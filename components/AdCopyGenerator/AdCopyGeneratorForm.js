@@ -73,7 +73,7 @@ const getLabelFromKey = (selectedKey, fieldName, options) => {
 
 
 // --------------------------------------------------------------------
-// NEW/UPDATED MODAL COMPONENT LOGIC
+// MODAL COMPONENT LOGIC
 // --------------------------------------------------------------------
 
 const VariantModalContent = ({ variants, onClose, inputs, onRequestRegenerate, showNotification }) => {
@@ -209,7 +209,7 @@ const VariantModalContent = ({ variants, onClose, inputs, onRequestRegenerate, s
                     <p style={{marginBottom: '20px', color: '#475569', fontSize: '14px'}}>
                         Click on any variant card to expand and view the full ad copy.
                     </p>
-                    {variants.map((variant, index) => {
+                    {variants.filter(v => v.show_variant).map((variant, index) => {
                         const isExpanded = index === expandedIndex;
                         const isRegenerating = regeneratingId === variant.id;
 
@@ -299,7 +299,7 @@ const VariantModalContent = ({ variants, onClose, inputs, onRequestRegenerate, s
 
 
 // --------------------------------------------------------------------
-// UPDATED AdCopyGeneratorForm COMPONENT (Integration and New Functions)
+// UPDATED AdCopyGeneratorForm COMPONENT (Fixing Platform Change)
 // --------------------------------------------------------------------
 
 const AdCopyGeneratorForm = () => {
@@ -346,12 +346,10 @@ const AdCopyGeneratorForm = () => {
   const [showSummary, setShowSummary] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   
-  // NEW STATES for API request tracking and Modal
-  const [requestId, setRequestId] = useState(null); // Tracks the current request ID
+  const [requestId, setRequestId] = useState(null);
   const [showVariantsModal, setShowVariantsModal] = useState(false);
-  // Initial structure for variants to match API response (including ID and content)
   const [generatedVariantsData, setGeneratedVariantsData] = useState({ 
-      variants: [], // [{ id: number, content: string }]
+      variants: [], 
       inputs: {}, 
   });
 
@@ -360,21 +358,25 @@ const AdCopyGeneratorForm = () => {
     setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
   }, []);
 
-  const updatePlacements = useCallback((platformLabel, allPlacements = fieldOptions.placement) => {
+  // REFACTORED: updatePlacements now accepts and uses the options list directly
+  const updatePlacements = useCallback((platformLabel, allPlacements) => {
+    if (!allPlacements) return;
+
     const filteredPlacements = allPlacements.filter(opt => 
       opt.parent_label === platformLabel
     );
 
     setAvailablePlacements(filteredPlacements);
     
+    // Set the new default placement to the first available option
     const newPlacement = filteredPlacements.length > 0 ? filteredPlacements[0].label : '';
     setFormData(prev => ({
       ...prev,
       placement: newPlacement || ''
     }));
-  }, [fieldOptions.placement]);
+  }, []); // Empty dependency array, relies on caller to pass data
 
-  // Main logic for fetching options with exponential backoff (Retained)
+  // Initial Data Load (Retained)
   useEffect(() => {
     setMounted(true);
 
@@ -414,15 +416,15 @@ const AdCopyGeneratorForm = () => {
             setFieldOptions(loadedOptions);
             
             const defaultPlatform = loadedOptions.platform.find(opt => opt.label === formData.platform)?.label || formData.platform;
-            let initialPlacements = loadedOptions.placement.filter(p => p.parent_label === defaultPlatform);
-            let initialPlacement = initialPlacements[0]?.label || '';
             
-            setAvailablePlacements(initialPlacements);
-
+            // Pass loaded placement data directly
+            updatePlacements(defaultPlatform, loadedOptions.placement);
+            
+            // Update other defaults
             setFormData(prev => ({
                 ...prev,
                 platform: defaultPlatform,
-                placement: initialPlacement,
+                // placement is handled by updatePlacements
                 campaignObjective: loadedOptions.campaign_objective.find(opt => opt.label === prev.campaignObjective)?.label || prev.campaignObjective,
                 tone: loadedOptions.tone_style.find(opt => opt.label === prev.tone || prev.tone.includes('Auto'))?.label || prev.tone,
                 headlineFocus: loadedOptions.headline_focus.find(opt => opt.label === prev.headlineFocus || prev.headlineFocus.includes('Auto'))?.label || prev.headlineFocus,
@@ -450,12 +452,22 @@ const AdCopyGeneratorForm = () => {
 
     fetchFieldOptions();
     
-  }, []);
+  }, []); // Initial load only
+
+  // FIXED: Runtime Platform Change Effect
+  useEffect(() => {
+    // This effect runs whenever formData.platform or fieldOptions.placement (master list) changes.
+    // It explicitly passes the current, updated options list to updatePlacements.
+    updatePlacements(formData.platform, fieldOptions.placement);
+  }, [formData.platform, fieldOptions.placement, updatePlacements]);
+
   
-  // Handlers for form controls (Retained/Updated)
   const handlePlatformChange = (e) => {
     const selectedKey = e.target.value;
     const platformLabel = getLabelFromKey(selectedKey, 'platform', fieldOptions);
+
+    // This simply updates the platform label in state.
+    // The useEffect hook above handles calling updatePlacements to filter based on this new label.
     setFormData(prev => ({ ...prev, platform: platformLabel }));
   };
 
@@ -488,7 +500,6 @@ const AdCopyGeneratorForm = () => {
     let labelToStore = selectedKey;
     if (selectedKey) {
         const fieldOptionsKey = name === 'adTextLength' ? 'primary_text_length' : name;
-        // Only look up label for select fields, otherwise use the value (e.g., input range/text)
         if (e.target.tagName === 'SELECT') {
             labelToStore = getLabelFromKey(selectedKey, fieldOptionsKey, fieldOptions);
         }
@@ -501,7 +512,6 @@ const AdCopyGeneratorForm = () => {
     
     setFormData(prev => ({ ...prev, [name]: labelToStore }));
   };
-  // ... other handlers (handleDateChange, handleArrayChange, removeItem, handleSubmit, toggleAdvanced) retained
 
   const handleDateChange = (e) => {
     const { name, value } = e.target;
