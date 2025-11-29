@@ -2,9 +2,6 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js",
   "/ad-copy-generator": "pages/ad-copy-generator.js",
-  "/caption-and-hastag-generator": "pages/caption-and-hastag-generator.js",
-  "/signin": "pages/signin.js",
-  "/signup": "pages/signup.js"
+  "/404": "pages/404.js"
 }

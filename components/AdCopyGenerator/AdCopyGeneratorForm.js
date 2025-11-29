@@ -1,15 +1,321 @@
-// components/AdCopyGenerator/AdCopyGeneratorForm.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Tooltip } from 'react-tooltip';
-import 'react-tooltip/dist/react-tooltip.css';
+
+// --- API Configuration (Defined internally to prevent build issues) ---
+const BASE_URL = 'https://olive-gull-905765.hostingersite.com/public/api/v1';
+const API = {
+    GET_FIELD_OPTIONS: `${BASE_URL}/ad-copy/options?field_type=all`,
+    GENERATE_AD_COPY: `${BASE_URL}/ad-copy/generate`,
+    // New endpoint for fetching old variants using request_id
+    GET_VARIANTS_LOG: (requestId) => `${BASE_URL}/ad-copy/${requestId}/variants`,
+    // New endpoint for regenerating a single variant using variant_id
+    REGENERATE_VARIANT: (variantId) => `${BASE_URL}/ad-copy/variants/${variantId}/regenerate`,
+    AUTH_TOKEN: '3|WwYYaSEAfSr1guYBFdPQlPtGg0dKphy1sVMDLBmX647db358',
+};
+const AUTH_HEADER = `Bearer ${API.AUTH_TOKEN}`;
+// --------------------------------------------------------------------
+
+const defaultFieldOptions = {
+    platform: [],
+    placement: [],
+    campaign_objective: [],
+    tone_style: [],
+    headline_focus: [],
+    primary_text_length: [],
+    cta_type: [],
+    emotional_angle: [],
+    asset_reuse_strategy: [],
+};
+
+// --- Helper Functions (Retained) ---
+const mapSelectionToApiObject = (fieldName, selectedLabel, options, isAutoSelect = false) => {
+    if (isAutoSelect && selectedLabel.includes('Auto-')) {
+        return { type: "auto-detect", id: null, value: selectedLabel };
+    }
+    if (fieldName === 'campaign_objective' && selectedLabel === 'Custom Objective') {
+        return { type: "custom", id: null, value: selectedLabel };
+    }
+    
+    let optionList = options[fieldName];
+    if (fieldName === 'primary_text_length') {
+        optionList = options.primary_text_length;
+    }
+
+    const selectedOption = optionList?.find(opt => 
+        selectedLabel === opt.label.replace('\t', '→')
+    );
+
+    if (selectedOption) {
+        return {
+            type: "predefined",
+            id: selectedOption.id,
+            value: selectedLabel 
+        };
+    }
+    return { type: "custom", id: null, value: selectedLabel };
+};
+
+const getLabelFromKey = (selectedKey, fieldName, options) => {
+    let optionList = options[fieldName];
+    if (fieldName === 'adTextLength') {
+        optionList = options.primary_text_length;
+    }
+
+    if (!optionList) return selectedKey;
+
+    const selectedOption = optionList.find(opt => opt.key === selectedKey);
+    
+    if (selectedOption) {
+        return selectedOption.label.replace('\t', '→');
+    }
+    return selectedKey;
+};
+
+
+// --------------------------------------------------------------------
+// NEW/UPDATED MODAL COMPONENT LOGIC
+// --------------------------------------------------------------------
+
+const VariantModalContent = ({ variants, onClose, inputs, onRequestRegenerate, showNotification }) => {
+    const [expandedIndex, setExpandedIndex] = useState(0); 
+    const [regeneratingId, setRegeneratingId] = useState(null);
+
+    const toggleExpand = (index) => {
+        setExpandedIndex(index === expandedIndex ? null : index);
+    };
+
+    const handleCopy = (text, variantId) => {
+        try {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showNotification(`Variant ${variantId} copied to clipboard!`, 'success');
+        } catch (err) {
+            showNotification('Failed to copy text.', 'error');
+        }
+    };
+
+    const handleRegenerate = async (variantId) => {
+        setRegeneratingId(variantId);
+        try {
+            await onRequestRegenerate(variantId);
+        } finally {
+            setRegeneratingId(null);
+        }
+    };
+
+    const modalStyles = {
+        overlay: {
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(30, 41, 59, 0.9)', 
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+        },
+        modal: {
+            backgroundColor: 'white', 
+            borderRadius: '12px',
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+            width: '95%',
+            maxWidth: '900px',
+            maxHeight: '95vh',
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+        },
+        header: {
+            padding: '20px 24px',
+            borderBottom: '1px solid #e0e7ff', 
+            backgroundColor: '#f1f5f9', 
+            color: '#1e293b', 
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+        body: {
+            padding: '24px',
+            backgroundColor: 'white',
+        },
+        card: {
+            marginBottom: '16px',
+            border: '1px solid #d1d5db',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            transition: 'all 0.3s ease-in-out',
+        },
+        cardHeader: {
+            padding: '16px 20px',
+            backgroundColor: '#ffffff',
+            cursor: 'pointer',
+            fontWeight: '600',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1px solid transparent',
+            gap: '10px',
+        },
+        cardContent: {
+            padding: '20px',
+            whiteSpace: 'pre-wrap',
+            fontSize: '14px',
+            color: '#1f2937', 
+            backgroundColor: '#f9fafb', 
+            borderTop: '1px solid #e5e7eb',
+        },
+        title: {
+            fontSize: '1.25rem',
+            margin: 0,
+            color: '#1e293b',
+        },
+        actionButton: {
+            padding: '6px 12px',
+            fontSize: '13px',
+            fontWeight: '500',
+            borderRadius: '4px',
+            border: '1px solid #d1d5db',
+            cursor: 'pointer',
+            marginLeft: '8px',
+            transition: 'background-color 0.15s ease-in-out',
+        }
+    };
+
+    if (!variants || variants.length === 0) return null;
+
+    return (
+        <div style={modalStyles.overlay}>
+            <div style={modalStyles.modal}>
+                <div style={modalStyles.header}>
+                    <h2 style={modalStyles.title}>Generated Ad Copy Variants ({variants.length})</h2>
+                    <button 
+                        onClick={onClose} 
+                        style={{
+                            background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', 
+                            color: '#4b5563', padding: '4px', lineHeight: 1
+                        }}
+                    >
+                        &times;
+                    </button>
+                </div>
+                <div style={modalStyles.body}>
+                    <p style={{marginBottom: '20px', color: '#475569', fontSize: '14px'}}>
+                        Click on any variant card to expand and view the full ad copy.
+                    </p>
+                    {variants.map((variant, index) => {
+                        const isExpanded = index === expandedIndex;
+                        const isRegenerating = regeneratingId === variant.id;
+
+                        return (
+                            <div key={variant.id || index} style={{
+                                ...modalStyles.card,
+                                border: isExpanded ? '1px solid #3b82f6' : '1px solid #e5e7eb',
+                                boxShadow: isExpanded ? '0 4px 8px -2px rgba(59, 130, 246, 0.2)' : '0 1px 3px rgba(0,0,0,0.05)',
+                                opacity: isRegenerating ? 0.6 : 1,
+                            }}>
+                                <div 
+                                    style={{
+                                        ...modalStyles.cardHeader,
+                                        backgroundColor: isExpanded ? '#e0f2fe' : '#ffffff',
+                                        borderBottom: isExpanded ? '1px solid #93c5fd' : '1px solid transparent',
+                                        color: isExpanded ? '#0369a1' : '#1f2937',
+                                    }}
+                                    onClick={() => toggleExpand(index)}
+                                >
+                                    <span style={{flexGrow: 1}}>Variant {index + 1}: {inputs.platform?.value} ({inputs.placement?.value})</span>
+                                    
+                                    <div onClick={(e) => e.stopPropagation()} style={{display: 'flex', alignItems: 'center'}}>
+                                        {/* Copy Button */}
+                                        <button 
+                                            style={{
+                                                ...modalStyles.actionButton,
+                                                backgroundColor: '#10b981', color: 'white', border: 'none',
+                                            }}
+                                            onClick={() => handleCopy(variant.content, index + 1)}
+                                        >
+                                            Copy
+                                        </button>
+
+                                        {/* Regenerate Button */}
+                                        <button 
+                                            style={{
+                                                ...modalStyles.actionButton,
+                                                backgroundColor: isRegenerating ? '#9ca3af' : '#f97316', 
+                                                color: 'white', 
+                                                border: 'none',
+                                                cursor: isRegenerating ? 'wait' : 'pointer'
+                                            }}
+                                            onClick={() => handleRegenerate(variant.id)}
+                                            disabled={isRegenerating}
+                                        >
+                                            {isRegenerating ? 'Regenerating...' : 'Regenerate'}
+                                        </button>
+                                    </div>
+                                    
+                                    <span>{isExpanded ? '▲' : '▼'}</span>
+                                </div>
+                                {isExpanded && (
+                                    <div style={modalStyles.cardContent}>
+                                        <div style={{ margin: 0, fontFamily: 'inherit', whiteSpace: 'pre-wrap' }}>
+                                            <p style={{ fontWeight: 'bold', margin: '0 0 8px 0' }}>Variant Content:</p>
+                                            {variant.content}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
+                        <button 
+                            onClick={onClose} 
+                            style={{ 
+                                padding: '10px 20px', 
+                                fontSize: '14px', 
+                                fontWeight: '500', 
+                                borderRadius: '6px', 
+                                border: '1px solid #d1d5db', 
+                                cursor: 'pointer',
+                                backgroundColor: '#f9fafb',
+                                color: '#4b5563',
+                                transition: 'background-color 0.15s ease-in-out'
+                            }}
+                        >
+                            Close Modal
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+// --------------------------------------------------------------------
+// UPDATED AdCopyGeneratorForm COMPONENT (Integration and New Functions)
+// --------------------------------------------------------------------
 
 const AdCopyGeneratorForm = () => {
+  // Hardcoded audience suggestions (moved inside the component function)
+  const audienceSuggestions = {
+    'Demographics': ['Women 25-34', 'Men 35-44', 'Parents of Toddlers'],
+    'Interests': ['Fitness Enthusiasts', 'Tech Early Adopters', 'Travel Lovers'],
+    'Professions': ['Marketing Managers', 'Small Business Owners', 'Software Engineers']
+  };
+
   const [formData, setFormData] = useState({
     platform: 'Meta (Facebook & Instagram)',
-    placement: 'Facebook/Instagram Feed',
+    placement: 'Facebook Feed',
     campaignObjective: 'Brand Awareness',
     customObjective: '',
-    targetAudience: [], // Changed to array to store audience segments
+    targetAudience: [],
     productServices: '',
     keyBenefits: [],
     variants: 3,
@@ -29,228 +335,128 @@ const AdCopyGeneratorForm = () => {
     showAdvanced: false
   });
   
-  // State for audience input
   const [audienceInput, setAudienceInput] = useState('');
   const [showAudienceSuggestions, setShowAudienceSuggestions] = useState(false);
-
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const [mounted, setMounted] = useState(false);
   const [availablePlacements, setAvailablePlacements] = useState([]);
+  const [fieldOptions, setFieldOptions] = useState(defaultFieldOptions);
+  const [loadingOptions, setLoadingOptions] = useState(false);
+  const [optionsError, setOptionsError] = useState('');
   const [showSummary, setShowSummary] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  // NEW STATES for API request tracking and Modal
+  const [requestId, setRequestId] = useState(null); // Tracks the current request ID
+  const [showVariantsModal, setShowVariantsModal] = useState(false);
+  // Initial structure for variants to match API response (including ID and content)
+  const [generatedVariantsData, setGeneratedVariantsData] = useState({ 
+      variants: [], // [{ id: number, content: string }]
+      inputs: {}, 
+  });
 
-  useEffect(() => {
-    setMounted(true);
-    updatePlacements('Meta (Facebook & Instagram)');
+  const showNotification = useCallback((message, type) => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
   }, []);
 
-  // Platform options
-  const platformOptions = [
-    'Meta (Facebook & Instagram)',
-    'Google Ads',
-    'LinkedIn Ads',
-    'YouTube Ads',
-    'Twitter / X Ads',
-    'TikTok Ads',
-    'Display / Programmatic (Generic)'
-  ];
+  const updatePlacements = useCallback((platformLabel, allPlacements = fieldOptions.placement) => {
+    const filteredPlacements = allPlacements.filter(opt => 
+      opt.parent_label === platformLabel
+    );
 
-  // Platform-specific placements
-  const platformPlacements = {
-    'Meta (Facebook & Instagram)': [
-      'Facebook Feed',
-      'Instagram Feed',
-      'Instagram Stories',
-      'Instagram Reels',
-      'Facebook Right Column',
-      'Facebook Marketplace'
-    ],
-    'Google Ads': [
-      'Search (Headlines/Descriptions)',
-      'Performance Max (Assets bundle)',
-      'Display Responsive (Short/long headlines + descriptions)',
-      'Discovery (Headline + description)',
-      'Shopping (copy limits apply)'
-    ],
-    'LinkedIn Ads': [
-      'Sponsored Content (Single Image)',
-      'Carousel',
-      'Video',
-      'Text Ads',
-      'Message / Conversation Ads'
-    ],
-    'YouTube Ads': [
-      'In-Stream Skippable',
-      'In-Feed (Discovery)',
-      'Bumper (6s—hook only)'
-    ],
-    'Twitter / X Ads': [
-      'Promoted Post (Text)',
-      'Image/Video Post (Text + hook)'
-    ],
-    'TikTok Ads': [
-      'In-Feed (Short punchy text)',
-      'Spark Ad (Creator-style tone)'
-    ],
-    'Display / Programmatic (Generic)': [
-      'Responsive Display (Short/long headline + description)'
-    ]
-  };
-
-  const campaignObjectiveOptions = [
-    'Brand Awareness',
-    'Reach / Impressions',
-    'Engagement',
-    'Traffic / Website Visits',
-    'Lead Generation',
-    'Conversions / Sales',
-    'App Installs',
-    'Video Views',
-    'Event Promotion',
-    'Product Launch',
-    'Service Promotion',
-    'Community Growth',
-    'Retargeting / Remarketing',
-    'Seasonal / Festive Offers',
-    'Custom Objective'
-  ];
-
-  const toneOptions = [
-    'Auto-Detect (Based on Platform)',
-    'Professional / Corporate',
-    'Friendly / Conversational',
-    'Inspirational / Motivational',
-    'Playful / Fun',
-    'Luxury / Premium',
-    'Bold / Confident',
-    'Empathetic / Caring',
-    'Minimal / Modern',
-    'Adventurous / Energetic',
-    'Witty / Clever',
-    'Trustworthy / Authoritative',
-    'Urgent / Limited-Time Offer',
-    'Educational / Informative',
-    'Romantic / Emotional',
-    'Edgy / Youthful',
-    'Relatable / Down-to-Earth',
-    'Visionary / Futuristic',
-    'Sarcastic / Bold Humor',
-    'Calm / Neutral'
-  ];
-
-  const headlineFocusOptions = [
-    'Auto-Select (Recommended)',
-    'Benefit-Focused',
-    'Problem-Solution',
-    'Question Hook',
-    'Number / Statistic',
-    'Fear of Missing Out (FOMO)',
-    'Curiosity / Teaser',
-    'Emotional / Relatable',
-    'Testimonial Style',
-    'Comparison / Superiority',
-    'Transformation Hook',
-    'Desire-Driven',
-    'Pain Avoidance',
-    'Educational / Tip-Based',
-    'Authority / Credibility'
-  ];
-
-  const adTextLengthOptions = [
-    'Auto-Length (Platform Optimized)',
-    'Short (Under 50 words)',
-    'Medium (50–100 words)',
-    'Long (100–150 words)',
-    'Extended (150–250 words)'
-  ];
-
-  const ctaTypeOptions = [
-    'Learn More',
-    'Sign Up Now',
-    'Shop Now',
-    'Get Started',
-    'Download Now',
-    'Try for Free',
-    'Book a Demo',
-    'Subscribe',
-    'Join Now',
-    'Contact Us',
-    'Get Offer',
-    'Buy Now',
-    'Donate Now',
-    'Watch Video',
-    'Read More',
-    'Request a Quote',
-    'Apply Now',
-    'Join the Waitlist',
-    'Message Us / DM Now',
-    'Custom CTA'
-  ];
-
-  const emotionalAngleOptions = [
-    'Pain → Solution',
-    'FOMO (Fear of Missing Out)',
-    'Social Proof',
-    'Authority / Expertise',
-    'Gain / Aspiration',
-    'Relief / Stress-Free',
-    'Curiosity / Mystery',
-    'Logic / Data-Driven',
-    'Trust & Safety',
-    'Joy / Celebration',
-    'Empathy / Understanding',
-    'Transformation',
-    'Empowerment / Confidence',
-    'Urgency / Scarcity',
-    'Neutral / Informative'
-  ];
-
-  const assetReuseOptions = [
-    'Auto-Detect (Recommended)',
-    'Prospecting (Cold Audience)',
-    'Retargeting (Warm Audience)',
-    'Remarketing (Existing Leads)',
-    'Upsell / Cross-Sell (Customers)',
-    'Loyalty / Re-Engagement'
-  ];
-
-  const audienceSuggestions = {
-    b2b: [
-      'Startup Founders',
-      'Marketing Managers',
-      'Small Business Owners',
-      'SaaS Product Teams',
-      'HR & Recruitment Professionals',
-      'Agencies & Freelancers'
-    ],
-    b2c: [
-      'Students',
-      'Creators & Influencers',
-      'Parents',
-      'Fitness Enthusiasts',
-      'Travelers',
-      'Shoppers',
-      'Tech-Savvy Gen Z'
-    ]
-  };
-
-  const updatePlacements = (platform) => {
-    setAvailablePlacements(platformPlacements[platform] || []);
-    if (platformPlacements[platform] && platformPlacements[platform].length > 0) {
-      setFormData(prev => ({
-        ...prev,
-        placement: platformPlacements[platform][0]
-      }));
-    }
-  };
-
-  const handlePlatformChange = (e) => {
-    const platform = e.target.value;
-    updatePlacements(platform);
+    setAvailablePlacements(filteredPlacements);
+    
+    const newPlacement = filteredPlacements.length > 0 ? filteredPlacements[0].label : '';
     setFormData(prev => ({
       ...prev,
-      platform,
-      placement: ''
+      placement: newPlacement || ''
     }));
+  }, [fieldOptions.placement]);
+
+  // Main logic for fetching options with exponential backoff (Retained)
+  useEffect(() => {
+    setMounted(true);
+
+    const fetchFieldOptions = async () => {
+      const maxRetries = 3;
+      let attempt = 0;
+      setLoadingOptions(true);
+      setOptionsError('');
+
+      while (attempt < maxRetries) {
+        try {
+          if (attempt > 0) {
+            const delay = Math.pow(2, attempt) * 1000 + Math.random() * 500;
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+
+          const response = await fetch(API.GET_FIELD_OPTIONS, {
+            headers: { Authorization: AUTH_HEADER },
+          });
+          
+          if (response.status === 429 && attempt < maxRetries - 1) {
+            attempt++;
+            continue;
+          }
+
+          if (!response.ok) {
+            throw new Error(`Failed to fetch field options (Status: ${response.status})`);
+          }
+
+          const apiData = await response.json();
+          
+          if (apiData && apiData.data && typeof apiData.data === 'object') {
+            const loadedOptions = {
+                ...defaultFieldOptions,
+                ...apiData.data
+            };
+            setFieldOptions(loadedOptions);
+            
+            const defaultPlatform = loadedOptions.platform.find(opt => opt.label === formData.platform)?.label || formData.platform;
+            let initialPlacements = loadedOptions.placement.filter(p => p.parent_label === defaultPlatform);
+            let initialPlacement = initialPlacements[0]?.label || '';
+            
+            setAvailablePlacements(initialPlacements);
+
+            setFormData(prev => ({
+                ...prev,
+                platform: defaultPlatform,
+                placement: initialPlacement,
+                campaignObjective: loadedOptions.campaign_objective.find(opt => opt.label === prev.campaignObjective)?.label || prev.campaignObjective,
+                tone: loadedOptions.tone_style.find(opt => opt.label === prev.tone || prev.tone.includes('Auto'))?.label || prev.tone,
+                headlineFocus: loadedOptions.headline_focus.find(opt => opt.label === prev.headlineFocus || prev.headlineFocus.includes('Auto'))?.label || prev.headlineFocus,
+                adTextLength: loadedOptions.primary_text_length.find(opt => opt.label === prev.adTextLength || prev.adTextLength.includes('Auto'))?.label || prev.adTextLength,
+                ctaType: loadedOptions.cta_type.find(opt => opt.label === prev.ctaType)?.label || prev.ctaType,
+                emotionalAngle: loadedOptions.emotional_angle.find(opt => opt.label.replace('\t', '→') === prev.emotionalAngle)?.label.replace('\t', '→') || prev.emotionalAngle,
+                assetReuseStrategy: loadedOptions.asset_reuse_strategy.find(opt => opt.label === prev.assetReuseStrategy || prev.assetReuseStrategy.includes('Auto'))?.label || prev.assetReuseStrategy,
+            }));
+            
+            setLoadingOptions(false);
+            return;
+          } else {
+            throw new Error('Invalid data structure from API');
+          }
+        } catch (error) {
+          attempt++;
+          if (attempt >= maxRetries) {
+            setOptionsError('Unable to load field options. Default options are being used.');
+            setLoadingOptions(false);
+            return;
+          }
+        }
+      }
+    };
+
+    fetchFieldOptions();
+    
+  }, []);
+  
+  // Handlers for form controls (Retained/Updated)
+  const handlePlatformChange = (e) => {
+    const selectedKey = e.target.value;
+    const platformLabel = getLabelFromKey(selectedKey, 'platform', fieldOptions);
+    setFormData(prev => ({ ...prev, platform: platformLabel }));
   };
 
   const handleAudienceInput = (e) => {
@@ -261,47 +467,41 @@ const AdCopyGeneratorForm = () => {
 
   const addAudienceChip = (chip) => {
     if (!formData.targetAudience.includes(chip)) {
-      const newAudience = [...formData.targetAudience, chip];
-      setFormData(prev => ({
-        ...prev,
-        targetAudience: newAudience
-      }));
+      setFormData(prev => ({ ...prev, targetAudience: [...prev.targetAudience, chip] }));
     }
     setAudienceInput('');
     setShowAudienceSuggestions(false);
   };
 
   const removeAudienceChip = (chipToRemove) => {
-    const newAudience = formData.targetAudience.filter(chip => chip !== chipToRemove);
-    setFormData(prev => ({
-      ...prev,
-      targetAudience: newAudience
-    }));
-  };
-
-  const showNotification = (message, type) => {
-    setNotification({ show: true, message, type });
-    setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
+    setFormData(prev => ({ ...prev, targetAudience: prev.targetAudience.filter(chip => chip !== chipToRemove) }));
   };
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value: selectedKey, type, checked } = e.target;
     
-    // Handle custom objective field visibility
-    if (name === 'campaignObjective' && value !== 'Custom Objective') {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value,
-        customObjective: ''
-      }));
-      return;
+    if (type === 'checkbox') {
+        setFormData(prev => ({ ...prev, [name]: checked }));
+        return;
     }
 
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    let labelToStore = selectedKey;
+    if (selectedKey) {
+        const fieldOptionsKey = name === 'adTextLength' ? 'primary_text_length' : name;
+        // Only look up label for select fields, otherwise use the value (e.g., input range/text)
+        if (e.target.tagName === 'SELECT') {
+            labelToStore = getLabelFromKey(selectedKey, fieldOptionsKey, fieldOptions);
+        }
+        
+        if (name === 'campaignObjective' && labelToStore !== 'Custom Objective') {
+            setFormData(prev => ({ ...prev, [name]: labelToStore, customObjective: '' }));
+            return;
+        }
+    }
+    
+    setFormData(prev => ({ ...prev, [name]: labelToStore }));
   };
+  // ... other handlers (handleDateChange, handleArrayChange, removeItem, handleSubmit, toggleAdvanced) retained
 
   const handleDateChange = (e) => {
     const { name, value } = e.target;
@@ -338,7 +538,6 @@ const AdCopyGeneratorForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setShowSummary(true);
-    // Scroll to the summary section
     setTimeout(() => {
       const summaryElement = document.getElementById('form-summary');
       if (summaryElement) {
@@ -346,17 +545,213 @@ const AdCopyGeneratorForm = () => {
       }
     }, 100);
   };
-
-  const handleGenerate = () => {
-    // Actual form submission logic here
-    showNotification('Generating your ad copy...', 'info');
-    // Reset form or redirect as needed
+  
+  const toggleAdvanced = () => {
+    setFormData(prev => ({
+      ...prev,
+      showAdvanced: !prev.showAdvanced
+    }));
   };
 
+  const formatPayload = () => {
+    const parseGeoLanguage = (input) => {
+      if (!input) return { locale: null, language: null };
+      const parts = input.split(',').map(p => p.trim());
+      const geo = parts[0]?.trim();
+      const lang = parts.length > 1 ? parts[1]?.trim() : null;
+      return { locale: geo || null, language: lang || null };
+    };
+
+    const payload = {
+      platform: mapSelectionToApiObject('platform', formData.platform, fieldOptions.platform, true),
+      placement: mapSelectionToApiObject('placement', formData.placement, fieldOptions.placement, true),
+      campaign_objective: formData.campaignObjective === 'Custom Objective' ? 
+        { type: 'custom', id: null, value: formData.customObjective || 'Custom Objective' } : 
+        mapSelectionToApiObject('campaign_objective', formData.campaignObjective, fieldOptions.campaign_objective, false),
+      target_audience: formData.targetAudience,
+      key_benefits: formData.keyBenefits,
+      audience_pain_points: formData.audiencePain,
+      proof_elements: formData.proofCredibility,
+      product_description: formData.productServices,
+      number_of_variants: parseInt(formData.variants, 10),
+      compliance_notes: formData.complianceNote,
+      brand_voice: formData.brandVoice,
+      offer_pricing_details: formData.offerPricing,
+      tone_style: mapSelectionToApiObject('tone_style', formData.tone, fieldOptions.tone_style, true),
+      headline_focus: mapSelectionToApiObject('headline_focus', formData.headlineFocus, fieldOptions.headline_focus, true),
+      primary_text_length: mapSelectionToApiObject('primary_text_length', formData.adTextLength, fieldOptions, true),
+      cta_type: mapSelectionToApiObject('cta_type', formData.ctaType, fieldOptions.cta_type, false),
+      emotional_angle: mapSelectionToApiObject('emotional_angle', formData.emotionalAngle, fieldOptions.emotional_angle, false),
+      asset_reuse_strategy: mapSelectionToApiObject('asset_reuse_strategy', formData.assetReuseStrategy, fieldOptions.asset_reuse_strategy, true),
+      campaign_duration: formData.campaignDuration,
+      geographic_language_target: parseGeoLanguage(formData.geoLanguageTarget),
+    };
+    
+    return payload;
+  };
+
+  const handleGenerate = async () => {
+    if (isGenerating) return;
+
+    const payload = formatPayload();
+    
+    if (!payload.product_description || payload.target_audience.length === 0 || (!payload.campaign_objective.value && payload.campaign_objective.type === 'custom')) {
+        showNotification('Please fill out all required fields (marked with *)', 'error');
+        return;
+    }
+
+    setIsGenerating(true);
+    showNotification('Generating ad copy, please wait...', 'info');
+
+    try {
+      const response = await fetch(API.GENERATE_AD_COPY, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': AUTH_HEADER,
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        let errorData = {};
+        try {
+            errorData = await response.json();
+        } catch (e) {
+            throw new Error(`API call failed with status: ${response.status} (${response.statusText}).`);
+        }
+        throw new Error(errorData.message || `API call failed with status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.variants && Array.isArray(result.variants) && result.variants.length > 0) {
+        // SUCCESS: Store request ID and variant data
+        setRequestId(result.request_id);
+        
+        // Map raw string variants to the required object structure if IDs are missing
+        const structuredVariants = result.variants.map((content, index) => ({
+            id: content.id || `temp-${Date.now()}-${index}`, // Use real ID if present, otherwise generate temporary ID
+            content: content.content || content,
+            show_variant: content.show_variant || true, // Assume true if key is missing
+        }));
+
+        setGeneratedVariantsData({ variants: structuredVariants, inputs: result.inputs });
+        setShowVariantsModal(true);
+        showNotification('Ad copy generated successfully!', 'success');
+      } else {
+        throw new Error("Generation successful, but no variants were returned.");
+      }
+      
+    } catch (error) {
+      console.error('Generation Error:', error);
+      showNotification(`Error: ${error.message || 'Failed to generate ad copy.'}`, 'error');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleRegenerateVariant = async (variantId) => {
+      const variantIndex = generatedVariantsData.variants.findIndex(v => v.id === variantId);
+      if (variantIndex === -1) return;
+
+      showNotification(`Regenerating Variant ${variantIndex + 1}...`, 'info');
+
+      try {
+          const response = await fetch(API.REGENERATE_VARIANT(variantId), {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': AUTH_HEADER,
+              },
+          });
+
+          if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.message || `Regeneration failed with status: ${response.status}`);
+          }
+          
+          const result = await response.json();
+          
+          // Update the specific variant content in the state
+          setGeneratedVariantsData(prev => {
+              const newVariants = [...prev.variants];
+              const updatedVariantIndex = newVariants.findIndex(v => v.id === result.variant_id);
+              
+              if (updatedVariantIndex !== -1) {
+                  newVariants[updatedVariantIndex] = {
+                      ...newVariants[updatedVariantIndex],
+                      content: result.new_content,
+                  };
+              } else {
+                  // Fallback: If regeneration API returned a new ID, add it (unlikely for regeneration)
+                  newVariants.push({
+                      id: result.variant_id,
+                      content: result.new_content,
+                      show_variant: true,
+                  });
+              }
+              
+              return { ...prev, variants: newVariants };
+          });
+
+          showNotification(`Variant ${variantIndex + 1} successfully regenerated!`, 'success');
+
+      } catch (error) {
+          console.error('Regeneration Error:', error);
+          showNotification(`Regeneration Error: ${error.message}`, 'error');
+      }
+  };
+
+  const handleViewLog = async () => {
+    if (!requestId) {
+        showNotification("No previous generation history found.", 'error');
+        return;
+    }
+
+    setIsGenerating(true);
+    showNotification("Fetching previous variants...", 'info');
+    
+    try {
+        const response = await fetch(API.GET_VARIANTS_LOG(requestId), {
+            headers: { 'Authorization': AUTH_HEADER },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `Failed to fetch log: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.variants && Array.isArray(result.variants) && result.variants.length > 0) {
+             const structuredVariants = result.variants.map(variant => ({
+                id: variant.id, 
+                content: variant.content,
+                show_variant: variant.show_variant || true,
+            }));
+
+            setGeneratedVariantsData({ variants: structuredVariants, inputs: result.inputs });
+            setShowVariantsModal(true);
+            showNotification('Log loaded successfully!', 'success');
+        } else {
+            showNotification('No variants found in the log.', 'error');
+        }
+
+    } catch (error) {
+        console.error('Log View Error:', error);
+        showNotification(`Error loading log: ${error.message || 'Failed to fetch variants log.'}`, 'error');
+    } finally {
+        setIsGenerating(false);
+    }
+  };
+  
+  // Reset handler (Retained)
   const handleReset = () => {
     setFormData({
       platform: 'Meta (Facebook & Instagram)',
-      placement: 'Facebook/Instagram Feed',
+      placement: 'Facebook Feed',
       campaignObjective: 'Brand Awareness',
       customObjective: '',
       targetAudience: [],
@@ -380,17 +775,14 @@ const AdCopyGeneratorForm = () => {
     });
     setAudienceInput('');
     setShowAudienceSuggestions(false);
+    setShowSummary(false);
+    setGeneratedVariantsData({ variants: [], inputs: {} });
+    setShowVariantsModal(false);
+    setRequestId(null); // Clear request ID
     showNotification('Form has been reset', 'info');
   };
 
-  const toggleAdvanced = () => {
-    setFormData(prev => ({
-      ...prev,
-      showAdvanced: !prev.showAdvanced
-    }));
-  };
-
-  // Styles
+  // Styles (Defined for the main component's structure)
   const styles = {
     container: { maxWidth: '1100px', margin: '0 auto', padding: '24px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' },
     card: { backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' },
@@ -475,11 +867,12 @@ const AdCopyGeneratorForm = () => {
     }
   };
 
+
   if (!mounted) return null;
 
   return (
     <div style={styles.container}>
-      {/* Notification Toast */}
+      {/* -------------------- Notification Toast -------------------- */}
       {notification.show && (
         <div style={{
           ...styles.toast,
@@ -488,19 +881,18 @@ const AdCopyGeneratorForm = () => {
           color: notification.type === 'error' ? '#b91c1c' : '#166534',
         }}>
           {notification.message}
-          <button onClick={() => setNotification({...notification, show: false})} style={styles.toastClose}>&times;</button>
+          <button onClick={() => setNotification({...notification, show: false})} style={{
+            background: 'none', border: 'none', color: 'inherit', marginLeft: '10px', cursor: 'pointer', fontSize: '18px'
+          }}>&times;</button>
         </div>
       )}
 
+      {/* -------------------- Main Form / Summary View -------------------- */}
       {!showSummary ? (
         <div style={styles.card}>
-          {/* Header */}
           <div style={styles.header}>
             <h1 style={styles.title}>Ad Copy Generator</h1>
             <p style={styles.subtitle}>Create compelling ad copy for your campaigns</p>
-            <div style={styles.progressBar}>
-              <div style={{...styles.progressFill, width: '50%'}}></div>
-            </div>
           </div>
 
           <div style={{ padding: '24px' }}>
@@ -514,7 +906,7 @@ const AdCopyGeneratorForm = () => {
                       <span 
                         style={styles.infoIcon} 
                         data-tooltip-id="platform-tooltip" 
-                        data-tooltip-content="Select the platform where your ad will run. This determines the available ad formats and requirements."
+                        data-tooltip-content="Select the platform where your ad will run."
                       >
                         i
                       </span>
@@ -523,17 +915,23 @@ const AdCopyGeneratorForm = () => {
                     <select
                       id="platform"
                       name="platform"
-                      value={formData.platform}
+                      // Use key for value attribute, label for display
+                      value={fieldOptions.platform.find(opt => opt.label === formData.platform)?.key || formData.platform}
                       onChange={handlePlatformChange}
                       style={styles.input}
                       required
                     >
-                      {platformOptions.map((platform, index) => (
-                        <option key={index} value={platform}>
-                          {platform}
+                      {loadingOptions && <option value="">Loading Platforms...</option>}
+                      {fieldOptions.platform && fieldOptions.platform.map((option) => (
+                        <option
+                          key={option.key || option.id}
+                          value={option.key} 
+                        >
+                          {option.label}
                         </option>
                       ))}
                     </select>
+                    {optionsError && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{optionsError}</p>}
                   </div>
                 </div>
 
@@ -544,7 +942,7 @@ const AdCopyGeneratorForm = () => {
                       <span 
                         style={styles.infoIcon} 
                         data-tooltip-id="placement-tooltip" 
-                        data-tooltip-content="Select where your ad will be displayed on the platform. Options update based on your platform selection."
+                        data-tooltip-content="Select where your ad will be displayed on the platform."
                       >
                         i
                       </span>
@@ -553,16 +951,20 @@ const AdCopyGeneratorForm = () => {
                     <select
                       id="placement"
                       name="placement"
-                      value={formData.placement}
+                      // Use key for value attribute, label for display
+                      value={fieldOptions.placement.find(opt => opt.label === formData.placement)?.key || formData.placement}
                       onChange={handleChange}
                       style={styles.input}
                       required
-                      disabled={!formData.platform}
+                      disabled={!formData.platform || availablePlacements.length === 0}
                     >
-                      <option value="">Select a platform first</option>
-                      {availablePlacements.map((placement, index) => (
-                        <option key={index} value={placement}>
-                          {placement}
+                      <option value="">Select Placement</option>
+                      {availablePlacements.map((option) => (
+                        <option
+                          key={option.key || option.id}
+                          value={option.key} 
+                        >
+                          {option.label}
                         </option>
                       ))}
                     </select>
@@ -577,13 +979,7 @@ const AdCopyGeneratorForm = () => {
                       <span 
                         style={styles.infoIcon} 
                         data-tooltip-id="campaignObjective-tooltip" 
-                        data-tooltip-html="Define what you want to achieve with this campaign. This determines the tone, CTA, and messaging direction.<br/><br/>
-                        <strong>Brand Awareness:</strong> Broad, memorable brand messaging<br/>
-                        <strong>Reach/Impressions:</strong> Short, repetitive hooks for maximum recall<br/>
-                        <strong>Engagement:</strong> Interactive content for comments/shares<br/>
-                        <strong>Traffic:</strong> Action-driven text for website visits<br/>
-                        <strong>Lead Gen:</strong> Persuasive copy for signups<br/>
-                        <strong>Sales:</strong> Urgent, benefit-focused CTAs"
+                        data-tooltip-html="Define what you want to achieve with this campaign."
                       >
                         i
                       </span>
@@ -592,16 +988,21 @@ const AdCopyGeneratorForm = () => {
                     <select
                       id="campaignObjective"
                       name="campaignObjective"
-                      value={formData.campaignObjective}
+                      // Use key for value attribute, label for display
+                      value={fieldOptions.campaign_objective.find(opt => opt.label === formData.campaignObjective)?.key || formData.campaignObjective}
                       onChange={handleChange}
                       style={styles.input}
                       required
                     >
-                      {campaignObjectiveOptions.map((objective, index) => (
-                        <option key={index} value={objective}>
-                          {objective}
+                      {fieldOptions.campaign_objective && fieldOptions.campaign_objective.map((option) => (
+                        <option
+                          key={option.key || option.id}
+                          value={option.key}
+                        >
+                          {option.label}
                         </option>
                       ))}
+                       <option value="Custom Objective">Custom Objective</option>
                     </select>
                     
                     {formData.campaignObjective === 'Custom Objective' && (
@@ -631,716 +1032,640 @@ const AdCopyGeneratorForm = () => {
                       <span 
                         style={styles.infoIcon} 
                         data-tooltip-id="targetAudience-tooltip" 
-                        data-tooltip-html="Define your ideal customer profile. Add multiple audience segments for better targeting.<br/><br/>
-                        <strong>Examples:</strong><br/>
-                        • Age & Gender: 'Women 25-34', 'Men 35-44'<br/>
-                        • Interests: 'Fitness Enthusiasts', 'Tech Early Adopters'<br/>
-                        • Professions: 'Marketing Managers', 'Small Business Owners'<br/>
-                        • Behaviors: 'Frequent Travelers', 'Online Shoppers'"
+                        data-tooltip-html="Define your ideal customer profile. Add multiple audience segments."
                       >
                         i
                       </span>
                     </label>
                     <Tooltip id="targetAudience-tooltip" />
                     
-                    {/* Audience Chips */}
-                <div style={{ 
-                  display: 'flex', 
-                  flexWrap: 'wrap', 
-                  gap: '8px', 
-                  marginBottom: '8px',
-                  minHeight: '40px',
-                  alignItems: 'center',
-                  padding: '4px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  backgroundColor: formData.targetAudience.length > 0 ? '#f9fafb' : 'white'
-                }}>
-                  {formData.targetAudience.length === 0 && (
-                    <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
-                      Add audience segments (e.g., 'Women 25-34', 'Fitness Enthusiasts')
-                    </span>
-                  )}
-                  {formData.targetAudience.map((chip, index) => (
-                    <span 
-                      key={index} 
-                      style={{
-                        ...styles.badge,
-                        ...styles.badgePrimary,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '4px 10px'
-                      }}
-                    >
-                      {chip}
-                      <button 
-                        type="button" 
-                        onClick={() => removeAudienceChip(chip)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'white',
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          lineHeight: 1,
-                          padding: '0 0 0 4px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: '16px',
-                          height: '16px',
-                          borderRadius: '50%',
-                          backgroundColor: 'rgba(255,255,255,0.2)'
-                        }}
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-
-                {/* Audience Input with Suggestions */}
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="text"
-                    value={audienceInput}
-                    onChange={handleAudienceInput}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && audienceInput.trim()) {
-                        e.preventDefault();
-                        addAudienceChip(audienceInput.trim());
-                      }
-                    }}
-                    style={{
-                      ...styles.input,
-                      marginBottom: 0,
-                      borderTopLeftRadius: audienceInput ? '6px 6px 0 0' : '6px',
-                      borderBottomLeftRadius: audienceInput ? '0' : '6px',
-                      borderBottomRightRadius: audienceInput ? '0' : '6px'
-                    }}
-                    placeholder="Type and press Enter to add audience segments"
-                  />
-                  
-                  {/* Suggestions Dropdown */}
-                  {audienceInput && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: 0,
-                      right: 0,
-                      backgroundColor: 'white',
+                    {/* Audience Chips and Input (No change here as it's a multi-select custom input) */}
+                    {/* ... (Audience Input/Chips render logic remains the same) ... */}
+                    <div style={{ 
+                      display: 'flex', 
+                      flexWrap: 'wrap', 
+                      gap: '8px', 
+                      marginBottom: '8px',
+                      minHeight: '40px',
+                      alignItems: 'center',
+                      padding: '4px',
                       border: '1px solid #d1d5db',
-                      borderTop: 'none',
-                      borderBottomLeftRadius: '6px',
-                      borderBottomRightRadius: '6px',
-                      zIndex: 1000,
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-                    }}>
-                      {Object.entries(audienceSuggestions).map(([category, suggestions]) => {
-                        const filtered = suggestions.filter(s => 
-                          s.toLowerCase().includes(audienceInput.toLowerCase()) && 
-                          !formData.targetAudience.includes(s)
-                        );
-                        
-                        if (filtered.length === 0) return null;
-                        
-                        return (
-                          <div key={category}>
-                            <div style={{
-                              padding: '8px 12px',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              color: '#4b5563',
-                              backgroundColor: '#f3f4f6',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.05em'
-                            }}>
-                              {category}
-                            </div>
-                            {filtered.map((suggestion, idx) => (
-                              <div
-                                key={idx}
-                                onClick={() => {
-                                  addAudienceChip(suggestion);
-                                  setAudienceInput('');
-                                }}
-                                style={{
-                                  padding: '8px 16px',
-                                  cursor: 'pointer',
-                                  transition: 'background-color 0.15s',
-                                  ':hover': {
-                                    backgroundColor: '#f3f4f6'
-                                  }
-                                }}
-                              >
-                                {suggestion}
-                              </div>
-                            ))}
-                          </div>
-                        );
-                      })}
-                      
-                      {/* Add custom option */}
-                      {audienceInput && !Object.values(audienceSuggestions)
-                        .flat()
-                        .some(s => s.toLowerCase() === audienceInput.toLowerCase()) && (
-                        <div
-                          onClick={() => {
-                            addAudienceChip(audienceInput);
-                            setAudienceInput('');
-                          }}
+                      borderRadius: '6px',
+                      backgroundColor: formData.targetAudience.length > 0 ? '#f9fafb' : 'white'
+                  }}>
+                      {formData.targetAudience.length === 0 && (
+                        <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
+                          Add audience segments (e.g., 'Women 25-34', 'Fitness Enthusiasts')
+                        </span>
+                      )}
+                      {formData.targetAudience.map((chip, index) => (
+                        <span 
+                          key={index} 
                           style={{
-                            padding: '8px 16px',
-                            cursor: 'pointer',
-                            backgroundColor: '#f8fafc',
-                            borderTop: '1px solid #e5e7eb',
-                            color: '#3b82f6',
-                            fontWeight: 500
+                            ...styles.badge,
+                            ...styles.badgePrimary,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '4px 10px'
                           }}
                         >
-                          Add "{audienceInput}" as custom audience
+                          {chip}
+                          <button 
+                            type="button" 
+                            onClick={() => removeAudienceChip(chip)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: 'white',
+                              cursor: 'pointer',
+                              fontSize: '14px',
+                              lineHeight: 1,
+                              padding: '0 0 0 4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: '16px',
+                              height: '16px',
+                              borderRadius: '50%',
+                              backgroundColor: 'rgba(255,255,255,0.2)'
+                            }}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        value={audienceInput}
+                        onChange={handleAudienceInput}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && audienceInput.trim()) {
+                            e.preventDefault();
+                            addAudienceChip(audienceInput.trim());
+                          }
+                        }}
+                        style={{
+                          ...styles.input,
+                          marginBottom: 0,
+                          borderBottomLeftRadius: showAudienceSuggestions ? '0' : '6px',
+                          borderBottomRightRadius: showAudienceSuggestions ? '0' : '6px'
+                        }}
+                        placeholder="Type and press Enter to add audience segments"
+                        required={formData.targetAudience.length === 0}
+                      />
+                      
+                      {showAudienceSuggestions && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: 0,
+                          right: 0,
+                          backgroundColor: 'white',
+                          border: '1px solid #d1d5db',
+                          borderTop: 'none',
+                          borderBottomLeftRadius: '6px',
+                          borderBottomRightRadius: '6px',
+                          zIndex: 1000,
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                          maxHeight: '200px',
+                          overflowY: 'auto'
+                        }}>
+                          {Object.entries(audienceSuggestions).map(([category, suggestions]) => {
+                            const filtered = suggestions.filter(s => 
+                              s.toLowerCase().includes(audienceInput.toLowerCase()) && 
+                              !formData.targetAudience.includes(s)
+                            );
+                            
+                            if (filtered.length === 0) return null;
+                            
+                            return (
+                              <div key={category}>
+                                <div style={{
+                                  padding: '8px 12px',
+                                  fontSize: '12px',
+                                  fontWeight: 600,
+                                  color: '#4b5563',
+                                  backgroundColor: '#f3f4f6',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.05em'
+                                }}>
+                                  {category}
+                                </div>
+                                {filtered.map((suggestion, idx) => (
+                                  <div
+                                    key={idx}
+                                    onClick={() => {
+                                      addAudienceChip(suggestion);
+                                      setAudienceInput('');
+                                    }}
+                                    style={{ padding: '8px 16px', cursor: 'pointer'}}
+                                  >
+                                    {suggestion}
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })}
+                          
+                          {audienceInput && !Object.values(audienceSuggestions)
+                            .flat()
+                            .some(s => s.toLowerCase() === audienceInput.toLowerCase()) && (
+                            <div
+                              onClick={() => {
+                                addAudienceChip(audienceInput);
+                                setAudienceInput('');
+                              }}
+                              style={{
+                                padding: '8px 16px',
+                                cursor: 'pointer',
+                                backgroundColor: '#f8fafc',
+                                borderTop: '1px solid #e5e7eb',
+                                color: '#3b82f6',
+                                fontWeight: 500
+                              }}
+                            >
+                              Add **"{audienceInput}"** as custom audience
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Product/Services */}
-              <div className="col-12">
-                <div style={styles.formGroup}>
-                  <label htmlFor="productServices" style={styles.label}>
-                    Product/Services <span style={{ color: '#ef4444' }}>*</span>
-                    <span 
-                      style={styles.infoIcon} 
-                      data-tooltip-id="productServices-tooltip" 
-                      data-tooltip-html="Provide detailed information about your product or service. Include unique selling points, features, and any technical specifications that make your offering stand out."
-                    >
-                      i
-                    </span>
-                  </label>
-                  <Tooltip id="productServices-tooltip" />
-                  <textarea
-                    id="productServices"
-                    name="productServices"
-                    value={formData.productServices}
-                    onChange={handleChange}
-                    style={{...styles.textarea, minHeight: '100px'}}
-                    placeholder="Describe your product or service in detail. What makes it unique? What problems does it solve?"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Tone */}
-              <div className="col-md-6">
-                <div style={styles.formGroup}>
-                  <label htmlFor="tone" style={styles.label}>
-                    Tone <span style={{ color: '#ef4444' }}>*</span>
-                    <span 
-                      style={styles.infoIcon}
-                      data-tooltip-id="tone-tooltip"
-                      data-tooltip-html="Select the tone that best matches your brand voice and campaign goals.<br/><br/>
-                      <strong>Auto-Detect (Recommended):</strong> Automatically selects the best tone based on platform and objective<br/>
-                      <strong>Professional/Corporate:</strong> Formal, business-appropriate language<br/>
-                      <strong>Friendly/Conversational:</strong> Casual, approachable tone<br/>
-                      <strong>Inspirational:</strong> Uplifting and motivational"
-                    >
-                      i
-                    </span>
-                  </label>
-                  <Tooltip id="tone-tooltip" />
-                  <select
-                    id="tone"
-                    name="tone"
-                    value={formData.tone}
-                    onChange={handleChange}
-                    style={styles.input}
-                    required
-                  >
-                    {toneOptions.map((tone, index) => (
-                      <option key={index} value={tone}>
-                        {tone}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Headline Focus */}
-              <div className="col-md-6">
-                <div style={styles.formGroup}>
-                  <label htmlFor="headlineFocus" style={styles.label}>
-                    Headline Focus
-                    <span 
-                      style={styles.infoIcon}
-                      data-tooltip-id="headlineFocus-tooltip"
-                      data-tooltip-html="Choose the primary focus for your ad headlines to optimize for engagement.<br/><br/>
-                      <strong>Auto-Select (Recommended):</strong> Let the system choose the best approach<br/>
-                      <strong>Benefit-Focused:</strong> Highlight key benefits<br/>
-                      <strong>Problem-Solution:</strong> Present a problem and your solution"
-                    >
-                      i
-                    </span>
-                  </label>
-                  <Tooltip id="headlineFocus-tooltip" />
-                  <select
-                    id="headlineFocus"
-                    name="headlineFocus"
-                    value={formData.headlineFocus}
-                    onChange={handleChange}
-                    style={styles.input}
-                  >
-                    {headlineFocusOptions.map((focus, index) => (
-                      <option key={index} value={focus}>
-                        {focus}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Ad Text Length */}
-              <div className="col-md-6">
-                <div style={styles.formGroup}>
-                  <label htmlFor="adTextLength" style={styles.label}>
-                    Ad Text Length
-                    <span 
-                      style={styles.infoIcon}
-                      data-tooltip-id="adTextLength-tooltip"
-                      data-tooltip-html="Select the desired length for your ad copy.<br/><br/>
-                      <strong>Auto-Length (Recommended):</strong> Optimizes length based on platform best practices<br/>
-                      <strong>Short:</strong> Concise, attention-grabbing copy (under 50 words)<br/>
-                      <strong>Medium:</strong> Balanced detail and brevity (50-100 words)"
-                    >
-                      i
-                    </span>
-                  </label>
-                  <Tooltip id="adTextLength-tooltip" />
-                  <select
-                    id="adTextLength"
-                    name="adTextLength"
-                    value={formData.adTextLength}
-                    onChange={handleChange}
-                    style={styles.input}
-                  >
-                    {adTextLengthOptions.map((length, index) => (
-                      <option key={index} value={length}>
-                        {length}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* CTA Type */}
-              <div className="col-md-6">
-                <div style={styles.formGroup}>
-                  <label htmlFor="ctaType" style={styles.label}>
-                    Call to Action (CTA)
-                    <span 
-                      style={styles.infoIcon}
-                      data-tooltip-id="ctaType-tooltip"
-                      data-tooltip-html="Select the primary action you want users to take.<br/><br/>
-                      <strong>Learn More:</strong> For informational content<br/>
-                      <strong>Shop Now:</strong> Direct product purchases<br/>
-                      <strong>Sign Up:</strong> For lead generation"
-                    >
-                      i
-                    </span>
-                  </label>
-                  <Tooltip id="ctaType-tooltip" />
-                  <select
-                    id="ctaType"
-                    name="ctaType"
-                    value={formData.ctaType}
-                    onChange={handleChange}
-                    style={styles.input}
-                  >
-                    {ctaTypeOptions.map((cta, index) => (
-                      <option key={index} value={cta}>
-                        {cta}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Key Benefits */}
-              <div className="col-12">
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>
-                    Key Benefits
-                    <span style={styles.infoIcon} data-tooltip-id="keyBenefits-tooltip" data-tooltip-content="List the main benefits of your product/service (press Enter to add)">i</span>
-                  </label>
-                  <Tooltip id="keyBenefits-tooltip" />
-                  <input
-                    type="text"
-                    style={styles.input}
-                    placeholder="Add a benefit and press Enter"
-                    onKeyPress={(e) => handleArrayChange(e, 'keyBenefits')}
-                    disabled={formData.keyBenefits.length >= 10}
-                  />
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
-                    {formData.keyBenefits.map((benefit, index) => (
-                      <span key={index} style={{...styles.badge, ...styles.badgePrimary}}>
-                        {benefit}
-                        <button type="button" style={styles.removeBtn} onClick={() => removeItem('keyBenefits', index)}>×</button>
-                      </span>
-                    ))}
                   </div>
                 </div>
-              </div>
 
-              {/* Number of Variants */}
-              <div className="col-12">
-                <div style={styles.formGroup}>
-                  <label htmlFor="variants" style={styles.label}>
-                    Number of Variants: {formData.variants}
-                    <span style={styles.infoIcon} data-tooltip-id="variants-tooltip" data-tooltip-content="How many different ad variations would you like to generate?">i</span>
-                  </label>
-                  <Tooltip id="variants-tooltip" />
-                  <input
-                    type="range"
-                    id="variants"
-                    name="variants"
-                    min="1"
-                    max="5"
-                    value={formData.variants}
-                    onChange={handleChange}
-                    style={styles.rangeInput}
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                    <span>1</span>
-                    <span>2</span>
-                    <span>3</span>
-                    <span>4</span>
-                    <span>5</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Tone */}
-              <div className="col-md-6">
-                <div style={styles.formGroup}>
-                  <label htmlFor="tone" style={styles.label}>
-                    Tone
-                    <span style={styles.infoIcon} data-tooltip-id="tone-tooltip" data-tooltip-content="Select the tone for your ad copy">i</span>
-                  </label>
-                  <Tooltip id="tone-tooltip" />
-                  <select
-                    id="tone"
-                    name="tone"
-                    value={formData.tone}
-                    onChange={handleChange}
-                    style={styles.input}
-                  >
-                    <option value="">Select Tone</option>
-                    {toneOptions.map((tone, index) => (
-                      <option key={index} value={tone}>{tone}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Ad Text Length */}
-              <div className="col-md-6">
-                <div style={styles.formGroup}>
-                  <label htmlFor="adTextLength" style={styles.label}>
-                    Ad Text Length
-                  </label>
-                  <select
-                    id="adTextLength"
-                    name="adTextLength"
-                    value={formData.adTextLength}
-                    onChange={handleChange}
-                    style={styles.input}
-                  >
-                    {adTextLengthOptions.map((length, index) => (
-                      <option key={index} value={length}>{length}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* CTA Type */}
-              <div className="col-md-6">
-                <div style={styles.formGroup}>
-                  <label htmlFor="ctaType" style={styles.label}>
-                    Call-to-Action
-                  </label>
-                  <select
-                    id="ctaType"
-                    name="ctaType"
-                    value={formData.ctaType}
-                    onChange={handleChange}
-                    style={styles.input}
-                  >
-                    <option value="">Select CTA Type</option>
-                    {ctaTypeOptions.map((cta, index) => (
-                      <option key={index} value={cta}>{cta}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Emotional Angle */}
-              <div className="col-md-6">
-                <div style={styles.formGroup}>
-                  <label htmlFor="emotionalAngle" style={styles.label}>
-                    Emotional Angle
-                  </label>
-                  <select
-                    id="emotionalAngle"
-                    name="emotionalAngle"
-                    value={formData.emotionalAngle}
-                    onChange={handleChange}
-                    style={styles.input}
-                  >
-                    <option value="">Select Emotional Angle</option>
-                    {emotionalAngleOptions.map((angle, index) => (
-                      <option key={index} value={angle}>{angle}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Advanced Features Toggle */}
-              <div className="col-12">
-                <button
-                  type="button"
-                  style={{...styles.btn, ...styles.btnOutline, padding: '0', border: 'none', background: 'none', color: '#3b82f6'}}
-                  onClick={toggleAdvanced}
-                >
-                  {formData.showAdvanced ? '▼ Hide Advanced Features' : '▶ Show Advanced Features'}
-                </button>
-              </div>
-
-              {/* Advanced Features */}
-              {formData.showAdvanced && (
-                <>
-                  {/* Headline Focus */}
-                  <div className="col-12">
-                    <div style={styles.formGroup}>
-                      <label htmlFor="headlineFocus" style={styles.label}>
-                        Headline Focus
-                        <span style={styles.infoIcon} data-tooltip-id="headlineFocus-tooltip" data-tooltip-content="What should be the main focus of your ad headline?">i</span>
-                      </label>
-                      <Tooltip id="headlineFocus-tooltip" />
-                      <input
-                        type="text"
-                        id="headlineFocus"
-                        name="headlineFocus"
-                        value={formData.headlineFocus}
-                        onChange={handleChange}
-                        style={styles.input}
-                        placeholder="e.g., Problem-solving, Benefits, Features"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Brand Voice */}
-                  <div className="col-12">
-                    <div style={styles.formGroup}>
-                      <label htmlFor="brandVoice" style={styles.label}>
-                        Brand Voice
-                      </label>
-                      <input
-                        type="text"
-                        id="brandVoice"
-                        name="brandVoice"
-                        value={formData.brandVoice}
-                        onChange={handleChange}
-                        style={styles.input}
-                        placeholder="Describe your brand's tone and personality"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Offer & Pricing */}
-                  <div className="col-md-6">
-                    <div style={styles.formGroup}>
-                      <label htmlFor="offerPricing" style={styles.label}>
-                        Offer & Pricing
-                      </label>
-                      <input
-                        type="text"
-                        id="offerPricing"
-                        name="offerPricing"
-                        value={formData.offerPricing}
-                        onChange={handleChange}
-                        style={styles.input}
-                        placeholder="e.g., 20% off, Free trial, Limited time offer"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Asset Reuse Strategy */}
-                  <div className="col-md-6">
-                    <div style={styles.formGroup}>
-                      <label htmlFor="assetReuseStrategy" style={styles.label}>
-                        Asset Reuse Strategy
-                      </label>
-                      <select
-                        id="assetReuseStrategy"
-                        name="assetReuseStrategy"
-                        value={formData.assetReuseStrategy}
-                        onChange={handleChange}
-                        style={styles.input}
+                {/* Product/Services */}
+                <div className="col-12">
+                  <div style={styles.formGroup}>
+                    <label htmlFor="productServices" style={styles.label}>
+                      Product/Services <span style={{ color: '#ef4444' }}>*</span>
+                      <span 
+                        style={styles.infoIcon} 
+                        data-tooltip-id="productServices-tooltip" 
+                        data-tooltip-html="Provide detailed information about your product or service."
                       >
-                        <option value="">Select Strategy</option>
-                        {assetReuseOptions.map((strategy, index) => (
-                          <option key={index} value={strategy}>{strategy}</option>
-                        ))}
-                      </select>
+                        i
+                      </span>
+                    </label>
+                    <Tooltip id="productServices-tooltip" />
+                    <textarea
+                      id="productServices"
+                      name="productServices"
+                      value={formData.productServices}
+                      onChange={handleChange}
+                      style={{...styles.textarea, minHeight: '100px'}}
+                      placeholder="Describe your product or service in detail. What makes it unique? What problems does it solve?"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Tone */}
+                <div className="col-md-6">
+                  <div style={styles.formGroup}>
+                    <label htmlFor="tone" style={styles.label}>
+                      Tone <span style={{ color: '#ef4444' }}>*</span>
+                      <span 
+                        style={styles.infoIcon}
+                        data-tooltip-id="tone-tooltip"
+                        data-tooltip-html="Select the tone that best matches your brand voice."
+                      >
+                        i
+                      </span>
+                    </label>
+                    <Tooltip id="tone-tooltip" />
+                    <select
+                      id="tone"
+                      name="tone"
+                      // Use key for value attribute, label for display
+                      value={fieldOptions.tone_style.find(opt => opt.label === formData.tone)?.key || formData.tone}
+                      onChange={handleChange}
+                      style={styles.input}
+                      required
+                    >
+                      <option value="Auto-Detect (Based on Platform)">Auto-Detect (Based on Platform)</option>
+                      {fieldOptions.tone_style && fieldOptions.tone_style.map((option) => (
+                        <option
+                          key={option.key || option.id}
+                          value={option.key}
+                        >
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Headline Focus */}
+                <div className="col-md-6">
+                  <div style={styles.formGroup}>
+                    <label htmlFor="headlineFocus" style={styles.label}>
+                      Headline Focus
+                      <span 
+                        style={styles.infoIcon}
+                        data-tooltip-id="headlineFocus-tooltip"
+                        data-tooltip-html="Choose the primary focus for your ad headlines."
+                      >
+                        i
+                      </span>
+                    </label>
+                    <Tooltip id="headlineFocus-tooltip" />
+                    <select
+                      id="headlineFocus"
+                      name="headlineFocus"
+                      // Use key for value attribute, label for display
+                      value={fieldOptions.headline_focus.find(opt => opt.label === formData.headlineFocus)?.key || formData.headlineFocus}
+                      onChange={handleChange}
+                      style={styles.input}
+                    >
+                      <option value="Auto-Select (Recommended)">Auto-Select (Recommended)</option>
+                      {fieldOptions.headline_focus && fieldOptions.headline_focus.map((option) => (
+                        <option
+                          key={option.key || option.id}
+                          value={option.key}
+                        >
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Ad Text Length */}
+                <div className="col-md-6">
+                  <div style={styles.formGroup}>
+                    <label htmlFor="adTextLength" style={styles.label}>
+                      Ad Text Length
+                      <span 
+                        style={styles.infoIcon}
+                        data-tooltip-id="adTextLength-tooltip"
+                        data-tooltip-html="Select the desired length for your ad copy."
+                      >
+                        i
+                      </span>
+                    </label>
+                    <Tooltip id="adTextLength-tooltip" />
+                    <select
+                      id="adTextLength"
+                      name="adTextLength"
+                      // Use key for value attribute, label for display
+                      value={fieldOptions.primary_text_length.find(opt => opt.label === formData.adTextLength)?.key || formData.adTextLength}
+                      onChange={handleChange}
+                      style={styles.input}
+                    >
+                      <option value="Auto-Length (Platform Optimized)">Auto-Length (Platform Optimized)</option>
+                      {fieldOptions.primary_text_length && fieldOptions.primary_text_length.map((option) => (
+                        <option
+                          key={option.key || option.id}
+                          value={option.key}
+                        >
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* CTA Type */}
+                <div className="col-md-6">
+                  <div style={styles.formGroup}>
+                    <label htmlFor="ctaType" style={styles.label}>
+                      Call to Action (CTA)
+                      <span 
+                        style={styles.infoIcon}
+                        data-tooltip-id="ctaType-tooltip"
+                        data-tooltip-html="Select the primary action you want users to take."
+                      >
+                        i
+                      </span>
+                    </label>
+                    <Tooltip id="ctaType-tooltip" />
+                    <select
+                      id="ctaType"
+                      name="ctaType"
+                      // Use key for value attribute, label for display
+                      value={fieldOptions.cta_type.find(opt => opt.label === formData.ctaType)?.key || formData.ctaType}
+                      onChange={handleChange}
+                      style={styles.input}
+                    >
+                      <option value="">Select CTA Type</option>
+                      {fieldOptions.cta_type && fieldOptions.cta_type.map((option) => (
+                        <option
+                          key={option.key || option.id}
+                          value={option.key}
+                        >
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Key Benefits */}
+                <div className="col-12">
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>
+                      Key Benefits
+                      <span style={styles.infoIcon} data-tooltip-id="keyBenefits-tooltip" data-tooltip-content="List the main benefits of your product/service (press Enter to add)">i</span>
+                    </label>
+                    <Tooltip id="keyBenefits-tooltip" />
+                    <input
+                      type="text"
+                      style={styles.input}
+                      placeholder="Add a benefit and press Enter"
+                      onKeyPress={(e) => handleArrayChange(e, 'keyBenefits')}
+                      disabled={formData.keyBenefits.length >= 10}
+                    />
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+                      {formData.keyBenefits.map((benefit, index) => (
+                        <span key={index} style={{...styles.badge, ...styles.badgePrimary}}>
+                          {benefit}
+                          <button type="button" style={styles.removeBtn} onClick={() => removeItem('keyBenefits', index)}>×</button>
+                        </span>
+                      ))}
                     </div>
                   </div>
+                </div>
 
-                  {/* Audience Pain Points */}
-                  <div className="col-12">
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>
-                        Audience Pain Points
-                        <span style={styles.infoIcon} data-tooltip-id="audiencePain-tooltip" data-tooltip-content="What problems or pain points does your product/service solve? (press Enter to add)">i</span>
-                      </label>
-                      <Tooltip id="audiencePain-tooltip" />
-                      <input
-                        type="text"
-                        style={styles.input}
-                        placeholder="Add a pain point and press Enter"
-                        onKeyPress={(e) => handleArrayChange(e, 'audiencePain')}
-                      />
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
-                        {formData.audiencePain.map((pain, index) => (
-                          <span key={index} style={{...styles.badge, ...styles.badgeSecondary}}>
-                            {pain}
-                            <button type="button" style={styles.removeBtn} onClick={() => removeItem('audiencePain', index)}>×</button>
-                          </span>
-                        ))}
+                {/* Number of Variants */}
+                <div className="col-12">
+                  <div style={styles.formGroup}>
+                    <label htmlFor="variants" style={styles.label}>
+                      Number of Variants: **{formData.variants}**
+                      <span style={styles.infoIcon} data-tooltip-id="variants-tooltip" data-tooltip-content="How many different ad variations would you like to generate?">i</span>
+                    </label>
+                    <Tooltip id="variants-tooltip" />
+                    <input
+                      type="range"
+                      id="variants"
+                      name="variants"
+                      min="1"
+                      max="5"
+                      value={formData.variants}
+                      onChange={handleChange}
+                      style={styles.rangeInput}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                      <span>1</span>
+                      <span>2</span>
+                      <span>3</span>
+                      <span>4</span>
+                      <span>5</span>
+                    </div>
+                  </div>
+                </div>
+
+
+                {/* Emotional Angle */}
+                <div className="col-md-6">
+                  <div style={styles.formGroup}>
+                    <label htmlFor="emotionalAngle" style={styles.label}>
+                      Emotional Angle
+                    </label>
+                    <select
+                      id="emotionalAngle"
+                      name="emotionalAngle"
+                      // Use key for value attribute, label for display
+                      value={fieldOptions.emotional_angle.find(opt => opt.label.replace('\t', '→') === formData.emotionalAngle)?.key || formData.emotionalAngle}
+                      onChange={handleChange}
+                      style={styles.input}
+                    >
+                      <option value="">Select Emotional Angle</option>
+                      {fieldOptions.emotional_angle && fieldOptions.emotional_angle.map((option) => (
+                        <option
+                          key={option.key || option.id}
+                          value={option.key} 
+                        >
+                          {option.label.replace('\t', '→')}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Advanced Features Toggle */}
+                <div className="col-12">
+                  <button
+                    type="button"
+                    style={{...styles.btn, ...styles.btnOutline, padding: '0', border: 'none', background: 'none', color: '#3b82f6'}}
+                    onClick={toggleAdvanced}
+                  >
+                    {formData.showAdvanced ? '▼ Hide Advanced Features' : '▶ Show Advanced Features'}
+                  </button>
+                </div>
+
+                {/* Advanced Features */}
+                {formData.showAdvanced && (
+                  <>
+                    {/* Brand Voice */}
+                    <div className="col-12">
+                      <div style={styles.formGroup}>
+                        <label htmlFor="brandVoice" style={styles.label}>
+                          Brand Voice
+                        </label>
+                        <input
+                          type="text"
+                          id="brandVoice"
+                          name="brandVoice"
+                          value={formData.brandVoice}
+                          onChange={handleChange}
+                          style={styles.input}
+                          placeholder="Describe your brand's tone and personality"
+                        />
                       </div>
                     </div>
-                  </div>
 
-                  {/* Campaign Duration */}
-                  <div className="col-md-6">
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>Campaign Start Date</label>
-                      <input
-                        type="date"
-                        name="start"
-                        value={formData.campaignDuration.start}
-                        onChange={handleDateChange}
-                        style={styles.input}
-                      />
-                    </div>
-                  </div>
-                  <div className="col-md-6">
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>Campaign End Date</label>
-                      <input
-                        type="date"
-                        name="end"
-                        value={formData.campaignDuration.end}
-                        onChange={handleDateChange}
-                        style={styles.input}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Geo & Language Targeting */}
-                  <div className="col-12">
-                    <div style={styles.formGroup}>
-                      <label htmlFor="geoLanguageTarget" style={styles.label}>
-                        Geo & Language Targeting
-                      </label>
-                      <input
-                        type="text"
-                        id="geoLanguageTarget"
-                        name="geoLanguageTarget"
-                        value={formData.geoLanguageTarget}
-                        onChange={handleChange}
-                        style={styles.input}
-                        placeholder="e.g., United States, English"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Proof & Credibility */}
-                  <div className="col-12">
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>
-                        Proof & Credibility Elements
-                        <span style={styles.infoIcon} data-tooltip-id="proofCredibility-tooltip" data-tooltip-content="Add trust signals (press Enter to add)">i</span>
-                      </label>
-                      <Tooltip id="proofCredibility-tooltip" />
-                      <input
-                        type="text"
-                        style={styles.input}
-                        placeholder="e.g., '10,000+ happy customers', 'Rated 4.9/5 stars'"
-                        onKeyPress={(e) => handleArrayChange(e, 'proofCredibility')}
-                      />
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
-                        {formData.proofCredibility.map((item, index) => (
-                          <span key={index} style={{...styles.badge, ...styles.badgeSuccess}}>
-                            {item}
-                            <button type="button" style={styles.removeBtn} onClick={() => removeItem('proofCredibility', index)}>×</button>
-                          </span>
-                        ))}
+                    {/* Offer & Pricing */}
+                    <div className="col-md-6">
+                      <div style={styles.formGroup}>
+                        <label htmlFor="offerPricing" style={styles.label}>
+                          Offer & Pricing
+                        </label>
+                        <input
+                          type="text"
+                          id="offerPricing"
+                          name="offerPricing"
+                          value={formData.offerPricing}
+                          onChange={handleChange}
+                          style={styles.input}
+                          placeholder="e.g., 20% off, Free trial, Limited time offer"
+                        />
                       </div>
                     </div>
-                  </div>
 
-                  {/* Compliance Note */}
-                  <div className="col-12">
-                    <div style={styles.formGroup}>
-                      <label htmlFor="complianceNote" style={styles.label}>
-                        Compliance Note
-                      </label>
-                      <textarea
-                        id="complianceNote"
-                        name="complianceNote"
-                        value={formData.complianceNote}
-                        onChange={handleChange}
-                        style={{...styles.textarea, minHeight: '80px'}}
-                        placeholder="Any legal disclaimers or compliance requirements for your ads"
-                      />
+                    {/* Asset Reuse Strategy */}
+                    <div className="col-md-6">
+                      <div style={styles.formGroup}>
+                        <label htmlFor="assetReuseStrategy" style={styles.label}>
+                          Asset Reuse Strategy
+                        </label>
+                        <select
+                          id="assetReuseStrategy"
+                          name="assetReuseStrategy"
+                          // Use key for value attribute, label for display
+                          value={fieldOptions.asset_reuse_strategy.find(opt => opt.label === formData.assetReuseStrategy)?.key || formData.assetReuseStrategy}
+                          onChange={handleChange}
+                          style={styles.input}
+                        >
+                          <option value="">Select Strategy</option>
+                          <option value="Auto-Detect (Recommended)">Auto-Detect (Recommended)</option>
+                          {fieldOptions.asset_reuse_strategy && fieldOptions.asset_reuse_strategy.map((option) => (
+                            <option
+                              key={option.key || option.id}
+                              value={option.key}
+                            >
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
-                  </div>
-                </>
-              )}
 
-              {/* Submit Button */}
-              <div className="col-12 mt-4">
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <button 
-                    type="button" 
-                    style={{...styles.btn, ...styles.btnOutline}}
-                    onClick={handleReset}
-                  >
-                    Reset Form
-                  </button>
-                  <button 
-                    type="submit" 
-                    style={{...styles.btn, ...styles.btnPrimary}}
-                  >
-                    Review & Generate
-                  </button>
+                    {/* Audience Pain Points */}
+                    <div className="col-12">
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>
+                          Audience Pain Points
+                          <span style={styles.infoIcon} data-tooltip-id="audiencePain-tooltip" data-tooltip-content="What problems or pain points does your product/service solve? (press Enter to add)">i</span>
+                        </label>
+                        <Tooltip id="audiencePain-tooltip" />
+                        <input
+                          type="text"
+                          style={styles.input}
+                          placeholder="Add a pain point and press Enter"
+                          onKeyPress={(e) => handleArrayChange(e, 'audiencePain')}
+                        />
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+                          {formData.audiencePain.map((pain, index) => (
+                            <span key={index} style={{...styles.badge, ...styles.badgeSecondary}}>
+                              {pain}
+                              <button type="button" style={styles.removeBtn} onClick={() => removeItem('audiencePain', index)}>×</button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Campaign Duration */}
+                    <div className="col-md-6">
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Campaign Start Date</label>
+                        <input
+                          type="date"
+                          name="start"
+                          value={formData.campaignDuration.start}
+                          onChange={handleDateChange}
+                          style={styles.input}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Campaign End Date</label>
+                        <input
+                          type="date"
+                          name="end"
+                          value={formData.campaignDuration.end}
+                          onChange={handleDateChange}
+                          style={styles.input}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Geo & Language Targeting */}
+                    <div className="col-12">
+                      <div style={styles.formGroup}>
+                        <label htmlFor="geoLanguageTarget" style={styles.label}>
+                          Geo & Language Targeting
+                        </label>
+                        <input
+                          type="text"
+                          id="geoLanguageTarget"
+                          name="geoLanguageTarget"
+                          value={formData.geoLanguageTarget}
+                          onChange={handleChange}
+                          style={styles.input}
+                          placeholder="e.g., United States, English"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Proof & Credibility */}
+                    <div className="col-12">
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>
+                          Proof & Credibility Elements
+                          <span style={styles.infoIcon} data-tooltip-id="proofCredibility-tooltip" data-tooltip-content="Add trust signals (press Enter to add)">i</span>
+                        </label>
+                        <Tooltip id="proofCredibility-tooltip" />
+                        <input
+                          type="text"
+                          style={styles.input}
+                          placeholder="e.g., '10,000+ happy customers', 'Rated 4.9/5 stars'"
+                          onKeyPress={(e) => handleArrayChange(e, 'proofCredibility')}
+                        />
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+                          {formData.proofCredibility.map((item, index) => (
+                            <span key={index} style={{...styles.badge, ...styles.badgeSuccess}}>
+                              {item}
+                              <button type="button" style={styles.removeBtn} onClick={() => removeItem('proofCredibility', index)}>×</button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Compliance Note */}
+                    <div className="col-12">
+                      <div style={styles.formGroup}>
+                        <label htmlFor="complianceNote" style={styles.label}>
+                          Compliance Note
+                        </label>
+                        <textarea
+                          id="complianceNote"
+                          name="complianceNote"
+                          value={formData.complianceNote}
+                          onChange={handleChange}
+                          style={{...styles.textarea, minHeight: '80px'}}
+                          placeholder="Any legal disclaimers or compliance requirements for your ads"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Submit Button */}
+                <div className="col-12 mt-4">
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button 
+                      type="button" 
+                      style={{...styles.btn, ...styles.btnOutline}}
+                      onClick={handleReset}
+                      disabled={isGenerating}
+                    >
+                      Reset Form
+                    </button>
+                    <button 
+                      type="submit" 
+                      style={{...styles.btn, ...styles.btnPrimary}}
+                      disabled={isGenerating}
+                    >
+                      {isGenerating ? 'Generating...' : 'Review & Generate'}
+                    </button>
+                  </div>
                 </div>
               </div>
-                </div>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
-      </div>
       ) : (
       <div style={styles.card}>
         <div style={styles.header}>
           <h1 style={styles.title}>Review Your Selections</h1>
           <p style={styles.subtitle}>Please review your ad copy details before generating</p>
-          <div style={styles.progressBar}>
-            <div style={{...styles.progressFill, width: '100%'}}></div>
-          </div>
         </div>
         <div style={{ padding: '24px' }}>
           <div id="form-summary" className="col-12 mt-5" style={styles.summaryContainer}>
@@ -1398,10 +1723,21 @@ const AdCopyGeneratorForm = () => {
             </div>
 
             <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
+              {requestId && (
+                <button
+                  type="button"
+                  onClick={handleViewLog}
+                  style={{...styles.btn, ...styles.btnSuccess, backgroundColor: '#fcd34d', color: '#111827'}}
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? 'Loading Log...' : 'View Log'}
+                </button>
+              )}
               <button 
                 type="button" 
                 onClick={() => setShowSummary(false)}
                 style={{...styles.btn, ...styles.btnOutline}}
+                disabled={isGenerating}
               >
                 Back to Edit
               </button>
@@ -1409,13 +1745,25 @@ const AdCopyGeneratorForm = () => {
                 type="button" 
                 onClick={handleGenerate}
                 style={{...styles.btn, ...styles.btnPrimary}}
+                disabled={isGenerating}
               >
-                Generate Ad Copy
+                {isGenerating ? 'Generating...' : 'Generate Ad Copy'}
               </button>
             </div>
           </div>
         </div>
       </div>
+      )}
+      
+      {/* -------------------- Variant Display Modal -------------------- */}
+      {showVariantsModal && (
+        <VariantModalContent 
+            variants={generatedVariantsData.variants} 
+            inputs={generatedVariantsData.inputs}
+            onClose={() => setShowVariantsModal(false)} 
+            onRequestRegenerate={handleRegenerateVariant}
+            showNotification={showNotification}
+        />
       )}
     </div>
   );
