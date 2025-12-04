@@ -22,10 +22,10 @@
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
     ],
-    "/ad-copy-generator": [
+    "/caption-and-hastag-generator": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/ad-copy-generator.js"
+      "static/chunks/pages/caption-and-hastag-generator.js"
     ]
   },
   "ampFirstPages": []
