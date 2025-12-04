@@ -2,5 +2,6 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/caption-and-hastag-generator": "pages/caption-and-hastag-generator.js"
+  "/copywriting-assistant": "pages/copywriting-assistant.js",
+  "/404": "pages/404.js"
 }

@@ -12,6 +12,11 @@
   ],
   "rootMainFiles": [],
   "pages": {
+    "/404": [
+      "static/chunks/webpack.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/404.js"
+    ],
     "/_app": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
@@ -22,10 +27,10 @@
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
     ],
-    "/caption-and-hastag-generator": [
+    "/copywriting-assistant": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/caption-and-hastag-generator.js"
+      "static/chunks/pages/copywriting-assistant.js"
     ]
   },
   "ampFirstPages": []
