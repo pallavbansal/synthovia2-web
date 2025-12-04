@@ -288,5 +288,4 @@ const SummaryReviewModal = ({ formData, apiOptions, onGenerate, onEdit, formatti
         </div>
     );
 };
-
 export default SummaryReviewModal;
