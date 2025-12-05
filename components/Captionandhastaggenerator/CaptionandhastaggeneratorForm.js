@@ -4,7 +4,7 @@ import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 import VariantModalContent from './VariantModalContent';
 // --- CHANGED IMPORT TO NEW MODAL COMPONENT ---
-import SummaryReviewModal from './SummaryReviewModal'; 
+import SummaryReviewModal from './SummaryReviewModal'; 
 
 // --- API Constants (Provided by User) ---
 const BASE_URL = 'https://olive-gull-905765.hostingersite.com/public/api/v1';
@@ -57,13 +57,15 @@ const Captionandhastaggeneratorform = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showSummary, setShowSummary] = useState(false); // <--- Controls the modal visibility
     const [isGenerating, setIsGenerating] = useState(false);
-     const [showVariantsModal, setShowVariantsModal] = useState(false);
-     const [requestId, setRequestId] = useState(null);
-     const [generatedVariantsData, setGeneratedVariantsData] = useState({ 
+    const [showVariantsModal, setShowVariantsModal] = useState(false);
+    const [requestId, setRequestId] = useState(null);
+    const [modalTitle, setModalTitle] = useState("Generated Variants");
+    const [isFetchingLog, setIsFetchingLog] = useState(false);
+    const [generatedVariantsData, setGeneratedVariantsData] = useState({ 
         requestId: null, 
         variants: [], 
         inputs: {} 
-     });
+    });
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
     // --- Shared Utility Function ---
@@ -130,7 +132,7 @@ const Captionandhastaggeneratorform = () => {
     useEffect(() => {
         setMounted(true);
         const fetchOptions = async () => {
-             // [... existing fetch logic ...]
+            // [... existing fetch logic ...]
             try {
                 const response = await fetch(API.GET_FIELD_OPTIONS, {
                     headers: { Authorization: AUTH_HEADER, 'Content-Type': 'application/json' },
@@ -287,7 +289,7 @@ const Captionandhastaggeneratorform = () => {
             if (!API.GENERATE_CAPTION_HASHTAG) {
                 throw new Error('API endpoint for generation is not defined.');
             }
-             setIsGenerating(true);
+            setIsGenerating(true);
             const response = await fetch(API.GENERATE_CAPTION_HASHTAG, {
                 method: 'POST',
                 headers: {
@@ -309,7 +311,7 @@ const Captionandhastaggeneratorform = () => {
                     show_variant: content.show_variant || true,
                 }));
 
-                setGeneratedVariantsData({ variants: structuredVariants, inputs: result.inputs });
+                setGeneratedVariantsData({ variants: structuredVariants, inputs: result.inputs, requestId: result.request_id });
                 setShowVariantsModal(true);
                 setShowSummary(false); // Hide summary before showing results
                 showNotification('Captions and hashtags generated successfully!', 'success');
@@ -320,64 +322,162 @@ const Captionandhastaggeneratorform = () => {
             console.error('Submission Error:', submitError);
             showNotification(`Error: ${submitError.message || submitError.toString()}`, 'error');
         } finally {
-             setIsGenerating(false);
-             setIsSubmitting(false);
+            setIsGenerating(false);
+            setIsSubmitting(false);
         }
     };
 
     const handleRegenerateVariant = async (variantId) => {
-         // [ ... existing regenerate logic ... ]
-     const variantIndex = generatedVariantsData.variants.findIndex(v => v.id === variantId);
-     if (variantIndex === -1) return;
+        // [ ... existing regenerate logic ... ]
+        const variantIndex = generatedVariantsData.variants.findIndex(v => v.id === variantId);
+        if (variantIndex === -1) return;
 
-     showNotification(`Regenerating Variant ${variantIndex + 1}...`, 'info');
+        showNotification(`Regenerating Variant ${variantIndex + 1}...`, 'info');
 
-     try {
-          const response = await fetch(API.REGENERATE_VARIANT(variantId), {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': AUTH_HEADER,
-              },
-          });
+        try {
+            const response = await fetch(API.REGENERATE_VARIANT(variantId), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': AUTH_HEADER,
+                },
+            });
 
-          if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || `Regeneration failed with status: ${response.status}`);
-          }
-          
-          const result = await response.json();
-          
-          // Update the specific variant content in the state
-          setGeneratedVariantsData(prev => {
-              const newVariants = [...prev.variants];
-              const updatedVariantIndex = newVariants.findIndex(v => v.id === result.variant_id);
-              
-              if (updatedVariantIndex !== -1) {
-                  newVariants[updatedVariantIndex] = {
-                      ...newVariants[updatedVariantIndex],
-                      content: result.new_content,
-                  };
-              } else {
-                  // Fallback: If regeneration API returned a new ID, add it (unlikely for regeneration)
-                  newVariants.push({
-                      id: result.variant_id,
-                      content: result.new_content,
-                      show_variant: true,
-                  });
-              }
-              
-              return { ...prev, variants: newVariants };
-          });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `Regeneration failed with status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            
+            // Update the specific variant content in the state
+            setGeneratedVariantsData(prev => {
+                const newVariants = [...prev.variants];
+                const updatedVariantIndex = newVariants.findIndex(v => v.id === result.variant_id);
+                
+                if (updatedVariantIndex !== -1) {
+                    newVariants[updatedVariantIndex] = {
+                        ...newVariants[updatedVariantIndex],
+                        content: result.new_content,
+                    };
+                } else {
+                    // Fallback: If regeneration API returned a new ID, add it (unlikely for regeneration)
+                    newVariants.push({
+                        id: result.variant_id,
+                        content: result.new_content,
+                        show_variant: true,
+                    });
+                }
+                
+                return { ...prev, variants: newVariants };
+            });
 
-          showNotification(`Variant ${variantIndex + 1} successfully regenerated!`, 'success');
+            showNotification(`Variant ${variantIndex + 1} successfully regenerated!`, 'success');
 
-     } catch (error) {
-          console.error('Regeneration Error:', error);
-          showNotification(`Regeneration Error: ${error.message}`, 'error');
-     }
+        } catch (error) {
+            console.error('Regeneration Error:', error);
+            showNotification(`Regeneration Error: ${error.message}`, 'error');
+        }
     };
+    
+    // --- FIXED handleViewLog Function ---
+    const handleViewLog = async () => {
+        if (!requestId) {
+            console.error('No previous copywriting request_id found for log viewing.');
+            alert('No previous generation found to view log.');
+            return;
+        }
 
+        setIsFetchingLog(true);       // so VariantsModal can show loading state if needed
+        setIsGenerating(true);         // reuse existing generating flag for buttons
+        setModalTitle('Variants Log'); // set title for log view
+
+        try {
+            const response = await fetch(API.GET_VARIANTS_LOG(requestId), {
+                headers: {
+                    Authorization: AUTH_HEADER,
+                },
+            });
+
+            if (!response.ok) {
+                let errorData = {};
+                try {
+                    errorData = await response.json();
+                } catch (e) {
+                    // ignore parse error
+                }
+                const errorMessage = errorData.message || response.statusText;
+                console.error('Failed to fetch variants log:', errorData || response.statusText);
+                alert('Failed to load log. Check console for details.');
+                
+                // Set error data in the expected object structure
+                setGeneratedVariantsData({
+                    requestId: requestId,
+                    variants: [{ id: 'error', content: `Error loading log: ${errorMessage}`, isLog: true }],
+                    inputs: {}
+                });
+                 console.log("inside if:",errorMessage);
+            } else {
+                const result = await response.json();
+                
+                if (result.variants && Array.isArray(result.variants) && result.variants.length > 0) {
+                    // const structured = result.variants.map((v, index) => ({
+                    //     id: v.id || `copy-log-${Date.now()}-${index}`,
+                    //     // Display the entire object content as a formatted string for log view
+                    //     content: JSON.stringify(v, null, 2), 
+                    //     isLog: true,
+                    // }));
+
+                    // *** FIX APPLIED HERE: Ensure state is an object with a 'variants' key. ***
+                     //console.log("inside else:",structured);
+                    // setGeneratedVariantsData({
+                    //     requestId: requestId,
+                    //     variants: structured,
+                    //     inputs: result.inputs || {},
+                    // });
+
+                            const structuredVariants = result.variants.map((content, index) => ({
+                    id: content.id || `temp-${Date.now()}-${index}`,
+                    content: content.content || content,
+                    show_variant: content.show_variant || true,
+                }));
+
+                   setGeneratedVariantsData({
+                     variants: structuredVariants,
+                    inputs: result.inputs,
+                    requestId: result.request_id });
+
+                    
+                    
+                } else {
+                    console.error('Variants log returned no variants:', result);
+                    alert('No variants found in the log for this request.');
+                    setGeneratedVariantsData({
+                        requestId: requestId,
+                        variants: [{ id: 'empty-log', content: 'Log was successfully fetched but contained no variant entries.', isLog: true }],
+                        inputs: result.inputs || {},
+                    });
+                }
+            }
+
+            setShowVariantsModal(true);
+        } catch (err) {
+            console.error('Error while fetching variants log:', err);
+            alert('Error while loading log. Check console for details.');
+            setGeneratedVariantsData({
+                requestId: requestId,
+                variants: [{ id: 'fatal-error', content: `Fatal Error: ${err.message}`, isLog: true }],
+                inputs: {}
+            });
+            setShowVariantsModal(true);
+        } finally {
+            setIsFetchingLog(false);
+            setIsGenerating(false);
+            setShowSummary(false);
+        }
+    };
+    // --- END FIXED handleViewLog Function ---
+    
     const handleReset = () => {
         // [ ... existing reset logic ...]
         const defaultPlatform = platformOptions[0]?.key || '';
@@ -430,56 +530,56 @@ const Captionandhastaggeneratorform = () => {
     // [ ... styles remain the same ...]
     const styles = {
         container: { maxWidth: '1100px', margin: '0 auto', padding: '24px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', backgroundColor: '#0a0e1a', minHeight: '100vh' },
-    card: { backgroundColor: '#141b2d', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.3)', overflow: 'hidden', border: '1px solid #1e293b' },
-    header: { padding: '24px 32px', borderBottom: '1px solid #1e293b', backgroundColor: '#0f1624' },
-    title: { margin: 0, fontSize: '24px', fontWeight: '600', color: '#f8fafc' },
-    subtitle: { margin: '6px 0 0', fontSize: '14px', color: '#94a3b8' },
-    formGroup: { marginBottom: '20px' },
-    label: { display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#e2e8f0' },
-    input: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box' },
-    select: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '20px', paddingRight: '40px', cursor: 'pointer' },
-    textarea: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', resize: 'vertical', minHeight: '80px' },
-    badge: { display: 'inline-flex', alignItems: 'center', padding: '6px 12px', fontSize: '13px', fontWeight: '500', borderRadius: '6px', gap: '6px' },
-    badgePrimary: { backgroundColor: '#3b82f6', color: 'white' },
-    badgeSecondary: { backgroundColor: '#475569', color: 'white' },
-    badgeSuccess: { backgroundColor: '#10b981', color: 'white' },
-    btn: { padding: '10px 20px', fontSize: '14px', fontWeight: '500', borderRadius: '6px', border: 'none', cursor: 'pointer', transition: 'all 0.15s ease-in-out', display: 'inline-flex', alignItems: 'center', gap: '8px' },
-    btnPrimary: { backgroundColor: '#3b82f6', color: 'white' },
-    btnSuccess: { backgroundColor: '#10b981', color: 'white' },
-    btnOutline: { backgroundColor: 'transparent', color: '#94a3b8', border: '1px solid #334155' },
-    btnDanger: { backgroundColor: '#ef4444', color: 'white' },
-    infoIcon: { display: 'inline-block', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#3b82f6', color: 'white', textAlign: 'center', lineHeight: '16px', fontSize: '11px', cursor: 'help', marginLeft: '6px' },
-    removeBtn: { background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', width: '18px', height: '18px', borderRadius: '50%', cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 },
-    rangeInput: { width: '100%', height: '6px', borderRadius: '3px', background: '#334155', outline: 'none' },
-    checkboxGroup: { display: 'flex', flexWrap: 'wrap', gap: '16px', marginTop: '8px' },
-    checkboxItem: { 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '8px',
+        card: { backgroundColor: '#141b2d', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.3)', overflow: 'hidden', border: '1px solid #1e293b' },
+        header: { padding: '24px 32px', borderBottom: '1px solid #1e293b', backgroundColor: '#0f1624' },
+        title: { margin: 0, fontSize: '24px', fontWeight: '600', color: '#f8fafc' },
+        subtitle: { margin: '6px 0 0', fontSize: '14px', color: '#94a3b8' },
+        formGroup: { marginBottom: '20px' },
+        label: { display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#e2e8f0' },
+        input: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box' },
+        select: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '20px', paddingRight: '40px', cursor: 'pointer' },
+        textarea: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', resize: 'vertical', minHeight: '80px' },
+        badge: { display: 'inline-flex', alignItems: 'center', padding: '6px 12px', fontSize: '13px', fontWeight: '500', borderRadius: '6px', gap: '6px' },
+        badgePrimary: { backgroundColor: '#3b82f6', color: 'white' },
+        badgeSecondary: { backgroundColor: '#475569', color: 'white' },
+        badgeSuccess: { backgroundColor: '#10b981', color: 'white' },
+        btn: { padding: '10px 20px', fontSize: '14px', fontWeight: '500', borderRadius: '6px', border: 'none', cursor: 'pointer', transition: 'all 0.15s ease-in-out', display: 'inline-flex', alignItems: 'center', gap: '8px' },
+        btnPrimary: { backgroundColor: '#3b82f6', color: 'white' },
+        btnSuccess: { backgroundColor: '#10b981', color: 'white' },
+        btnOutline: { backgroundColor: 'transparent', color: '#94a3b8', border: '1px solid #334155' },
+        btnDanger: { backgroundColor: '#ef4444', color: 'white' },
+        infoIcon: { display: 'inline-block', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#3b82f6', color: 'white', textAlign: 'center', lineHeight: '16px', fontSize: '11px', cursor: 'help', marginLeft: '6px' },
+        removeBtn: { background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', width: '18px', height: '18px', borderRadius: '50%', cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 },
+        rangeInput: { width: '100%', height: '6px', borderRadius: '3px', background: '#334155', outline: 'none' },
+        checkboxGroup: { display: 'flex', flexWrap: 'wrap', gap: '16px', marginTop: '8px' },
+        checkboxItem: { 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px',
+            cursor: 'pointer',
+            padding: '8px 12px',
+            borderRadius: '6px',
+            transition: 'background-color 0.2s',
+            '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.05)'
+            }
+        },
+        checkboxInput: {
+        width: '18px',
+        height: '18px',
+        margin: 0,
         cursor: 'pointer',
-        padding: '8px 12px',
-        borderRadius: '6px',
-        transition: 'background-color 0.2s',
-        '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.05)'
-        }
+        accentColor: '#3b82f6',
+        backgroundColor: '#0f1624',
+        border: '2px solid #64748b',
+        borderRadius: '4px',
+        outline: 'none',
+        transition: 'all 0.2s ease',
     },
-    checkboxInput: {
-    width: '18px',
-    height: '18px',
-    margin: 0,
-    cursor: 'pointer',
-    accentColor: '#3b82f6',
-    backgroundColor: '#0f1624',
-    border: '2px solid #64748b',
-    borderRadius: '4px',
-    outline: 'none',
-    transition: 'all 0.2s ease',
-},
-    radioGroup: { display: 'flex', gap: '16px', marginTop: '8px' },
-    radioItem: { display: 'flex', alignItems: 'center', gap: '8px' },
-    toast: { position: 'fixed', top: '20px', right: '20px', padding: '16px 24px', color: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 9999 },
-};
+        radioGroup: { display: 'flex', gap: '16px', marginTop: '8px' },
+        radioItem: { display: 'flex', alignItems: 'center', gap: '8px' },
+        toast: { position: 'fixed', top: '20px', right: '20px', padding: '16px 24px', color: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 9999 },
+    };
 
     // --- Layout Helpers (Unchanged) ---
     const COLUMN_GAP = '20px';
@@ -846,13 +946,13 @@ const Captionandhastaggeneratorform = () => {
                                 <button
                                     type="button"
                                     style={{
-                                            ...styles.btn,
-                                            ...styles.btnOutline,
-                                            padding: '8px 16px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            backgroundColor:'transparent',
-                                            gap: '8px'}}
+                                        ...styles.btn,
+                                        ...styles.btnOutline,
+                                        padding: '8px 16px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        backgroundColor:'transparent',
+                                        gap: '8px'}}
                                     onClick={toggleAdvanced}
                                 >
                                     {formData.showAdvanced ? '▼ Hide Advanced Features' : '▶ Show Advanced Features'}
@@ -1197,6 +1297,7 @@ const Captionandhastaggeneratorform = () => {
                     formattingOptionsList={formattingOptionsList}
                     getOptionDetails={getOptionDetails}
                     isGenerating={isGenerating}
+                    onViewLog={handleViewLog}
                 />
             )}
 
@@ -1205,9 +1306,14 @@ const Captionandhastaggeneratorform = () => {
                 <VariantModalContent
                     variants={generatedVariantsData.variants}
                     inputs={generatedVariantsData.inputs}
-                    onClose={() => setShowVariantsModal(false)}
+                    onClose={() => {
+                        setShowVariantsModal(false);
+                        setShowSummary(true);
+                    }}
                     onRequestRegenerate={handleRegenerateVariant}
                     showNotification={showNotification}
+                    isFetchingLog={isFetchingLog} 
+                    modalTitle={modalTitle} 
                 />
             )}
         </div>
