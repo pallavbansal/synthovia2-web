@@ -2,6 +2,6 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/copywriting-assistant": "pages/copywriting-assistant.js",
-  "/404": "pages/404.js"
+  "/404": "pages/404.js",
+  "/copywriting-assistant": "pages/copywriting-assistant.js"
 }
