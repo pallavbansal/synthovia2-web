@@ -138,7 +138,7 @@ const styles = {
     },
 };
 
-const SummaryReviewModal = ({ formData, apiOptions, onGenerate, onEdit, formattingOptionsList, getOptionDetails, isGenerating }) => {
+const SummaryReviewModal = ({ formData, apiOptions, onGenerate, onEdit, onViewLog, formattingOptionsList, getOptionDetails, isGenerating }) => {
     
     // Map predefined keys to labels for display (using the utility function passed from parent)
     const platformDetails = getOptionDetails('caption_platform', formData.platform, formData.customPlatform, formData.platformType);
@@ -274,6 +274,14 @@ const SummaryReviewModal = ({ formData, apiOptions, onGenerate, onEdit, formatti
                         onClick={onEdit}
                     >
                         &lt; Edit Request
+                    </button>
+                    <button
+                        type="button"
+                        style={{ ...styles.btn, ...styles.btnOutline }}
+                        onClick={onViewLog}
+                        disabled={isGenerating}
+                    >
+                        View Log
                     </button>
                     <button
                         type="button"
