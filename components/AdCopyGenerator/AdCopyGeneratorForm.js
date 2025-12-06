@@ -25,6 +25,7 @@ const defaultFieldOptions = {
     cta_type: [],
     emotional_angle: [],
     asset_reuse_strategy: [],
+    brand_voice_personality: [],
 };
 
 // --- Helper Functions (Retained) ---
@@ -332,7 +333,13 @@ const AdCopyGeneratorForm = () => {
     campaignDuration: { start: '', end: '' },
     geoLanguageTarget: '',
     proofCredibility: [],
-    showAdvanced: false
+    showAdvanced: false,
+    usp: '',
+    featureHighlight: '',
+    problemScenario: '',
+    brandVoicePersonalityMode: 'predefined',
+    brandVoicePersonalityOption: '',
+    brandVoicePersonalityCustom: ''
   });
   
   const [audienceInput, setAudienceInput] = useState('');
@@ -497,6 +504,25 @@ const AdCopyGeneratorForm = () => {
         return;
     }
 
+    // Special handling for Brand Voice Personality mode and option
+    if (name === 'brandVoicePersonalityMode') {
+        setFormData(prev => ({
+          ...prev,
+          brandVoicePersonalityMode: selectedKey,
+          // Reset custom / option when switching modes
+          brandVoicePersonalityCustom: selectedKey === 'custom' ? prev.brandVoicePersonalityCustom : '',
+        }));
+        return;
+    }
+
+    if (name === 'brandVoicePersonalityOption') {
+        // Map key -> label from API options list so UI shows label consistently
+        const option = (fieldOptions.brand_voice_personality || []).find(opt => opt.key === selectedKey);
+        const label = option ? option.label : selectedKey;
+        setFormData(prev => ({ ...prev, brandVoicePersonalityOption: label }));
+        return;
+    }
+
     let labelToStore = selectedKey;
     if (selectedKey) {
         const fieldOptionsKey = name === 'adTextLength' ? 'primary_text_length' : name;
@@ -595,6 +621,39 @@ const AdCopyGeneratorForm = () => {
       asset_reuse_strategy: mapSelectionToApiObject('asset_reuse_strategy', formData.assetReuseStrategy, fieldOptions.asset_reuse_strategy, true),
       campaign_duration: formData.campaignDuration,
       geographic_language_target: parseGeoLanguage(formData.geoLanguageTarget),
+      usp: formData.usp,
+      feature_highlight: formData.featureHighlight,
+      problem_scenario: formData.problemScenario,
+      brand_voice_personality: (() => {
+        const mode = formData.brandVoicePersonalityMode;
+        const customValue = formData.brandVoicePersonalityCustom;
+
+        if (mode === 'custom') {
+          return {
+            type: 'custom',
+            id: null,
+            value: customValue || ''
+          };
+        }
+
+        // Predefined option: find matching option by label from API options
+        const options = fieldOptions.brand_voice_personality || [];
+        const selected = options.find(opt => opt.label === formData.brandVoicePersonalityOption);
+
+        if (selected) {
+          return {
+            type: 'predefined',
+            id: selected.id ?? null,
+            value: selected.label,
+          };
+        }
+
+        return {
+          type: 'predefined',
+          id: null,
+          value: formData.brandVoicePersonalityOption || ''
+        };
+      })(),
     };
     
     return payload;
@@ -781,7 +840,13 @@ const AdCopyGeneratorForm = () => {
       campaignDuration: { start: '', end: '' },
       geoLanguageTarget: '',
       proofCredibility: [],
-      showAdvanced: false
+      showAdvanced: false,
+      usp: '',
+      featureHighlight: '',
+      problemScenario: '',
+      brandVoicePersonalityMode: 'predefined',
+      brandVoicePersonalityOption: '',
+      brandVoicePersonalityCustom: ''
     });
     setAudienceInput('');
     setShowAudienceSuggestions(false);
@@ -1234,6 +1299,57 @@ const AdCopyGeneratorForm = () => {
                   </div>
                 </div>
 
+                {/* USP (Unique Selling Proposition) */}
+                <div className="col-12">
+                  <div style={styles.formGroup}>
+                    <label htmlFor="usp" style={styles.label}>
+                      USP (Unique Selling Proposition)
+                    </label>
+                    <textarea
+                      id="usp"
+                      name="usp"
+                      value={formData.usp}
+                      onChange={handleChange}
+                      style={{...styles.textarea, minHeight: '80px'}}
+                      placeholder="Strongest differentiator vs competitors. E.g., 'First AI tool with multi-variant regeneration in one click.'"
+                    />
+                  </div>
+                </div>
+
+                {/* Feature Highlight */}
+                <div className="col-12">
+                  <div style={styles.formGroup}>
+                    <label htmlFor="featureHighlight" style={styles.label}>
+                      Feature Highlight
+                    </label>
+                    <textarea
+                      id="featureHighlight"
+                      name="featureHighlight"
+                      value={formData.featureHighlight}
+                      onChange={handleChange}
+                      style={{...styles.textarea, minHeight: '80px'}}
+                      placeholder="Most important product feature showcased. E.g., 'Automated campaign generation in 30 seconds.'"
+                    />
+                  </div>
+                </div>
+
+                {/* Problem Scenario */}
+                <div className="col-12">
+                  <div style={styles.formGroup}>
+                    <label htmlFor="problemScenario" style={styles.label}>
+                      Problem Scenario
+                    </label>
+                    <textarea
+                      id="problemScenario"
+                      name="problemScenario"
+                      value={formData.problemScenario}
+                      onChange={handleChange}
+                      style={{...styles.textarea, minHeight: '80px'}}
+                      placeholder="When/where customer needs your solution. E.g., 'When agencies need to scale content fast without hiring more writers during seasonal sales events.'"
+                    />
+                  </div>
+                </div>
+
                 {/* Tone */}
                 <div className="col-md-6">
                   <div style={styles.formGroup}>
@@ -1654,6 +1770,57 @@ const AdCopyGeneratorForm = () => {
                         />
                       </div>
                     </div>
+
+                    {/* Brand Voice Personality */}
+                    <div className="col-md-6">
+                      <div style={styles.formGroup}>
+                        <label htmlFor="brandVoicePersonality" style={styles.label}>
+                          Brand Voice Personality
+                        </label>
+                        <div style={{ marginBottom: '8px' }}>
+                          <select
+                            name="brandVoicePersonalityMode"
+                            value={formData.brandVoicePersonalityMode}
+                            onChange={handleChange}
+                            style={styles.select}
+                          >
+                            <option value="predefined">Predefined Personality</option>
+                            <option value="custom">Custom Personality</option>
+                          </select>
+                        </div>
+
+                        {formData.brandVoicePersonalityMode === 'predefined' && (
+                          <select
+                            name="brandVoicePersonalityOption"
+                            // Use key from API as value, map to label in handleChange
+                            value={(fieldOptions.brand_voice_personality || []).find(opt => opt.label === formData.brandVoicePersonalityOption)?.key || ''}
+                            onChange={handleChange}
+                            style={styles.select}
+                          >
+                            <option value="">Select Brand Voice Personality</option>
+                            {(fieldOptions.brand_voice_personality || []).map((option) => (
+                              <option
+                                key={option.key || option.id}
+                                value={option.key}
+                              >
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+
+                        {formData.brandVoicePersonalityMode === 'custom' && (
+                          <input
+                            type="text"
+                            name="brandVoicePersonalityCustom"
+                            value={formData.brandVoicePersonalityCustom}
+                            onChange={handleChange}
+                            style={styles.input}
+                            placeholder="Describe your brand voice personality (e.g., Calm, Educational, Bold)"
+                          />
+                        )}
+                      </div>
+                    </div>
                   </>
                 )}
 
@@ -1698,6 +1865,15 @@ const AdCopyGeneratorForm = () => {
                 <p><strong>Campaign Objective:</strong> {formData.campaignObjective}</p>
                 {formData.customObjective && <p><strong>Custom Objective:</strong> {formData.customObjective}</p>}
                 <p><strong>Number of Variants:</strong> {formData.variants}</p>
+                {formData.usp && (
+                  <p><strong>USP:</strong> {formData.usp}</p>
+                )}
+                {formData.featureHighlight && (
+                  <p><strong>Feature Highlight:</strong> {formData.featureHighlight}</p>
+                )}
+                {formData.problemScenario && (
+                  <p><strong>Problem Scenario:</strong> {formData.problemScenario}</p>
+                )}
               </div>
 
               <div style={styles.summarySection}>
@@ -1730,6 +1906,12 @@ const AdCopyGeneratorForm = () => {
                 <div style={styles.summarySection}>
                   <h5 style={styles.summarySectionTitle}>Advanced Settings</h5>
                   {formData.brandVoice && <p><strong>Brand Voice:</strong> {formData.brandVoice}</p>}
+                  {(formData.brandVoicePersonalityMode === 'predefined' && formData.brandVoicePersonalityOption) && (
+                    <p><strong>Brand Voice Personality:</strong> {formData.brandVoicePersonalityOption}</p>
+                  )}
+                  {(formData.brandVoicePersonalityMode === 'custom' && formData.brandVoicePersonalityCustom) && (
+                    <p><strong>Brand Voice Personality (Custom):</strong> {formData.brandVoicePersonalityCustom}</p>
+                  )}
                   {formData.offerPricing && <p><strong>Offer & Pricing:</strong> {formData.offerPricing}</p>}
                   {formData.assetReuseStrategy && <p><strong>Asset Reuse:</strong> {formData.assetReuseStrategy}</p>}
                   {formData.complianceNote && (
