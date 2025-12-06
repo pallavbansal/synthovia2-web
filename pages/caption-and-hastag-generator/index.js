@@ -8,7 +8,7 @@ import HeaderDashboard from "@/components/Header/HeaderDashboard";
 import RightDashboardSidebar from "@/components/Header/RightDashboardSidebar";
 import Modal from "@/components/Common/Modal";
 import StaticbarDashboard from "@/components/Common/StaticBarDashboard";
-import Captionandhastaggeneratorform from "@/components/Captionandhastaggenerator/Captionandhastaggeneratorform";
+import Captionandhastaggeneratorform from "@/components/Captionandhastaggenerator/CaptionandhastaggeneratorForm";
 
 const CaptionandhastaggeneratorPage = () => {
   return (
