@@ -613,11 +613,9 @@ const AdCopyGeneratorForm = () => {
 
     if (!formData.tone) missing.push('Tone');
     if (!formData.headlineFocus) missing.push('Headline Focus');
-    if (!formData.adTextLength) missing.push('Ad Text Length');
+    // Ad Text Length is optional; default Auto-Length can be sent without validation
     if (!formData.ctaType) missing.push('Call to Action (CTA)');
-
     if (!formData.variants) missing.push('Number of Variants');
-
     if (!formData.emotionalAngle) missing.push('Emotional Angle');
 
     if (!formData.keyBenefits || formData.keyBenefits.length === 0) {
