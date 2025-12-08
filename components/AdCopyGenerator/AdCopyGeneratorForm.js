@@ -313,6 +313,8 @@ const AdCopyGeneratorForm = () => {
 
   const [formData, setFormData] = useState({
     platform: 'Meta (Facebook & Instagram)',
+    platformMode: 'predefined',
+    platformCustom: '',
     placement: 'Facebook Feed',
     campaignObjective: 'Brand Awareness',
     customObjective: '',
@@ -344,6 +346,18 @@ const AdCopyGeneratorForm = () => {
   
   const [audienceInput, setAudienceInput] = useState('');
   const [showAudienceSuggestions, setShowAudienceSuggestions] = useState(false);
+  const [placementMode, setPlacementMode] = useState('predefined');
+  const [placementCustom, setPlacementCustom] = useState('');
+  const [campaignObjectiveMode, setCampaignObjectiveMode] = useState('predefined');
+  const [toneMode, setToneMode] = useState('predefined');
+  const [toneCustom, setToneCustom] = useState('');
+  const [headlineFocusMode, setHeadlineFocusMode] = useState('predefined');
+  const [headlineFocusCustom, setHeadlineFocusCustom] = useState('');
+  const [ctaTypeMode, setCtaTypeMode] = useState('predefined');
+  const [ctaTypeCustom, setCtaTypeCustom] = useState('');
+  const [emotionalAngleMode, setEmotionalAngleMode] = useState('predefined');
+  const [emotionalAngleCustom, setEmotionalAngleCustom] = useState('');
+  
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const [mounted, setMounted] = useState(false);
   const [availablePlacements, setAvailablePlacements] = useState([]);
@@ -504,6 +518,16 @@ const AdCopyGeneratorForm = () => {
         return;
     }
 
+    // Special handling for Ad Platform custom text
+    if (name === 'platformCustom') {
+        setFormData(prev => ({
+          ...prev,
+          platformCustom: selectedKey,
+          platform: selectedKey,
+        }));
+        return;
+    }
+
     // Special handling for Brand Voice Personality mode and option
     if (name === 'brandVoicePersonalityMode') {
         setFormData(prev => ({
@@ -571,8 +595,53 @@ const AdCopyGeneratorForm = () => {
     }));
   };
 
+  const validateForm = () => {
+    const missing = [];
+
+    if (!formData.platform) missing.push('Ad Platform');
+    if (!formData.placement) missing.push('Ad Placement');
+    if (!formData.campaignObjective) missing.push('Campaign Objective');
+    if (formData.campaignObjective === 'Custom Objective' && !formData.customObjective.trim()) {
+      missing.push('Custom Objective');
+    }
+
+    if (!formData.targetAudience || formData.targetAudience.length === 0) {
+      missing.push('Target Audience');
+    }
+
+    if (!formData.productServices.trim()) missing.push('Product/Services');
+
+    if (!formData.tone) missing.push('Tone');
+    if (!formData.headlineFocus) missing.push('Headline Focus');
+    if (!formData.adTextLength) missing.push('Ad Text Length');
+    if (!formData.ctaType) missing.push('Call to Action (CTA)');
+
+    if (!formData.variants) missing.push('Number of Variants');
+
+    if (!formData.emotionalAngle) missing.push('Emotional Angle');
+
+    if (!formData.keyBenefits || formData.keyBenefits.length === 0) {
+      missing.push('Key Benefits');
+    }
+
+    // All advanced fields (Brand Voice, USP, Feature Highlight, Problem Scenario,
+    // Offer & Pricing, Asset Reuse Strategy, Audience Pain Points, Campaign Duration,
+    // Geo & Language, Proof & Credibility, Compliance Note, Brand Voice Personality)
+    // are intentionally optional and therefore not validated here.
+
+    return missing;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    const missingFields = validateForm();
+
+    if (missingFields.length > 0) {
+      const message = `Please fill all required fields: ${missingFields.join(', ')}`;
+      showNotification(message, 'error');
+      return;
+    }
+
     setShowSummary(true);
     setTimeout(() => {
       const summaryElement = document.getElementById('form-summary');
@@ -581,7 +650,7 @@ const AdCopyGeneratorForm = () => {
       }
     }, 100);
   };
-  
+
   const toggleAdvanced = () => {
     setFormData(prev => ({
       ...prev,
@@ -820,6 +889,8 @@ const AdCopyGeneratorForm = () => {
   const handleReset = () => {
     setFormData({
       platform: 'Meta (Facebook & Instagram)',
+      platformMode: 'predefined',
+      platformCustom: '',
       placement: 'Facebook Feed',
       campaignObjective: 'Brand Awareness',
       customObjective: '',
@@ -848,6 +919,18 @@ const AdCopyGeneratorForm = () => {
       brandVoicePersonalityOption: '',
       brandVoicePersonalityCustom: ''
     });
+    setPlacementMode('predefined');
+    setPlacementCustom('');
+    setCampaignObjectiveMode('predefined');
+    setToneMode('predefined');
+    setToneCustom('');
+    setHeadlineFocusMode('predefined');
+    setHeadlineFocusCustom('');
+    setCtaTypeMode('predefined');
+    setCtaTypeCustom('');
+    setEmotionalAngleMode('predefined');
+    setEmotionalAngleCustom('');
+    
     setAudienceInput('');
     setShowAudienceSuggestions(false);
     setShowSummary(false);
@@ -988,25 +1071,87 @@ const AdCopyGeneratorForm = () => {
                       </span>
                     </label>
                     <Tooltip id="platform-tooltip" />
-                    <select
-                      id="platform"
-                      name="platform"
-                      // Use key for value attribute, label for display
-                      value={fieldOptions.platform.find(opt => opt.label === formData.platform)?.key || formData.platform}
-                      onChange={handlePlatformChange}
-                      style={styles.select}
-                      required
-                    >
-                      {loadingOptions && <option value="">Loading Platforms...</option>}
-                      {fieldOptions.platform && fieldOptions.platform.map((option) => (
-                        <option
-                          key={option.key || option.id}
-                          value={option.key} 
-                        >
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                    {/* Platform mode: Predefined vs Custom */}
+                    <div style={styles.radioGroup}>
+                      <label style={styles.radioItem}>
+                        <input
+                          type="radio"
+                          name="platformMode"
+                          value="predefined"
+                          checked={formData.platformMode === 'predefined'}
+                          onChange={(e) => {
+                            const mode = e.target.value;
+                            setFormData(prev => {
+                              const next = { ...prev, platformMode: mode };
+                              if (mode === 'predefined') {
+                                const predefinedLabels = (fieldOptions.platform || []).map(opt => opt.label);
+                                if (!predefinedLabels.includes(prev.platform)) {
+                                  const defaultLabel = (fieldOptions.platform && fieldOptions.platform[0]?.label) || prev.platform;
+                                  next.platform = defaultLabel;
+                                }
+                              }
+                              if (mode === 'custom') {
+                                next.platform = prev.platformCustom || '';
+                              }
+                              return next;
+                            });
+                          }}
+                        />
+                        <span>Predefined</span>
+                      </label>
+                      <label style={styles.radioItem}>
+                        <input
+                          type="radio"
+                          name="platformMode"
+                          value="custom"
+                          checked={formData.platformMode === 'custom'}
+                          onChange={(e) => {
+                            const mode = e.target.value;
+                            setFormData(prev => ({
+                              ...prev,
+                              platformMode: mode,
+                              platform: prev.platformCustom || '',
+                            }));
+                          }}
+                        />
+                        <span>Custom</span>
+                      </label>
+                    </div>
+
+                    {formData.platformMode === 'predefined' && (
+                      <select
+                        id="platform"
+                        name="platform"
+                        // Use key for value attribute, label for display
+                        value={fieldOptions.platform.find(opt => opt.label === formData.platform)?.key || formData.platform}
+                        onChange={handlePlatformChange}
+                        style={{ ...styles.select, marginTop: '8px' }}
+                        required
+                      >
+                        {loadingOptions && <option value="">Loading Platforms...</option>}
+                        {fieldOptions.platform && fieldOptions.platform.map((option) => (
+                          <option
+                            key={option.key || option.id}
+                            value={option.key}
+                          >
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
+                    {formData.platformMode === 'custom' && (
+                      <input
+                        type="text"
+                        id="platformCustom"
+                        name="platformCustom"
+                        value={formData.platformCustom}
+                        onChange={handleChange}
+                        style={{ ...styles.input, marginTop: '8px' }}
+                        placeholder="Enter custom ad platform"
+                        required
+                      />
+                    )}
                     {optionsError && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{optionsError}</p>}
                   </div>
                 </div>
@@ -1024,26 +1169,83 @@ const AdCopyGeneratorForm = () => {
                       </span>
                     </label>
                     <Tooltip id="placement-tooltip" />
-                    <select
-                      id="placement"
-                      name="placement"
-                      // Use key for value attribute, label for display
-                      value={fieldOptions.placement.find(opt => opt.label === formData.placement)?.key || formData.placement}
-                      onChange={handleChange}
-                      style={styles.select}
-                      required
-                      disabled={!formData.platform || availablePlacements.length === 0}
-                    >
-                      <option value="">Select Placement</option>
-                      {availablePlacements.map((option) => (
-                        <option
-                          key={option.key || option.id}
-                          value={option.key} 
-                        >
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                    <div style={styles.radioGroup}>
+                      <label style={styles.radioItem}>
+                        <input
+                          type="radio"
+                          name="placementMode"
+                          value="predefined"
+                          checked={placementMode === 'predefined'}
+                          onChange={() => {
+                            setPlacementMode('predefined');
+                            setFormData(prev => {
+                              const labels = availablePlacements.map(p => p.label);
+                              let nextPlacement = prev.placement;
+                              if (!labels.includes(nextPlacement) && availablePlacements[0]) {
+                                nextPlacement = availablePlacements[0].label;
+                              }
+                              return { ...prev, placement: nextPlacement };
+                            });
+                          }}
+                        />
+                        <span>Predefined</span>
+                      </label>
+                      <label style={styles.radioItem}>
+                        <input
+                          type="radio"
+                          name="placementMode"
+                          value="custom"
+                          checked={placementMode === 'custom'}
+                          onChange={() => {
+                            setPlacementMode('custom');
+                            setFormData(prev => ({
+                              ...prev,
+                              placement: placementCustom || '',
+                            }));
+                          }}
+                        />
+                        <span>Custom</span>
+                      </label>
+                    </div>
+
+                    {placementMode === 'predefined' && (
+                      <select
+                        id="placement"
+                        name="placement"
+                        // Use key for value attribute, label for display
+                        value={fieldOptions.placement.find(opt => opt.label === formData.placement)?.key || formData.placement}
+                        onChange={handleChange}
+                        style={{ ...styles.select, marginTop: '8px' }}
+                        required
+                        disabled={!formData.platform || availablePlacements.length === 0}
+                      >
+                        <option value="">Select Placement</option>
+                        {availablePlacements.map((option) => (
+                          <option
+                            key={option.key || option.id}
+                            value={option.key} 
+                          >
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
+                    {placementMode === 'custom' && (
+                      <input
+                        type="text"
+                        id="placementCustom"
+                        value={placementCustom}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setPlacementCustom(val);
+                          setFormData(prev => ({ ...prev, placement: val }));
+                        }}
+                        style={{ ...styles.input, marginTop: '8px' }}
+                        placeholder="Enter custom ad placement"
+                        required
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -1061,27 +1263,65 @@ const AdCopyGeneratorForm = () => {
                       </span>
                     </label>
                     <Tooltip id="campaignObjective-tooltip" />
-                    <select
-                      id="campaignObjective"
-                      name="campaignObjective"
-                      // Use key for value attribute, label for display
-                      value={fieldOptions.campaign_objective.find(opt => opt.label === formData.campaignObjective)?.key || formData.campaignObjective}
-                      onChange={handleChange}
-                      style={styles.select}
-                      required
-                    >
-                      {fieldOptions.campaign_objective && fieldOptions.campaign_objective.map((option) => (
-                        <option
-                          key={option.key || option.id}
-                          value={option.key}
-                        >
-                          {option.label}
-                        </option>
-                      ))}
-                       <option value="Custom Objective">Custom Objective</option>
-                    </select>
-                    
-                    {formData.campaignObjective === 'Custom Objective' && (
+                    <div style={styles.radioGroup}>
+                      <label style={styles.radioItem}>
+                        <input
+                          type="radio"
+                          name="campaignObjectiveMode"
+                          value="predefined"
+                          checked={campaignObjectiveMode === 'predefined'}
+                          onChange={() => {
+                            setCampaignObjectiveMode('predefined');
+                            setFormData(prev => {
+                              const opts = fieldOptions.campaign_objective || [];
+                              const labels = opts.map(o => o.label);
+                              let next = prev.campaignObjective;
+                              if (!labels.includes(next) && opts[0]) {
+                                next = opts[0].label;
+                              }
+                              return { ...prev, campaignObjective: next };
+                            });
+                          }}
+                        />
+                        <span>Predefined</span>
+                      </label>
+                      <label style={styles.radioItem}>
+                        <input
+                          type="radio"
+                          name="campaignObjectiveMode"
+                          value="custom"
+                          checked={campaignObjectiveMode === 'custom'}
+                          onChange={() => {
+                            setCampaignObjectiveMode('custom');
+                            setFormData(prev => ({ ...prev, campaignObjective: 'Custom Objective' }));
+                          }}
+                        />
+                        <span>Custom</span>
+                      </label>
+                    </div>
+
+                    {campaignObjectiveMode === 'predefined' && (
+                      <select
+                        id="campaignObjective"
+                        name="campaignObjective"
+                        // Use key for value attribute, label for display
+                        value={fieldOptions.campaign_objective.find(opt => opt.label === formData.campaignObjective)?.key || formData.campaignObjective}
+                        onChange={handleChange}
+                        style={{ ...styles.select, marginTop: '8px' }}
+                        required
+                      >
+                        {fieldOptions.campaign_objective && fieldOptions.campaign_objective.map((option) => (
+                          <option
+                            key={option.key || option.id}
+                            value={option.key}
+                          >
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
+                    {campaignObjectiveMode === 'custom' && (
                       <div style={{ marginTop: '12px' }}>
                         <input
                           type="text"
@@ -1299,57 +1539,6 @@ const AdCopyGeneratorForm = () => {
                   </div>
                 </div>
 
-                {/* USP (Unique Selling Proposition) */}
-                <div className="col-12">
-                  <div style={styles.formGroup}>
-                    <label htmlFor="usp" style={styles.label}>
-                      USP (Unique Selling Proposition)
-                    </label>
-                    <textarea
-                      id="usp"
-                      name="usp"
-                      value={formData.usp}
-                      onChange={handleChange}
-                      style={{...styles.textarea, minHeight: '80px'}}
-                      placeholder="Strongest differentiator vs competitors. E.g., 'First AI tool with multi-variant regeneration in one click.'"
-                    />
-                  </div>
-                </div>
-
-                {/* Feature Highlight */}
-                <div className="col-12">
-                  <div style={styles.formGroup}>
-                    <label htmlFor="featureHighlight" style={styles.label}>
-                      Feature Highlight
-                    </label>
-                    <textarea
-                      id="featureHighlight"
-                      name="featureHighlight"
-                      value={formData.featureHighlight}
-                      onChange={handleChange}
-                      style={{...styles.textarea, minHeight: '80px'}}
-                      placeholder="Most important product feature showcased. E.g., 'Automated campaign generation in 30 seconds.'"
-                    />
-                  </div>
-                </div>
-
-                {/* Problem Scenario */}
-                <div className="col-12">
-                  <div style={styles.formGroup}>
-                    <label htmlFor="problemScenario" style={styles.label}>
-                      Problem Scenario
-                    </label>
-                    <textarea
-                      id="problemScenario"
-                      name="problemScenario"
-                      value={formData.problemScenario}
-                      onChange={handleChange}
-                      style={{...styles.textarea, minHeight: '80px'}}
-                      placeholder="When/where customer needs your solution. E.g., 'When agencies need to scale content fast without hiring more writers during seasonal sales events.'"
-                    />
-                  </div>
-                </div>
-
                 {/* Tone */}
                 <div className="col-md-6">
                   <div style={styles.formGroup}>
@@ -1364,25 +1553,72 @@ const AdCopyGeneratorForm = () => {
                       </span>
                     </label>
                     <Tooltip id="tone-tooltip" />
-                    <select
-                      id="tone"
-                      name="tone"
-                      // Use key for value attribute, label for display
-                      value={fieldOptions.tone_style.find(opt => opt.label === formData.tone)?.key || formData.tone}
-                      onChange={handleChange}
-                      style={styles.select}
-                      required
-                    >
-                      <option value="Auto-Detect (Based on Platform)">Auto-Detect (Based on Platform)</option>
-                      {fieldOptions.tone_style && fieldOptions.tone_style.map((option) => (
-                        <option
-                          key={option.key || option.id}
-                          value={option.key}
-                        >
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                    <div style={styles.radioGroup}>
+                      <label style={styles.radioItem}>
+                        <input
+                          type="radio"
+                          name="toneMode"
+                          value="predefined"
+                          checked={toneMode === 'predefined'}
+                          onChange={() => {
+                            setToneMode('predefined');
+                            setFormData(prev => ({ ...prev, tone: 'Auto-Detect (Based on Platform)' }));
+                          }}
+                        />
+                        <span>Predefined</span>
+                      </label>
+                      <label style={styles.radioItem}>
+                        <input
+                          type="radio"
+                          name="toneMode"
+                          value="custom"
+                          checked={toneMode === 'custom'}
+                          onChange={() => {
+                            setToneMode('custom');
+                            setFormData(prev => ({ ...prev, tone: toneCustom || '' }));
+                          }}
+                        />
+                        <span>Custom</span>
+                      </label>
+                    </div>
+
+                    {toneMode === 'predefined' && (
+                      <select
+                        id="tone"
+                        name="tone"
+                        // Use key for value attribute, label for display
+                        value={fieldOptions.tone_style.find(opt => opt.label === formData.tone)?.key || formData.tone}
+                        onChange={handleChange}
+                        style={{ ...styles.select, marginTop: '8px' }}
+                        required
+                      >
+                        <option value="Auto-Detect (Based on Platform)">Auto-Detect (Based on Platform)</option>
+                        {fieldOptions.tone_style && fieldOptions.tone_style.map((option) => (
+                          <option
+                            key={option.key || option.id}
+                            value={option.key}
+                          >
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
+                    {toneMode === 'custom' && (
+                      <input
+                        type="text"
+                        id="toneCustom"
+                        value={toneCustom}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setToneCustom(val);
+                          setFormData(prev => ({ ...prev, tone: val }));
+                        }}
+                        style={{ ...styles.input, marginTop: '8px' }}
+                        placeholder="Enter custom tone"
+                        required
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -1400,24 +1636,71 @@ const AdCopyGeneratorForm = () => {
                       </span>
                     </label>
                     <Tooltip id="headlineFocus-tooltip" />
-                    <select
-                      id="headlineFocus"
-                      name="headlineFocus"
-                      // Use key for value attribute, label for display
-                      value={fieldOptions.headline_focus.find(opt => opt.label === formData.headlineFocus)?.key || formData.headlineFocus}
-                      onChange={handleChange}
-                      style={styles.select}
-                    >
-                      <option value="Auto-Select (Recommended)">Auto-Select (Recommended)</option>
-                      {fieldOptions.headline_focus && fieldOptions.headline_focus.map((option) => (
-                        <option
-                          key={option.key || option.id}
-                          value={option.key}
-                        >
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                    <div style={styles.radioGroup}>
+                      <label style={styles.radioItem}>
+                        <input
+                          type="radio"
+                          name="headlineFocusMode"
+                          value="predefined"
+                          checked={headlineFocusMode === 'predefined'}
+                          onChange={() => {
+                            setHeadlineFocusMode('predefined');
+                            setFormData(prev => ({ ...prev, headlineFocus: 'Auto-Select (Recommended)' }));
+                          }}
+                        />
+                        <span>Predefined</span>
+                      </label>
+                      <label style={styles.radioItem}>
+                        <input
+                          type="radio"
+                          name="headlineFocusMode"
+                          value="custom"
+                          checked={headlineFocusMode === 'custom'}
+                          onChange={() => {
+                            setHeadlineFocusMode('custom');
+                            setFormData(prev => ({ ...prev, headlineFocus: headlineFocusCustom || '' }));
+                          }}
+                        />
+                        <span>Custom</span>
+                      </label>
+                    </div>
+
+                    {headlineFocusMode === 'predefined' && (
+                      <select
+                        id="headlineFocus"
+                        name="headlineFocus"
+                        // Use key for value attribute, label for display
+                        value={fieldOptions.headline_focus.find(opt => opt.label === formData.headlineFocus)?.key || formData.headlineFocus}
+                        onChange={handleChange}
+                        style={{ ...styles.select, marginTop: '8px' }}
+                      >
+                        <option value="Auto-Select (Recommended)">Auto-Select (Recommended)</option>
+                        {fieldOptions.headline_focus && fieldOptions.headline_focus.map((option) => (
+                          <option
+                            key={option.key || option.id}
+                            value={option.key}
+                          >
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
+                    {headlineFocusMode === 'custom' && (
+                      <input
+                        type="text"
+                        id="headlineFocusCustom"
+                        value={headlineFocusCustom}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setHeadlineFocusCustom(val);
+                          setFormData(prev => ({ ...prev, headlineFocus: val }));
+                        }}
+                        style={{ ...styles.input, marginTop: '8px' }}
+                        placeholder="Enter custom headline focus"
+                        required
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -1470,24 +1753,71 @@ const AdCopyGeneratorForm = () => {
                       </span>
                     </label>
                     <Tooltip id="ctaType-tooltip" />
-                    <select
-                      id="ctaType"
-                      name="ctaType"
-                      // Use key for value attribute, label for display
-                      value={fieldOptions.cta_type.find(opt => opt.label === formData.ctaType)?.key || formData.ctaType}
-                      onChange={handleChange}
-                      style={styles.select}
-                    >
-                      <option value="">Select CTA Type</option>
-                      {fieldOptions.cta_type && fieldOptions.cta_type.map((option) => (
-                        <option
-                          key={option.key || option.id}
-                          value={option.key}
-                        >
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                    <div style={styles.radioGroup}>
+                      <label style={styles.radioItem}>
+                        <input
+                          type="radio"
+                          name="ctaTypeMode"
+                          value="predefined"
+                          checked={ctaTypeMode === 'predefined'}
+                          onChange={() => {
+                            setCtaTypeMode('predefined');
+                            setFormData(prev => ({ ...prev, ctaType: 'Learn More' }));
+                          }}
+                        />
+                        <span>Predefined</span>
+                      </label>
+                      <label style={styles.radioItem}>
+                        <input
+                          type="radio"
+                          name="ctaTypeMode"
+                          value="custom"
+                          checked={ctaTypeMode === 'custom'}
+                          onChange={() => {
+                            setCtaTypeMode('custom');
+                            setFormData(prev => ({ ...prev, ctaType: ctaTypeCustom || '' }));
+                          }}
+                        />
+                        <span>Custom</span>
+                      </label>
+                    </div>
+
+                    {ctaTypeMode === 'predefined' && (
+                      <select
+                        id="ctaType"
+                        name="ctaType"
+                        // Use key for value attribute, label for display
+                        value={fieldOptions.cta_type.find(opt => opt.label === formData.ctaType)?.key || formData.ctaType}
+                        onChange={handleChange}
+                        style={{ ...styles.select, marginTop: '8px' }}
+                      >
+                        <option value="">Select CTA Type</option>
+                        {fieldOptions.cta_type && fieldOptions.cta_type.map((option) => (
+                          <option
+                            key={option.key || option.id}
+                            value={option.key}
+                          >
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
+                    {ctaTypeMode === 'custom' && (
+                      <input
+                        type="text"
+                        id="ctaTypeCustom"
+                        value={ctaTypeCustom}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setCtaTypeCustom(val);
+                          setFormData(prev => ({ ...prev, ctaType: val }));
+                        }}
+                        style={{ ...styles.input, marginTop: '8px' }}
+                        placeholder="Enter custom CTA"
+                        required
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -1499,21 +1829,57 @@ const AdCopyGeneratorForm = () => {
                       <span style={styles.infoIcon} data-tooltip-id="keyBenefits-tooltip" data-tooltip-content="List the main benefits of your product/service (press Enter to add)">i</span>
                     </label>
                     <Tooltip id="keyBenefits-tooltip" />
-                    <input
-                      type="text"
-                      style={styles.input}
-                      placeholder="Add a benefit and press Enter"
-                      onKeyPress={(e) => handleArrayChange(e, 'keyBenefits')}
-                      disabled={formData.keyBenefits.length >= 10}
-                    />
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+
+                    {/* Chips container with inline placeholder when empty, mirroring Target Audience UX */}
+                    <div style={{ 
+                      display: 'flex', 
+                      flexWrap: 'wrap', 
+                      gap: '8px', 
+                      marginBottom: '8px',
+                      minHeight: '40px',
+                      alignItems: 'center',
+                      padding: '4px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      backgroundColor: formData.keyBenefits.length > 0 ? '#f9fafb' : 'white'
+                    }}>
+                      {formData.keyBenefits.length === 0 && (
+                        <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
+                          Type and press Enter to add key benefits
+                        </span>
+                      )}
                       {formData.keyBenefits.map((benefit, index) => (
-                        <span key={index} style={{...styles.badge, ...styles.badgePrimary}}>
+                        <span 
+                          key={index} 
+                          style={{
+                            ...styles.badge,
+                            ...styles.badgePrimary,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '4px 10px'
+                          }}
+                        >
                           {benefit}
-                          <button type="button" style={styles.removeBtn} onClick={() => removeItem('keyBenefits', index)}>×</button>
+                          <button 
+                            type="button" 
+                            style={styles.removeBtn} 
+                            onClick={() => removeItem('keyBenefits', index)}
+                          >
+                            ×
+                          </button>
                         </span>
                       ))}
                     </div>
+
+                    {/* Input to add new key benefits, same interaction as before */}
+                    <input
+                      type="text"
+                      style={styles.input}
+                      placeholder="Type and press Enter to add key benefits"
+                      onKeyPress={(e) => handleArrayChange(e, 'keyBenefits')}
+                      disabled={formData.keyBenefits.length >= 10}
+                    />
                   </div>
                 </div>
 
@@ -1545,31 +1911,77 @@ const AdCopyGeneratorForm = () => {
                   </div>
                 </div>
 
-
                 {/* Emotional Angle */}
                 <div className="col-md-6">
                   <div style={styles.formGroup}>
                     <label htmlFor="emotionalAngle" style={styles.label}>
                       Emotional Angle
                     </label>
-                    <select
-                      id="emotionalAngle"
-                      name="emotionalAngle"
-                      // Use key for value attribute, label for display
-                      value={fieldOptions.emotional_angle.find(opt => opt.label.replace('\t', '→') === formData.emotionalAngle)?.key || formData.emotionalAngle}
-                      onChange={handleChange}
-                      style={styles.select}
-                    >
-                      <option value="">Select Emotional Angle</option>
-                      {fieldOptions.emotional_angle && fieldOptions.emotional_angle.map((option) => (
-                        <option
-                          key={option.key || option.id}
-                          value={option.key} 
-                        >
-                          {option.label.replace('\t', '→')}
-                        </option>
-                      ))}
-                    </select>
+                    <div style={styles.radioGroup}>
+                      <label style={styles.radioItem}>
+                        <input
+                          type="radio"
+                          name="emotionalAngleMode"
+                          value="predefined"
+                          checked={emotionalAngleMode === 'predefined'}
+                          onChange={() => {
+                            setEmotionalAngleMode('predefined');
+                            setFormData(prev => ({ ...prev, emotionalAngle: 'Pain → Solution' }));
+                          }}
+                        />
+                        <span>Predefined</span>
+                      </label>
+                      <label style={styles.radioItem}>
+                        <input
+                          type="radio"
+                          name="emotionalAngleMode"
+                          value="custom"
+                          checked={emotionalAngleMode === 'custom'}
+                          onChange={() => {
+                            setEmotionalAngleMode('custom');
+                            setFormData(prev => ({ ...prev, emotionalAngle: emotionalAngleCustom || '' }));
+                          }}
+                        />
+                        <span>Custom</span>
+                      </label>
+                    </div>
+
+                    {emotionalAngleMode === 'predefined' && (
+                      <select
+                        id="emotionalAngle"
+                        name="emotionalAngle"
+                        // Use key for value attribute, label for display
+                        value={fieldOptions.emotional_angle.find(opt => opt.label.replace('\t', '→') === formData.emotionalAngle)?.key || formData.emotionalAngle}
+                        onChange={handleChange}
+                        style={{ ...styles.select, marginTop: '8px' }}
+                      >
+                        <option value="">Select Emotional Angle</option>
+                        {fieldOptions.emotional_angle && fieldOptions.emotional_angle.map((option) => (
+                          <option
+                            key={option.key || option.id}
+                            value={option.key} 
+                          >
+                            {option.label.replace('\t', '→')}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
+                    {emotionalAngleMode === 'custom' && (
+                      <input
+                        type="text"
+                        id="emotionalAngleCustom"
+                        value={emotionalAngleCustom}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setEmotionalAngleCustom(val);
+                          setFormData(prev => ({ ...prev, emotionalAngle: val }));
+                        }}
+                        style={{ ...styles.input, marginTop: '8px' }}
+                        placeholder="Enter custom emotional angle"
+                        required
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -1610,6 +2022,57 @@ const AdCopyGeneratorForm = () => {
                           onChange={handleChange}
                           style={styles.select}
                           placeholder="Describe your brand's tone and personality"
+                        />
+                      </div>
+                    </div>
+
+                    {/* USP (Unique Selling Proposition) */}
+                    <div className="col-12">
+                      <div style={styles.formGroup}>
+                        <label htmlFor="usp" style={styles.label}>
+                          USP (Unique Selling Proposition)
+                        </label>
+                        <textarea
+                          id="usp"
+                          name="usp"
+                          value={formData.usp}
+                          onChange={handleChange}
+                          style={{...styles.textarea, minHeight: '80px'}}
+                          placeholder="Strongest differentiator vs competitors. E.g., 'First AI tool with multi-variant regeneration in one click.'"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Feature Highlight */}
+                    <div className="col-12">
+                      <div style={styles.formGroup}>
+                        <label htmlFor="featureHighlight" style={styles.label}>
+                          Feature Highlight
+                        </label>
+                        <textarea
+                          id="featureHighlight"
+                          name="featureHighlight"
+                          value={formData.featureHighlight}
+                          onChange={handleChange}
+                          style={{...styles.textarea, minHeight: '80px'}}
+                          placeholder="Most important product feature showcased. E.g., 'Automated campaign generation in 30 seconds.'"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Problem Scenario */}
+                    <div className="col-12">
+                      <div style={styles.formGroup}>
+                        <label htmlFor="problemScenario" style={styles.label}>
+                          Problem Scenario
+                        </label>
+                        <textarea
+                          id="problemScenario"
+                          name="problemScenario"
+                          value={formData.problemScenario}
+                          onChange={handleChange}
+                          style={{...styles.textarea, minHeight: '80px'}}
+                          placeholder="When/where customer needs your solution. E.g., 'When agencies need to scale content fast without hiring more writers during seasonal sales events.'"
                         />
                       </div>
                     </div>
@@ -1670,7 +2133,7 @@ const AdCopyGeneratorForm = () => {
                         <Tooltip id="audiencePain-tooltip" />
                         <input
                           type="text"
-                          style={styles.select}
+                          style={styles.input}
                           placeholder="Add a pain point and press Enter"
                           onKeyPress={(e) => handleArrayChange(e, 'audiencePain')}
                         />
@@ -1777,16 +2240,27 @@ const AdCopyGeneratorForm = () => {
                         <label htmlFor="brandVoicePersonality" style={styles.label}>
                           Brand Voice Personality
                         </label>
-                        <div style={{ marginBottom: '8px' }}>
-                          <select
-                            name="brandVoicePersonalityMode"
-                            value={formData.brandVoicePersonalityMode}
-                            onChange={handleChange}
-                            style={styles.select}
-                          >
-                            <option value="predefined">Predefined Personality</option>
-                            <option value="custom">Custom Personality</option>
-                          </select>
+                        <div style={{ ...styles.radioGroup, marginBottom: '8px' }}>
+                          <label style={styles.radioItem}>
+                            <input
+                              type="radio"
+                              name="brandVoicePersonalityMode"
+                              value="predefined"
+                              checked={formData.brandVoicePersonalityMode === 'predefined'}
+                              onChange={handleChange}
+                            />
+                            <span>Predefined</span>
+                          </label>
+                          <label style={styles.radioItem}>
+                            <input
+                              type="radio"
+                              name="brandVoicePersonalityMode"
+                              value="custom"
+                              checked={formData.brandVoicePersonalityMode === 'custom'}
+                              onChange={handleChange}
+                            />
+                            <span>Custom</span>
+                          </label>
                         </div>
 
                         {formData.brandVoicePersonalityMode === 'predefined' && (
