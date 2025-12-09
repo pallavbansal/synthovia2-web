@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import SummaryReviewModal from './SummaryReviewModal';
 import { Tooltip } from 'react-tooltip';
 
 // --- API Configuration (Defined internally to prevent build issues) ---
@@ -189,6 +190,25 @@ const VariantModalContent = ({ variants, onClose, inputs, onRequestRegenerate, s
         }
     };
 
+    useEffect(() => {
+        if (typeof document !== 'undefined') {
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            `;
+            document.head.appendChild(style);
+
+            return () => {
+                if (document.head.contains(style)) {
+                    document.head.removeChild(style);
+                }
+            };
+        }
+    }, []);
+
     if (!variants || variants.length === 0) return null;
 
     return (
@@ -366,7 +386,6 @@ const AdCopyGeneratorForm = () => {
   const [optionsError, setOptionsError] = useState('');
   const [showSummary, setShowSummary] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  
   const [requestId, setRequestId] = useState(null);
   const [showVariantsModal, setShowVariantsModal] = useState(false);
   const [generatedVariantsData, setGeneratedVariantsData] = useState({ 
@@ -641,15 +660,87 @@ const AdCopyGeneratorForm = () => {
     }
 
     setShowSummary(true);
-    setTimeout(() => {
-      const summaryElement = document.getElementById('form-summary');
-      if (summaryElement) {
-        summaryElement.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 100);
   };
 
-  const toggleAdvanced = () => {
+  const handleGenerateFromSummary = async () => {
+  try {
+    setIsGenerating(true);
+    
+    // Reuse the formatPayload function to get the current form data
+    const payload = formatPayload();
+    
+    // Validate required fields
+    if (!payload.product_description || payload.target_audience.length === 0) {
+      showNotification('Please fill out all required fields', 'error');
+      setShowSummary(false);
+      return;
+    }
+
+    showNotification('Generating ad copy, please wait...', 'info');
+
+    // Make the API call
+    const response = await fetch(API.GENERATE_AD_COPY, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': AUTH_HEADER,
+      },
+      body: JSON.stringify(payload)
+    });
+
+    // Handle response
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `API call failed with status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    // Process the response
+    if (result.variants?.length > 0) {
+      setRequestId(result.request_id);
+      
+      const structuredVariants = result.variants.map((content, index) => ({
+        id: content.id || `temp-${Date.now()}-${index}`,
+        content: content.content || content,
+        show_variant: true
+      }));
+
+      setGeneratedVariantsData({ 
+        variants: structuredVariants, 
+        inputs: result.inputs || payload 
+      });
+      
+      setShowVariantsModal(true);
+      setShowSummary(false);
+      showNotification('Ad copy generated successfully!', 'success');
+    } else {
+      throw new Error("No variants were returned from the server");
+    }
+    
+  } catch (error) {
+    console.error('Generation Error:', error);
+    showNotification(`Error: ${error.message || 'Failed to generate ad copy'}`, 'error');
+  } finally {
+    setIsGenerating(false);
+  }
+};
+
+  const handleEditFromSummary = () => {
+    setShowSummary(false);
+    // Scroll to top of form
+    const formTop = document.getElementById('ad-copy-form-top');
+    if (formTop) {
+      formTop.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleViewHistory = () => {
+    // Implement view history/log functionality here
+    console.log('View history clicked');
+  };
+const toggleAdvanced = () => {
     setFormData(prev => ({
       ...prev,
       showAdvanced: !prev.showAdvanced
@@ -942,21 +1033,35 @@ const AdCopyGeneratorForm = () => {
   const styles = {
     container: { maxWidth: '1100px', margin: '0 auto', padding: '24px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', backgroundColor: '#0a0e1a', minHeight: '100vh' },
     card: { backgroundColor: '#141b2d', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.3)', overflow: 'hidden', border: '1px solid #1e293b' },
-    header: { padding: '24px 32px', borderBottom: '1px solid #1e293b', backgroundColor: '#0f1624' },
+    header: { padding: '24px 32px', borderBottom: '1px solid #1e293b',},
     title: { margin: 0, fontSize: '24px', fontWeight: '600', color: '#f8fafc' },
     subtitle: { margin: '6px 0 0', fontSize: '14px', color: '#94a3b8' },
     formGroup: { marginBottom: '20px' },
-    label: { display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#e2e8f0' },
+    label: { display: 'block', marginBottom: '6px', fontSize: '16px', fontWeight: '500', color: '#e2e8f0' },
     input: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box' },
-    select: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '20px', paddingRight: '40px', cursor: 'pointer' },
+    select: { width: '100%',height: '42px', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '20px', paddingRight: '40px', cursor: 'pointer' },
     textarea: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', resize: 'vertical', minHeight: '80px' },
     badge: { display: 'inline-flex', alignItems: 'center', padding: '6px 12px', fontSize: '13px', fontWeight: '500', borderRadius: '6px', gap: '6px' },
     badgePrimary: { backgroundColor: '#3b82f6', color: 'white' },
     badgeSecondary: { backgroundColor: '#475569', color: 'white' },
     badgeSuccess: { backgroundColor: '#10b981', color: 'white' },
     btn: { padding: '10px 20px', fontSize: '14px', fontWeight: '500', borderRadius: '6px', border: 'none', cursor: 'pointer', transition: 'all 0.15s ease-in-out', display: 'inline-flex', alignItems: 'center', gap: '8px' },
-    btnPrimary: { backgroundColor: '#3b82f6', color: 'white' },
-    btnSuccess: { backgroundColor: '#10b981', color: 'white' },
+    btnPrimary: {
+    backgroundColor: '#3b82f6',
+    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    '&:hover': {
+      backgroundColor: '#2563eb',
+    },
+    '&:disabled': {
+      backgroundColor: '#93c5fd',
+      cursor: 'not-allowed',
+    },
+  },
+  btnSuccess: { backgroundColor: '#10b981', color: 'white' },
     btnOutline: { backgroundColor: 'transparent', color: '#94a3b8', border: '1px solid #334155' },
     btnDanger: { backgroundColor: '#ef4444', color: 'white' },
     infoIcon: { display: 'inline-block', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#3b82f6', color: 'white', textAlign: 'center', lineHeight: '16px', fontSize: '11px', cursor: 'help', marginLeft: '6px' },
@@ -967,6 +1072,7 @@ const AdCopyGeneratorForm = () => {
     radioGroup: { display: 'flex', gap: '16px', marginTop: '8px' },
     radioItem: { display: 'flex', alignItems: 'center', gap: '8px' },
     toast: { position: 'fixed', top: '20px', right: '20px', padding: '16px 24px', color: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 9999 },
+    toolTip:{width:'40%'},
     summaryContainer: {
       backgroundColor: '#0f1624',
       borderRadius: '8px',
@@ -1046,15 +1152,18 @@ const AdCopyGeneratorForm = () => {
 
       {/* -------------------- Main Form / Summary View -------------------- */}
       {!showSummary ? (
-        <div style={styles.card}>
+        <>
           <div style={styles.header}>
             <h1 style={styles.title}>Ad Copy Generator</h1>
             <p style={styles.subtitle}>Create compelling ad copy for your campaigns</p>
           </div>
+        <div style={styles.card}>
 
           <div style={{ padding: '24px' }}>
             <form onSubmit={handleSubmit}>
               <div className="row g-4">
+                {!formData.showAdvanced && (
+                  <>
                 {/* Platform & Placement - Two-Step Selector */}
                 <div className="col-md-6">
                   <div style={styles.formGroup}>
@@ -1063,12 +1172,12 @@ const AdCopyGeneratorForm = () => {
                       <span 
                         style={styles.infoIcon} 
                         data-tooltip-id="platform-tooltip" 
-                        data-tooltip-content="Select the platform where your ad will run."
+                        data-tooltip-content="Choose whether you want to use predefined platforms like Instagram, Facebook, Google, or enter your own custom platform. This helps the tool understand where your ad will be posted so the content format matches platform style."
                       >
                         i
                       </span>
                     </label>
-                    <Tooltip id="platform-tooltip" />
+                    <Tooltip style={styles.toolTip} id="platform-tooltip" />
                     {/* Platform mode: Predefined vs Custom */}
                     <div style={styles.radioGroup}>
                       <label style={styles.radioItem}>
@@ -1161,12 +1270,12 @@ const AdCopyGeneratorForm = () => {
                       <span 
                         style={styles.infoIcon} 
                         data-tooltip-id="placement-tooltip" 
-                        data-tooltip-content="Select where your ad will be displayed on the platform."
+                        data-tooltip-content="Select where the ad will appear (example: feed, story, search results, sidebar). Placement affects length, tone, and visual structure of the generated ad, so choosing correctly helps improve conversion and readability."
                       >
                         i
                       </span>
                     </label>
-                    <Tooltip id="placement-tooltip" />
+                    <Tooltip style={styles.toolTip} id="placement-tooltip" />
                     <div style={styles.radioGroup}>
                       <label style={styles.radioItem}>
                         <input
@@ -1253,9 +1362,9 @@ const AdCopyGeneratorForm = () => {
                     <label htmlFor="campaignObjective" style={styles.label}>
                       Campaign Objective <span style={{ color: '#ef4444' }}>*</span>
                       <span 
-                        style={styles.infoIcon} 
-                        data-tooltip-id="campaignObjective-tooltip" 
-                        data-tooltip-html="Define what you want to achieve with this campaign."
+                        style={styles.infoIcon}
+                        data-tooltip-id="campaignObjective-tooltip"
+                        data-tooltip-html="Select the main goal of your campaign, such as leads, sales, awareness, traffic, or engagement. The tool uses your objective to shape message style, content strength, and call-to-action direction to drive results effectively."
                       >
                         i
                       </span>
@@ -1270,15 +1379,10 @@ const AdCopyGeneratorForm = () => {
                           checked={campaignObjectiveMode === 'predefined'}
                           onChange={() => {
                             setCampaignObjectiveMode('predefined');
-                            setFormData(prev => {
-                              const opts = fieldOptions.campaign_objective || [];
-                              const labels = opts.map(o => o.label);
-                              let next = prev.campaignObjective;
-                              if (!labels.includes(next) && opts[0]) {
-                                next = opts[0].label;
-                              }
-                              return { ...prev, campaignObjective: next };
-                            });
+                            setFormData(prev => ({
+                              ...prev,
+                              campaignObjective: loadedOptions.campaign_objective.find(opt => opt.label === prev.campaignObjective)?.label || prev.campaignObjective,
+                            }));
                           }}
                         />
                         <span>Predefined</span>
@@ -1344,9 +1448,9 @@ const AdCopyGeneratorForm = () => {
                     <label style={styles.label}>
                       Target Audience <span style={{ color: '#ef4444' }}>*</span>
                       <span 
-                        style={styles.infoIcon} 
-                        data-tooltip-id="targetAudience-tooltip" 
-                        data-tooltip-html="Define your ideal customer profile. Add multiple audience segments."
+                        style={styles.infoIcon}
+                        data-tooltip-id="targetAudience-tooltip"
+                        data-tooltip-html="Describe who you want to reach with this ad. Include audience characteristics like age, profession, interests, and behavior. This helps generate messaging that speaks directly to the right people and increases conversions."
                       >
                         i
                       </span>
@@ -1517,9 +1621,9 @@ const AdCopyGeneratorForm = () => {
                     <label htmlFor="productServices" style={styles.label}>
                       Product/Services <span style={{ color: '#ef4444' }}>*</span>
                       <span 
-                        style={styles.infoIcon} 
-                        data-tooltip-id="productServices-tooltip" 
-                        data-tooltip-html="Provide detailed information about your product or service."
+                        style={styles.infoIcon}
+                        data-tooltip-id="productServices-tooltip"
+                        data-tooltip-html="Write important information about your product or service, including features, purpose, and key details. Clear information allows the system to create accurate ad content that explains your offering effectively to potential customers."
                       >
                         i
                       </span>
@@ -1545,7 +1649,7 @@ const AdCopyGeneratorForm = () => {
                       <span 
                         style={styles.infoIcon}
                         data-tooltip-id="tone-tooltip"
-                        data-tooltip-html="Select the tone that best matches your brand voice."
+                        data-tooltip-html="Select the personality or feel of the ad copy (such as professional, friendly, urgent, funny, bold). Tone guides how the message connects emotionally with your target audience."
                       >
                         i
                       </span>
@@ -1628,7 +1732,7 @@ const AdCopyGeneratorForm = () => {
                       <span 
                         style={styles.infoIcon}
                         data-tooltip-id="headlineFocus-tooltip"
-                        data-tooltip-html="Choose the primary focus for your ad headlines."
+                        data-tooltip-html="Choose what you want the headline to highlight, such as problem-solution, transformation, discount, or urgency. A good hook catches immediate attention and improves click-through rates."
                       >
                         i
                       </span>
@@ -1745,7 +1849,7 @@ const AdCopyGeneratorForm = () => {
                       <span 
                         style={styles.infoIcon}
                         data-tooltip-id="ctaType-tooltip"
-                        data-tooltip-html="Select the primary action you want users to take."
+                        data-tooltip-html="Choose what action you want users to take (example: Buy Now, Learn More, Sign Up). A strong CTA increases conversions by telling the audience exactly what to do next."
                       >
                         i
                       </span>
@@ -1885,7 +1989,7 @@ const AdCopyGeneratorForm = () => {
                 <div className="col-12">
                   <div style={styles.formGroup}>
                     <label htmlFor="variants" style={styles.label}>
-                      Number of Variants: **{formData.variants}**
+                      Number of Variants: {formData.variants}
                       <span style={styles.infoIcon} data-tooltip-id="variants-tooltip" data-tooltip-content="How many different ad variations would you like to generate?">i</span>
                     </label>
                     <Tooltip id="variants-tooltip" />
@@ -1984,23 +2088,58 @@ const AdCopyGeneratorForm = () => {
                 </div>
 
                 <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #e5e7eb', margin: '5px 0' }} />
+                </>)}
 
                 {/* Advanced Features Toggle */}
-                <div className="col-12">
-                  <button
-                    type="button"
-                    style={{
-                    ...styles.btn,
-                    ...styles.btnOutline,
-                    padding: '8px 16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                    onClick={toggleAdvanced}
-                  >
-                    {formData.showAdvanced ? '▼ Hide Advanced Features' : '▶ Show Advanced Features'}
-                  </button>
+                <div className="col-12" style={{ margin: '16px 0' }}>
+                  <div style={{
+                    display: 'inline-flex',
+                    backgroundColor: 'white',
+                    borderRadius: '9999px',
+                    border: '1px solid #3b82f6',
+                    overflow: 'hidden',
+                    width: 'fit-content',
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                  }}>
+                    <button
+                      type="button"
+                      onClick={toggleAdvanced}
+                      style={{
+                        padding: '6px 20px',
+                        border: 'none',
+                        backgroundColor: formData.showAdvanced ? 'transparent' : '#3b82f6',
+                        color: formData.showAdvanced ? '#1f2937' : 'white',
+                        fontWeight: 500,
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        borderRadius: '9999px',
+                        margin: '2px',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      <span>Hide Advanced</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={toggleAdvanced}
+                      style={{
+                        padding: '6px 20px',
+                        border: 'none',
+                        backgroundColor: formData.showAdvanced ? '#3b82f6' : 'transparent',
+                        color: formData.showAdvanced ? 'white' : '#1f2937',
+                        fontWeight: 500,
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        borderRadius: '9999px',
+                        margin: '2px',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      <span>Show Advanced</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Advanced Features */}
@@ -2010,7 +2149,7 @@ const AdCopyGeneratorForm = () => {
                     <div className="col-12">
                       <div style={styles.formGroup}>
                         <label htmlFor="brandVoice" style={styles.label}>
-                          Brand Voice
+                          Brand Voice  (Optional)
                         </label>
                         <input
                           type="text"
@@ -2028,7 +2167,7 @@ const AdCopyGeneratorForm = () => {
                     <div className="col-12">
                       <div style={styles.formGroup}>
                         <label htmlFor="usp" style={styles.label}>
-                          USP (Unique Selling Proposition)
+                          USP [Unique Selling Proposition](Optional)
                         </label>
                         <textarea
                           id="usp"
@@ -2045,7 +2184,7 @@ const AdCopyGeneratorForm = () => {
                     <div className="col-12">
                       <div style={styles.formGroup}>
                         <label htmlFor="featureHighlight" style={styles.label}>
-                          Feature Highlight
+                          Feature Highlight (Optional)
                         </label>
                         <textarea
                           id="featureHighlight"
@@ -2062,7 +2201,7 @@ const AdCopyGeneratorForm = () => {
                     <div className="col-12">
                       <div style={styles.formGroup}>
                         <label htmlFor="problemScenario" style={styles.label}>
-                          Problem Scenario
+                          Problem Scenario (Optional)
                         </label>
                         <textarea
                           id="problemScenario"
@@ -2079,7 +2218,7 @@ const AdCopyGeneratorForm = () => {
                     <div className="col-md-6">
                       <div style={styles.formGroup}>
                         <label htmlFor="offerPricing" style={styles.label}>
-                          Offer & Pricing
+                          Offer & Pricing (Optional)
                         </label>
                         <input
                           type="text"
@@ -2097,7 +2236,7 @@ const AdCopyGeneratorForm = () => {
                     <div className="col-md-6">
                       <div style={styles.formGroup}>
                         <label htmlFor="assetReuseStrategy" style={styles.label}>
-                          Asset Reuse Strategy
+                          Asset Reuse Strategy (Optional)
                         </label>
                         <select
                           id="assetReuseStrategy"
@@ -2125,7 +2264,7 @@ const AdCopyGeneratorForm = () => {
                     <div className="col-12">
                       <div style={styles.formGroup}>
                         <label style={styles.label}>
-                          Audience Pain Points
+                          Audience Pain Points (Optional)
                           <span style={styles.infoIcon} data-tooltip-id="audiencePain-tooltip" data-tooltip-content="What problems or pain points does your product/service solve? (press Enter to add)">i</span>
                         </label>
                         <Tooltip id="audiencePain-tooltip" />
@@ -2149,7 +2288,7 @@ const AdCopyGeneratorForm = () => {
                     {/* Campaign Duration */}
                     <div className="col-md-6">
                       <div style={styles.formGroup}>
-                        <label style={styles.label}>Campaign Start Date</label>
+                        <label style={styles.label}>Campaign Start Date (Optional)</label>
                         <input
                           type="date"
                           name="start"
@@ -2161,7 +2300,7 @@ const AdCopyGeneratorForm = () => {
                     </div>
                     <div className="col-md-6">
                       <div style={styles.formGroup}>
-                        <label style={styles.label}>Campaign End Date</label>
+                        <label style={styles.label}>Campaign End Date (Optional)</label>
                         <input
                           type="date"
                           name="end"
@@ -2176,7 +2315,7 @@ const AdCopyGeneratorForm = () => {
                     <div className="col-12">
                       <div style={styles.formGroup}>
                         <label htmlFor="geoLanguageTarget" style={styles.label}>
-                          Geo & Language Targeting
+                          Geo & Language Targeting (Optional)
                         </label>
                         <input
                           type="text"
@@ -2194,7 +2333,7 @@ const AdCopyGeneratorForm = () => {
                     <div className="col-12">
                       <div style={styles.formGroup}>
                         <label style={styles.label}>
-                          Proof & Credibility Elements
+                          Proof & Credibility Elements (Optional)
                           <span style={styles.infoIcon} data-tooltip-id="proofCredibility-tooltip" data-tooltip-content="Add trust signals (press Enter to add)">i</span>
                         </label>
                         <Tooltip id="proofCredibility-tooltip" />
@@ -2219,7 +2358,7 @@ const AdCopyGeneratorForm = () => {
                     <div className="col-12">
                       <div style={styles.formGroup}>
                         <label htmlFor="complianceNote" style={styles.label}>
-                          Compliance Note
+                          Compliance Note (Optional)
                         </label>
                         <textarea
                           id="complianceNote"
@@ -2236,7 +2375,7 @@ const AdCopyGeneratorForm = () => {
                     <div className="col-md-6">
                       <div style={styles.formGroup}>
                         <label htmlFor="brandVoicePersonality" style={styles.label}>
-                          Brand Voice Personality
+                          Brand Voice Personality (Optional)
                         </label>
                         <div style={{ ...styles.radioGroup, marginBottom: '8px' }}>
                           <label style={styles.radioItem}>
@@ -2312,14 +2451,28 @@ const AdCopyGeneratorForm = () => {
                       style={{...styles.btn, ...styles.btnPrimary}}
                       disabled={isGenerating}
                     >
-                      {isGenerating ? 'Generating...' : 'Review & Generate'}
-                    </button>
+                      {isGenerating ? (
+                        <>
+                          <span>Generating</span>
+                          <div style={{
+                            width: '16px',
+                            height: '16px',
+                            border: '2px solid rgba(255,255,255,0.3)',
+                            borderTopColor: 'white',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite',
+                            display: 'inline-block',
+                            marginLeft: '8px'
+                          }} />
+                        </>
+                      ) : 'Generate Ad Copy'}</button>
                   </div>
                 </div>
               </div>
             </form>
           </div>
         </div>
+        </>
       ) : (
       <div style={styles.card}>
         <div style={styles.header}>
@@ -2327,27 +2480,13 @@ const AdCopyGeneratorForm = () => {
           <p style={styles.subtitle}>Please review your ad copy details before generating</p>
         </div>
         <div style={{ padding: '24px' }}>
-          <div id="form-summary" className="col-12 mt-5" style={styles.summaryContainer}>
-            <h4 style={styles.summaryTitle}>Review Your Selections</h4>
-            <div style={styles.summaryGrid}>
-              <div style={styles.summarySection}>
-                <h5 style={styles.summarySectionTitle}>Campaign Details</h5>
-                <p><strong>Platform:</strong> {formData.platform}</p>
-                <p><strong>Placement:</strong> {formData.placement}</p>
-                <p><strong>Campaign Objective:</strong> {formData.campaignObjective}</p>
-                {formData.customObjective && <p><strong>Custom Objective:</strong> {formData.customObjective}</p>}
-                <p><strong>Number of Variants:</strong> {formData.variants}</p>
-                {formData.usp && (
-                  <p><strong>USP:</strong> {formData.usp}</p>
-                )}
-                {formData.featureHighlight && (
-                  <p><strong>Feature Highlight:</strong> {formData.featureHighlight}</p>
-                )}
-                {formData.problemScenario && (
-                  <p><strong>Problem Scenario:</strong> {formData.problemScenario}</p>
-                )}
-              </div>
-
+          <SummaryReviewModal
+            formData={formData}
+            onGenerate={handleGenerateFromSummary}
+            onEdit={handleEditFromSummary}
+            onViewLog={handleViewHistory}
+            isGenerating={isGenerating}
+          />
               <div style={styles.summarySection}>
                 <h5 style={styles.summarySectionTitle}>Targeting</h5>
                 <p><strong>Target Audience:</strong></p>
@@ -2404,7 +2543,7 @@ const AdCopyGeneratorForm = () => {
                   style={{...styles.btn, ...styles.btnSuccess, backgroundColor: '#fcd34d', color: '#111827'}}
                   disabled={isGenerating}
                 >
-                  {isGenerating ? 'Loading Log...' : 'View Log'}
+                  {isGenerating ? 'Loading history...' : 'View history'}
                 </button>
               )}
               <button 
@@ -2421,11 +2560,23 @@ const AdCopyGeneratorForm = () => {
                 style={{...styles.btn, ...styles.btnPrimary}}
                 disabled={isGenerating}
               >
-                {isGenerating ? 'Generating...' : 'Generate Ad Copy'}
+                {isGenerating ? (
+                        <>
+                          <span>Generating</span>
+                          <div style={{
+                            width: '16px',
+                            height: '16px',
+                            border: '2px solid rgba(255,255,255,0.3)',
+                            borderTopColor: 'white',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite',
+                            display: 'inline-block',
+                            marginLeft: '8px'
+                          }} />
+                        </>
+                      ) : 'Generate Ad Copy'}
               </button>
             </div>
-          </div>
-        </div>
       </div>
       )}
       
