@@ -41,6 +41,36 @@ const VariantModalContent = ({ variants, onClose, inputs, onRequestRegenerate, s
         }
     };
 
+    const handleDownload = (variant, index) => {
+        if (!variant || !variant.content) {
+            if (showNotification) {
+                showNotification('No content available to download for this variant.', 'error');
+            }
+            return;
+        }
+
+        try {
+            const blob = new Blob([variant.content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+
+            const platform = inputs?.platform?.value || 'Platform';
+            const postLength = inputs?.post_length?.value || 'PostLength';
+
+            link.href = url;
+            link.download = `caption_variant_${index + 1}_${platform}_${postLength}.txt`.replace(/\s+/g, '_');
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            if (showNotification) {
+                showNotification('Failed to download variant as a file.', 'error');
+            }
+        }
+    };
+
     const modalStyles = {
         overlay: {
             position: 'fixed',
@@ -210,6 +240,17 @@ const VariantModalContent = ({ variants, onClose, inputs, onRequestRegenerate, s
                                                 disabled={isRegenerating}
                                             >
                                                 {isRegenerating ? 'Regenerating...' : 'Regenerate'}
+                                            </button>
+                                            <button
+                                                style={{
+                                                    ...modalStyles.actionButton,
+                                                    backgroundColor: '#3b82f6',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                }}
+                                                onClick={() => handleDownload(variant, index)}
+                                            >
+                                                Download
                                             </button>
                                         </div>
 
