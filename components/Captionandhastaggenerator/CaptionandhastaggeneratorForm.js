@@ -537,7 +537,7 @@ const Captionandhastaggeneratorform = () => {
         formGroup: { marginBottom: '20px' },
         label: { display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#e2e8f0' },
         input: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box' },
-        select: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '20px', paddingRight: '40px', cursor: 'pointer' },
+        select: { width: '100%', height:'42px', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '20px', paddingRight: '40px', cursor: 'pointer' },
         textarea: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', resize: 'vertical', minHeight: '80px' },
         badge: { display: 'inline-flex', alignItems: 'center', padding: '6px 12px', fontSize: '13px', fontWeight: '500', borderRadius: '6px', gap: '6px' },
         badgePrimary: { backgroundColor: '#3b82f6', color: 'white' },
@@ -638,89 +638,85 @@ const Captionandhastaggeneratorform = () => {
                         {/* [ ... FORM CONTENT REMAINS THE SAME ... ] */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: COLUMN_GAP, width: '100%' }}>
 
-                            {/* ROW 1: Platform Type Radio */}
-                            <div style={colFullStyle}>
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>
-                                        Platform Type <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} data-tooltip-id="platformType-tooltip" data-tooltip-content="Select whether to use a predefined platform/post type or enter a custom one">i</span>
-                                    </label>
-                                    <Tooltip id="platformType-tooltip" />
-                                    <div style={styles.radioGroup}>
-                                        <label style={styles.radioItem}>
-                                            <input
-                                                type="radio"
-                                                name="platformType"
-                                                value="predefined"
-                                                checked={formData.platformType === 'predefined'}
-                                                onChange={handleChange}
-                                                style={{ marginRight: '8px' }}
-                                                required
-                                            />
-                                            Predefined
-                                        </label>
-                                        <label style={styles.radioItem}>
-                                            <input
-                                                type="radio"
-                                                name="platformType"
-                                                value="custom"
-                                                checked={formData.platformType === 'custom'}
-                                                onChange={handleChange}
-                                                style={{ marginRight: '8px' }}
-                                                required
-                                            />
-                                            Custom
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-
                             {/* ROW 2: Platform Input + Tone Input (2 Columns) */}
                             <div style={twoColContainerStyle}>
                                 {/* Platform Dropdown or Custom Platform Input (Left Half) */}
-                                {formData.platformType === 'predefined' ? (
-                                    <div style={colHalfStyle}>
-                                        <div style={styles.formGroup}>
-                                            <label htmlFor="platform" style={styles.label}>
-                                                Platform & Post Type <span style={{ color: '#ef4444' }}>*</span>
+                                <div style={colHalfStyle}>
+                                    <div style={styles.formGroup}>
+                                        <label style={styles.label}>
+                                        Platform & Post Type <span style={{ color: '#ef4444' }}>*</span>
+                                        <span style={styles.infoIcon} data-tooltip-id="platformType-tooltip" data-tooltip-content="Select whether to use a predefined platform/post type or enter a custom one">i</span>
+                                        </label>
+                                        <Tooltip id="platformType-tooltip" />
+                                        <div style={styles.radioGroup}>
+                                            <label style={styles.radioItem}>
+                                                <input
+                                                    type="radio"
+                                                    name="platformType"
+                                                    value="predefined"
+                                                    checked={formData.platformType === 'predefined'}
+                                                    onChange={handleChange}
+                                                    style={{ marginRight: '8px' }}
+                                                    required
+                                                />
+                                                Predefined
                                             </label>
-                                            <select
-                                                id="platform"
-                                                name="platform"
-                                                value={formData.platform}
-                                                onChange={handleChange}
-                                                style={styles.input}
-                                                required={formData.platformType === 'predefined'}
-                                            >
-                                                <option value="">Select Platform & Post Type</option>
-                                                {platformOptions.map((platform) => (
-                                                    <option key={platform.key} value={platform.key}>{platform.label}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div style={colHalfStyle}>
-                                        <div style={styles.formGroup}>
-                                            <label htmlFor="customPlatform" style={styles.label}>
-                                                Custom Platform Description <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} data-tooltip-id="customPlatform-tooltip" data-tooltip-content="Enter a description of your custom platform and desired post type">i</span>
+                                            <label style={styles.radioItem}>
+                                                <input
+                                                    type="radio"
+                                                    name="platformType"
+                                                    value="custom"
+                                                    checked={formData.platformType === 'custom'}
+                                                    onChange={handleChange}
+                                                    style={{ marginRight: '8px' }}
+                                                    required
+                                                />
+                                                Custom
                                             </label>
-                                            <Tooltip id="customPlatform-tooltip" />
-                                            <input
-                                                type="text"
-                                                id="customPlatform"
-                                                name="customPlatform"
-                                                value={formData.customPlatform}
-                                                onChange={handleChange}
-                                                style={styles.input}
-                                                maxLength={50}
-                                                placeholder="e.g., Email newsletter snippet, Product flyer text"
-                                                required={formData.platformType === 'custom'}
-                                            />
                                         </div>
+                                        {formData.platformType === 'predefined' ? (
+                                        <div style={colHalfStyle}>
+                                            <div style={styles.formGroup}>
+                                                <select
+                                                    id="platform"
+                                                    name="platform"
+                                                    value={formData.platform}
+                                                    onChange={handleChange}
+                                                    style={styles.select}
+                                                    required={formData.platformType === 'predefined'}
+                                                >
+                                                    <option value="">Select Platform & Post Type</option>
+                                                    {platformOptions.map((platform) => (
+                                                        <option key={platform.key} value={platform.key}>{platform.label}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                            ) : (
+                                                <div style={colHalfStyle}>
+                                                    <div style={styles.formGroup}>
+                                                        <label htmlFor="customPlatform" style={styles.label}>
+                                                            Custom Platform Description <span style={{ color: '#ef4444' }}>*</span>
+                                                            <span style={styles.infoIcon} data-tooltip-id="customPlatform-tooltip" data-tooltip-content="Enter a description of your custom platform and desired post type">i</span>
+                                                        </label>
+                                                        <Tooltip id="customPlatform-tooltip" />
+                                                        <input
+                                                            type="text"
+                                                            id="customPlatform"
+                                                            name="customPlatform"
+                                                            value={formData.customPlatform}
+                                                            onChange={handleChange}
+                                                            style={styles.input}
+                                                            maxLength={50}
+                                                            placeholder="e.g., Email newsletter snippet, Product flyer text"
+                                                            required={formData.platformType === 'custom'}
+                                                        />
+                                                    </div>
+                                                </div>
+                                        )}
                                     </div>
-                                )}
+                                </div>
+                                
 
                                 {/* Tone Selection Radio/Dropdown (Right Half) */}
                                 <div style={colHalfStyle}>
@@ -763,7 +759,7 @@ const Captionandhastaggeneratorform = () => {
                                                 name="toneOfVoice"
                                                 value={formData.toneOfVoice}
                                                 onChange={handleChange}
-                                                style={{ ...styles.input, marginTop: '8px' }}
+                                                style={{ ...styles.select }}
                                                 required={formData.toneSelection === 'predefined'}
                                             >
                                                 <option value="">Select Tone of Voice</option>
@@ -772,7 +768,7 @@ const Captionandhastaggeneratorform = () => {
                                                 ))}
                                             </select>
                                         ) : (
-                                            <div style={{ marginTop: '8px' }}>
+                                            <div>
                                                 <label htmlFor="customTone" style={styles.label}>
                                                     Custom Tone <span style={{ color: '#ef4444' }}>*</span>
                                                     <span style={styles.infoIcon} data-tooltip-id="customTone-tooltip" data-tooltip-content="Describe your custom tone (max 60 characters)">i</span>
@@ -903,7 +899,7 @@ const Captionandhastaggeneratorform = () => {
                                             name="postLength"
                                             value={formData.postLength}
                                             onChange={handleChange}
-                                            style={styles.input}
+                                            style={styles.select}
                                         >
                                             {postLengthOptions.map((option) => (
                                                 <option key={option.key} value={option.key}>{option.label}</option>
@@ -911,6 +907,76 @@ const Captionandhastaggeneratorform = () => {
                                         </select>
                                     </div>
                                 </div>
+
+                                {/* <div style={colHalfStyle}>
+                                    <div style={styles.formGroup}>
+                                        <label style={styles.label}>
+                                            Post lenght Selection <span style={{ color: '#ef4444' }}>*</span>
+                                            <span style={styles.infoIcon} data-tooltip-id="lenghtSelection-tooltip" data-tooltip-content="Select whether to use a predefined tone or enter a custom one">i</span>
+                                        </label>
+                                        <Tooltip id="lenghtSelection-tooltip" />
+                                        <div style={styles.radioGroup}>
+                                            <label style={styles.radioItem}>
+                                                <input
+                                                    type="radio"
+                                                    name="lenghtSelection"
+                                                    value="predefined"
+                                                    checked={formData.lenghtSelection === 'predefined'}
+                                                    onChange={handleChange}
+                                                    style={{ marginRight: '8px' }}
+                                                    required
+                                                />
+                                                Predefined
+                                            </label>
+                                            <label style={styles.radioItem}>
+                                                <input
+                                                    type="radio"
+                                                    name="lenghtSelection"
+                                                    value="custom"
+                                                    checked={formData.lenghtSelection === 'custom'}
+                                                    onChange={handleChange}
+                                                    style={{ marginRight: '8px' }}
+                                                    required
+                                                />
+                                                Custom
+                                            </label>
+                                        </div>
+
+                                        {formData.lenghtSelection === 'predefined' ? (
+                                        <select
+                                            id="postLength"
+                                            name="postLength"
+                                            value={formData.postLength}
+                                            onChange={handleChange}
+                                            style={styles.select}
+                                        >
+                                            {postLengthOptions.map((option) => (
+                                                <option key={option.key} value={option.key}>{option.label}</option>
+                                            ))}
+                                        </select>
+                                        ) : (
+                                            <div>
+                                                <label htmlFor="customLenght" style={styles.label}>
+                                                    Custom Post Lenght <span style={{ color: '#ef4444' }}>*</span>
+                                                    <span style={styles.infoIcon} data-tooltip-id="customTone-tooltip" data-tooltip-content="Describe your custom tone (max 60 characters)">i</span>
+                                                </label>
+                                                <Tooltip id="lenghtSelection-tooltip" />
+                                                <input
+                                                    type="text"
+                                                    id="postLength"
+                                                    name="postLength"
+                                                    value={formData.postLength}
+                                                    onChange={handleChange}
+                                                    style={styles.input}
+                                                    maxLength={60}
+                                                    placeholder="e.g., Short,Medium,Long"
+                                                    required={formData.toneSelection === 'custom'}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div> */}
+
                             </div>
 
                             {/* ROW 7: Formatting Options (Full Width Checkboxes) */}
@@ -942,22 +1008,57 @@ const Captionandhastaggeneratorform = () => {
                             <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #e5e7eb', margin: '5px 0' }} />
 
                             {/* Advanced Features Toggle (Full Width) */}
-                            <div style={{ width: '100%', marginBottom: '20px' }}>
-                                <button
+                            <div className="col-12" style={{ margin: '16px 0' }}>
+                                <div style={{
+                                    display: 'inline-flex',
+                                    backgroundColor: 'white',
+                                    borderRadius: '9999px',
+                                    border: '1px solid #3b82f6',
+                                    overflow: 'hidden',
+                                    width: 'fit-content',
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                }}>
+                                    <button
                                     type="button"
-                                    style={{
-                                        ...styles.btn,
-                                        ...styles.btnOutline,
-                                        padding: '8px 16px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        backgroundColor:'transparent',
-                                        gap: '8px'}}
                                     onClick={toggleAdvanced}
-                                >
-                                    {formData.showAdvanced ? '▼ Hide Advanced Features' : '▶ Show Advanced Features'}
-                                </button>
-                            </div>
+                                    style={{
+                                        padding: '6px 20px',
+                                        border: 'none',
+                                        backgroundColor: formData.showAdvanced ? 'transparent' : '#3b82f6',
+                                        color: formData.showAdvanced ? '#1f2937' : 'white',
+                                        fontWeight: 500,
+                                        fontSize: '14px',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        borderRadius: '9999px',
+                                        margin: '2px',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                    >
+                                    <span>Hide Advanced</span>
+                                    </button>
+                                    <button
+                                    type="button"
+                                    onClick={toggleAdvanced}
+                                    style={{
+                                        padding: '6px 20px',
+                                        border: 'none',
+                                        backgroundColor: formData.showAdvanced ? '#3b82f6' : 'transparent',
+                                        color: formData.showAdvanced ? 'white' : '#1f2937',
+                                        fontWeight: 500,
+                                        fontSize: '14px',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        borderRadius: '9999px',
+                                        margin: '2px',
+                                        whiteSpace: 'nowrap'
+                                    }}
+                                    >
+                                    <span>Show Advanced</span>
+                                    </button>
+                                </div>
+                                </div>
+
 
                             {/* Advanced Features Container (Conditional) */}
                             {formData.showAdvanced && (
@@ -974,7 +1075,7 @@ const Captionandhastaggeneratorform = () => {
                                                     name="includeCtaType"
                                                     value={formData.includeCtaType}
                                                     onChange={handleChange}
-                                                    style={styles.input}
+                                                    style={styles.select}
                                                 >
                                                     <option value="">Select CTA Type</option>
                                                     {ctaTypeOptions.map((cta) => (
@@ -1041,7 +1142,7 @@ const Captionandhastaggeneratorform = () => {
                                                     name="captionStyle"
                                                     value={formData.captionStyle}
                                                     onChange={handleChange}
-                                                    style={styles.input}
+                                                    style={styles.select}
                                                 >
                                                     <option value="">Select Caption Style</option>
                                                     {captionStyleOptions.map((style) => (
@@ -1060,7 +1161,7 @@ const Captionandhastaggeneratorform = () => {
                                                     name="hashtagStyle"
                                                     value={formData.hashtagStyle}
                                                     onChange={handleChange}
-                                                    style={styles.input}
+                                                    style={styles.select}
                                                 >
                                                     <option value="">Select Hashtag Style</option>
                                                     {hashtagStyleOptions.map((style) => (
@@ -1086,7 +1187,7 @@ const Captionandhastaggeneratorform = () => {
                                                     name="emotionalIntent"
                                                     value={formData.emotionalIntent}
                                                     onChange={handleChange}
-                                                    style={styles.input}
+                                                    style={styles.select}
                                                 >
                                                     <option value="">Select Emotional Intent</option>
                                                     {emotionalIntentOptions.map((emotion) => (
@@ -1105,7 +1206,7 @@ const Captionandhastaggeneratorform = () => {
                                                     name="language"
                                                     value={formData.language}
                                                     onChange={handleChange}
-                                                    style={styles.input}
+                                                    style={styles.select}
                                                 >
                                                     {languageOptions.map((lang) => (
                                                         <option key={lang.key} value={lang.key}>{lang.label}</option>
