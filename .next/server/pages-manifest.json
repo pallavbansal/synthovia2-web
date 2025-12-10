@@ -1,8 +1,0 @@
-{
-  "/_app": "pages/_app.js",
-  "/_error": "pages/_error.js",
-  "/_document": "pages/_document.js",
-  "/caption-and-hastag-generator": "pages/caption-and-hastag-generator.js",
-  "/ad-copy-generator": "pages/ad-copy-generator.js",
-  "/copywriting-assistant": "pages/copywriting-assistant.js"
-}
