@@ -1,25 +1,25 @@
 "use client";
 import { useEffect, useState } from "react";
 
-// Define different message sets for different modes
+// Define different message sets for different modes (Caption & Hashtag context)
 const GENERATION_MESSAGES = [
-    "AI is working to generate your ad copy...",
-    "Tuning the message for maximum conversion...",
-    "Analyzing target audience psychology...",
-    "Crafting headline hooks and emotional angles...",
-    "Just a moment, almost finished generating variants...",
-    "Searching for the perfect CTA...",
-    "Applying advanced copy optimization techniques...",
-    "It's surfing... hang ten!",
+    "AI is crafting your marketing copy...",
+    "Tuning tone and style for your content...",
+    "Analyzing your target audience for higher impact...",
+    "Balancing copy length and readability...",
+    "Just a moment, almost finished generating copy variants...",
+    "Optimizing your messaging for clarity and conversion...",
+    "Applying advanced language optimization to your copy...",
+    "It's surfing through ideas for powerful copy... hang tight!",
 ];
 
 const HISTORY_MESSAGES = [
-    "Loading your previous ad copy variants log...",
-    "Retrieving campaign inputs and settings...",
-    "Compiling generated variants for display...",
-    "Finalizing secure history connection...",
-    "Almost done, loading log data...",
-    "Organizing your historical ad copies...",
+    "Loading your previous copy variants log...",
+    "Retrieving your saved copy inputs and settings...",
+    "Compiling generated copy for display...",
+    "Finalizing history view for your content...",
+    "Almost done, loading copy log data...",
+    "Organizing your historical copy variants...",
     "History log retrieval in progress...",
     "Log loaded successfully!",
 ];

@@ -1,9 +1,9 @@
-// components/CopywritingAssistant/CopywritingAssistantForm.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 import SummaryReviewModal from './SummaryReviewModal';
-import VariantsModal from './VariantsModal';
+import VariantModalContent from './VariantModalContent';
+import SurfingLoading from './SurfingLoading';
 
 // --- API Constants (Provided by User) ---
 const BASE_URL = 'https://olive-gull-905765.hostingersite.com/public/api/v1';
@@ -12,11 +12,9 @@ const API = {
     // Fetch dropdown & predefined field options for Copy Writing Assistant
     GET_COPYWRITING_OPTIONS: `${BASE_URL}/copy-writing/options?field_type=all`,
     GENERATE_COPYWRITING: `${BASE_URL}/copy-writing/generate`,
-    GET_COPYWRITING_VARIANTS: (requestId) =>
-        `${BASE_URL}/copy-writing/${requestId}/variants`,
     REGENERATE_COPYWRITING_VARIANT: (variantId) =>
         `${BASE_URL}/copy-writing/variants/${variantId}/regenerate`,
-    GET_VARIANTS_LOG: (requestId) => `${BASE_URL}/copy-writing/${requestId}/variants`, // Updated to match user request
+    GET_VARIANTS_LOG: (requestId) => `${BASE_URL}/copy-writing/${requestId}/variants`,
     AUTH_TOKEN: '3|WwYYaSEAfSr1guYBFdPQlPtGg0dKphy1sVMDLBmX647db358',
 };
 
@@ -64,10 +62,25 @@ const CopywritingAssistantForm = () => {
     const [showSummary, setShowSummary] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const [showVariantsModal, setShowVariantsModal] = useState(false);
-    const [generatedVariants, setGeneratedVariants] = useState([]);
+    
+    // State structure to hold both variants array and metadata/inputs
+    const [generatedVariantsData, setGeneratedVariantsData] = useState({
+       requestId: null, 
+        variants: [],
+        inputs: {},
+    });
+    
     const [requestId, setRequestId] = useState(null);
+    const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     const [modalTitle, setModalTitle] = useState("Generated Variants");
     const [isFetchingLog, setIsFetchingLog] = useState(false);
+    const [isApiLoading, setIsApiLoading] = useState(false);
+    const [isHistoryView, setIsHistoryView] = useState(false);
+    
+    const showNotification = (message, type) => {
+        setNotification({ show: true, message, type });
+        setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
+    };
 
     // Helper to safely access API options by key
     const getOptions = (key) => apiOptions?.[key] || [];
@@ -477,7 +490,9 @@ const CopywritingAssistantForm = () => {
         };
 
         setIsGenerating(true);
-        setModalTitle("Generated Variants"); // Reset modal title
+        setModalTitle("Generated Variants"); 
+        setIsHistoryView(false);
+        setIsApiLoading(true);
 
         try {
             const response = await fetch(API.GENERATE_COPYWRITING, {
@@ -496,17 +511,19 @@ const CopywritingAssistantForm = () => {
                 setRequestId(result.request_id);
             }
 
-            if (result.variants && Array.isArray(result.variants) && result.variants.length > 0) {
-                const structured = result.variants.map((v, index) => ({
-                    id: v.id || `copy-${Date.now()}-${index}`,
-                    content: v.content || v,
-                    // Assuming the API response structure might contain a status/log entry if it's the full log
-                    log: v.log || 'Generation successful',
-                    isLog: false,
+              if (result.variants && Array.isArray(result.variants) && result.variants.length > 0) {
+                setRequestId(result.request_id);
+
+                const structuredVariants = result.variants.map((content, index) => ({
+                    id: content.id || `temp-${Date.now()}-${index}`,
+                    content: content.content || content,
+                    show_variant: content.show_variant || true,
                 }));
 
-                setGeneratedVariants(structured);
+                setGeneratedVariantsData({ variants: structuredVariants, inputs: result.inputs, requestId: result.request_id });
                 setShowVariantsModal(true);
+                setShowSummary(false); // Hide summary before showing results
+                showNotification('Captions and hashtags generated successfully!', 'success');
             } else {
                 console.error('Copywriting generation returned no variants:', result);
                 alert('Generation failed or returned no content. Check console for details.');
@@ -515,8 +532,8 @@ const CopywritingAssistantForm = () => {
             console.error('Error generating copywriting variants:', err);
             alert('An error occurred during content generation.');
         } finally {
+            setIsApiLoading(false);
             setIsGenerating(false);
-            setShowSummary(false);
         }
     };
 
@@ -545,83 +562,106 @@ const CopywritingAssistantForm = () => {
 
             const result = await response.json();
 
-            setGeneratedVariants((prev) => {
-                const next = [...prev];
-                const idx = next.findIndex((v) => v.id === variantId || v.id === result.variant_id);
+            // Update the generatedVariantsData state correctly
+            setGeneratedVariantsData((prev) => {
+                const nextVariants = [...prev.variants];
+                const idx = nextVariants.findIndex((v) => v.id === variantId || v.id === result.variant_id);
                 if (idx !== -1) {
-                    next[idx] = {
-                        ...next[idx],
-                        content: result.new_content || result.content || next[idx].content,
+                    nextVariants[idx] = {
+                        ...nextVariants[idx],
+                        content: result.new_content || result.content || nextVariants[idx].content,
                         isLog: false,
                     };
                 }
-                return next;
+                return { ...prev, variants: nextVariants };
             });
+
         } catch (err) {
             console.error('Error regenerating copywriting variant:', err);
         }
     };
-    
+
     // --- New handleViewLog Function ---
     const handleViewLog = async () => {
-  if (!requestId) {
-    console.error('No previous copywriting request_id found for log viewing.');
-    alert('No previous generation found to view log.');
-    return;
-  }
+        if (!requestId) {
+            console.error('No previous copywriting request_id found for log viewing.');
+            alert('No previous generation found to view log.');
+            return;
+        }
 
-  setIsFetchingLog(true);      // so VariantsModal can show loading state if needed
-  setIsGenerating(true);       // reuse existing generating flag for buttons
+        setIsFetchingLog(true);       // so VariantsModal can show loading state if needed
+        setIsGenerating(true);         // reuse existing generating flag for buttons
+        setModalTitle('Variants Log'); // set title for log view
+        setIsHistoryView(true);
+        setIsApiLoading(true);
 
-  try {
-    const response = await fetch(API.GET_VARIANTS_LOG(requestId), {
-      headers: {
-        Authorization: AUTH_HEADER,
-      },
-    });
+        try {
+            const response = await fetch(API.GET_VARIANTS_LOG(requestId), {
+                headers: {
+                    Authorization: AUTH_HEADER,
+                },
+            });
 
-    if (!response.ok) {
-      let errorData = {};
-      try {
-        errorData = await response.json();
-      } catch (e) {
-        // ignore parse error
-      }
-      console.error(
-        'Failed to fetch copywriting variants log:',
-        errorData || response.statusText
-      );
-      alert('Failed to load log. Check console for details.');
-      return;
-    }
+            if (!response.ok) {
+                let errorData = {};
+                try {
+                    errorData = await response.json();
+                } catch (e) {
+                    // ignore parse error
+                }
+                const errorMessage = errorData.message || response.statusText;
+                console.error('Failed to fetch variants log:', errorData || response.statusText);
+                alert('Failed to load log. Check console for details.');
+                
+                // Set error data in the expected object structure
+                setGeneratedVariantsData({
+                    requestId: requestId,
+                    variants: [{ id: 'error', content: `Error loading log: ${errorMessage}`, isLog: true }],
+                    inputs: {}
+                });
+            } else {
+                const result = await response.json();
+                
+                if (result.variants && Array.isArray(result.variants) && result.variants.length > 0) {
+                    const structuredVariants = result.variants.map((content, index) => ({
+                        id: content.id || `temp-${Date.now()}-${index}`,
+                        content: content.content || content,
+                        show_variant: content.show_variant || true,
+                    }));
 
-    const result = await response.json();
-
-    if (result.variants && Array.isArray(result.variants) && result.variants.length > 0) {
-      const structured = result.variants.map((v, index) => ({
-        id: v.id || `copy-log-${Date.now()}-${index}`,
-        content: v.content || v,
-        log: v.log || 'Loaded from variants log',
-        isLog: true,
-      }));
-
-      setModalTitle('Variants Log');  // so VariantsModal can show different heading
-      setGeneratedVariants(structured);
-      setShowVariantsModal(true);
-    } else {
-      console.error('Copywriting variants log returned no variants:', result);
-      alert('No variants found in the log for this request.');
-    }
-  } catch (err) {
-    console.error('Error while fetching copywriting variants log:', err);
-    alert('Error while loading log. Check console for details.');
-  } finally {
-    setIsFetchingLog(false);
-    setIsGenerating(false);
-  }
-};
-    // --- End New handleViewLog Function ---
-
+                    setGeneratedVariantsData({
+                        variants: structuredVariants,
+                        inputs: result.inputs,
+                        requestId: result.request_id
+                    });
+                    setShowVariantsModal(true);
+                } else {
+                    console.error('Variants log returned no variants:', result);
+                    alert('No variants found in the log for this request.');
+                    setGeneratedVariantsData({
+                        requestId: requestId,
+                        variants: [{ id: 'empty-log', content: 'Log was successfully fetched but contained no variant entries.', isLog: true }],
+                        inputs: result.inputs || {},
+                    });
+                    setShowVariantsModal(true);
+                }
+            }
+        } catch (err) {
+            console.error('Error while fetching variants log:', err);
+            alert('Error while loading log. Check console for details.');
+            setGeneratedVariantsData({
+                requestId: requestId,
+                variants: [{ id: 'fatal-error', content: `Fatal Error: ${err.message}`, isLog: true }],
+                inputs: {}
+            });
+            setShowVariantsModal(true);
+        } finally {
+            setIsFetchingLog(false);
+            setIsGenerating(false);
+            setIsApiLoading(false);
+            setShowSummary(false);
+        }
+    };
 
     // Fetch dropdown & predefined options from API on mount
     useEffect(() => {
@@ -635,7 +675,6 @@ const CopywritingAssistantForm = () => {
                 });
 
                 if (!response.ok) {
-                    // If the API fails, keep using static defaults silently
                     console.error('Failed to fetch copywriting options:', response.status, response.statusText);
                     return;
                 }
@@ -697,7 +736,7 @@ const CopywritingAssistantForm = () => {
         toast: { position: 'fixed', top: '20px', right: '20px', padding: '16px 24px', color: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 9999 },
     };
 
-     // --- Layout Helpers (Unchanged) ---
+    // --- Layout Helpers (Unchanged) ---
     const COLUMN_GAP = '20px';
     const twoColContainerStyle = { 
         display: 'flex', 
@@ -1038,7 +1077,7 @@ const CopywritingAssistantForm = () => {
                                     <span>Show Advanced</span>
                                     </button>
                                 </div>
-                                </div>
+                            </div>
 
 
                             {/* Advanced Features */}
@@ -1163,7 +1202,7 @@ const CopywritingAssistantForm = () => {
                                             <select
                                                 id="targetPlatform"
                                                 name="targetPlatform"
-                                                value={formData.targetPlatform}
+                                                value={formData.targetPlatform || ''}
                                                 onChange={handleChange}
                                                 style={styles.select}
                                             >
@@ -1196,27 +1235,6 @@ const CopywritingAssistantForm = () => {
                                                         <option key={i} value={`brand-${i + 1}`}>Brand Style {i + 1}</option>
                                                     ))}
                                                 </select>
-                                                {/* <button
-                                                    type="button"
-                                                    style={{ ...styles.btn, ...styles.btnOutline, whiteSpace: 'nowrap' }}
-                                                    onClick={() => document.getElementById('brandVoiceFile').click()}
-                                                >
-                                                    Upload
-                                                </button>
-                                                <input
-                                                    type="file"
-                                                    id="brandVoiceFile"
-                                                    accept=".pdf,.doc,.docx,.txt"
-                                                    style={{ display: 'none' }}
-                                                    onChange={(e) => {
-                                                        if (e.target.files && e.target.files[0]) {
-                                                            setFormData(prev => ({
-                                                                ...prev,
-                                                                brandVoiceFile: e.target.files[0]
-                                                            }));
-                                                        }
-                                                    }}
-                                                /> */}
                                             </div>
                                         </div>
                                     </div>
@@ -1495,9 +1513,9 @@ const CopywritingAssistantForm = () => {
                                                 />
                                                 <span>Enable Proofreading & Optimization (optional)</span>
                                                 <span style={{ ...styles.infoIcon, marginLeft: '8px' }} data-tooltip-id="proofreading-tooltip" data-tooltip-content="Automatically check for grammar, readability, and SEO optimization">i</span>
-                                            </label>  
+                                            </label> 
                                             <Tooltip id="proofreading-tooltip" />
-                                        </div>
+                                            </div>
                                         </div>
                                         <div style={colHalfStyle}></div> 
                                     </div>
@@ -1567,22 +1585,29 @@ const CopywritingAssistantForm = () => {
                     onGenerate={handleGenerate}
                     onEdit={handleEdit}
                     isGenerating={isGenerating}
-                    onViewLog={handleViewLog} // Passing the new function
+                    onViewLog={handleViewLog}
                 />
             )}
 
             {showVariantsModal && (
-                <VariantsModal
-                    variants={generatedVariants}
+                <VariantModalContent
+                    variants={generatedVariantsData.variants}
+                    inputs={generatedVariantsData.inputs}
                     onClose={() => {
-                      setShowVariantsModal(false);
-                      setShowSummary(true);      // reopen Review & Confirm modal
+                        setShowVariantsModal(false);
+                        setIsHistoryView(false); 
+                        setShowSummary(true); // Always return to summary
                     }}
                     onRequestRegenerate={handleRegenerateVariant}
-                    modalTitle={modalTitle} // Pass the title to the modal
-                    isFetchingLog={isFetchingLog} // Pass log fetching state
+                    showNotification={showNotification}
+                    isLoading={isApiLoading}
+                    isHistoryView={isHistoryView}
                 />
             )}
+              {isApiLoading && (
+                <SurfingLoading mode={isHistoryView ? "history" : "generate"} />
+            )}
+            
             {/* Output Section (initially hidden) - This remains unchanged */}
             {formData.submitted && (
                 <div style={{ marginTop: '40px' }}>
