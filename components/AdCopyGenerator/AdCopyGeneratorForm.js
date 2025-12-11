@@ -76,462 +76,6 @@ const getLabelFromKey = (selectedKey, fieldName, options) => {
     return selectedKey;
 };
 
-
-// --------------------------------------------------------------------
-// NEW / UPDATED MODAL COMPONENTS LOGIC
-// --------------------------------------------------------------------
-
-/**
- * NEW: Component to render the AI typing effect.
- */
-const TypingEffect2 = ({ text, onComplete }) => {
-    const [displayedText, setDisplayedText] = useState('');
-    const indexRef = useRef(0);
-    const delay = 30; // Typing speed in ms
-
-    useEffect(() => {
-        if (indexRef.current < text.length) {
-            const timeoutId = setTimeout(() => {
-                setDisplayedText((prev) => prev + text[indexRef.current]);
-                indexRef.current += 1;
-            }, delay);
-            return () => clearTimeout(timeoutId);
-        } else if (text.length > 0) {
-            onComplete();
-        }
-    }, [text, onComplete, displayedText]);
-
-    return (
-        <p style={{ margin: 0, fontFamily: 'monospace', whiteSpace: 'pre-wrap', color: '#1f2937' }}>
-            {displayedText}
-            {indexRef.current < text.length && (
-                <span className="cursor" style={{ 
-                    animation: 'blink 1s step-end infinite', 
-                    marginLeft: '2px', 
-                    fontWeight: 'bold' 
-                }}>|</span>
-            )}
-        </p>
-    );
-};
-
-/**
- * NEW: Loading screen with a surfing animation (CSS-only for portability)
- */
-const SurfingLoading2 = () => {
-    const messages = [
-        "AI is working to generate your ad copy...",
-        "Tuning the message for maximum conversion...",
-        "Analyzing target audience psychology...",
-        "Crafting headline hooks and emotional angles...",
-        "Just a moment, almost finished generating variants...",
-        "Searching for the perfect CTA...",
-        "Applying advanced copy optimization techniques...",
-        "Its surfing... hang ten!",
-    ];
-    
-    const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
-
-    useEffect(() => {
-        const intervalId = setInterval(() => {
-            setCurrentMessageIndex(prevIndex => (prevIndex + 1) % messages.length);
-        }, 2500); // Change message every 2.5 seconds (2500ms)
-
-        return () => clearInterval(intervalId);
-    }, []);
-
-    return (
-        <div style={{ 
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(30, 41, 59, 0.9)', 
-            zIndex: 2000, 
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px'
-        }}>
-            <div style={{
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                height: '300px', 
-                width: '400px',
-                padding: '40px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '12px',
-                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
-            }}>
-                {/* Surfing-like Animation */}
-                <div className="surf-loader" style={{ 
-                    width: '80px', 
-                    height: '80px', 
-                    borderRadius: '50%', 
-                    border: '6px solid #bfdbfe', 
-                    borderTopColor: '#3b82f6', 
-                    animation: 'spin 1.5s linear infinite',
-                    position: 'relative',
-                }}>
-                    <div style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        width: '30px',
-                        height: '30px',
-                        backgroundColor: '#3b82f6',
-                        borderRadius: '50%',
-                        boxShadow: '0 0 10px rgba(59, 130, 246, 0.5)',
-                    }}/>
-                </div>
-                
-                {/* Dynamic Message Display */}
-                <p style={{ 
-                    marginTop: '20px', 
-                    fontSize: '16px', 
-                    fontWeight: '600', 
-                    color: '#1e293b',
-                    textAlign: 'center',
-                    minHeight: '40px', // Prevent vertical jump when text changes length
-                }}>
-                    {messages[currentMessageIndex]}
-                </p>
-                
-                {/* CSS Keyframes for the Animation */}
-                <style dangerouslySetInnerHTML={{__html: `
-                    @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }
-                    @keyframes blink {
-                        0%, 100% { opacity: 1; }
-                        50% { opacity: 0; }
-                    }
-                `}} />
-            </div>
-        </div>
-    );
-};
-
-/**
- * UPDATED: Variant Modal Content to handle loading state, typing effect, and variants display.
- */
-const VariantModalContent2 = ({ 
-    variants, 
-    onClose, 
-    inputs, 
-    onRequestRegenerate, 
-    showNotification,
-    isLoading, // NEW PROP: controls initial loading screen
-}) => {
-    const [expandedIndex, setExpandedIndex] = useState(0); 
-    const [regeneratingId, setRegeneratingId] = useState(null);
-    const [isTypingCompleted, setIsTypingCompleted] = useState(false); // NEW STATE: for first variant typing
-
-    const toggleExpand = (index) => {
-        setExpandedIndex(index === expandedIndex ? null : index);
-    };
-
-    const handleCopy = (text, variantId) => {
-        try {
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-            showNotification(`Variant ${variantId} copied to clipboard!`, 'success');
-        } catch (err) {
-            showNotification('Failed to copy text.', 'error');
-        }
-    };
-
-    const handleRegenerate = async (variantId) => {
-        setRegeneratingId(variantId);
-        try {
-            await onRequestRegenerate(variantId);
-        } finally {
-            setRegeneratingId(null);
-        }
-    };
-
-    const handleDownload = (variant, index) => {
-        if (!variant || !variant.content) {
-            showNotification('No content available to download for this variant.', 'error');
-            return;
-        }
-
-        try {
-            const blob = new Blob([variant.content], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            const platform = inputs?.platform?.value || 'Platform';
-            const placement = inputs?.placement?.value || 'Placement';
-
-            link.href = url;
-            link.download = `ad_variant_${index + 1}_${platform}_${placement}.txt`.replace(/\s+/g, '_');
-
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        } catch (error) {
-            showNotification('Failed to download variant as a file.', 'error');
-        }
-    };
-
-    const modalStyles = {
-        // ... (Styles remain mostly the same, ensuring a visible background)
-        overlay: {
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(30, 41, 59, 0.9)', 
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px'
-        },
-        modal: {
-            backgroundColor: 'white', 
-            borderRadius: '12px',
-            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
-            width: '95%',
-            maxWidth: '900px',
-            maxHeight: '95vh',
-            overflowY: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-        },
-        header: {
-            padding: '20px 24px',
-            borderBottom: '1px solid #e0e7ff', 
-            backgroundColor: '#f1f5f9', 
-            color: '#1e293b', 
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            position: 'sticky', // Ensure header sticks for scrolling modal
-            top: 0,
-            zIndex: 10,
-        },
-        body: {
-            padding: '24px',
-            backgroundColor: 'white',
-        },
-        card: {
-            marginBottom: '16px',
-            border: '1px solid #d1d5db',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            transition: 'all 0.3s ease-in-out',
-        },
-        cardHeader: {
-            padding: '16px 20px',
-            backgroundColor: '#ffffff',
-            cursor: 'pointer',
-            fontWeight: '600',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderBottom: '1px solid transparent',
-            gap: '10px',
-        },
-        cardContent: {
-            padding: '20px',
-            whiteSpace: 'pre-wrap',
-            fontSize: '14px',
-            color: '#1f2937', 
-            backgroundColor: '#f9fafb', 
-            borderTop: '1px solid #e5e7eb',
-        },
-        title: {
-            fontSize: '1.25rem',
-            margin: 0,
-            color: '#1e293b',
-        },
-        actionButton: {
-            padding: '6px 12px',
-            fontSize: '13px',
-            fontWeight: '500',
-            borderRadius: '4px',
-            border: '1px solid #d1d5db',
-            cursor: 'pointer',
-            marginLeft: '8px',
-            transition: 'background-color 0.15s ease-in-out',
-        }
-    };
-    
-    // Condition to show loading screen
-    if (isLoading) {
-        return (
-            <div style={modalStyles.overlay}>
-                {/* Ensure the SurfingLoading component fills a contained area of the modal body */}
-                <div style={{ 
-                    ...modalStyles.modal, 
-                    maxWidth: '500px', 
-                    maxHeight: '400px', 
-                    padding: 0,
-                    overflow: 'hidden', // Hide overflow to clean up loading animation
-                }}>
-                    <SurfingLoading />
-                </div>
-            </div>
-        );
-    }
-    
-    // After loading, ensure variants are present before showing the content
-    if (!variants || variants.length === 0) return null;
-
-    return (
-        <div style={modalStyles.overlay}>
-            <div style={modalStyles.modal}>
-                <div style={modalStyles.header}>
-                    <h2 style={modalStyles.title}>Generated Ad Copy Variants ({variants.length})</h2>
-                    <button 
-                        onClick={onClose} 
-                        style={{
-                            background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', 
-                            color: '#4b5563', padding: '4px', lineHeight: 1
-                        }}
-                    >
-                        &times;
-                    </button>
-                </div>
-                <div style={modalStyles.body}>
-                    <p style={{marginBottom: '20px', color: '#475569', fontSize: '14px'}}>
-                        Click on any variant card to expand and view the full ad copy.
-                    </p>
-                    {variants.filter(v => v.show_variant).map((variant, index) => {
-                        const isExpanded = index === expandedIndex;
-                        const isRegenerating = regeneratingId === variant.id;
-                        const isFirstVariant = index === 0;
-                        
-                        // Determine content for rendering
-                        let contentToRender = variant.content;
-                        let showTypingEffect = isFirstVariant && !isTypingCompleted;
-
-                        return (
-                            <div key={variant.id || index} style={{
-                                ...modalStyles.card,
-                                border: isExpanded ? '1px solid #3b82f6' : '1px solid #e5e7eb',
-                                boxShadow: isExpanded ? '0 4px 8px -2px rgba(59, 130, 246, 0.2)' : '0 1px 3px rgba(0,0,0,0.05)',
-                                opacity: isRegenerating ? 0.6 : 1,
-                            }}>
-                                <div 
-                                    style={{
-                                        ...modalStyles.cardHeader,
-                                        backgroundColor: isExpanded ? '#e0f2fe' : '#ffffff',
-                                        borderBottom: isExpanded ? '1px solid #93c5fd' : '1px solid transparent',
-                                        color: isExpanded ? '#0369a1' : '#1f2937',
-                                    }}
-                                    onClick={() => toggleExpand(index)}
-                                >
-                                    <span style={{flexGrow: 1}}>Variant {index + 1}: {inputs.platform?.value} ({inputs.placement?.value})</span>
-                                    
-                                    <div onClick={(e) => e.stopPropagation()} style={{display: 'flex', alignItems: 'center'}}>
-                                        {/* Copy Button */}
-                                        <button 
-                                            style={{
-                                                ...modalStyles.actionButton,
-                                                backgroundColor: '#10b981', color: 'white', border: 'none',
-                                            }}
-                                            onClick={() => handleCopy(variant.content, index + 1)}
-                                            disabled={showTypingEffect} // Disable copy button while typing
-                                        >
-                                            Copy
-                                        </button>
-
-                                        {/* Regenerate Button */}
-                                        <button 
-                                            style={{
-                                                ...modalStyles.actionButton,
-                                                backgroundColor: isRegenerating ? '#9ca3af' : '#f97316', 
-                                                color: 'white', 
-                                                border: 'none',
-                                                cursor: isRegenerating ? 'wait' : 'pointer'
-                                            }}
-                                            onClick={() => handleRegenerate(variant.id)}
-                                            disabled={isRegenerating || showTypingEffect} // Disable regenerate while typing
-                                        >
-                                            {isRegenerating ? 'Regenerating...' : 'Regenerate'}
-                                        </button>
-
-                                        {/* Download Button */}
-                                        <button 
-                                            style={{
-                                                ...modalStyles.actionButton,
-                                                backgroundColor: '#3b82f6',
-                                                color: 'white',
-                                                border: 'none',
-                                            }}
-                                            onClick={() => handleDownload(variant, index)}
-                                        >
-                                            Download
-                                        </button>
-                                    </div>
-                                    
-                                    <span>{isExpanded ? '▲' : '▼'}</span>
-                                </div>
-                                {isExpanded && (
-                                    <div style={modalStyles.cardContent}>
-                                        <div style={{ margin: 0, fontFamily: 'inherit', whiteSpace: 'pre-wrap' }}>
-                                            <p style={{ fontWeight: 'bold', margin: '0 0 8px 0' }}>Variant Content:</p>
-                                            
-                                            {/* RENDER LOGIC FOR TYPING EFFECT */}
-                                            {isFirstVariant && !isTypingCompleted ? (
-                                                <TypingEffect 
-                                                    text={contentToRender} 
-                                                    onComplete={() => setIsTypingCompleted(true)} 
-                                                />
-                                            ) : (
-                                                <p style={{ margin: 0, fontFamily: 'inherit', whiteSpace: 'pre-wrap', color: '#1f2937' }}>
-                                                    {contentToRender}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
-
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
-                        <button 
-                            onClick={onClose} 
-                            style={{ 
-                                padding: '10px 20px', 
-                                fontSize: '14px', 
-                                fontWeight: '500', 
-                                borderRadius: '6px', 
-                                border: '1px solid #d1d5db', 
-                                cursor: 'pointer',
-                                backgroundColor: '#f9fafb',
-                                color: '#4b5563',
-                                transition: 'background-color 0.15s ease-in-out'
-                            }}
-                        >
-                            Close Modal
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-
-// --------------------------------------------------------------------
-// UPDATED AdCopyGeneratorForm COMPONENT (Integrating new modal logic)
-// --------------------------------------------------------------------
-
 const AdCopyGeneratorForm = () => {
     // Hardcoded audience suggestions (moved inside the component function)
     const audienceSuggestions = {
@@ -599,6 +143,7 @@ const AdCopyGeneratorForm = () => {
     // UPDATED STATE MANAGEMENT FOR GENERATION FLOW
     const [isGenerating, setIsGenerating] = useState(false); // Controls button text on form
     const [isApiLoading, setIsApiLoading] = useState(false); // NEW: Controls the modal loading state (step 1 & 2)
+    const [isHistoryView, setIsHistoryView] = useState(false);
     
     const [requestId, setRequestId] = useState(null);
     const [showVariantsModal, setShowVariantsModal] = useState(false);
@@ -886,6 +431,7 @@ const AdCopyGeneratorForm = () => {
         // 1. Instantly open modal and show surfing animation
         setShowSummary(false); // Close summary modal
         setShowVariantsModal(true); // Open the variants modal
+           setIsHistoryView(false);
         setIsApiLoading(true); // START API LOADING - SHOWS SURFING ANIMATION IN MODAL
 
         // 2. While backend API request is in progress: modal shows surfing animation
@@ -955,6 +501,7 @@ const AdCopyGeneratorForm = () => {
     try {
         setIsGenerating(true); // START GENERATING - SHOWS LOADING SCREEN
        setIsApiLoading(true);
+          setIsHistoryView(false);
         // Reuse the formatPayload function to get the current form data
         const payload = formatPayload();
         
@@ -994,6 +541,7 @@ const AdCopyGeneratorForm = () => {
             
             setShowVariantsModal(true);
             setShowSummary(false);
+         
             // DO NOT show success notification here, as the typing effect should start now.
         } else {
             throw new Error("No variants were returned from the server");
@@ -1027,6 +575,7 @@ const AdCopyGeneratorForm = () => {
         setIsGenerating(true);
         setShowVariantsModal(true); // Open modal
         setIsApiLoading(true); // Show surfing loader
+        setIsHistoryView(true);
         
         try {
             const response = await fetch(API.GET_VARIANTS_LOG(requestId), {
@@ -1250,6 +799,7 @@ const AdCopyGeneratorForm = () => {
         setRequestId(null); // Clear request ID
         setIsApiLoading(false); // Reset loading state
         setIsGenerating(false); // Reset button state
+        setIsHistoryView(false);
         showNotification('Form has been reset', 'info');
     };
 
@@ -1717,22 +1267,7 @@ const AdCopyGeneratorForm = () => {
                                                     <button 
                                                         type="button" 
                                                         onClick={() => removeAudienceChip(chip)}
-                                                        style={{
-                                                            background: 'none',
-                                                            border: 'none',
-                                                            color: 'white',
-                                                            cursor: 'pointer',
-                                                            fontSize: '14px',
-                                                            lineHeight: 1,
-                                                            padding: '0 0 0 4px',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            width: '16px',
-                                                            height: '16px',
-                                                            borderRadius: '50%',
-                                                            backgroundColor: 'rgba(255,255,255,0.2)'
-                                                        }}
+                                                         style={styles.removeBtn} 
                                                     >
                                                         ×
                                                     </button>
@@ -2819,20 +2354,24 @@ const AdCopyGeneratorForm = () => {
             
             {/* -------------------- Variant Display Modal -------------------- */}
             {showVariantsModal && (
-                <VariantModalContent
-                    variants={generatedVariantsData.variants} 
+              <VariantModalContent
+                    variants={generatedVariantsData.variants}  
                     inputs={generatedVariantsData.inputs}
-                    onClose={() => setShowVariantsModal(false)} 
+                    onClose={() => {
+                        setShowVariantsModal(false); 
+                        setIsHistoryView(false); // *** NEW: Reset flag on close ***
+                        setShowSummary(true);
+                    }} 
                     onRequestRegenerate={handleRegenerateVariant}
                     showNotification={showNotification}
-                    isLoading={isApiLoading} // Pass the loading state down
+                    isLoading={isApiLoading} 
+                    isHistoryView={isHistoryView} // *** NEW PROP PASSED DOWN ***
                 />
             )}
-            {
-              isApiLoading &&(
-                <SurfingLoading/>
-              )
-            }
+            // Inside AdCopyGeneratorForm render:
+            {isApiLoading && (
+                <SurfingLoading mode={isHistoryView ? "history" : "generate"} />
+            )}
         </div>
     );
 };

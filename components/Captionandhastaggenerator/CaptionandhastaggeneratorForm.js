@@ -4,7 +4,8 @@ import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 import VariantModalContent from './VariantModalContent';
 // --- CHANGED IMPORT TO NEW MODAL COMPONENT ---
-import SummaryReviewModal from './SummaryReviewModal'; 
+import SummaryReviewModal from './SummaryReviewModal';
+import SurfingLoading from './SurfingLoading';
 
 // --- API Constants (Provided by User) ---
 const BASE_URL = 'https://olive-gull-905765.hostingersite.com/public/api/v1';
@@ -67,6 +68,10 @@ const Captionandhastaggeneratorform = () => {
         inputs: {} 
     });
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+    const [audienceInput, setAudienceInput] = useState('');
+    const [showAudienceSuggestions, setShowAudienceSuggestions] = useState(false);
+    const [isApiLoading, setIsApiLoading] = useState(false);
+    const [isHistoryView, setIsHistoryView] = useState(false);
 
     // --- Shared Utility Function ---
     const showNotification = (message, type) => {
@@ -128,6 +133,13 @@ const Captionandhastaggeneratorform = () => {
         { value: 'linebreaks', label: 'Use Line Breaks', apiValue: 'line_breaks' }
     ];
 
+    // Hardcoded audience suggestions (mirroring Ad Copy Generator)
+    const audienceSuggestions = {
+        'Demographics': ['Women 25-34', 'Men 35-44', 'Parents of Toddlers'],
+        'Interests': ['Fitness Enthusiasts', 'Tech Early Adopters', 'Travel Lovers'],
+        'Professions': ['Marketing Managers', 'Small Business Owners', 'Software Engineers']
+    };
+
     // --- 4. Data Fetching Logic (unchanged) ---
     useEffect(() => {
         setMounted(true);
@@ -177,7 +189,6 @@ const Captionandhastaggeneratorform = () => {
         fetchOptions();
     }, []);
 
-
     // --- Handlers (Unchanged) ---
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -194,6 +205,12 @@ const Captionandhastaggeneratorform = () => {
         });
     };
 
+    const handleAudienceInput = (e) => {
+        const value = e.target.value;
+        setAudienceInput(value);
+        setShowAudienceSuggestions(value.length > 0);
+    };
+
     const handleArrayChange = (e, field) => {
         if (e.key === 'Enter' && e.target.value.trim()) {
             e.preventDefault();
@@ -204,6 +221,19 @@ const Captionandhastaggeneratorform = () => {
                 e.target.value = '';
             }
         }
+    };
+
+    const addAudienceChip = (chip) => {
+        if (!chip.trim()) return;
+        const value = chip.trim();
+        if (!formData.targetAudience.includes(value) && formData.targetAudience.length < 10) {
+            setFormData(prev => ({
+                ...prev,
+                targetAudience: [...prev.targetAudience, value]
+            }));
+        }
+        setAudienceInput('');
+        setShowAudienceSuggestions(false);
     };
 
     const removeItem = (field, index) => {
@@ -242,6 +272,8 @@ const Captionandhastaggeneratorform = () => {
 
     const handleGenerate = async () => {
         setIsGenerating(true);
+        setIsHistoryView(false);
+        setIsApiLoading(true);
         showNotification('Generating captions and hashtags...', 'info');
 
         // 1. Construct the API Payload
@@ -323,6 +355,7 @@ const Captionandhastaggeneratorform = () => {
             showNotification(`Error: ${submitError.message || submitError.toString()}`, 'error');
         } finally {
             setIsGenerating(false);
+            setIsApiLoading(false);
             setIsSubmitting(false);
         }
     };
@@ -391,6 +424,8 @@ const Captionandhastaggeneratorform = () => {
         setIsFetchingLog(true);       // so VariantsModal can show loading state if needed
         setIsGenerating(true);         // reuse existing generating flag for buttons
         setModalTitle('Variants Log'); // set title for log view
+        setIsHistoryView(true);
+        setIsApiLoading(true);
 
         try {
             const response = await fetch(API.GET_VARIANTS_LOG(requestId), {
@@ -416,39 +451,22 @@ const Captionandhastaggeneratorform = () => {
                     variants: [{ id: 'error', content: `Error loading log: ${errorMessage}`, isLog: true }],
                     inputs: {}
                 });
-                 console.log("inside if:",errorMessage);
             } else {
                 const result = await response.json();
                 
                 if (result.variants && Array.isArray(result.variants) && result.variants.length > 0) {
-                    // const structured = result.variants.map((v, index) => ({
-                    //     id: v.id || `copy-log-${Date.now()}-${index}`,
-                    //     // Display the entire object content as a formatted string for log view
-                    //     content: JSON.stringify(v, null, 2), 
-                    //     isLog: true,
-                    // }));
+                    const structuredVariants = result.variants.map((content, index) => ({
+                        id: content.id || `temp-${Date.now()}-${index}`,
+                        content: content.content || content,
+                        show_variant: content.show_variant || true,
+                    }));
 
-                    // *** FIX APPLIED HERE: Ensure state is an object with a 'variants' key. ***
-                     //console.log("inside else:",structured);
-                    // setGeneratedVariantsData({
-                    //     requestId: requestId,
-                    //     variants: structured,
-                    //     inputs: result.inputs || {},
-                    // });
-
-                            const structuredVariants = result.variants.map((content, index) => ({
-                    id: content.id || `temp-${Date.now()}-${index}`,
-                    content: content.content || content,
-                    show_variant: content.show_variant || true,
-                }));
-
-                   setGeneratedVariantsData({
-                     variants: structuredVariants,
-                    inputs: result.inputs,
-                    requestId: result.request_id });
-
-                    
-                    
+                    setGeneratedVariantsData({
+                        variants: structuredVariants,
+                        inputs: result.inputs,
+                        requestId: result.request_id
+                    });
+                    setShowVariantsModal(true);
                 } else {
                     console.error('Variants log returned no variants:', result);
                     alert('No variants found in the log for this request.');
@@ -457,10 +475,9 @@ const Captionandhastaggeneratorform = () => {
                         variants: [{ id: 'empty-log', content: 'Log was successfully fetched but contained no variant entries.', isLog: true }],
                         inputs: result.inputs || {},
                     });
+                    setShowVariantsModal(true);
                 }
             }
-
-            setShowVariantsModal(true);
         } catch (err) {
             console.error('Error while fetching variants log:', err);
             alert('Error while loading log. Check console for details.');
@@ -473,6 +490,7 @@ const Captionandhastaggeneratorform = () => {
         } finally {
             setIsFetchingLog(false);
             setIsGenerating(false);
+            setIsApiLoading(false);
             setShowSummary(false);
         }
     };
@@ -839,23 +857,150 @@ const Captionandhastaggeneratorform = () => {
                                 <div style={styles.formGroup}>
                                     <label style={styles.label}>
                                         Target Audience <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} data-tooltip-id="targetAudience-tooltip" data-tooltip-content="Enter your target audience (press Enter to add multiple, max 10)">i</span>
+                                        <span 
+                                            style={styles.infoIcon} 
+                                            data-tooltip-id="targetAudience-tooltip" 
+                                            data-tooltip-html="Describe who you want to reach with this post. Include audience characteristics like age, profession, interests, and behavior to help generate captions that speak directly to them."
+                                        >
+                                            i
+                                        </span>
                                     </label>
                                     <Tooltip id="targetAudience-tooltip" />
-                                    <input
-                                        type="text"
-                                        style={styles.input}
-                                        placeholder="Add an audience segment and press Enter (e.g., Young professionals, age 25-35)"
-                                        onKeyPress={(e) => handleArrayChange(e, 'targetAudience')}
-                                        disabled={formData.targetAudience.length >= 10}
-                                    />
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
-                                        {formData.targetAudience.map((audience, index) => (
-                                            <span key={index} style={{ ...styles.badge, ...styles.badgePrimary }}>
-                                                {audience}
-                                                <button type="button" style={styles.removeBtn} onClick={() => removeItem('targetAudience', index)}>×</button>
+                                    <div style={{ 
+                                        display: 'flex', 
+                                        flexWrap: 'wrap', 
+                                        gap: '8px', 
+                                        marginBottom: '8px',
+                                        minHeight: '40px',
+                                        alignItems: 'center',
+                                        padding: '4px',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: '6px',
+                                        backgroundColor: formData.targetAudience.length > 0 ? '#0b1220' : 'transparent'
+                                    }}>
+                                        {formData.targetAudience.length === 0 && (
+                                            <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
+                                                Add audience segments (e.g., 'Women 25-34', 'Fitness Enthusiasts')
+                                            </span>
+                                        )}
+                                        {formData.targetAudience.map((chip, index) => (
+                                            <span 
+                                                key={index} 
+                                                style={{
+                                                    ...styles.badge,
+                                                    ...styles.badgePrimary,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    padding: '4px 10px'
+                                                }}
+                                            >
+                                                {chip}
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => removeItem('targetAudience', index)}
+                                                    style={styles.removeBtn}
+                                                >
+                                                    ×
+                                                </button>
                                             </span>
                                         ))}
+                                    </div>
+
+                                    <div style={{ position: 'relative' }}>
+                                        <input
+                                            type="text"
+                                            value={audienceInput}
+                                            onChange={handleAudienceInput}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && audienceInput.trim()) {
+                                                    e.preventDefault();
+                                                    addAudienceChip(audienceInput.trim());
+                                                }
+                                            }}
+                                            style={{
+                                                ...styles.input,
+                                                marginBottom: 0,
+                                                borderBottomLeftRadius: showAudienceSuggestions ? '0' : '6px',
+                                                borderBottomRightRadius: showAudienceSuggestions ? '0' : '6px'
+                                            }}
+                                            placeholder="Type and press Enter to add audience segments"
+                                            required={formData.targetAudience.length === 0}
+                                        />
+
+                                        {showAudienceSuggestions && (
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '100%',
+                                                left: 0,
+                                                right: 0,
+                                                backgroundColor: '#020617',
+                                                border: '1px solid #1e293b',
+                                                borderTop: 'none',
+                                                borderBottomLeftRadius: '6px',
+                                                borderBottomRightRadius: '6px',
+                                                zIndex: 1000,
+                                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)',
+                                                maxHeight: '200px',
+                                                overflowY: 'auto'
+                                            }}>
+                                                {Object.entries(audienceSuggestions).map(([category, suggestions]) => {
+                                                    const filtered = suggestions.filter(s => 
+                                                        s.toLowerCase().includes(audienceInput.toLowerCase()) && 
+                                                        !formData.targetAudience.includes(s)
+                                                    );
+                                                    if (filtered.length === 0) return null;
+                                                    return (
+                                                        <div key={category}>
+                                                            <div style={{
+                                                                padding: '8px 12px',
+                                                                fontSize: '12px',
+                                                                fontWeight: 600,
+                                                                color: '#e5e7eb',
+                                                                backgroundColor: '#020617',
+                                                                textTransform: 'uppercase',
+                                                                letterSpacing: '0.05em'
+                                                            }}>
+                                                                {category}
+                                                            </div>
+                                                            {filtered.map((suggestion, idx) => (
+                                                                <div
+                                                                    key={idx}
+                                                                    onClick={() => {
+                                                                        addAudienceChip(suggestion);
+                                                                        setAudienceInput('');
+                                                                    }}
+                                                                    style={{ padding: '8px 16px', cursor: 'pointer', color: '#e5e7eb' }}
+                                                                >
+                                                                    {suggestion}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    );
+                                                })}
+
+                                                {audienceInput && !Object.values(audienceSuggestions)
+                                                    .flat()
+                                                    .some(s => s.toLowerCase() === audienceInput.toLowerCase()) && (
+                                                    <div
+                                                        onClick={() => {
+                                                            addAudienceChip(audienceInput);
+                                                            setAudienceInput('');
+                                                        }}
+                                                        style={{
+                                                            padding: '8px 16px',
+                                                            cursor: 'pointer',
+                                                            backgroundColor: '#020617',
+                                                            borderTop: '1px solid #1e293b',
+                                                            color: '#38bdf8',
+                                                            fontWeight: 500
+                                                        }}
+                                                    >
+                                                        Add "{audienceInput}" as custom audience
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -1413,9 +1558,13 @@ const Captionandhastaggeneratorform = () => {
                     }}
                     onRequestRegenerate={handleRegenerateVariant}
                     showNotification={showNotification}
-                    isFetchingLog={isFetchingLog} 
-                    modalTitle={modalTitle} 
+                    isLoading={isApiLoading}
+                    isHistoryView={isHistoryView}
                 />
+            )}
+            
+            {isApiLoading && (
+                <SurfingLoading mode={isHistoryView ? "history" : "generate"} />
             )}
         </div>
     );

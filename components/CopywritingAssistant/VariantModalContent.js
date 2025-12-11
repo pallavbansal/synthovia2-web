@@ -51,16 +51,16 @@ const VariantModalContent = ({
     isLoading, 
     isHistoryView = false,
 }) => {
-    
+    console.log("check copy response:",variants);
     const [expandedIndex, setExpandedIndex] = useState(0); 
     const [regeneratingId, setRegeneratingId] = useState(null);
     const [typingRegeneratedId, setTypingRegeneratedId] = useState(null); 
     
+    // Define the global typing state outside of the map function scope
     const initialTypingState = isHistoryView || variants.length === 0;
     const [isTypingCompleted, setIsTypingCompleted] = useState(initialTypingState); 
 
     useEffect(() => {
-        // Global Typing Logic (Only for initial, non-history load)
         if (isHistoryView || variants.length === 0) {
              setIsTypingCompleted(true);
         } else {
@@ -69,13 +69,11 @@ const VariantModalContent = ({
         if (variants.length > 0) {
             setExpandedIndex(0);
         }
-        // Clear regeneration typing state if the whole variant set changes
         setTypingRegeneratedId(null); 
     }, [variants.length, isHistoryView]);
 
 
     const toggleExpand = (index) => {
-        // This function is implicitly blocked via pointerEvents: none on the UI element.
         setExpandedIndex(index === expandedIndex ? null : index);
     };
 
@@ -108,11 +106,12 @@ const VariantModalContent = ({
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
 
-            const platform = inputs?.platform?.value || 'Platform';
-            const textLength = inputs?.adTextLength?.value || 'TextLength'; 
+            // Use generic fallback text since specific input names like 'platform' are missing here
+            const useCase = inputs?.use_case?.value || 'N/A Use Case';
+            const language = inputs?.language?.value || 'N/A Language'; 
 
             link.href = url;
-            link.download = `adcopy_variant_${index + 1}_${platform}_${textLength}.txt`.replace(/\s+/g, '_');
+            link.download = `copywriting_variant_${index + 1}_${useCase}_${language}.txt`.replace(/\s+/g, '_');
 
             document.body.appendChild(link);
             link.click();
@@ -129,7 +128,6 @@ const VariantModalContent = ({
     const handleRegenerate = async (variantId) => {
         setRegeneratingId(variantId);
 
-        // Ensure the current variant is expanded to show the typing
         const indexToExpand = variants.findIndex(v => v.id === variantId);
         if (indexToExpand !== -1) {
             setExpandedIndex(indexToExpand);
@@ -221,7 +219,8 @@ const VariantModalContent = ({
         <div style={modalStyles.overlay}>
             <div style={modalStyles.modal}>
                 <div style={modalStyles.header}>
-                    <h2 style={modalStyles.title}>Generated Ad Copy Variants ({variants.length})
+                    {/* Updated Title */}
+                    <h2 style={modalStyles.title}>Generated Copywriting Variants ({variants.length})
                         {isHistoryView && (
                             <span style={{ marginLeft: '10px', fontSize: '14px', color: '#94a3b8', fontWeight: '400' }}>
                                 (History Log)
@@ -245,7 +244,7 @@ const VariantModalContent = ({
                 <div style={modalStyles.body}>
                     
                     <p style={{marginBottom: '20px', color: '#475569', fontSize: '14px'}}>
-                        Click on any variant card to expand and view the full ad copy.
+                        Click on any variant card to expand and view the full copy.
                         {isUILocked && (
                             <span style={{ color: '#f97316', marginLeft: '8px' }}>
                                 (Wait for generation to complete)
@@ -258,17 +257,19 @@ const VariantModalContent = ({
                         const isRegenerating = regeneratingId === variant.id;
                         const isFirstVariant = index === 0;
                         
-                        // Typing condition specific to this variant
-                        // NOTE: isInitialTypingActive is already calculated globally
                         const isInitialTyping = isFirstVariant && isInitialTypingActive;
                         const isRegenTyping = typingRegeneratedId === variant.id && !isRegenerating;
 
                         const showTypingEffect = isInitialTyping || isRegenTyping;
                         
-                        // The lock condition for elements in this map is the global lock state
                         const isInteractionDisabled = isUILocked; 
 
                         let contentToRender = variant.content;
+
+                        // Safely access copywriting fields
+                        const displayUseCase = inputs?.use_case?.value || 'Content';
+                        const displayLanguage = inputs?.language?.value || 'N/A';
+                        const displayTone = inputs?.tone_of_voice?.value || 'N/A';
 
                         return (
                             <div key={variant.id || index} style={{
@@ -290,7 +291,10 @@ const VariantModalContent = ({
                                     }}
                                     onClick={() => toggleExpand(index)}
                                 >
-                                    <span style={{flexGrow: 1}}>Variant {index + 1}: {inputs.platform?.value} ({inputs.placement?.value})</span>
+                                    {/* FIX APPLIED HERE: Use Copywriting Assistant Keys */}
+                                    <span style={{flexGrow: 1}}>
+                                        Variant {index + 1}: {displayUseCase} ({displayLanguage}, {displayTone})
+                                    </span>
                                     
                                     <div onClick={(e) => e.stopPropagation()} style={{display: 'flex', alignItems: 'center'}}>
                                         
