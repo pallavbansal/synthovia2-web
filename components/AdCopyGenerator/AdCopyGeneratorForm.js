@@ -937,7 +937,6 @@ const AdCopyGeneratorForm = () => {
                     <div style={{ padding: '24px' }}>
                         <form onSubmit={handleSubmit}>
                             <div className="row g-4">
-                                {!formData.showAdvanced && (
                                 <>
                                 {/* Platform & Placement - Two-Step Selector */}
                                 <div className="col-md-6">
@@ -1848,7 +1847,8 @@ const AdCopyGeneratorForm = () => {
                                 </div>
 
                                 <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #e5e7eb', margin: '5px 0' }} />
-                                </>)}
+                                </>
+                            
 
                                 {/* Advanced Features Toggle */}
                                 <div className="col-12" style={{ margin: '16px 0' }}>
