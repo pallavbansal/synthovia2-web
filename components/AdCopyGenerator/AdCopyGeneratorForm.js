@@ -937,7 +937,6 @@ const AdCopyGeneratorForm = () => {
                     <div style={{ padding: '24px' }}>
                         <form onSubmit={handleSubmit}>
                             <div className="row g-4">
-                           
                                 <>
                                 {/* Platform & Placement - Two-Step Selector */}
                                 <div className="col-md-6">
