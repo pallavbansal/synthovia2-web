@@ -2368,7 +2368,7 @@ const AdCopyGeneratorForm = () => {
                     isHistoryView={isHistoryView} // *** NEW PROP PASSED DOWN ***
                 />
             )}
-            // Inside AdCopyGeneratorForm render:
+         
             {isApiLoading && (
                 <SurfingLoading mode={isHistoryView ? "history" : "generate"} />
             )}
