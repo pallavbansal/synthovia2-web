@@ -149,6 +149,7 @@ const SummaryReviewModal = ({ formData, apiOptions, onGenerate, onEdit, onViewLo
     const captionStyleDetails = getOptionDetails('caption_style', formData.captionStyle);
     const hashtagStyleDetails = getOptionDetails('caption_hashtag_style', formData.hashtagStyle);
     const emotionalIntentDetails = getOptionDetails('caption_emotional_intent', formData.emotionalIntent);
+    const hashtagLimitDetails = getOptionDetails('caption_hashtag_limit', formData.hashtagLimit);
 
     const getFormattingLabels = () => {
         return formData.formattingOptions.map(key => {
@@ -230,18 +231,26 @@ const SummaryReviewModal = ({ formData, apiOptions, onGenerate, onEdit, onViewLo
                         <div style={styles.valueBox}>{ctaDetails.value === 'Custom CTA' ? `Custom: ${formData.customCta}` : ctaDetails.value || 'N/A'}</div>
                     </div>
                     <div style={{...styles.item, gridColumn: 'span 1'}}>
+                        <span style={styles.itemLabel}>Number of CTAs:</span>
+                        <div style={styles.valueBox}>{formData.numberOfCta ?? 'N/A'}</div>
+                    </div>
+                    <div style={{...styles.item, gridColumn: 'span 1'}}>
                         <span style={styles.itemLabel}>Post Length / Variants / Creativity:</span>
                         <div style={styles.valueBox}>
                             Length: {postLengthDetails.value} | Variants: {formData.variants} | Creativity: {formData.creativityLevel}/10
                         </div>
                     </div>
+                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+                        <span style={styles.itemLabel}>Hashtag Limit:</span>
+                        <div style={styles.valueBox}>{hashtagLimitDetails.value || 'N/A'}</div>
+                    </div>
 
                     {/* Full Width Tags/Options */}
                     <div style={{...styles.item, gridColumn: '1 / -1'}}>
-                        <span style={styles.itemLabel}>Formatting Options:</span>
+                        <span style={styles.itemLabel}>Proofread &amp; Formatting:</span>
                         <div style={styles.tagContainer}>
                             <span style={{...styles.badge, backgroundColor: formData.proofread ? '#10b981' : '#f87171', color: 'white'}}>
-                                Proofread: {formData.proofread ? 'Yes' : 'No'}
+                                Proofread &amp; Optimize: {formData.proofread ? 'Yes' : 'No'}
                             </span>
                             {getFormattingLabels().map((l, i) => <span key={i} style={{ ...styles.badge, ...styles.badgeSecondary }}>{l}</span>)}
                         </div>
@@ -249,7 +258,7 @@ const SummaryReviewModal = ({ formData, apiOptions, onGenerate, onEdit, onViewLo
 
                     {(formData.requiredKeywords.length > 0 || formData.excludeWords.length > 0) && (
                         <div style={{...styles.item, gridColumn: '1 / -1'}}>
-                            <span style={styles.itemLabel}>Keyword Constraints:</span>
+                            <span style={styles.itemLabel}>Required Keywords / Hashtags &amp; Exclude Words/Topics:</span>
                             <div style={styles.tagContainer}>
                                 {formData.requiredKeywords.map((k, i) => <span key={`req-${i}`} style={{ ...styles.badge, ...styles.badgeSuccess }}>Required: {k}</span>)}
                                 {formData.excludeWords.map((w, i) => <span key={`exc-${i}`} style={{ ...styles.badge, backgroundColor: '#f87171', color: 'white' }}>Exclude: {w}</span>)}
@@ -263,7 +272,6 @@ const SummaryReviewModal = ({ formData, apiOptions, onGenerate, onEdit, onViewLo
                             <div style={styles.valueBox}>{formData.complianceNotes}</div>
                         </div>
                     )}
-
                 </div>
 
                 {/* Actions */}

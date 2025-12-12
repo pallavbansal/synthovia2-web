@@ -154,11 +154,12 @@ const Captionandhastaggeneratorform = () => {
         }
 
         const option = getOptions(fieldKey).find(opt => opt.key === value);
-        // NOTE: For the API payload, we must return the ID and type for predefined fields.
+        // NOTE: For the API payload, we use id/type; for display (SummaryReviewModal) we prefer the label.
         return {
             type: 'predefined',
             id: option?.id || null,
-            value: option?.key || value || 'N/A' 
+            // Use label for user-facing display, fall back to key/value if label is missing
+            value: option?.label || option?.key || value || 'N/A'
         };
     };
 
@@ -675,7 +676,7 @@ const Captionandhastaggeneratorform = () => {
         outline: 'none',
         transition: 'all 0.2s ease',
     },
-        radioGroup: { display: 'flex', gap: '16px', marginTop: '8px' },
+        radioGroup: { display: 'flex', gap: '16px', marginTop: '14px' ,marginBottom:'10px'},
         radioItem: { display: 'flex', alignItems: 'center', gap: '8px' },
         toast: { position: 'fixed', top: '20px', right: '20px', padding: '16px 24px', color: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 9999 },
     };
@@ -1177,7 +1178,7 @@ const Captionandhastaggeneratorform = () => {
                             <div className="col-12" style={{ margin: '16px 0' }}>
                                 <div style={{
                                     display: 'inline-flex',
-                                    backgroundColor: '#1e293b', // Updated background
+                                    backgroundColor: 'white',
                                     borderRadius: '9999px',
                                     border: '1px solid #3b82f6',
                                     overflow: 'hidden',
@@ -1185,46 +1186,45 @@ const Captionandhastaggeneratorform = () => {
                                     boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
                                 }}>
                                     <button
-                                    type="button"
-                                    onClick={toggleAdvanced}
-                                    style={{
-                                        padding: '6px 20px',
-                                        border: 'none',
-                                        backgroundColor: formData.showAdvanced ? 'transparent' : '#3b82f6',
-                                        color: formData.showAdvanced ? '#e2e8f0' : 'white',
-                                        fontWeight: 500,
-                                        fontSize: '14px',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease',
-                                        borderRadius: '9999px',
-                                        margin: '2px',
-                                        whiteSpace: 'nowrap'
-                                    }}
+                                        type="button"
+                                        onClick={toggleAdvanced}
+                                        style={{
+                                            padding: '6px 20px',
+                                            border: 'none',
+                                            backgroundColor: formData.showAdvanced ? 'transparent' : '#3b82f6',
+                                            color: formData.showAdvanced ? '#1f2937' : 'white',
+                                            fontWeight: 500,
+                                            fontSize: '14px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease',
+                                            borderRadius: '9999px',
+                                            margin: '2px',
+                                            whiteSpace: 'nowrap'
+                                        }}
                                     >
-                                    <span>Hide Advanced</span>
+                                        <span>Hide Advanced</span>
                                     </button>
                                     <button
-                                    type="button"
-                                    onClick={toggleAdvanced}
-                                    style={{
-                                        padding: '6px 20px',
-                                        border: 'none',
-                                        backgroundColor: formData.showAdvanced ? '#3b82f6' : 'transparent',
-                                        color: formData.showAdvanced ? 'white' : '#e2e8f0',
-                                        fontWeight: 500,
-                                        fontSize: '14px',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease',
-                                        borderRadius: '9999px',
-                                        margin: '2px',
-                                        whiteSpace: 'nowrap'
-                                    }}
+                                        type="button"
+                                        onClick={toggleAdvanced}
+                                        style={{
+                                            padding: '6px 20px',
+                                            border: 'none',
+                                            backgroundColor: formData.showAdvanced ? '#3b82f6' : 'transparent',
+                                            color: formData.showAdvanced ? 'white' : '#1f2937',
+                                            fontWeight: 500,
+                                            fontSize: '14px',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease',
+                                            borderRadius: '9999px',
+                                            margin: '2px',
+                                            whiteSpace: 'nowrap'
+                                        }}
                                     >
-                                    <span>Show Advanced</span>
+                                        <span>Show Advanced</span>
                                     </button>
                                 </div>
-                                </div>
-
+                            </div>
 
                             {/* Advanced Features Container (Conditional) */}
                             {formData.showAdvanced && (
