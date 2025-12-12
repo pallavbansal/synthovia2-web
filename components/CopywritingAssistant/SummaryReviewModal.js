@@ -168,6 +168,14 @@ const SummaryReviewModal = ({
     });
   };
 
+  const renderListValue = (value) => {
+    if (Array.isArray(value)) {
+      if (!value.length) return 'N/A';
+      return value.join(', ');
+    }
+    return value || 'N/A';
+  };
+
   return (
     <div style={styles.overlay} onClick={onEdit}>
       <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -182,9 +190,25 @@ const SummaryReviewModal = ({
           <h3 style={styles.sectionTitle}>🎯 Core Request Details</h3>
 
           <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Use Case Mode:</span>
+            <div style={styles.valueBox}>
+              {formData.useCaseMode === 'custom' ? 'Custom' : 'Predefined'}
+            </div>
+          </div>
+
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
             <span style={styles.itemLabel}>Use Case:</span>
             <div style={styles.valueBox}>
-              {findLabel(useCaseOptions, formData.useCase)}
+              {formData.useCaseMode === 'custom'
+                ? formData.customUseCase || 'N/A'
+                : findLabel(useCaseOptions, formData.useCase)}
+            </div>
+          </div>
+
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Tone Mode:</span>
+            <div style={styles.valueBox}>
+              {formData.toneMode === 'custom' ? 'Custom' : 'Predefined'}
             </div>
           </div>
 
@@ -192,7 +216,7 @@ const SummaryReviewModal = ({
             <span style={styles.itemLabel}>Tone of Voice:</span>
             <div style={styles.valueBox}>
               {formData.toneMode === 'custom'
-                ? `Custom: ${formData.customTone || 'N/A'}`
+                ? formData.customTone || 'N/A'
                 : findLabel(toneOptions, formData.toneOfVoice)}
             </div>
           </div>
@@ -203,8 +227,16 @@ const SummaryReviewModal = ({
           </div>
 
           <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Target Audience Mode:</span>
+            <div style={styles.valueBox}>
+              {/* Mirrors targetAudience handling in the form (multi-tag vs text) */}
+              {Array.isArray(formData.targetAudience) ? 'Multi-Segment' : 'Single Description'}
+            </div>
+          </div>
+
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
             <span style={styles.itemLabel}>Target Audience:</span>
-            <div style={styles.valueBox}>{formData.targetAudience || 'N/A'}</div>
+            <div style={styles.valueBox}>{renderListValue(formData.targetAudience)}</div>
           </div>
 
           <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
@@ -212,15 +244,31 @@ const SummaryReviewModal = ({
             <div style={styles.valueBox}>{formData.keyPoints || 'No key points provided.'}</div>
           </div>
 
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Website / Copy Context:</span>
+            <div style={styles.valueBox}>{formData.websiteCopy || 'N/A'}</div>
+          </div>
+
           <h3 style={styles.sectionTitle}>⚙️ Advanced Customization</h3>
 
+          {/* Language */}
           <div style={{ ...styles.item, gridColumn: 'span 1' }}>
-            <span style={styles.itemLabel}>Language:</span>
+            <span style={styles.itemLabel}>Language Mode:</span>
             <div style={styles.valueBox}>
-              {findLabel(languageOptions, formData.language)}
+              {formData.languageMode === 'custom' ? 'Custom' : 'Predefined'}
             </div>
           </div>
 
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Language / Locale:</span>
+            <div style={styles.valueBox}>
+              {formData.languageMode === 'custom'
+                ? formData.customLanguage || 'N/A'
+                : findLabel(languageOptions, formData.language)}
+            </div>
+          </div>
+
+          {/* Length Target */}
           <div style={{ ...styles.item, gridColumn: 'span 1' }}>
             <span style={styles.itemLabel}>Length Target:</span>
             <div style={styles.valueBox}>
@@ -231,48 +279,172 @@ const SummaryReviewModal = ({
             </div>
           </div>
 
+          {/* Variants & Creativity */}
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Variants & Creativity:</span>
+            <div style={styles.valueBox}>
+              Variants: {formData.variants} | Creativity: {formData.creativityLevel}/10
+            </div>
+          </div>
+
+          {/* Keywords */}
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Keywords:</span>
+            <div style={styles.valueBox}>{formData.keywords || 'N/A'}</div>
+          </div>
+
+          {/* CTA Style */}
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>CTA Style Mode:</span>
+            <div style={styles.valueBox}>
+              {formData.ctaStyleMode === 'custom' ? 'Custom' : 'Predefined'}
+            </div>
+          </div>
+
           <div style={{ ...styles.item, gridColumn: 'span 1' }}>
             <span style={styles.itemLabel}>CTA Style:</span>
             <div style={styles.valueBox}>
-              {findLabel(ctaStyleOptions, formData.ctaStyle) || 'N/A'}
+              {formData.ctaStyleMode === 'custom'
+                ? formData.customCtaStyle || 'N/A'
+                : (formData.ctaStyle
+                    ? findLabel(ctaStyleOptions, formData.ctaStyle)
+                    : 'N/A')}
+            </div>
+          </div>
+
+          {/* Reference Text / Rewrite */}
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Reference Text:</span>
+            <div style={styles.valueBox}>{formData.referenceText || 'N/A'}</div>
+          </div>
+
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Rewrite Mode:</span>
+            <div style={styles.valueBox}>{formData.rewriteMode ? 'Enabled' : 'Disabled'}</div>
+          </div>
+
+          {/* Reading Level */}
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Reading Level Mode:</span>
+            <div style={styles.valueBox}>
+              {formData.readingLevelMode === 'custom' ? 'Custom' : 'Predefined'}
             </div>
           </div>
 
           <div style={{ ...styles.item, gridColumn: 'span 1' }}>
             <span style={styles.itemLabel}>Reading Level:</span>
             <div style={styles.valueBox}>
-              {findLabel(readingLevelOptions, formData.readingLevel)}
+              {formData.readingLevelMode === 'custom'
+                ? formData.customReadingLevel || 'N/A'
+                : findLabel(readingLevelOptions, formData.readingLevel)}
+            </div>
+          </div>
+
+          {/* Target Platform */}
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Platform Mode:</span>
+            <div style={styles.valueBox}>
+              {formData.targetPlatformMode === 'custom' ? 'Custom' : 'Predefined'}
             </div>
           </div>
 
           <div style={{ ...styles.item, gridColumn: 'span 1' }}>
             <span style={styles.itemLabel}>Target Platform:</span>
             <div style={styles.valueBox}>
-              {findLabel(targetPlatformOptions, formData.targetPlatform) || 'Any Platform'}
+              {formData.targetPlatformMode === 'custom'
+                ? formData.customTargetPlatform || 'N/A'
+                : (formData.targetPlatform
+                    ? findLabel(targetPlatformOptions, formData.targetPlatform)
+                    : 'Any Platform')}
+            </div>
+          </div>
+
+          {/* Brand Voice */}
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Brand Voice Mode:</span>
+            <div style={styles.valueBox}>
+              {formData.brandVoiceMode === 'custom' ? 'Custom' : 'Predefined'}
+            </div>
+          </div>
+
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Brand Voice Reference:</span>
+            <div style={styles.valueBox}>
+              {formData.brandVoiceMode === 'custom'
+                ? formData.customBrandVoice || 'N/A'
+                : (formData.brandVoice || 'N/A')}
+            </div>
+          </div>
+
+          {/* Content Style Preference */}
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Content Style Mode:</span>
+            <div style={styles.valueBox}>
+              {formData.contentStyleMode === 'custom' ? 'Custom' : 'Predefined'}
             </div>
           </div>
 
           <div style={{ ...styles.item, gridColumn: 'span 1' }}>
             <span style={styles.itemLabel}>Content Style Preference:</span>
             <div style={styles.valueBox}>
-              {findLabel(contentStyleOptions, formData.contentStyle) || 'N/A'}
+              {formData.contentStyleMode === 'custom'
+                ? formData.customContentStyle || 'N/A'
+                : (formData.contentStyle
+                    ? findLabel(contentStyleOptions, formData.contentStyle)
+                    : 'N/A')}
+            </div>
+          </div>
+
+          {/* Emotional Intent */}
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Emotional Intent Mode:</span>
+            <div style={styles.valueBox}>
+              {formData.emotionalIntentMode === 'custom' ? 'Custom' : 'Predefined'}
             </div>
           </div>
 
           <div style={{ ...styles.item, gridColumn: 'span 1' }}>
             <span style={styles.itemLabel}>Emotional Intent:</span>
             <div style={styles.valueBox}>
-              {findLabel(emotionalIntentOptions, formData.emotionalIntent) || 'Neutral'}
+              {formData.emotionalIntentMode === 'custom'
+                ? formData.customEmotionalIntent || 'N/A'
+                : (formData.emotionalIntent
+                    ? findLabel(emotionalIntentOptions, formData.emotionalIntent)
+                    : 'Neutral')}
+            </div>
+          </div>
+
+          {/* Include / Exclude Words */}
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Include Words:</span>
+            <div style={styles.valueBox}>{renderListValue(formData.includeWords)}</div>
+          </div>
+
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Exclude Words:</span>
+            <div style={styles.valueBox}>{renderListValue(formData.excludeWords)}</div>
+          </div>
+
+          {/* Writing Framework */}
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Writing Framework Mode:</span>
+            <div style={styles.valueBox}>
+              {formData.writingFrameworkMode === 'custom' ? 'Custom' : 'Predefined'}
             </div>
           </div>
 
           <div style={{ ...styles.item, gridColumn: 'span 1' }}>
             <span style={styles.itemLabel}>Writing Framework:</span>
             <div style={styles.valueBox}>
-              {findLabel(writingFrameworkOptions, formData.writingFramework) || 'Standard'}
+              {formData.writingFrameworkMode === 'custom'
+                ? formData.customWritingFramework || 'N/A'
+                : (formData.writingFramework
+                    ? findLabel(writingFrameworkOptions, formData.writingFramework)
+                    : 'Standard')}
             </div>
           </div>
 
+          {/* Output Structure */}
           <div style={{ ...styles.item, gridColumn: 'span 1' }}>
             <span style={styles.itemLabel}>Output Structure:</span>
             <div style={styles.valueBox}>
@@ -280,13 +452,7 @@ const SummaryReviewModal = ({
             </div>
           </div>
 
-          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
-            <span style={styles.itemLabel}>Creativity & Variants:</span>
-            <div style={styles.valueBox}>
-              Variants: {formData.variants} | Creativity: {formData.creativityLevel}/10
-            </div>
-          </div>
-
+          {/* Formatting & Proofreading */}
           <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
             <span style={styles.itemLabel}>Formatting & Proofreading:</span>
             <div style={styles.tagContainer}>
@@ -310,6 +476,38 @@ const SummaryReviewModal = ({
             </div>
           </div>
 
+          {/* Grammar Strictness */}
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Grammar Strictness Mode:</span>
+            <div style={styles.valueBox}>
+              {!formData.proofreading
+                ? 'N/A (Proofreading disabled)'
+                : formData.grammarStrictnessMode === 'custom'
+                  ? 'Custom'
+                  : 'Predefined'}
+            </div>
+          </div>
+
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Grammar Strictness:</span>
+            <div style={styles.valueBox}>
+              {!formData.proofreading
+                ? 'N/A (Proofreading disabled)'
+                : formData.grammarStrictnessMode === 'custom'
+                  ? formData.customGrammarStrictness || 'N/A'
+                  : (formData.grammarStrictness
+                      ? findLabel(grammarStrictnessOptions, formData.grammarStrictness)
+                      : 'N/A')}
+            </div>
+          </div>
+
+          {/* Reference URL */}
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Reference URL:</span>
+            <div style={styles.valueBox}>{formData.referenceUrl || 'N/A'}</div>
+          </div>
+
+          {/* Compliance Notes */}
           {formData.complianceNotes && (
             <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
               <span style={styles.itemLabel}>Compliance Notes:</span>

@@ -1576,8 +1576,8 @@ const AdCopyGeneratorForm = () => {
                                     </div>
                                 </div>
 
-                                {/* Ad Text Length */}
-                                <div className="col-md-6">
+                                {/* Ad Text Length (full width) */}
+                                <div className="col-12">
                                     <div style={styles.formGroup}>
                                         <label htmlFor="adTextLength" style={styles.label}>
                                             Ad Text Length
@@ -1611,8 +1611,8 @@ const AdCopyGeneratorForm = () => {
                                     </div>
                                 </div>
 
-                                {/* CTA Type */}
-                                <div className="col-md-6">
+                                {/* CTA Type (full width) */}
+                                <div className="col-12">
                                     <div style={styles.formGroup}>
                                         <label htmlFor="ctaType" style={styles.label}>
                                             Call to Action (CTA)
