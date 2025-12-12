@@ -20,8 +20,15 @@ const API = {
 // Authorization header structure
 const AUTH_HEADER = `Bearer ${API.AUTH_TOKEN}`;
 
+// --- MANUAL CONSTANT FOR AUTO-DETECT POST LENGTH ---
+const AUTO_DETECT_POST_LENGTH = {
+    key: 'auto-detect',
+    label: 'Auto-Detect (Platform Optimized)',
+    isAuto: true
+};
+
 const Captionandhastaggeneratorform = () => {
-    // [STATE REMAINS THE SAME]
+    // [STATE UPDATED TO SUPPORT CUSTOM/PREDEFINED TOGGLES FOR 5 FIELDS]
     const [formData, setFormData] = useState({
         platformType: 'predefined',
         platform: '', // key from API options
@@ -35,19 +42,33 @@ const Captionandhastaggeneratorform = () => {
         variants: 3,
         showAdvanced: false,
         requiredKeywords: [],
-        language: 'en_global',
-        emotionalIntent: '',
-        postLength: 'medium',
+        // Language / locale selection - NEW LOGIC TOGGLES ADDED
+        languageSelection: 'predefined', // <--- NEW STATE
+        language: 'en_global', // key from API options
+        customLanguage: '', // <--- NEW STATE
+        // Emotional intent selection - NEW LOGIC TOGGLES ADDED
+        emotionalIntentSelection: 'predefined', // <--- NEW STATE
+        emotionalIntent: '', // key from API options
+        customEmotionalIntent: '', // <--- NEW STATE
+        postLength: 'auto-detect', // <--- SET DEFAULT TO AUTO-DETECT
         formattingOptions: [], // Multi-select checkbox array (e.g., ['emoji', 'linebreaks'])
+        // CTA selection - NEW LOGIC TOGGLES ADDED
+        ctaSelection: 'predefined', // <--- NEW STATE
         includeCtaType: '', // key from API options, can be 'custom'
-        customCta: '',
+        customCta: '', // <--- NEW STATE (Already present, now used with toggle)
+        numberOfCtaSelection: 'predefined',
         numberOfCta: 1,
-        captionStyle: '',
-        hashtagStyle: '',
+        // Caption & hashtag style selection - NEW LOGIC TOGGLES ADDED
+        captionStyleSelection: 'predefined', // <--- NEW STATE
+        captionStyle: '', // key from API options
+        customCaptionStyle: '', // <--- NEW STATE
+        hashtagStyleSelection: 'predefined', // <--- NEW STATE
+        hashtagStyle: '', // key from API options
+        customHashtagStyle: '', // <--- NEW STATE
         excludeWords: [],
         creativityLevel: 5,
         proofread: true,
-        hashtagLimit: 15,
+        hashtagLimit: '', // Changed to empty string to be set by API default key
         complianceNotes: ''
     });
 
@@ -62,10 +83,10 @@ const Captionandhastaggeneratorform = () => {
     const [requestId, setRequestId] = useState(null);
     const [modalTitle, setModalTitle] = useState("Generated Variants");
     const [isFetchingLog, setIsFetchingLog] = useState(false);
-    const [generatedVariantsData, setGeneratedVariantsData] = useState({ 
-        requestId: null, 
-        variants: [], 
-        inputs: {} 
+    const [generatedVariantsData, setGeneratedVariantsData] = useState({
+        requestId: null,
+        variants: [],
+        inputs: {}
     });
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     const [audienceInput, setAudienceInput] = useState('');
@@ -82,22 +103,48 @@ const Captionandhastaggeneratorform = () => {
     // --- Data mapping and retrieval ---
     const getOptions = (key) => apiOptions?.[key] || [];
 
-    // Function to get the label and ID for predefined keys (Updated to be more robust for the summary)
+    // Function to get the label, key/value, and ID for predefined fields 
     const getOptionDetails = (fieldKey, value, customValue = null, typeOverride = null) => {
         if (!apiOptions) return { type: 'predefined', id: null, value: value || 'N/A' };
+
+        // --- NEW LOGIC FOR AUTO-DETECT POST LENGTH ---
+        if (fieldKey === 'caption_post_length' && value === 'auto-detect') {
+            return {
+                type: null,
+                id: 'auto-detect',
+                value: 'Auto-Length (Platform Optimized)'
+            };
+        }
 
         // Determine if the *mode* is explicitly custom based on the selector state
         let isCustomMode = false;
         if (fieldKey === 'caption_platform' && formData.platformType === 'custom') isCustomMode = true;
         if (fieldKey === 'caption_tone_of_voice' && formData.toneSelection === 'custom') isCustomMode = true;
-        if (fieldKey === 'caption_cta_type' && formData.includeCtaType === 'custom') isCustomMode = true;
+        if (fieldKey === 'caption_cta_type' && formData.ctaSelection === 'custom') isCustomMode = true;
+        if (fieldKey === 'caption_language_locale' && formData.languageSelection === 'custom') isCustomMode = true;
+        if (fieldKey === 'caption_emotional_intent' && formData.emotionalIntentSelection === 'custom') isCustomMode = true;
+        if (fieldKey === 'caption_style' && formData.captionStyleSelection === 'custom') isCustomMode = true;
+        if (fieldKey === 'caption_hashtag_style' && formData.hashtagStyleSelection === 'custom') isCustomMode = true;
 
         const type = typeOverride || (isCustomMode ? 'custom' : 'predefined');
         
         if (type === 'custom') {
-            const finalCustomValue = (fieldKey === 'caption_platform' ? formData.customPlatform : 
-                                      (fieldKey === 'caption_tone_of_voice' ? formData.customTone : 
-                                       formData.customCta));
+            let finalCustomValue = '';
+            if (fieldKey === 'caption_platform') {
+                finalCustomValue = formData.customPlatform;
+            } else if (fieldKey === 'caption_tone_of_voice') {
+                finalCustomValue = formData.customTone;
+            } else if (fieldKey === 'caption_cta_type') {
+                finalCustomValue = formData.customCta;
+            } else if (fieldKey === 'caption_language_locale') {
+                finalCustomValue = formData.customLanguage;
+            } else if (fieldKey === 'caption_emotional_intent') {
+                finalCustomValue = formData.customEmotionalIntent;
+            } else if (fieldKey === 'caption_style') {
+                finalCustomValue = formData.customCaptionStyle;
+            } else if (fieldKey === 'caption_hashtag_style') {
+                finalCustomValue = formData.customHashtagStyle;
+            }
 
             return {
                 type: 'custom',
@@ -107,10 +154,11 @@ const Captionandhastaggeneratorform = () => {
         }
 
         const option = getOptions(fieldKey).find(opt => opt.key === value);
+        // NOTE: For the API payload, we must return the ID and type for predefined fields.
         return {
             type: 'predefined',
             id: option?.id || null,
-            value: option?.label || value || 'N/A' 
+            value: option?.key || value || 'N/A' 
         };
     };
 
@@ -119,11 +167,13 @@ const Captionandhastaggeneratorform = () => {
     const toneOptions = getOptions('caption_tone_of_voice');
     const languageOptions = getOptions('caption_language_locale');
     const emotionalIntentOptions = getOptions('caption_emotional_intent');
-    const postLengthOptions = getOptions('caption_post_length');
+    // Inject the Auto-Detect option into the Post Length options list
+    const postLengthOptions = [AUTO_DETECT_POST_LENGTH, ...getOptions('caption_post_length')];
     // Including 'custom' manually for the dropdown for consistent UX
     const ctaTypeOptions = [ ...getOptions('caption_cta_type'), { key: 'custom', label: 'Custom CTA' } ];
     const captionStyleOptions = getOptions('caption_style');
     const hashtagStyleOptions = getOptions('caption_hashtag_style');
+    const hashtagLimitOptions = getOptions('caption_hashtag_limit'); 
 
     // Static Formatting Options (used for rendering and mapping values)
     const formattingOptionsList = [
@@ -140,11 +190,10 @@ const Captionandhastaggeneratorform = () => {
         'Professions': ['Marketing Managers', 'Small Business Owners', 'Software Engineers']
     };
 
-    // --- 4. Data Fetching Logic (unchanged) ---
+    // --- 4. Data Fetching Logic (UPDATED for hashtagLimit default and postLength default) ---
     useEffect(() => {
         setMounted(true);
         const fetchOptions = async () => {
-            // [... existing fetch logic ...]
             try {
                 const response = await fetch(API.GET_FIELD_OPTIONS, {
                     headers: { Authorization: AUTH_HEADER, 'Content-Type': 'application/json' },
@@ -161,20 +210,27 @@ const Captionandhastaggeneratorform = () => {
                     const defaultPlatform = result.data.caption_platform[0]?.key || '';
                     const defaultTone = result.data.caption_tone_of_voice[0]?.key || '';
                     const defaultLanguage = result.data.caption_language_locale.find(o => o.key === 'en_global')?.key || result.data.caption_language_locale[0]?.key || 'en_global';
-                    const defaultPostLength = result.data.caption_post_length.find(o => o.key === 'medium')?.key || result.data.caption_post_length[0]?.key || 'medium';
+                    const defaultEmotionalIntent = result.data.caption_emotional_intent[0]?.key || '';
                     const defaultCta = result.data.caption_cta_type.find(o => o.key === 'caption_cta_1')?.key || result.data.caption_cta_type[0]?.key || '';
                     const defaultCaptionStyle = result.data.caption_style[0]?.key || '';
                     const defaultHashtagStyle = result.data.caption_hashtag_style[0]?.key || '';
+                    
+                    // Post length defaults to 'auto-detect' now (set in initial state, no change needed here)
+                    
+                    // Set default for Hashtag Limit from API
+                    const defaultHashtagLimit = result.data.caption_hashtag_limit?.find(o => o.key === '15')?.key || result.data.caption_hashtag_limit?.[0]?.key || '15';
 
                     setFormData(prev => ({
                         ...prev,
                         platform: defaultPlatform,
                         toneOfVoice: defaultTone,
                         language: defaultLanguage,
-                        postLength: defaultPostLength,
+                        emotionalIntent: defaultEmotionalIntent,
+                        // postLength remains 'auto-detect' from initial state
                         includeCtaType: defaultCta,
                         captionStyle: defaultCaptionStyle,
                         hashtagStyle: defaultHashtagStyle,
+                        hashtagLimit: defaultHashtagLimit, 
                     }));
                 } else {
                     setError('Failed to load options: API returned an unsuccessful status or no data.');
@@ -189,7 +245,7 @@ const Captionandhastaggeneratorform = () => {
         fetchOptions();
     }, []);
 
-    // --- Handlers (Unchanged) ---
+    // --- Handlers (Unchanged for generic behavior) ---
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData(prev => {
@@ -279,18 +335,21 @@ const Captionandhastaggeneratorform = () => {
         // 1. Construct the API Payload
         const platformPayload = getOptionDetails('caption_platform', formData.platform, formData.customPlatform, formData.platformType);
         const tonePayload = getOptionDetails('caption_tone_of_voice', formData.toneOfVoice, formData.customTone, formData.toneSelection);
-        const ctaPayload = getOptionDetails('caption_cta_type', formData.includeCtaType, formData.customCta);
-        const languagePayload = getOptionDetails('caption_language_locale', formData.language, null, 'predefined');
-        const emotionalIntentPayload = getOptionDetails('caption_emotional_intent', formData.emotionalIntent, null, 'predefined');
-        const postLengthPayload = getOptionDetails('caption_post_length', formData.postLength, null, 'predefined');
-        const captionStylePayload = getOptionDetails('caption_style', formData.captionStyle, null, 'predefined');
-        const hashtagStylePayload = getOptionDetails('caption_hashtag_style', formData.hashtagStyle, null, 'predefined');
+        const ctaPayload = getOptionDetails('caption_cta_type', formData.includeCtaType, formData.customCta, formData.ctaSelection);
+        const languagePayload = getOptionDetails('caption_language_locale', formData.language, formData.customLanguage, formData.languageSelection);
+        const emotionalIntentPayload = getOptionDetails('caption_emotional_intent', formData.emotionalIntent, formData.customEmotionalIntent, formData.emotionalIntentSelection);
+        const postLengthPayload = getOptionDetails('caption_post_length', formData.postLength, null, 'predefined'); // Includes 'auto-detect' logic
+        const captionStylePayload = getOptionDetails('caption_style', formData.captionStyle, formData.customCaptionStyle, formData.captionStyleSelection);
+        const hashtagStylePayload = getOptionDetails('caption_hashtag_style', formData.hashtagStyle, formData.customHashtagStyle, formData.hashtagStyleSelection);
+        
+        const hashtagLimitDetails = getOptionDetails('caption_hashtag_limit', formData.hashtagLimit, null, 'predefined');
 
         const formattedOptions = formData.formattingOptions.map(key => {
             const detail = formattingOptionsList.find(opt => opt.value === key);
             return detail ? detail.apiValue : key;
         });
 
+        // 2. Build the final payload
         const payload = {
             platform: platformPayload,
             post_topic: formData.postTheme,
@@ -301,14 +360,21 @@ const Captionandhastaggeneratorform = () => {
             required_keywords: formData.requiredKeywords,
             language_locale: languagePayload,
             emotional_intent: emotionalIntentPayload,
-            post_length: postLengthPayload,
+            // FIX: Use the special payload object directly if it's auto-detect, otherwise reconstruct the predefined object 
+            post_length: postLengthPayload.isAuto // Check for our internal flag (though postLengthPayload.type === null also works)
+                ? { type: null, id: postLengthPayload.id, value: postLengthPayload.value } // Specific API structure for auto-detect
+                : { type: 'predefined', id: postLengthPayload.id, value: postLengthPayload.value }, // Standard predefined structure
             caption_style: captionStylePayload,
             cta_type: ctaPayload,
-            custom_cta_text: formData.includeCtaType === 'custom' ? formData.customCta : null,
+            custom_cta_text: ctaPayload.type === 'custom' ? formData.customCta : null,
             number_of_ctas: formData.includeCtaType !== ctaTypeOptions.find(o => o.label === 'No CTA')?.key ? parseInt(formData.numberOfCta) : 0,
             formatting_options: formattedOptions,
             hashtag_style: hashtagStylePayload,
-            hashtag_limit: parseInt(formData.hashtagLimit),
+            // FIX: Send the predefined object structure for hashtag_limit
+            hashtag_limit: {
+                type: 'predefined',
+                id: hashtagLimitDetails.id // Use the ID retrieved by getOptionDetails
+            },
             exclude_words: formData.excludeWords,
             creativity_level: parseInt(formData.creativityLevel),
             proofread_optimize: formData.proofread,
@@ -501,10 +567,13 @@ const Captionandhastaggeneratorform = () => {
         const defaultPlatform = platformOptions[0]?.key || '';
         const defaultTone = toneOptions[0]?.key || '';
         const defaultLanguage = languageOptions.find(o => o.key === 'en_global')?.key || languageOptions[0]?.key || 'en_global';
-        const defaultPostLength = postLengthOptions.find(o => o.key === 'medium')?.key || postLengthOptions[0]?.key || 'medium';
+        const defaultEmotionalIntent = emotionalIntentOptions[0]?.key || ''; // Default Emotional Intent
         const defaultCta = ctaTypeOptions.find(o => o.key === 'caption_cta_1')?.key || ctaTypeOptions[0]?.key || '';
         const defaultCaptionStyle = captionStyleOptions[0]?.key || '';
         const defaultHashtagStyle = hashtagStyleOptions[0]?.key || '';
+        // Reset Hashtag Limit to its new default
+        const defaultHashtagLimit = hashtagLimitOptions?.find(o => o.key === '15')?.key || hashtagLimitOptions?.[0]?.key || '15';
+
 
         setFormData({
             platformType: 'predefined',
@@ -519,19 +588,31 @@ const Captionandhastaggeneratorform = () => {
             variants: 3,
             showAdvanced: false,
             requiredKeywords: [],
+            // Reset new fields to defaults
+            languageSelection: 'predefined',
             language: defaultLanguage,
-            emotionalIntent: '',
-            postLength: defaultPostLength,
+            customLanguage: '',
+            emotionalIntentSelection: 'predefined',
+            emotionalIntent: defaultEmotionalIntent,
+            customEmotionalIntent: '',
+            postLength: 'auto-detect', // Reset default post length to Auto-Detect
             formattingOptions: [],
+            ctaSelection: 'predefined', // Reset CTA toggle
             includeCtaType: defaultCta,
             customCta: '',
+            numberOfCtaSelection: 'predefined',
             numberOfCta: 1,
+            captionStyleSelection: 'predefined', // Reset Caption Style toggle
             captionStyle: defaultCaptionStyle,
+            customCaptionStyle: '',
+            hashtagStyleSelection: 'predefined', // Reset Hashtag Style toggle
             hashtagStyle: defaultHashtagStyle,
+            customHashtagStyle: '',
+            // End of new field resets
             excludeWords: [],
             creativityLevel: 5,
             proofread: true,
-            hashtagLimit: 15,
+            hashtagLimit: defaultHashtagLimit, // <--- RESET DEFAULT
             complianceNotes: ''
         });
         setShowSummary(false); // Hide summary on reset
@@ -555,7 +636,7 @@ const Captionandhastaggeneratorform = () => {
         formGroup: { marginBottom: '20px' },
         label: { display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#e2e8f0' },
         input: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box' },
-        select: { width: '100%', height:'42px', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '20px', paddingRight: '40px', cursor: 'pointer' },
+        select: { width: '100%', height:'42px', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'\x3e\x3c/polyline\x3e\x3c/svg\x3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '20px', paddingRight: '40px', cursor: 'pointer' },
         textarea: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', resize: 'vertical', minHeight: '80px' },
         badge: { display: 'inline-flex', alignItems: 'center', padding: '6px 12px', fontSize: '13px', fontWeight: '500', borderRadius: '6px', gap: '6px' },
         badgePrimary: { backgroundColor: '#3b82f6', color: 'white' },
@@ -653,10 +734,215 @@ const Captionandhastaggeneratorform = () => {
 
                 <div style={{ padding: '24px' }}>
                     <form onSubmit={handleSubmit}>
-                        {/* [ ... FORM CONTENT REMAINS THE SAME ... ] */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: COLUMN_GAP, width: '100%' }}>
 
-                            {/* ROW 2: Platform Input + Tone Input (2 Columns) */}
+                            {/* ROW 1: Post Theme/Topic (Full Width Textarea) */}
+                            <div style={colFullStyle}>
+                                <div style={styles.formGroup}>
+                                    <label htmlFor="postTheme" style={styles.label}>
+                                        Post Theme / Topic <span style={{ color: '#ef4444' }}>*</span>
+                                        <span style={styles.infoIcon} data-tooltip-id="postTheme-tooltip" data-tooltip-content="Describe the main theme or topic of your post (max 1200 characters)">i</span>
+                                    </label>
+                                    <Tooltip id="postTheme-tooltip" />
+                                    <textarea
+                                        id="postTheme"
+                                        name="postTheme"
+                                        value={formData.postTheme}
+                                        onChange={handleChange}
+                                        style={{ ...styles.textarea, minHeight: '100px' }}
+                                        maxLength={1200}
+                                        placeholder="What is your post about?"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            {/* ROW 2: Primary Goal (Full Width Input) */}
+                            <div style={colFullStyle}>
+                                <div style={styles.formGroup}>
+                                    <label htmlFor="primaryGoal" style={styles.label}>
+                                        Primary Goal <span style={{ color: '#ef4444' }}>*</span>
+                                        <span style={styles.infoIcon} data-tooltip-id="primaryGoal-tooltip" data-tooltip-content="What is the main goal of this post? (e.g., drive traffic, increase engagement, announce launch)">i</span>
+                                    </label>
+                                    <Tooltip id="primaryGoal-tooltip" />
+                                    <input
+                                        type="text"
+                                        id="primaryGoal"
+                                        name="primaryGoal"
+                                        value={formData.primaryGoal}
+                                        onChange={handleChange}
+                                        style={styles.input}
+                                        maxLength={300}
+                                        placeholder="e.g., Increase engagement, drive traffic to website, etc."
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            {/* ROW 3: Target Audience Tags (Full Width) */}
+                            <div style={colFullStyle}>
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>
+                                        Target Audience <span style={{ color: '#ef4444' }}>*</span>
+                                        <span 
+                                            style={styles.infoIcon} 
+                                            data-tooltip-id="targetAudience-tooltip" 
+                                            data-tooltip-html="Describe who you want to reach with this post. Include audience characteristics like age, profession, interests, and behavior to help generate captions that speak directly to them."
+                                        >
+                                            i
+                                        </span>
+                                    </label>
+                                    <Tooltip id="targetAudience-tooltip" />
+                                    <div style={{ 
+                                        display: 'flex', 
+                                        flexWrap: 'wrap', 
+                                        gap: '8px', 
+                                        marginBottom: '8px',
+                                        minHeight: '40px',
+                                        alignItems: 'center',
+                                        padding: '4px',
+                                        border: '1px solid #334155', // Updated border to match theme
+                                        borderRadius: '6px',
+                                        backgroundColor: formData.targetAudience.length > 0 ? '#1e293b' : '#1e293b' // Updated background to match theme
+                                    }}>
+                                        {formData.targetAudience.length === 0 && (
+                                            <span style={{ color: '#94a3b8', fontSize: '14px', marginLeft: '8px' }}>
+                                                Add audience segments (e.g., 'Women 25-34', 'Fitness Enthusiasts')
+                                            </span>
+                                        )}
+                                        {formData.targetAudience.map((chip, index) => (
+                                            <span 
+                                                key={index} 
+                                                style={{
+                                                    ...styles.badge,
+                                                    ...styles.badgePrimary,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    padding: '4px 10px'
+                                                }}
+                                            >
+                                                {chip}
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => removeItem('targetAudience', index)}
+                                                    style={styles.removeBtn}
+                                                >
+                                                    ×
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+
+                                    <div style={{ position: 'relative' }}>
+                                        <input
+                                            type="text"
+                                            value={audienceInput}
+                                            onChange={handleAudienceInput}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && audienceInput.trim()) {
+                                                    e.preventDefault();
+                                                    addAudienceChip(audienceInput.trim());
+                                                }
+                                            }}
+                                            style={{
+                                                ...styles.input,
+                                                marginBottom: 0,
+                                                borderBottomLeftRadius: showAudienceSuggestions ? '0' : '6px',
+                                                borderBottomRightRadius: showAudienceSuggestions ? '0' : '6px'
+                                            }}
+                                            placeholder="Type and press Enter to add audience segments"
+                                            required={formData.targetAudience.length === 0}
+                                        />
+
+                                        {showAudienceSuggestions && (
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '100%',
+                                                left: 0,
+                                                right: 0,
+                                                backgroundColor: '#1e293b', // Updated background
+                                                border: '1px solid #334155',
+                                                borderTop: 'none',
+                                                borderBottomLeftRadius: '6px',
+                                                borderBottomRightRadius: '6px',
+                                                zIndex: 1000,
+                                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)',
+                                                maxHeight: '200px',
+                                                overflowY: 'auto'
+                                            }}>
+                                                {Object.entries(audienceSuggestions).map(([category, suggestions]) => {
+                                                    const filtered = suggestions.filter(s => 
+                                                        s.toLowerCase().includes(audienceInput.toLowerCase()) && 
+                                                        !formData.targetAudience.includes(s)
+                                                    );
+                                                    if (filtered.length === 0) return null;
+                                                    return (
+                                                        <div key={category}>
+                                                            <div style={{
+                                                                padding: '8px 12px',
+                                                                fontSize: '12px',
+                                                                fontWeight: 600,
+                                                                color: '#94a3b8',
+                                                                backgroundColor: '#141b2d',
+                                                                textTransform: 'uppercase',
+                                                                letterSpacing: '0.05em'
+                                                            }}>
+                                                                {category}
+                                                            </div>
+                                                            {filtered.map((suggestion, idx) => (
+                                                                <div
+                                                                    key={idx}
+                                                                    onClick={() => {
+                                                                        addAudienceChip(suggestion);
+                                                                        setAudienceInput('');
+                                                                    }}
+                                                                    style={{ 
+                                                                        padding: '8px 16px', 
+                                                                        cursor: 'pointer', 
+                                                                        color: '#e2e8f0',
+                                                                        backgroundColor: '#1e293b',
+                                                                        transition: 'background-color 0.15s ease',
+                                                                    }}
+                                                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#334155'}
+                                                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1e293b'}
+                                                                >
+                                                                    {suggestion}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    );
+                                                })}
+
+                                                {audienceInput && !Object.values(audienceSuggestions)
+                                                    .flat()
+                                                    .some(s => s.toLowerCase() === audienceInput.toLowerCase()) && (
+                                                    <div
+                                                        onClick={() => {
+                                                            addAudienceChip(audienceInput);
+                                                            setAudienceInput('');
+                                                        }}
+                                                        style={{
+                                                            padding: '8px 16px',
+                                                            cursor: 'pointer',
+                                                            backgroundColor: '#141b2d',
+                                                            borderTop: '1px solid #334155',
+                                                            color: '#38bdf8',
+                                                            fontWeight: 500
+                                                        }}
+                                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1e293b'}
+                                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#141b2d'}
+                                                    >
+                                                        Add "{audienceInput}" as custom audience
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* ROW 4: Platform Input + Tone Input (2 Columns - Existing Logic) */}
                             <div style={twoColContainerStyle}>
                                 {/* Platform Dropdown or Custom Platform Input (Left Half) */}
                                 <div style={colHalfStyle}>
@@ -693,7 +979,7 @@ const Captionandhastaggeneratorform = () => {
                                             </label>
                                         </div>
                                         {formData.platformType === 'predefined' ? (
-                                        <div style={colHalfStyle}>
+                                        <div>
                                             <div style={styles.formGroup}>
                                                 <select
                                                     id="platform"
@@ -711,32 +997,32 @@ const Captionandhastaggeneratorform = () => {
                                             </div>
                                         </div>
                                             ) : (
-                                                <div style={colHalfStyle}>
-                                                    <div style={styles.formGroup}>
-                                                        <label htmlFor="customPlatform" style={styles.label}>
-                                                            Custom Platform Description <span style={{ color: '#ef4444' }}>*</span>
-                                                            <span style={styles.infoIcon} data-tooltip-id="customPlatform-tooltip" data-tooltip-content="Enter a description of your custom platform and desired post type">i</span>
-                                                        </label>
-                                                        <Tooltip id="customPlatform-tooltip" />
-                                                        <input
-                                                            type="text"
-                                                            id="customPlatform"
-                                                            name="customPlatform"
-                                                            value={formData.customPlatform}
-                                                            onChange={handleChange}
-                                                            style={styles.input}
-                                                            maxLength={50}
-                                                            placeholder="e.g., Email newsletter snippet, Product flyer text"
-                                                            required={formData.platformType === 'custom'}
-                                                        />
-                                                    </div>
+                                            <div>
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="customPlatform" style={styles.label}>
+                                                        Custom Platform Description <span style={{ color: '#ef4444' }}>*</span>
+                                                        <span style={styles.infoIcon} data-tooltip-id="customPlatform-tooltip" data-tooltip-content="Enter a description of your custom platform and desired post type">i</span>
+                                                    </label>
+                                                    <Tooltip id="customPlatform-tooltip" />
+                                                    <input
+                                                        type="text"
+                                                        id="customPlatform"
+                                                        name="customPlatform"
+                                                        value={formData.customPlatform}
+                                                        onChange={handleChange}
+                                                        style={styles.input}
+                                                        maxLength={50}
+                                                        placeholder="e.g., Email newsletter snippet, Product flyer text"
+                                                        required={formData.platformType === 'custom'}
+                                                    />
                                                 </div>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
                                 
 
-                                {/* Tone Selection Radio/Dropdown (Right Half) */}
+                                {/* Tone Selection Radio/Dropdown (Right Half - Existing Logic) */}
                                 <div style={colHalfStyle}>
                                     <div style={styles.formGroup}>
                                         <label style={styles.label}>
@@ -808,204 +1094,8 @@ const Captionandhastaggeneratorform = () => {
                                     </div>
                                 </div>
                             </div>
-
-                            {/* ROW 3: Post Theme/Topic (Full Width Textarea) */}
-                            <div style={colFullStyle}>
-                                <div style={styles.formGroup}>
-                                    <label htmlFor="postTheme" style={styles.label}>
-                                        Post Theme / Topic <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} data-tooltip-id="postTheme-tooltip" data-tooltip-content="Describe the main theme or topic of your post (max 1200 characters)">i</span>
-                                    </label>
-                                    <Tooltip id="postTheme-tooltip" />
-                                    <textarea
-                                        id="postTheme"
-                                        name="postTheme"
-                                        value={formData.postTheme}
-                                        onChange={handleChange}
-                                        style={{ ...styles.textarea, minHeight: '100px' }}
-                                        maxLength={1200}
-                                        placeholder="What is your post about?"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            {/* ROW 4: Primary Goal (Full Width Input) */}
-                            <div style={colFullStyle}>
-                                <div style={styles.formGroup}>
-                                    <label htmlFor="primaryGoal" style={styles.label}>
-                                        Primary Goal <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} data-tooltip-id="primaryGoal-tooltip" data-tooltip-content="What is the main goal of this post? (e.g., drive traffic, increase engagement, announce launch)">i</span>
-                                    </label>
-                                    <Tooltip id="primaryGoal-tooltip" />
-                                    <input
-                                        type="text"
-                                        id="primaryGoal"
-                                        name="primaryGoal"
-                                        value={formData.primaryGoal}
-                                        onChange={handleChange}
-                                        style={styles.input}
-                                        maxLength={300}
-                                        placeholder="e.g., Increase engagement, drive traffic to website, etc."
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            {/* ROW 5: Target Audience Tags (Full Width) */}
-                            <div style={colFullStyle}>
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>
-                                        Target Audience <span style={{ color: '#ef4444' }}>*</span>
-                                        <span 
-                                            style={styles.infoIcon} 
-                                            data-tooltip-id="targetAudience-tooltip" 
-                                            data-tooltip-html="Describe who you want to reach with this post. Include audience characteristics like age, profession, interests, and behavior to help generate captions that speak directly to them."
-                                        >
-                                            i
-                                        </span>
-                                    </label>
-                                    <Tooltip id="targetAudience-tooltip" />
-                                    <div style={{ 
-                                        display: 'flex', 
-                                        flexWrap: 'wrap', 
-                                        gap: '8px', 
-                                        marginBottom: '8px',
-                                        minHeight: '40px',
-                                        alignItems: 'center',
-                                        padding: '4px',
-                                        border: '1px solid #d1d5db',
-                                        borderRadius: '6px',
-                                        backgroundColor: formData.targetAudience.length > 0 ? '#0b1220' : 'transparent'
-                                    }}>
-                                        {formData.targetAudience.length === 0 && (
-                                            <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
-                                                Add audience segments (e.g., 'Women 25-34', 'Fitness Enthusiasts')
-                                            </span>
-                                        )}
-                                        {formData.targetAudience.map((chip, index) => (
-                                            <span 
-                                                key={index} 
-                                                style={{
-                                                    ...styles.badge,
-                                                    ...styles.badgePrimary,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '6px',
-                                                    padding: '4px 10px'
-                                                }}
-                                            >
-                                                {chip}
-                                                <button 
-                                                    type="button" 
-                                                    onClick={() => removeItem('targetAudience', index)}
-                                                    style={styles.removeBtn}
-                                                >
-                                                    ×
-                                                </button>
-                                            </span>
-                                        ))}
-                                    </div>
-
-                                    <div style={{ position: 'relative' }}>
-                                        <input
-                                            type="text"
-                                            value={audienceInput}
-                                            onChange={handleAudienceInput}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' && audienceInput.trim()) {
-                                                    e.preventDefault();
-                                                    addAudienceChip(audienceInput.trim());
-                                                }
-                                            }}
-                                            style={{
-                                                ...styles.input,
-                                                marginBottom: 0,
-                                                borderBottomLeftRadius: showAudienceSuggestions ? '0' : '6px',
-                                                borderBottomRightRadius: showAudienceSuggestions ? '0' : '6px'
-                                            }}
-                                            placeholder="Type and press Enter to add audience segments"
-                                            required={formData.targetAudience.length === 0}
-                                        />
-
-                                        {showAudienceSuggestions && (
-                                            <div style={{
-                                                position: 'absolute',
-                                                top: '100%',
-                                                left: 0,
-                                                right: 0,
-                                                backgroundColor: '#020617',
-                                                border: '1px solid #1e293b',
-                                                borderTop: 'none',
-                                                borderBottomLeftRadius: '6px',
-                                                borderBottomRightRadius: '6px',
-                                                zIndex: 1000,
-                                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)',
-                                                maxHeight: '200px',
-                                                overflowY: 'auto'
-                                            }}>
-                                                {Object.entries(audienceSuggestions).map(([category, suggestions]) => {
-                                                    const filtered = suggestions.filter(s => 
-                                                        s.toLowerCase().includes(audienceInput.toLowerCase()) && 
-                                                        !formData.targetAudience.includes(s)
-                                                    );
-                                                    if (filtered.length === 0) return null;
-                                                    return (
-                                                        <div key={category}>
-                                                            <div style={{
-                                                                padding: '8px 12px',
-                                                                fontSize: '12px',
-                                                                fontWeight: 600,
-                                                                color: '#e5e7eb',
-                                                                backgroundColor: '#020617',
-                                                                textTransform: 'uppercase',
-                                                                letterSpacing: '0.05em'
-                                                            }}>
-                                                                {category}
-                                                            </div>
-                                                            {filtered.map((suggestion, idx) => (
-                                                                <div
-                                                                    key={idx}
-                                                                    onClick={() => {
-                                                                        addAudienceChip(suggestion);
-                                                                        setAudienceInput('');
-                                                                    }}
-                                                                    style={{ padding: '8px 16px', cursor: 'pointer', color: '#e5e7eb' }}
-                                                                >
-                                                                    {suggestion}
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    );
-                                                })}
-
-                                                {audienceInput && !Object.values(audienceSuggestions)
-                                                    .flat()
-                                                    .some(s => s.toLowerCase() === audienceInput.toLowerCase()) && (
-                                                    <div
-                                                        onClick={() => {
-                                                            addAudienceChip(audienceInput);
-                                                            setAudienceInput('');
-                                                        }}
-                                                        style={{
-                                                            padding: '8px 16px',
-                                                            cursor: 'pointer',
-                                                            backgroundColor: '#020617',
-                                                            borderTop: '1px solid #1e293b',
-                                                            color: '#38bdf8',
-                                                            fontWeight: 500
-                                                        }}
-                                                    >
-                                                        Add "{audienceInput}" as custom audience
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* ROW 6: Variants + Post Length (2 Columns) */}
+                            
+                            {/* ROW 5: Variants + Post Length (2 Columns) */}
                             <div style={twoColContainerStyle}>
                                 {/* Number of Variants (Left Half) */}
                                 <div style={colHalfStyle}>
@@ -1035,7 +1125,7 @@ const Captionandhastaggeneratorform = () => {
                                     </div>
                                 </div>
 
-                                {/* Post Length (Right Half) */}
+                                {/* Post Length (Right Half) - ADDED AUTO-DETECT */}
                                 <div style={colHalfStyle}>
                                     <div style={styles.formGroup}>
                                         <label htmlFor="postLength" style={styles.label}>Post Length</label>
@@ -1046,85 +1136,16 @@ const Captionandhastaggeneratorform = () => {
                                             onChange={handleChange}
                                             style={styles.select}
                                         >
+                                            {/* Mapping over the combined list including Auto-Detect */}
                                             {postLengthOptions.map((option) => (
                                                 <option key={option.key} value={option.key}>{option.label}</option>
                                             ))}
                                         </select>
                                     </div>
                                 </div>
-
-                                {/* <div style={colHalfStyle}>
-                                    <div style={styles.formGroup}>
-                                        <label style={styles.label}>
-                                            Post lenght Selection <span style={{ color: '#ef4444' }}>*</span>
-                                            <span style={styles.infoIcon} data-tooltip-id="lenghtSelection-tooltip" data-tooltip-content="Select whether to use a predefined tone or enter a custom one">i</span>
-                                        </label>
-                                        <Tooltip id="lenghtSelection-tooltip" />
-                                        <div style={styles.radioGroup}>
-                                            <label style={styles.radioItem}>
-                                                <input
-                                                    type="radio"
-                                                    name="lenghtSelection"
-                                                    value="predefined"
-                                                    checked={formData.lenghtSelection === 'predefined'}
-                                                    onChange={handleChange}
-                                                    style={{ marginRight: '8px' }}
-                                                    required
-                                                />
-                                                Predefined
-                                            </label>
-                                            <label style={styles.radioItem}>
-                                                <input
-                                                    type="radio"
-                                                    name="lenghtSelection"
-                                                    value="custom"
-                                                    checked={formData.lenghtSelection === 'custom'}
-                                                    onChange={handleChange}
-                                                    style={{ marginRight: '8px' }}
-                                                    required
-                                                />
-                                                Custom
-                                            </label>
-                                        </div>
-
-                                        {formData.lenghtSelection === 'predefined' ? (
-                                        <select
-                                            id="postLength"
-                                            name="postLength"
-                                            value={formData.postLength}
-                                            onChange={handleChange}
-                                            style={styles.select}
-                                        >
-                                            {postLengthOptions.map((option) => (
-                                                <option key={option.key} value={option.key}>{option.label}</option>
-                                            ))}
-                                        </select>
-                                        ) : (
-                                            <div>
-                                                <label htmlFor="customLenght" style={styles.label}>
-                                                    Custom Post Lenght <span style={{ color: '#ef4444' }}>*</span>
-                                                    <span style={styles.infoIcon} data-tooltip-id="customTone-tooltip" data-tooltip-content="Describe your custom tone (max 60 characters)">i</span>
-                                                </label>
-                                                <Tooltip id="lenghtSelection-tooltip" />
-                                                <input
-                                                    type="text"
-                                                    id="postLength"
-                                                    name="postLength"
-                                                    value={formData.postLength}
-                                                    onChange={handleChange}
-                                                    style={styles.input}
-                                                    maxLength={60}
-                                                    placeholder="e.g., Short,Medium,Long"
-                                                    required={formData.toneSelection === 'custom'}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                </div> */}
-
                             </div>
 
-                            {/* ROW 7: Formatting Options (Full Width Checkboxes) */}
+                            {/* ROW 6: Formatting Options (Full Width Checkboxes) */}
                             <div style={colFullStyle}>
                                 <div style={styles.formGroup}>
                                     <label style={styles.label}>
@@ -1150,13 +1171,13 @@ const Captionandhastaggeneratorform = () => {
                                 </div>
                             </div>
 
-                            <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #e5e7eb', margin: '5px 0' }} />
+                            <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #334155', margin: '5px 0' }} />
 
                             {/* Advanced Features Toggle (Full Width) */}
                             <div className="col-12" style={{ margin: '16px 0' }}>
                                 <div style={{
                                     display: 'inline-flex',
-                                    backgroundColor: 'white',
+                                    backgroundColor: '#1e293b', // Updated background
                                     borderRadius: '9999px',
                                     border: '1px solid #3b82f6',
                                     overflow: 'hidden',
@@ -1170,7 +1191,7 @@ const Captionandhastaggeneratorform = () => {
                                         padding: '6px 20px',
                                         border: 'none',
                                         backgroundColor: formData.showAdvanced ? 'transparent' : '#3b82f6',
-                                        color: formData.showAdvanced ? '#1f2937' : 'white',
+                                        color: formData.showAdvanced ? '#e2e8f0' : 'white',
                                         fontWeight: 500,
                                         fontSize: '14px',
                                         cursor: 'pointer',
@@ -1189,7 +1210,7 @@ const Captionandhastaggeneratorform = () => {
                                         padding: '6px 20px',
                                         border: 'none',
                                         backgroundColor: formData.showAdvanced ? '#3b82f6' : 'transparent',
-                                        color: formData.showAdvanced ? 'white' : '#1f2937',
+                                        color: formData.showAdvanced ? 'white' : '#e2e8f0',
                                         fontWeight: 500,
                                         fontSize: '14px',
                                         cursor: 'pointer',
@@ -1209,24 +1230,62 @@ const Captionandhastaggeneratorform = () => {
                             {formData.showAdvanced && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: COLUMN_GAP, width: '100%' }}>
 
-                                    {/* ROW 8: CTA Type + Number of CTAs (2 Columns) */}
+                                    {/* ROW 7 (OLD ROW 8): CTA Type + Number of CTAs (2 Columns) */}
                                     <div style={twoColContainerStyle}>
-                                        {/* CTA Type (Left Half) */}
+                                        {/* CTA Type (Left Half) - UPDATED WITH TOGGLE */}
                                         <div style={colHalfStyle}>
                                             <div style={styles.formGroup}>
-                                                <label htmlFor="includeCtaType" style={styles.label}>CTA Type</label>
-                                                <select
-                                                    id="includeCtaType"
-                                                    name="includeCtaType"
-                                                    value={formData.includeCtaType}
-                                                    onChange={handleChange}
-                                                    style={styles.select}
-                                                >
-                                                    <option value="">Select CTA Type</option>
-                                                    {ctaTypeOptions.map((cta) => (
-                                                        <option key={cta.key} value={cta.key}>{cta.label}</option>
-                                                    ))}
-                                                </select>
+                                                <label style={styles.label}>CTA Type</label>
+                                                <div style={styles.radioGroup}>
+                                                    <label style={styles.radioItem}>
+                                                        <input
+                                                            type="radio"
+                                                            name="ctaSelection"
+                                                            value="predefined"
+                                                            checked={formData.ctaSelection === 'predefined'}
+                                                            onChange={handleChange}
+                                                            style={{ marginRight: '8px' }}
+                                                        />
+                                                        Predefined
+                                                    </label>
+                                                    <label style={styles.radioItem}>
+                                                        <input
+                                                            type="radio"
+                                                            name="ctaSelection"
+                                                            value="custom"
+                                                            checked={formData.ctaSelection === 'custom'}
+                                                            onChange={handleChange}
+                                                            style={{ marginRight: '8px' }}
+                                                        />
+                                                        Custom
+                                                    </label>
+                                                </div>
+                                                {formData.ctaSelection === 'predefined' ? (
+                                                    <select
+                                                        id="includeCtaType"
+                                                        name="includeCtaType"
+                                                        value={formData.includeCtaType}
+                                                        onChange={handleChange}
+                                                        style={styles.select}
+                                                    >
+                                                        <option value="">Select CTA Type</option>
+                                                        {ctaTypeOptions.filter(cta => cta.key !== 'custom').map((cta) => (
+                                                            <option key={cta.key} value={cta.key}>{cta.label}</option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <input
+                                                        type="text"
+                                                        id="customCta"
+                                                        name="customCta"
+                                                        value={formData.customCta}
+                                                        onChange={handleChange}
+                                                        style={styles.input}
+                                                        maxLength={100}
+                                                        placeholder="e.g., Tap to explore the full eco-collection now."
+                                                        required={formData.ctaSelection === 'custom'}
+                                                    />
+                                                )}
                                             </div>
                                         </div>
 
@@ -1247,121 +1306,191 @@ const Captionandhastaggeneratorform = () => {
                                                     value={formData.numberOfCta}
                                                     onChange={handleChange}
                                                     style={styles.input}
+                                                    disabled={formData.ctaSelection === 'predefined' && formData.includeCtaType === ctaTypeOptions.find(o => o.label === 'No CTA')?.key}
                                                 />
                                             </div>
                                         </div>
                                     </div>
                                     
-                                    {/* Conditional Custom CTA Row (Full Width) */}
-                                    {formData.includeCtaType === 'custom' && (
-                                        <div style={colFullStyle}>
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="customCta" style={styles.label}>
-                                                    Custom CTA Text <span style={{ color: '#ef4444' }}>*</span>
-                                                    <span style={styles.infoIcon} data-tooltip-id="customCta-tooltip" data-tooltip-content="Enter your custom call-to-action (max 100 characters)">i</span>
-                                                </label>
-                                                <Tooltip id="customCta-tooltip" />
-                                                <input
-                                                    type="text"
-                                                    id="customCta"
-                                                    name="customCta"
-                                                    value={formData.customCta}
-                                                    onChange={handleChange}
-                                                    style={styles.input}
-                                                    maxLength={100}
-                                                    placeholder="e.g., Tap to explore the full eco-collection now."
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* ROW 9: Caption Style + Hashtag Style (2 Columns) */}
+                                    {/* ROW 8 (OLD ROW 9): Caption Style + Hashtag Style (2 Columns) - UPDATED WITH TOGGLES */}
                                     <div style={twoColContainerStyle}>
                                         {/* Caption Style (Left Half) */}
                                         <div style={colHalfStyle}>
                                             <div style={styles.formGroup}>
-                                                <label htmlFor="captionStyle" style={styles.label}>Caption Style</label>
-                                                <select
-                                                    id="captionStyle"
-                                                    name="captionStyle"
-                                                    value={formData.captionStyle}
-                                                    onChange={handleChange}
-                                                    style={styles.select}
-                                                >
-                                                    <option value="">Select Caption Style</option>
-                                                    {captionStyleOptions.map((style) => (
-                                                        <option key={style.key} value={style.key}>{style.label}</option>
-                                                    ))}
-                                                </select>
+                                                <label style={styles.label}>Caption Style</label>
+                                                <div style={styles.radioGroup}>
+                                                    <label style={styles.radioItem}>
+                                                        <input type="radio" name="captionStyleSelection" value="predefined" checked={formData.captionStyleSelection === 'predefined'} onChange={handleChange} style={{ marginRight: '8px' }} />
+                                                        Predefined
+                                                    </label>
+                                                    <label style={styles.radioItem}>
+                                                        <input type="radio" name="captionStyleSelection" value="custom" checked={formData.captionStyleSelection === 'custom'} onChange={handleChange} style={{ marginRight: '8px' }} />
+                                                        Custom
+                                                    </label>
+                                                </div>
+                                                {formData.captionStyleSelection === 'predefined' ? (
+                                                    <select
+                                                        id="captionStyle"
+                                                        name="captionStyle"
+                                                        value={formData.captionStyle}
+                                                        onChange={handleChange}
+                                                        style={styles.select}
+                                                    >
+                                                        <option value="">Select Caption Style</option>
+                                                        {captionStyleOptions.map((style) => (
+                                                            <option key={style.key} value={style.key}>{style.label}</option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <input
+                                                        type="text"
+                                                        id="customCaptionStyle"
+                                                        name="customCaptionStyle"
+                                                        value={formData.customCaptionStyle}
+                                                        onChange={handleChange}
+                                                        style={styles.input}
+                                                        maxLength={60}
+                                                        placeholder="e.g., A/B Split Test, Case Study format"
+                                                    />
+                                                )}
                                             </div>
                                         </div>
 
                                         {/* Platform Hashtag Style (Right Half) */}
                                         <div style={colHalfStyle}>
                                             <div style={styles.formGroup}>
-                                                <label htmlFor="hashtagStyle" style={styles.label}>Hashtag Style</label>
-                                                <select
-                                                    id="hashtagStyle"
-                                                    name="hashtagStyle"
-                                                    value={formData.hashtagStyle}
-                                                    onChange={handleChange}
-                                                    style={styles.select}
-                                                >
-                                                    <option value="">Select Hashtag Style</option>
-                                                    {hashtagStyleOptions.map((style) => (
-                                                        <option key={style.key} value={style.key}>{style.label}</option>
-                                                    ))}
-                                                </select>
+                                                <label style={styles.label}>Hashtag Style</label>
+                                                <div style={styles.radioGroup}>
+                                                    <label style={styles.radioItem}>
+                                                        <input type="radio" name="hashtagStyleSelection" value="predefined" checked={formData.hashtagStyleSelection === 'predefined'} onChange={handleChange} style={{ marginRight: '8px' }} />
+                                                        Predefined
+                                                    </label>
+                                                    <label style={styles.radioItem}>
+                                                        <input type="radio" name="hashtagStyleSelection" value="custom" checked={formData.hashtagStyleSelection === 'custom'} onChange={handleChange} style={{ marginRight: '8px' }} />
+                                                        Custom
+                                                    </label>
+                                                </div>
+                                                {formData.hashtagStyleSelection === 'predefined' ? (
+                                                    <select
+                                                        id="hashtagStyle"
+                                                        name="hashtagStyle"
+                                                        value={formData.hashtagStyle}
+                                                        onChange={handleChange}
+                                                        style={styles.select}
+                                                    >
+                                                        <option value="">Select Hashtag Style</option>
+                                                        {hashtagStyleOptions.map((style) => (
+                                                            <option key={style.key} value={style.key}>{style.label}</option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <input
+                                                        type="text"
+                                                        id="customHashtagStyle"
+                                                        name="customHashtagStyle"
+                                                        value={formData.customHashtagStyle}
+                                                        onChange={handleChange}
+                                                        style={styles.input}
+                                                        maxLength={60}
+                                                        placeholder="e.g., Industry-specific, Long-tail, Minimal"
+                                                    />
+                                                )}
                                             </div>
                                         </div>
                                     </div>
                                     
-                                    {/* ROW 10: Emotional Intent + Language/Locale (2 Columns) */}
+                                    {/* ROW 9 (OLD ROW 10): Emotional Intent + Language/Locale (2 Columns) - UPDATED WITH TOGGLES */}
                                     <div style={twoColContainerStyle}>
                                         {/* Emotional Intent (Left Half) */}
                                         <div style={colHalfStyle}>
                                             <div style={styles.formGroup}>
-                                                <label htmlFor="emotionalIntent" style={styles.label}>
+                                                <label style={styles.label}>
                                                     Emotional Intent
                                                     <span style={styles.infoIcon} data-tooltip-id="emotionalIntent-tooltip" data-tooltip-content="Select the emotional tone for your caption">i</span>
                                                 </label>
                                                 <Tooltip id="emotionalIntent-tooltip" />
-                                                <select
-                                                    id="emotionalIntent"
-                                                    name="emotionalIntent"
-                                                    value={formData.emotionalIntent}
-                                                    onChange={handleChange}
-                                                    style={styles.select}
-                                                >
-                                                    <option value="">Select Emotional Intent</option>
-                                                    {emotionalIntentOptions.map((emotion) => (
-                                                        <option key={emotion.key} value={emotion.key}>{emotion.label}</option>
-                                                    ))}
-                                                </select>
+                                                <div style={styles.radioGroup}>
+                                                    <label style={styles.radioItem}>
+                                                        <input type="radio" name="emotionalIntentSelection" value="predefined" checked={formData.emotionalIntentSelection === 'predefined'} onChange={handleChange} style={{ marginRight: '8px' }} />
+                                                        Predefined
+                                                    </label>
+                                                    <label style={styles.radioItem}>
+                                                        <input type="radio" name="emotionalIntentSelection" value="custom" checked={formData.emotionalIntentSelection === 'custom'} onChange={handleChange} style={{ marginRight: '8px' }} />
+                                                        Custom
+                                                    </label>
+                                                </div>
+                                                {formData.emotionalIntentSelection === 'predefined' ? (
+                                                    <select
+                                                        id="emotionalIntent"
+                                                        name="emotionalIntent"
+                                                        value={formData.emotionalIntent}
+                                                        onChange={handleChange}
+                                                        style={styles.select}
+                                                    >
+                                                        <option value="">Select Emotional Intent</option>
+                                                        {emotionalIntentOptions.map((emotion) => (
+                                                            <option key={emotion.key} value={emotion.key}>{emotion.label}</option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <input
+                                                        type="text"
+                                                        id="customEmotionalIntent"
+                                                        name="customEmotionalIntent"
+                                                        value={formData.customEmotionalIntent}
+                                                        onChange={handleChange}
+                                                        style={styles.input}
+                                                        maxLength={60}
+                                                        placeholder="e.g., Nostalgia, Awe, Urgency"
+                                                    />
+                                                )}
                                             </div>
                                         </div>
 
                                         {/* Language/Locale (Right Half) */}
                                         <div style={colHalfStyle}>
                                             <div style={styles.formGroup}>
-                                                <label htmlFor="language" style={styles.label}>Language / Locale</label>
-                                                <select
-                                                    id="language"
-                                                    name="language"
-                                                    value={formData.language}
-                                                    onChange={handleChange}
-                                                    style={styles.select}
-                                                >
-                                                    {languageOptions.map((lang) => (
-                                                        <option key={lang.key} value={lang.key}>{lang.label}</option>
-                                                    ))}
-                                                </select>
+                                                <label style={styles.label}>Language / Locale</label>
+                                                <div style={styles.radioGroup}>
+                                                    <label style={styles.radioItem}>
+                                                        <input type="radio" name="languageSelection" value="predefined" checked={formData.languageSelection === 'predefined'} onChange={handleChange} style={{ marginRight: '8px' }} />
+                                                        Predefined
+                                                    </label>
+                                                    <label style={styles.radioItem}>
+                                                        <input type="radio" name="languageSelection" value="custom" checked={formData.languageSelection === 'custom'} onChange={handleChange} style={{ marginRight: '8px' }} />
+                                                        Custom
+                                                    </label>
+                                                </div>
+                                                {formData.languageSelection === 'predefined' ? (
+                                                    <select
+                                                        id="language"
+                                                        name="language"
+                                                        value={formData.language}
+                                                        onChange={handleChange}
+                                                        style={styles.select}
+                                                    >
+                                                        <option value="">Select Language/Locale</option>
+                                                        {languageOptions.map((lang) => (
+                                                            <option key={lang.key} value={lang.key}>{lang.label}</option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <input
+                                                        type="text"
+                                                        id="customLanguage"
+                                                        name="customLanguage"
+                                                        value={formData.customLanguage}
+                                                        onChange={handleChange}
+                                                        style={styles.input}
+                                                        maxLength={30}
+                                                        placeholder="e.g., Canadian French, Brazilian Portuguese"
+                                                    />
+                                                )}
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* ROW 11: Required Keywords (Full Width Tags) */}
+                                    {/* ROW 10 (OLD ROW 11): Required Keywords (Full Width Tags) */}
                                     <div style={colFullStyle}>
                                         <div style={styles.formGroup}>
                                             <label style={styles.label}>
@@ -1387,7 +1516,7 @@ const Captionandhastaggeneratorform = () => {
                                         </div>
                                     </div>
 
-                                    {/* ROW 12: Exclude Words (Full Width Tags) */}
+                                    {/* ROW 11 (OLD ROW 12): Exclude Words (Full Width Tags) */}
                                     <div style={colFullStyle}>
                                         <div style={styles.formGroup}>
                                             <label style={styles.label}>
@@ -1412,7 +1541,7 @@ const Captionandhastaggeneratorform = () => {
                                         </div>
                                     </div>
 
-                                    {/* ROW 13: Creativity + Hashtag Limit (2 Columns) */}
+                                    {/* ROW 12 (OLD ROW 13): Creativity + Hashtag Limit (2 Columns) */}
                                     <div style={twoColContainerStyle}>
                                         {/* Creativity Level (Left Half) */}
                                         <div style={colHalfStyle}>
@@ -1439,29 +1568,32 @@ const Captionandhastaggeneratorform = () => {
                                             </div>
                                         </div>
 
-                                        {/* Hashtag Limit (Right Half) */}
+                                        {/* Hashtag Limit (Right Half) - UPDATED TO DROPDOWN */}
                                         <div style={colHalfStyle}>
                                             <div style={styles.formGroup}>
                                                 <label htmlFor="hashtagLimit" style={styles.label}>
-                                                    Hashtag Limit
-                                                    <span style={styles.infoIcon} data-tooltip-id="hashtagLimit-tooltip" data-tooltip-content="Maximum number of hashtags to include (max 30)">i</span>
+                                                    Hashtag Limit (Max Number)
+                                                    <span style={styles.infoIcon} data-tooltip-id="hashtagLimit-tooltip" data-tooltip-content="Maximum number of hashtags to include (select limit)">i</span>
                                                 </label>
                                                 <Tooltip id="hashtagLimit-tooltip" />
-                                                <input
-                                                    type="number"
+                                                {/* Replaced input type="number" with select */}
+                                                <select
                                                     id="hashtagLimit"
                                                     name="hashtagLimit"
-                                                    min="0"
-                                                    max="30"
                                                     value={formData.hashtagLimit}
                                                     onChange={handleChange}
-                                                    style={styles.input}
-                                                />
+                                                    style={styles.select}
+                                                >
+                                                    <option value="">Select Limit</option>
+                                                    {hashtagLimitOptions.map((option) => (
+                                                        <option key={option.key} value={option.key}>{option.label}</option>
+                                                    ))}
+                                                </select>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* ROW 14: Proofread Toggle + Compliance Notes (Full Width) */}
+                                    {/* ROW 13 (OLD ROW 14): Proofread Toggle + Compliance Notes (Full Width) */}
                                     <div style={twoColContainerStyle}>
                                         {/* Proofread & Optimize (Left Half - Toggle) */}
                                         <div style={colHalfStyle}>
@@ -1526,6 +1658,16 @@ const Captionandhastaggeneratorform = () => {
                                         {'Review & Generate'}
                                     </button>
                                 </div>
+                                {requestId && (
+                                    <button
+                                        type="button"
+                                        style={{ ...styles.btn, ...styles.btnOutline, marginTop: '10px' }}
+                                        onClick={handleViewLog}
+                                        disabled={isGenerating}
+                                    >
+                                        View Last Generation Log
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </form>
@@ -1554,12 +1696,13 @@ const Captionandhastaggeneratorform = () => {
                     inputs={generatedVariantsData.inputs}
                     onClose={() => {
                         setShowVariantsModal(false);
-                        setShowSummary(true);
+                        setRequestId(generatedVariantsData.requestId); // Keep last successful request ID
                     }}
                     onRequestRegenerate={handleRegenerateVariant}
                     showNotification={showNotification}
                     isLoading={isApiLoading}
                     isHistoryView={isHistoryView}
+                    modalTitle={modalTitle}
                 />
             )}
             
