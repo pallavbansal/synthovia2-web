@@ -23,32 +23,50 @@ const AUTH_HEADER = `Bearer ${API.AUTH_TOKEN}`;
 const CopywritingAssistantForm = () => {
     // State for all form fields
     const [formData, setFormData] = useState({
+        useCaseMode: 'predefined',
         useCase: '',
+        customUseCase: '',
         primaryGoal: '',
         targetAudience: '',
         toneMode: 'predefined',
         toneOfVoice: '',
         customTone: '',
+        languageMode: 'predefined',
         language: 'English',
+        customLanguage: '',
         lengthTarget: 'medium',
         customWordCount: 180,
         keyPoints: '',
         variants: 3,
         showAdvanced: false,
         keywords: '',
+        ctaStyleMode: 'predefined',
         ctaStyle: '',
+        customCtaStyle: '',
         referenceText: '',
         rewriteMode: false,
+        readingLevelMode: 'predefined',
         readingLevel: 'standard',
+        customReadingLevel: '',
+        targetPlatformMode: 'predefined',
         targetPlatform: '',
+        customTargetPlatform: '',
+        brandVoiceMode: 'predefined',
         brandVoice: '',
+        customBrandVoice: '',
+        contentStyleMode: 'predefined',
         contentStyle: '',
+        customContentStyle: '',
         formattingOptions: [],
         includeWords: [],
         excludeWords: [],
+        emotionalIntentMode: 'predefined',
         emotionalIntent: '',
+        customEmotionalIntent: '',
         complianceNotes: '',
+        writingFrameworkMode: 'predefined',
         writingFramework: '',
+        customWritingFramework: '',
         outputStructure: 'markdown',
         creativityLevel: 5,
         referenceUrl: '',
@@ -62,21 +80,21 @@ const CopywritingAssistantForm = () => {
     const [showSummary, setShowSummary] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const [showVariantsModal, setShowVariantsModal] = useState(false);
-    
+
     // State structure to hold both variants array and metadata/inputs
     const [generatedVariantsData, setGeneratedVariantsData] = useState({
-       requestId: null, 
+        requestId: null,
         variants: [],
         inputs: {},
     });
-    
+
     const [requestId, setRequestId] = useState(null);
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     const [modalTitle, setModalTitle] = useState("Generated Variants");
     const [isFetchingLog, setIsFetchingLog] = useState(false);
     const [isApiLoading, setIsApiLoading] = useState(false);
     const [isHistoryView, setIsHistoryView] = useState(false);
-    
+
     const showNotification = (message, type) => {
         setNotification({ show: true, message, type });
         setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
@@ -286,9 +304,9 @@ const CopywritingAssistantForm = () => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value
+            [name]: type === 'checkbox' ? checked : value,
         }));
     };
 
@@ -296,33 +314,43 @@ const CopywritingAssistantForm = () => {
         if (e.key === 'Enter' && e.target.value.trim()) {
             e.preventDefault();
             const newItem = e.target.value.trim();
-            setFormData(prev => ({
+            setFormData((prev) => ({
                 ...prev,
-                [field]: [...prev[field], newItem]
+                [field]: [...prev[field], newItem],
             }));
             e.target.value = '';
         }
     };
 
     const removeItem = (field, index) => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [field]: prev[field].filter((_, i) => i !== index)
+            [field]: prev[field].filter((_, i) => i !== index),
         }));
     };
 
     const toggleAdvanced = () => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            showAdvanced: !prev.showAdvanced
+            showAdvanced: !prev.showAdvanced,
         }));
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (!formData.useCase || !formData.primaryGoal || !formData.targetAudience || !formData.keyPoints) {
+        if (!formData.primaryGoal || !formData.targetAudience || !formData.keyPoints) {
             alert('Please fill in all required fields (marked with *)');
+            return;
+        }
+
+        if (formData.useCaseMode === 'predefined' && !formData.useCase) {
+            alert('Please select a Use Case.');
+            return;
+        }
+
+        if (formData.useCaseMode === 'custom' && !formData.customUseCase) {
+            alert('Please enter a Custom Use Case.');
             return;
         }
 
@@ -336,6 +364,11 @@ const CopywritingAssistantForm = () => {
             return;
         }
 
+        if (formData.languageMode === 'custom' && !formData.customLanguage) {
+            alert('Please enter a Custom Language.');
+            return;
+        }
+
         setShowSummary(true);
     };
 
@@ -346,7 +379,14 @@ const CopywritingAssistantForm = () => {
     const handleGenerate = async () => {
         if (isGenerating) return;
 
-        const useCaseObj = buildOptionObject('use_case', formData.useCase);
+        const useCaseType = formData.useCaseMode === 'custom' ? 'custom' : 'predefined';
+        const useCaseValue = formData.useCaseMode === 'custom' ? formData.customUseCase : formData.useCase;
+        const useCaseObj = buildOptionObject('use_case', useCaseValue, useCaseType) || {
+            id: null,
+            value: useCaseValue,
+            type: useCaseType,
+        };
+
         const toneType = formData.toneMode === 'custom' ? 'custom' : 'predefined';
         const toneValue = formData.toneMode === 'custom' ? formData.customTone : formData.toneOfVoice;
         const toneObj = buildOptionObject('tone_of_voice', toneValue, toneType) || {
@@ -355,10 +395,12 @@ const CopywritingAssistantForm = () => {
             type: toneType,
         };
 
-        const languageObj = buildOptionObject('language', formData.language) || {
+        const languageType = formData.languageMode === 'custom' ? 'custom' : 'predefined';
+        const languageValue = formData.languageMode === 'custom' ? formData.customLanguage : formData.language;
+        const languageObj = buildOptionObject('language', languageValue, languageType) || {
             id: null,
-            value: formData.language,
-            type: 'predefined',
+            value: languageValue,
+            type: languageType,
         };
 
         let lengthTargetObj;
@@ -376,53 +418,119 @@ const CopywritingAssistantForm = () => {
             };
         }
 
-        const ctaStyleObj = formData.ctaStyle
-            ? buildOptionObject('cta_style', formData.ctaStyle) || {
+        let ctaStyleObj = null;
+        if (formData.ctaStyleMode === 'custom' && formData.customCtaStyle) {
+            const type = 'custom';
+            const value = formData.customCtaStyle;
+            ctaStyleObj = buildOptionObject('cta_style', value, type) || {
                 id: null,
-                value: formData.ctaStyle,
-                type: 'predefined',
-            }
-            : null;
+                value,
+                type,
+            };
+        } else if (formData.ctaStyleMode === 'predefined' && formData.ctaStyle) {
+            const type = 'predefined';
+            const value = formData.ctaStyle;
+            ctaStyleObj = buildOptionObject('cta_style', value, type) || {
+                id: null,
+                value,
+                type,
+            };
+        }
 
-        const readingLevelObj = formData.readingLevel
-            ? buildOptionObject('reading_level', formData.readingLevel) || {
+        let readingLevelObj = null;
+        if (formData.readingLevelMode === 'custom' && formData.customReadingLevel) {
+            const type = 'custom';
+            const value = formData.customReadingLevel;
+            readingLevelObj = buildOptionObject('reading_level', value, type) || {
                 id: null,
-                value: formData.readingLevel,
-                type: 'predefined',
-            }
-            : null;
+                value,
+                type,
+            };
+        } else if (formData.readingLevelMode === 'predefined' && formData.readingLevel) {
+            const type = 'predefined';
+            const value = formData.readingLevel;
+            readingLevelObj = buildOptionObject('reading_level', value, type) || {
+                id: null,
+                value,
+                type,
+            };
+        }
 
-        const targetPlatformObj = formData.targetPlatform
-            ? buildOptionObject('target_platform', formData.targetPlatform) || {
+        let targetPlatformObj = null;
+        if (formData.targetPlatformMode === 'custom' && formData.customTargetPlatform) {
+            const type = 'custom';
+            const value = formData.customTargetPlatform;
+            targetPlatformObj = buildOptionObject('target_platform', value, type) || {
                 id: null,
-                value: formData.targetPlatform,
-                type: 'predefined',
-            }
-            : null;
+                value,
+                type,
+            };
+        } else if (formData.targetPlatformMode === 'predefined' && formData.targetPlatform) {
+            const type = 'predefined';
+            const value = formData.targetPlatform;
+            targetPlatformObj = buildOptionObject('target_platform', value, type) || {
+                id: null,
+                value,
+                type,
+            };
+        }
 
-        const contentStyleObj = formData.contentStyle
-            ? buildOptionObject('content_style_preference', formData.contentStyle) || {
+        let contentStyleObj = null;
+        if (formData.contentStyleMode === 'custom' && formData.customContentStyle) {
+            const type = 'custom';
+            const value = formData.customContentStyle;
+            contentStyleObj = buildOptionObject('content_style_preference', value, type) || {
                 id: null,
-                value: formData.contentStyle,
-                type: 'predefined',
-            }
-            : null;
+                value,
+                type,
+            };
+        } else if (formData.contentStyleMode === 'predefined' && formData.contentStyle) {
+            const type = 'predefined';
+            const value = formData.contentStyle;
+            contentStyleObj = buildOptionObject('content_style_preference', value, type) || {
+                id: null,
+                value,
+                type,
+            };
+        }
 
-        const emotionalIntentObj = formData.emotionalIntent
-            ? buildOptionObject('emotional_intent', formData.emotionalIntent) || {
+        let emotionalIntentObj = null;
+        if (formData.emotionalIntentMode === 'custom' && formData.customEmotionalIntent) {
+            const type = 'custom';
+            const value = formData.customEmotionalIntent;
+            emotionalIntentObj = buildOptionObject('emotional_intent', value, type) || {
                 id: null,
-                value: formData.emotionalIntent,
-                type: 'predefined',
-            }
-            : null;
+                value,
+                type,
+            };
+        } else if (formData.emotionalIntentMode === 'predefined' && formData.emotionalIntent) {
+            const type = 'predefined';
+            const value = formData.emotionalIntent;
+            emotionalIntentObj = buildOptionObject('emotional_intent', value, type) || {
+                id: null,
+                value,
+                type,
+            };
+        }
 
-        const writingFrameworkObj = formData.writingFramework
-            ? buildOptionObject('writing_framework', formData.writingFramework) || {
+        let writingFrameworkObj = null;
+        if (formData.writingFrameworkMode === 'custom' && formData.customWritingFramework) {
+            const type = 'custom';
+            const value = formData.customWritingFramework;
+            writingFrameworkObj = buildOptionObject('writing_framework', value, type) || {
                 id: null,
-                value: formData.writingFramework,
-                type: 'predefined',
-            }
-            : null;
+                value,
+                type,
+            };
+        } else if (formData.writingFrameworkMode === 'predefined' && formData.writingFramework) {
+            const type = 'predefined';
+            const value = formData.writingFramework;
+            writingFrameworkObj = buildOptionObject('writing_framework', value, type) || {
+                id: null,
+                value,
+                type,
+            };
+        }
 
         const outputStructureObj = formData.outputStructure
             ? buildOptionObject('output_structure_type', formData.outputStructure) || {
@@ -468,13 +576,23 @@ const CopywritingAssistantForm = () => {
             reference_text: formData.referenceText || null,
             reading_level: readingLevelObj,
             target_platform: targetPlatformObj,
-            brand_voice_reference: formData.brandVoice
-                ? {
-                    id: null,
-                    value: formData.brandVoice,
-                    type: 'predefined',
+            brand_voice_reference: (() => {
+                if (formData.brandVoiceMode === 'custom' && formData.customBrandVoice) {
+                    return {
+                        id: null,
+                        value: formData.customBrandVoice,
+                        type: 'custom',
+                    };
                 }
-                : null,
+                if (formData.brandVoiceMode === 'predefined' && formData.brandVoice) {
+                    return {
+                        id: null,
+                        value: formData.brandVoice,
+                        type: 'predefined',
+                    };
+                }
+                return null;
+            })(),
             content_style_preference: contentStyleObj,
             formatting_options: formData.formattingOptions || [],
             include_words: formData.includeWords || [],
@@ -767,28 +885,85 @@ const CopywritingAssistantForm = () => {
                     <form onSubmit={handleSubmit}>
                         <div className="row g-4">
                             {/* Use Case */}
-                            <div className="col-md-6">
+                            <div className="col-12">
                                 <div style={styles.formGroup}>
-                                    <label htmlFor="useCase" style={styles.label}>
+                                    <label style={styles.label}>
                                         Use Case <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} data-tooltip-id="useCase-tooltip" data-tooltip-content="Select the type of content you want to create">i</span>
+                                        <span style={styles.infoIcon} data-tooltip-id="useCase-tooltip" data-tooltip-content="Select a predefined use case or define your own custom use case">i</span>
                                     </label>
                                     <Tooltip id="useCase-tooltip" />
-                                    <select
-                                        id="useCase"
-                                        name="useCase"
-                                        value={formData.useCase}
-                                        onChange={handleChange}
-                                        style={styles.select}
-                                        required
-                                    >
-                                        <option value="">Select a use case</option>
-                                        {useCaseOptions.map((option, index) => (
-                                            <option key={index} value={option.value}>{option.label}</option>
-                                        ))}
-                                    </select>
+                                    <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                            <input
+                                                type="radio"
+                                                name="useCaseMode"
+                                                value="predefined"
+                                                checked={formData.useCaseMode === 'predefined'}
+                                                onChange={handleChange}
+                                                style={{ marginRight: '8px' }}
+                                            />
+                                            Predefined
+                                        </label>
+                                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                            <input
+                                                type="radio"
+                                                name="useCaseMode"
+                                                value="custom"
+                                                checked={formData.useCaseMode === 'custom'}
+                                                onChange={handleChange}
+                                                style={{ marginRight: '8px' }}
+                                            />
+                                            Custom
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
+
+                            {/* Predefined Use Case (shown when predefined is selected) */}
+                            {formData.useCaseMode === 'predefined' && (
+                                <div className="col-md-6">
+                                    <div style={styles.formGroup}>
+                                        <label htmlFor="useCase" style={styles.label}>
+                                            Select Use Case <span style={{ color: '#ef4444' }}>*</span>
+                                        </label>
+                                        <select
+                                            id="useCase"
+                                            name="useCase"
+                                            value={formData.useCase}
+                                            onChange={handleChange}
+                                            style={styles.select}
+                                            required={formData.useCaseMode === 'predefined'}
+                                        >
+                                            <option value="">Select a use case</option>
+                                            {useCaseOptions.map((option, index) => (
+                                                <option key={index} value={option.value}>{option.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Custom Use Case (shown when custom is selected) */}
+                            {formData.useCaseMode === 'custom' && (
+                                <div className="col-md-6">
+                                    <div style={styles.formGroup}>
+                                        <label htmlFor="customUseCase" style={styles.label}>
+                                            Custom Use Case <span style={{ color: '#ef4444' }}>*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="customUseCase"
+                                            name="customUseCase"
+                                            value={formData.customUseCase}
+                                            onChange={handleChange}
+                                            style={styles.input}
+                                            placeholder="Describe your specific use case"
+                                            maxLength={150}
+                                            required={formData.useCaseMode === 'custom'}
+                                        />
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Primary Goal */}
                             <div className="col-12">
@@ -918,27 +1093,82 @@ const CopywritingAssistantForm = () => {
                             )}
 
                             {/* Language */}
-                            <div className="col-md-6">
+                            <div className="col-12">
                                 <div style={styles.formGroup}>
-                                    <label htmlFor="language" style={styles.label}>
+                                    <label style={styles.label}>
                                         Language <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} data-tooltip-id="language-tooltip" data-tooltip-content="Select the language for your content">i</span>
+                                        <span style={styles.infoIcon} data-tooltip-id="language-tooltip" data-tooltip-content="Select the language for your content or define a custom language">i</span>
                                     </label>
                                     <Tooltip id="language-tooltip" />
-                                    <select
-                                        id="language"
-                                        name="language"
-                                        value={formData.language}
-                                        onChange={handleChange}
-                                        style={styles.select}
-                                        required
-                                    >
-                                        {languageOptions.map((lang, index) => (
-                                            <option key={index} value={lang.value}>{lang.label}</option>
-                                        ))}
-                                    </select>
+                                    <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                            <input
+                                                type="radio"
+                                                name="languageMode"
+                                                value="predefined"
+                                                checked={formData.languageMode === 'predefined'}
+                                                onChange={handleChange}
+                                                style={{ marginRight: '8px' }}
+                                            />
+                                            Predefined
+                                        </label>
+                                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                            <input
+                                                type="radio"
+                                                name="languageMode"
+                                                value="custom"
+                                                checked={formData.languageMode === 'custom'}
+                                                onChange={handleChange}
+                                                style={{ marginRight: '8px' }}
+                                            />
+                                            Custom
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
+
+                            {formData.languageMode === 'predefined' && (
+                                <div className="col-md-6">
+                                    <div style={styles.formGroup}>
+                                        <label htmlFor="language" style={styles.label}>
+                                            Select Language <span style={{ color: '#ef4444' }}>*</span>
+                                        </label>
+                                        <select
+                                            id="language"
+                                            name="language"
+                                            value={formData.language}
+                                            onChange={handleChange}
+                                            style={styles.select}
+                                            required={formData.languageMode === 'predefined'}
+                                        >
+                                            {languageOptions.map((lang, index) => (
+                                                <option key={index} value={lang.value}>{lang.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
+
+                            {formData.languageMode === 'custom' && (
+                                <div className="col-md-6">
+                                    <div style={styles.formGroup}>
+                                        <label htmlFor="customLanguage" style={styles.label}>
+                                            Custom Language <span style={{ color: '#ef4444' }}>*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="customLanguage"
+                                            name="customLanguage"
+                                            value={formData.customLanguage}
+                                            onChange={handleChange}
+                                            style={styles.input}
+                                            placeholder="e.g., English (Canada), Hinglish"
+                                            maxLength={100}
+                                            required={formData.languageMode === 'custom'}
+                                        />
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Length Target */}
                             <div className="col-md-6">
@@ -1105,27 +1335,81 @@ const CopywritingAssistantForm = () => {
                                     </div>
 
                                     {/* CTA Style */}
-                                    <div className="col-md-6">
+                                    <div className="col-12">
                                         <div style={styles.formGroup}>
-                                            <label htmlFor="ctaStyle" style={styles.label}>
+                                            <label style={styles.label}>
                                                 CTA Style (optional)
-                                                <span style={styles.infoIcon} data-tooltip-id="cta-tooltip" data-tooltip-content="Select the style for your call-to-action">i</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="cta-tooltip" data-tooltip-content="Select a CTA style or define your own">i</span>
                                             </label>
                                             <Tooltip id="cta-tooltip" />
-                                            <select
-                                                id="ctaStyle"
-                                                name="ctaStyle"
-                                                value={formData.ctaStyle}
-                                                onChange={handleChange}
-                                                style={styles.select}
-                                            >
-                                                <option value="">Select CTA Style</option>
-                                                {ctaStyleOptions.map((style, index) => (
-                                                    <option key={index} value={style.value}>{style.label}</option>
-                                                ))}
-                                            </select>
+                                            <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
+                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="radio"
+                                                        name="ctaStyleMode"
+                                                        value="predefined"
+                                                        checked={formData.ctaStyleMode === 'predefined'}
+                                                        onChange={handleChange}
+                                                        style={{ marginRight: '8px' }}
+                                                    />
+                                                    Predefined
+                                                </label>
+                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="radio"
+                                                        name="ctaStyleMode"
+                                                        value="custom"
+                                                        checked={formData.ctaStyleMode === 'custom'}
+                                                        onChange={handleChange}
+                                                        style={{ marginRight: '8px' }}
+                                                    />
+                                                    Custom
+                                                </label>
+                                            </div>
                                         </div>
                                     </div>
+
+                                    {formData.ctaStyleMode === 'predefined' && (
+                                        <div className="col-md-6">
+                                            <div style={styles.formGroup}>
+                                                <label htmlFor="ctaStyle" style={styles.label}>
+                                                    Select CTA Style
+                                                </label>
+                                                <select
+                                                    id="ctaStyle"
+                                                    name="ctaStyle"
+                                                    value={formData.ctaStyle}
+                                                    onChange={handleChange}
+                                                    style={styles.select}
+                                                >
+                                                    <option value="">Select CTA Style</option>
+                                                    {ctaStyleOptions.map((style, index) => (
+                                                        <option key={index} value={style.value}>{style.label}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {formData.ctaStyleMode === 'custom' && (
+                                        <div className="col-md-6">
+                                            <div style={styles.formGroup}>
+                                                <label htmlFor="customCtaStyle" style={styles.label}>
+                                                    Custom CTA Style
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    id="customCtaStyle"
+                                                    name="customCtaStyle"
+                                                    value={formData.customCtaStyle}
+                                                    onChange={handleChange}
+                                                    style={styles.input}
+                                                    placeholder="Describe your CTA style"
+                                                    maxLength={120}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Reference Text */}
                                     <div className="col-12">
@@ -1170,49 +1454,157 @@ const CopywritingAssistantForm = () => {
                                     </div>
 
                                     {/* Reading Level */}
-                                    <div className="col-md-6">
+                                    <div className="col-12">
                                         <div style={styles.formGroup}>
-                                            <label htmlFor="readingLevel" style={styles.label}>
+                                            <label style={styles.label}>
                                                 Reading Level (optional)
-                                                <span style={styles.infoIcon} data-tooltip-id="reading-tooltip" data-tooltip-content="Select the reading level for your content">i</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="reading-tooltip" data-tooltip-content="Select the reading level for your content or describe a custom level">i</span>
                                             </label>
                                             <Tooltip id="reading-tooltip" />
-                                            <select
-                                                id="readingLevel"
-                                                name="readingLevel"
-                                                value={formData.readingLevel}
-                                                onChange={handleChange}
-                                                style={styles.select}
-                                            >
-                                                {readingLevelOptions.map((opt, index) => (
-                                                    <option key={index} value={opt.value}>{opt.label}</option>
-                                                ))}
-                                            </select>
+                                            <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
+                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="radio"
+                                                        name="readingLevelMode"
+                                                        value="predefined"
+                                                        checked={formData.readingLevelMode === 'predefined'}
+                                                        onChange={handleChange}
+                                                        style={{ marginRight: '8px' }}
+                                                    />
+                                                    Predefined
+                                                </label>
+                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="radio"
+                                                        name="readingLevelMode"
+                                                        value="custom"
+                                                        checked={formData.readingLevelMode === 'custom'}
+                                                        onChange={handleChange}
+                                                        style={{ marginRight: '8px' }}
+                                                    />
+                                                    Custom
+                                                </label>
+                                            </div>
                                         </div>
                                     </div>
 
+                                    {formData.readingLevelMode === 'predefined' && (
+                                        <div className="col-md-6">
+                                            <div style={styles.formGroup}>
+                                                <label htmlFor="readingLevel" style={styles.label}>
+                                                    Select Reading Level
+                                                </label>
+                                                <select
+                                                    id="readingLevel"
+                                                    name="readingLevel"
+                                                    value={formData.readingLevel}
+                                                    onChange={handleChange}
+                                                    style={styles.select}
+                                                >
+                                                    {readingLevelOptions.map((opt, index) => (
+                                                        <option key={index} value={opt.value}>{opt.label}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {formData.readingLevelMode === 'custom' && (
+                                        <div className="col-md-6">
+                                            <div style={styles.formGroup}>
+                                                <label htmlFor="customReadingLevel" style={styles.label}>
+                                                    Custom Reading Level
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    id="customReadingLevel"
+                                                    name="customReadingLevel"
+                                                    value={formData.customReadingLevel}
+                                                    onChange={handleChange}
+                                                    style={styles.input}
+                                                    placeholder="Describe the reading level"
+                                                    maxLength={120}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Target Platform */}
-                                    <div className="col-md-6">
+                                    <div className="col-12">
                                         <div style={styles.formGroup}>
-                                            <label htmlFor="targetPlatform" style={styles.label}>
+                                            <label style={styles.label}>
                                                 Target Platform (optional)
-                                                <span style={styles.infoIcon} data-tooltip-id="platform-tooltip" data-tooltip-content="Select the platform where this content will be published">i</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="platform-tooltip" data-tooltip-content="Select the platform where this content will be published or specify your own">i</span>
                                             </label>
                                             <Tooltip id="platform-tooltip" />
-                                            <select
-                                                id="targetPlatform"
-                                                name="targetPlatform"
-                                                value={formData.targetPlatform || ''}
-                                                onChange={handleChange}
-                                                style={styles.select}
-                                            >
-                                                <option value="">Any Platform</option>
-                                                {targetPlatformOptions.map((opt, index) => (
-                                                    <option key={index} value={opt.value}>{opt.label}</option>
-                                                ))}
-                                            </select>
+                                            <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
+                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="radio"
+                                                        name="targetPlatformMode"
+                                                        value="predefined"
+                                                        checked={formData.targetPlatformMode === 'predefined'}
+                                                        onChange={handleChange}
+                                                        style={{ marginRight: '8px' }}
+                                                    />
+                                                    Predefined
+                                                </label>
+                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="radio"
+                                                        name="targetPlatformMode"
+                                                        value="custom"
+                                                        checked={formData.targetPlatformMode === 'custom'}
+                                                        onChange={handleChange}
+                                                        style={{ marginRight: '8px' }}
+                                                    />
+                                                    Custom
+                                                </label>
+                                            </div>
                                         </div>
                                     </div>
+
+                                    {formData.targetPlatformMode === 'predefined' && (
+                                        <div className="col-md-6">
+                                            <div style={styles.formGroup}>
+                                                <label htmlFor="targetPlatform" style={styles.label}>
+                                                    Select Target Platform
+                                                </label>
+                                                <select
+                                                    id="targetPlatform"
+                                                    name="targetPlatform"
+                                                    value={formData.targetPlatform || ''}
+                                                    onChange={handleChange}
+                                                    style={styles.select}
+                                                >
+                                                    <option value="">Any Platform</option>
+                                                    {targetPlatformOptions.map((opt, index) => (
+                                                        <option key={index} value={opt.value}>{opt.label}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {formData.targetPlatformMode === 'custom' && (
+                                        <div className="col-md-6">
+                                            <div style={styles.formGroup}>
+                                                <label htmlFor="customTargetPlatform" style={styles.label}>
+                                                    Custom Target Platform
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    id="customTargetPlatform"
+                                                    name="customTargetPlatform"
+                                                    value={formData.customTargetPlatform}
+                                                    onChange={handleChange}
+                                                    style={styles.input}
+                                                    placeholder="Describe the platform"
+                                                    maxLength={120}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Brand Voice Reference */}
                                     <div className="col-md-6">
