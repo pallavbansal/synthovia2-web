@@ -131,6 +131,8 @@ const AdCopyGeneratorForm = () => {
     const [ctaTypeCustom, setCtaTypeCustom] = useState('');
     const [emotionalAngleMode, setEmotionalAngleMode] = useState('predefined');
     const [emotionalAngleCustom, setEmotionalAngleCustom] = useState('');
+    const [assetReuseMode, setAssetReuseMode] = useState('predefined');
+    const [assetReuseCustom, setAssetReuseCustom] = useState('');
     
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     const [mounted, setMounted] = useState(false);
@@ -327,7 +329,15 @@ const AdCopyGeneratorForm = () => {
 
         let labelToStore = selectedKey;
         if (selectedKey) {
-            const fieldOptionsKey = name === 'adTextLength' ? 'primary_text_length' : name;
+            // Map form field name to the correct options key used in fieldOptions
+            let fieldOptionsKey = name;
+            if (name === 'adTextLength') fieldOptionsKey = 'primary_text_length';
+            if (name === 'tone') fieldOptionsKey = 'tone_style';
+            if (name === 'headlineFocus') fieldOptionsKey = 'headline_focus';
+            if (name === 'ctaType') fieldOptionsKey = 'cta_type';
+            if (name === 'emotionalAngle') fieldOptionsKey = 'emotional_angle';
+            if (name === 'assetReuseStrategy') fieldOptionsKey = 'asset_reuse_strategy';
+
             if (e.target.tagName === 'SELECT') {
                 labelToStore = getLabelFromKey(selectedKey, fieldOptionsKey, fieldOptions);
             }
@@ -379,7 +389,8 @@ const AdCopyGeneratorForm = () => {
         if (!formData.platform) missing.push('Ad Platform');
         if (!formData.placement) missing.push('Ad Placement');
         if (!formData.campaignObjective) missing.push('Campaign Objective');
-        if (formData.campaignObjective === 'Custom Objective' && !formData.customObjective.trim()) {
+        // Only require Custom Objective when user has explicitly chosen custom mode
+        if (formData.campaignObjectiveMode === 'custom' && !formData.customObjective.trim()) {
             missing.push('Custom Objective');
         }
 
@@ -504,6 +515,8 @@ const AdCopyGeneratorForm = () => {
           setIsHistoryView(false);
         // Reuse the formatPayload function to get the current form data
         const payload = formatPayload();
+        console.log("payload:payload",payload);
+       
         
         // ... (validation remains the same) ...
 
@@ -622,7 +635,7 @@ const AdCopyGeneratorForm = () => {
             const lang = parts.length > 1 ? parts[1]?.trim() : null;
             return { locale: geo || null, language: lang || null };
         };
-    
+       
         const payload = {
             platform: mapSelectionToApiObject('platform', formData.platform, fieldOptions.platform, true),
             placement: mapSelectionToApiObject('placement', formData.placement, fieldOptions.placement, true),
@@ -1204,13 +1217,11 @@ const AdCopyGeneratorForm = () => {
                                                     name="customObjective"
                                                     value={formData.customObjective}
                                                     onChange={handleChange}
-                                                    style={styles.select}
+                                                    style={styles.input}
                                                     placeholder="Describe your custom objective"
                                                     required={formData.campaignObjective === 'Custom Objective'}
                                                 />
-                                                <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                                                    Please describe what you want to achieve with this campaign.
-                                                </p>
+                                               
                                             </div>
                                         )}
                                     </div>
@@ -1917,7 +1928,7 @@ const AdCopyGeneratorForm = () => {
                                                     name="brandVoice"
                                                     value={formData.brandVoice}
                                                     onChange={handleChange}
-                                                    style={styles.select}
+                                                    style={styles.input}
                                                     placeholder="Describe your brand's tone and personality"
                                                 />
                                             </div>
@@ -1998,25 +2009,87 @@ const AdCopyGeneratorForm = () => {
                                                 <label htmlFor="assetReuseStrategy" style={styles.label}>
                                                     Asset Reuse Strategy (Optional)
                                                 </label>
-                                                <select
-                                                    id="assetReuseStrategy"
-                                                    name="assetReuseStrategy"
-                                                    // Use key for value attribute, label for display
-                                                    value={fieldOptions.asset_reuse_strategy.find(opt => opt.label === formData.assetReuseStrategy)?.key || formData.assetReuseStrategy}
-                                                    onChange={handleChange}
-                                                    style={styles.select}
-                                                >
-                                                    <option value="">Select Strategy</option>
-                                                    <option value="Auto-Detect (Recommended)">Auto-Detect (Recommended)</option>
-                                                    {fieldOptions.asset_reuse_strategy && fieldOptions.asset_reuse_strategy.map((option) => (
-                                                        <option
-                                                            key={option.key || option.id}
-                                                            value={option.key}
-                                                        >
-                                                            {option.label}
-                                                        </option>
-                                                    ))}
-                                                </select>
+
+                                                {/* Mode toggle */}
+                                                <div style={styles.radioGroup}>
+                                                    <label style={styles.radioItem}>
+                                                        <input
+                                                            type="radio"
+                                                            name="assetReuseMode"
+                                                            value="predefined"
+                                                            checked={assetReuseMode === 'predefined'}
+                                                            onChange={() => {
+                                                                setAssetReuseMode('predefined');
+                                                                setFormData(prev => ({
+                                                                    ...prev,
+                                                                    assetReuseStrategy: prev.assetReuseStrategy || 'Auto-Detect (Recommended)',
+                                                                }));
+                                                            }}
+                                                        />
+                                                        <span>Predefined</span>
+                                                    </label>
+                                                    <label style={styles.radioItem}>
+                                                        <input
+                                                            type="radio"
+                                                            name="assetReuseMode"
+                                                            value="custom"
+                                                            checked={assetReuseMode === 'custom'}
+                                                            onChange={() => {
+                                                                setAssetReuseMode('custom');
+                                                                setFormData(prev => ({
+                                                                    ...prev,
+                                                                    assetReuseStrategy: assetReuseCustom || prev.assetReuseStrategy,
+                                                                }));
+                                                            }}
+                                                        />
+                                                        <span>Custom</span>
+                                                    </label>
+                                                </div>
+
+                                                {/* Predefined select */}
+                                                {assetReuseMode === 'predefined' && (
+                                                    <select
+                                                        id="assetReuseStrategy"
+                                                        name="assetReuseStrategy"
+                                                        // Use key for value attribute, label for display
+                                                        value={fieldOptions.asset_reuse_strategy.find(opt => opt.label === formData.assetReuseStrategy)?.key || formData.assetReuseStrategy}
+                                                        onChange={handleChange}
+                                                        style={{ ...styles.select, marginTop: '8px' }}
+                                                    >
+                                                        <option value="">Select Strategy</option>
+                                                        <option value="Auto-Detect (Recommended)">Auto-Detect (Recommended)</option>
+                                                        {fieldOptions.asset_reuse_strategy && fieldOptions.asset_reuse_strategy.map((option) => (
+                                                            <option
+                                                                key={option.key || option.id}
+                                                                value={option.key}
+                                                            >
+                                                                {option.label}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                )}
+
+                                                {/* Custom input */}
+                                                {assetReuseMode === 'custom' && (
+                                                    <div style={{ marginTop: '8px' }}>
+                                                        <input
+                                                            type="text"
+                                                            id="assetReuseCustom"
+                                                            name="assetReuseCustom"
+                                                            value={assetReuseCustom}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                setAssetReuseCustom(val);
+                                                                setFormData(prev => ({
+                                                                    ...prev,
+                                                                    assetReuseStrategy: val,
+                                                                }));
+                                                            }}
+                                                            style={styles.input}
+                                                            placeholder="Describe how existing assets should be reused"
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
@@ -2035,6 +2108,11 @@ const AdCopyGeneratorForm = () => {
                                                     onKeyPress={(e) => handleArrayChange(e, 'audiencePain')}
                                                 />
                                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+                                                    {formData.audiencePain.length === 0 && (
+                                                        <span style={{ color: '#9ca3af', fontSize: '14px' }}>
+                                                            Type and press Enter to add audience pain points
+                                                        </span>
+                                                    )}
                                                     {formData.audiencePain.map((pain, index) => (
                                                         <span key={index} style={{...styles.badge, ...styles.badgeSecondary}}>
                                                             {pain}
@@ -2104,6 +2182,11 @@ const AdCopyGeneratorForm = () => {
                                                     onKeyPress={(e) => handleArrayChange(e, 'proofCredibility')}
                                                 />
                                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+                                                    {formData.proofCredibility.length === 0 && (
+                                                        <span style={{ color: '#9ca3af', fontSize: '14px' }}>
+                                                            Type and press Enter to add proof & credibility elements
+                                                        </span>
+                                                    )}
                                                     {formData.proofCredibility.map((item, index) => (
                                                         <span key={index} style={{...styles.badge, ...styles.badgeSuccess}}>
                                                             {item}

@@ -214,6 +214,21 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                         </div>
                     </div>
 
+                    {/* Emotional Angle & Variants just above Advanced Settings */}
+                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+                        <span style={styles.itemLabel}>Emotional Angle:</span>
+                        <div style={styles.valueBox}>
+                            {formData.emotionalAngle}
+                        </div>
+                    </div>
+                    
+                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+                        <span style={styles.itemLabel}>Number of Variants:</span>
+                        <div style={styles.valueBox}>
+                            {formData.variants}
+                        </div>
+                    </div>
+
                     <h3 style={styles.sectionTitle}>⚙️ Advanced Settings</h3>
                     
                     <div style={{...styles.item, gridColumn: 'span 1'}}>
@@ -243,21 +258,114 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                             {formData.ctaType}
                         </div>
                     </div>
-                    
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
-                        <span style={styles.itemLabel}>Emotional Angle:</span>
-                        <div style={styles.valueBox}>
-                            {formData.emotionalAngle}
-                        </div>
-                    </div>
-                    
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
-                        <span style={styles.itemLabel}>Number of Variants:</span>
-                        <div style={styles.valueBox}>
-                            {formData.variants}
-                        </div>
-                    </div>
 
+                    {/* Brand Voice & Personality */}
+                    {formData.brandVoice && (
+                        <div style={{...styles.item, gridColumn: 'span 1'}}>
+                            <span style={styles.itemLabel}>Brand Voice:</span>
+                            <div style={styles.valueBox}>
+                                {formData.brandVoice}
+                            </div>
+                        </div>
+                    )}
+
+                    {formData.brandVoicePersonalityMode === 'predefined' && formData.brandVoicePersonalityOption && (
+                        <div style={{...styles.item, gridColumn: 'span 1'}}>
+                            <span style={styles.itemLabel}>Brand Voice Personality:</span>
+                            <div style={styles.valueBox}>
+                                {formData.brandVoicePersonalityOption}
+                            </div>
+                        </div>
+                    )}
+
+                    {formData.brandVoicePersonalityMode === 'custom' && formData.brandVoicePersonalityCustom && (
+                        <div style={{...styles.item, gridColumn: 'span 1'}}>
+                            <span style={styles.itemLabel}>Brand Voice Personality (Custom):</span>
+                            <div style={styles.valueBox}>
+                                {formData.brandVoicePersonalityCustom}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Geo & Language Targeting and Dates */}
+                    {formData.geoLanguageTarget && (
+                        <div style={{...styles.item, gridColumn: 'span 1'}}>
+                            <span style={styles.itemLabel}>Geo &amp; Language Targeting:</span>
+                            <div style={styles.valueBox}>
+                                {formData.geoLanguageTarget}
+                            </div>
+                        </div>
+                    )}
+
+                    {(formData.campaignDuration?.start || formData.campaignDuration?.end) && (
+                        <div style={{...styles.item, gridColumn: 'span 1'}}>
+                            <span style={styles.itemLabel}>Campaign Dates:</span>
+                            <div style={styles.valueBox}>
+                                {formData.campaignDuration?.start || 'Not set'}
+                                {'  →  '}
+                                {formData.campaignDuration?.end || 'Not set'}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Audience Pain Points */}
+                    {formData.audiencePain && formData.audiencePain.length > 0 && (
+                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                            <span style={styles.itemLabel}>Audience Pain Points:</span>
+                            <div style={styles.tagContainer}>
+                                {formData.audiencePain.map((item, index) => (
+                                    <span key={index} style={{ ...styles.badge, ...styles.badgeSecondary }}>
+                                        {item}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Proof & Credibility Elements */}
+                    {formData.proofCredibility && formData.proofCredibility.length > 0 && (
+                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                            <span style={styles.itemLabel}>Proof & Credibility Elements:</span>
+                            <div style={styles.tagContainer}>
+                                {formData.proofCredibility.map((item, index) => (
+                                    <span key={index} style={{ ...styles.badge, ...styles.badgeSuccess }}>
+                                        {item}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Offer & Pricing */}
+                    {formData.offerPricing && (
+                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                            <span style={styles.itemLabel}>Offer &amp; Pricing:</span>
+                            <div style={styles.valueBox}>
+                                {formData.offerPricing}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Problem Scenario & Feature Highlight */}
+                    {formData.problemScenario && (
+                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                            <span style={styles.itemLabel}>Problem Scenario:</span>
+                            <div style={styles.valueBox}>
+                                {formData.problemScenario}
+                            </div>
+                        </div>
+                    )}
+
+                    {formData.featureHighlight && (
+                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                            <span style={styles.itemLabel}>Feature Highlight:</span>
+                            <div style={styles.valueBox}>
+                                {formData.featureHighlight}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* USP & Compliance Note */}
                     {formData.usp && (
                         <div style={{...styles.item, gridColumn: '1 / -1'}}>
                             <span style={styles.itemLabel}>Unique Selling Proposition (USP):</span>
