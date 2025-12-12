@@ -780,168 +780,171 @@ const Captionandhastaggeneratorform = () => {
                                 </div>
                             </div>
 
-                            {/* ROW 3: Target Audience Tags (Full Width) */}
-                            <div style={colFullStyle}>
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>
-                                        Target Audience <span style={{ color: '#ef4444' }}>*</span>
-                                        <span 
-                                            style={styles.infoIcon} 
-                                            data-tooltip-id="targetAudience-tooltip" 
-                                            data-tooltip-html="Describe who you want to reach with this post. Include audience characteristics like age, profession, interests, and behavior to help generate captions that speak directly to them."
-                                        >
-                                            i
-                                        </span>
-                                    </label>
-                                    <Tooltip id="targetAudience-tooltip" />
-                                    <div style={{ 
-                                        display: 'flex', 
-                                        flexWrap: 'wrap', 
-                                        gap: '8px', 
-                                        marginBottom: '8px',
-                                        minHeight: '40px',
-                                        alignItems: 'center',
-                                        padding: '4px',
-                                        border: '1px solid #334155', // Updated border to match theme
-                                        borderRadius: '6px',
-                                        backgroundColor: formData.targetAudience.length > 0 ? '#1e293b' : '#1e293b' // Updated background to match theme
-                                    }}>
-                                        {formData.targetAudience.length === 0 && (
-                                            <span style={{ color: '#94a3b8', fontSize: '14px', marginLeft: '8px' }}>
-                                                Add audience segments (e.g., 'Women 25-34', 'Fitness Enthusiasts')
-                                            </span>
-                                        )}
-                                        {formData.targetAudience.map((chip, index) => (
-                                            <span 
-                                                key={index} 
-                                                style={{
-                                                    ...styles.badge,
-                                                    ...styles.badgePrimary,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '6px',
-                                                    padding: '4px 10px'
-                                                }}
-                                            >
-                                                {chip}
-                                                <button 
-                                                    type="button" 
-                                                    onClick={() => removeItem('targetAudience', index)}
-                                                    style={styles.removeBtn}
-                                                >
-                                                    ×
-                                                </button>
-                                            </span>
-                                        ))}
-                                    </div>
+                   {/* ROW 3: Target Audience Tags (Full Width) */}
+<div style={colFullStyle}>
+    <div style={styles.formGroup}>
+        <label style={styles.label}>
+            Target Audience <span style={{ color: '#ef4444' }}>*</span>
+            <span 
+                style={styles.infoIcon} 
+                data-tooltip-id="targetAudience-tooltip" 
+                data-tooltip-html="Describe who you want to reach with this ad. Include audience characteristics like age, profession, interests, and behavior. This helps generate messaging that speaks directly to the right people and increases conversions."
+            >
+                i
+            </span>
+        </label>
 
-                                    <div style={{ position: 'relative' }}>
-                                        <input
-                                            type="text"
-                                            value={audienceInput}
-                                            onChange={handleAudienceInput}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' && audienceInput.trim()) {
-                                                    e.preventDefault();
-                                                    addAudienceChip(audienceInput.trim());
-                                                }
-                                            }}
-                                            style={{
-                                                ...styles.input,
-                                                marginBottom: 0,
-                                                borderBottomLeftRadius: showAudienceSuggestions ? '0' : '6px',
-                                                borderBottomRightRadius: showAudienceSuggestions ? '0' : '6px'
-                                            }}
-                                            placeholder="Type and press Enter to add audience segments"
-                                            required={formData.targetAudience.length === 0}
-                                        />
+        <Tooltip id="targetAudience-tooltip" />
 
-                                        {showAudienceSuggestions && (
-                                            <div style={{
-                                                position: 'absolute',
-                                                top: '100%',
-                                                left: 0,
-                                                right: 0,
-                                                backgroundColor: '#1e293b', // Updated background
-                                                border: '1px solid #334155',
-                                                borderTop: 'none',
-                                                borderBottomLeftRadius: '6px',
-                                                borderBottomRightRadius: '6px',
-                                                zIndex: 1000,
-                                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)',
-                                                maxHeight: '200px',
-                                                overflowY: 'auto'
-                                            }}>
-                                                {Object.entries(audienceSuggestions).map(([category, suggestions]) => {
-                                                    const filtered = suggestions.filter(s => 
-                                                        s.toLowerCase().includes(audienceInput.toLowerCase()) && 
-                                                        !formData.targetAudience.includes(s)
-                                                    );
-                                                    if (filtered.length === 0) return null;
-                                                    return (
-                                                        <div key={category}>
-                                                            <div style={{
-                                                                padding: '8px 12px',
-                                                                fontSize: '12px',
-                                                                fontWeight: 600,
-                                                                color: '#94a3b8',
-                                                                backgroundColor: '#141b2d',
-                                                                textTransform: 'uppercase',
-                                                                letterSpacing: '0.05em'
-                                                            }}>
-                                                                {category}
-                                                            </div>
-                                                            {filtered.map((suggestion, idx) => (
-                                                                <div
-                                                                    key={idx}
-                                                                    onClick={() => {
-                                                                        addAudienceChip(suggestion);
-                                                                        setAudienceInput('');
-                                                                    }}
-                                                                    style={{ 
-                                                                        padding: '8px 16px', 
-                                                                        cursor: 'pointer', 
-                                                                        color: '#e2e8f0',
-                                                                        backgroundColor: '#1e293b',
-                                                                        transition: 'background-color 0.15s ease',
-                                                                    }}
-                                                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#334155'}
-                                                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#1e293b'}
-                                                                >
-                                                                    {suggestion}
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    );
-                                                })}
+        {/* Chips container */}
+        <div style={{ 
+            display: 'flex', 
+            flexWrap: 'wrap', 
+            gap: '8px', 
+            marginBottom: '8px',
+            minHeight: '40px',
+            alignItems: 'center',
+            padding: '4px',
+            border: '1px solid #d1d5db',
+            borderRadius: '6px',
+            backgroundColor: formData.targetAudience.length > 0 ? '#f9fafb' : 'white'
+        }}>
+            {formData.targetAudience.length === 0 && (
+                <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
+                    Add audience segments (e.g., 'Women 25-34', 'Fitness Enthusiasts')
+                </span>
+            )}
 
-                                                {audienceInput && !Object.values(audienceSuggestions)
-                                                    .flat()
-                                                    .some(s => s.toLowerCase() === audienceInput.toLowerCase()) && (
-                                                    <div
-                                                        onClick={() => {
-                                                            addAudienceChip(audienceInput);
-                                                            setAudienceInput('');
-                                                        }}
-                                                        style={{
-                                                            padding: '8px 16px',
-                                                            cursor: 'pointer',
-                                                            backgroundColor: '#141b2d',
-                                                            borderTop: '1px solid #334155',
-                                                            color: '#38bdf8',
-                                                            fontWeight: 500
-                                                        }}
-                                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1e293b'}
-                                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#141b2d'}
-                                                    >
-                                                        Add "{audienceInput}" as custom audience
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
+            {formData.targetAudience.map((chip, index) => (
+                <span 
+                    key={index} 
+                    style={{
+                        ...styles.badge,
+                        ...styles.badgePrimary,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '4px 10px'
+                    }}
+                >
+                    {chip}
+                    <button 
+                        type="button" 
+                        onClick={() => removeItem('targetAudience', index)}
+                        style={styles.removeBtn}
+                    >
+                        ×
+                    </button>
+                </span>
+            ))}
+        </div>
+
+        {/* Input + Suggestions */}
+        <div style={{ position: 'relative' }}>
+            <input
+                type="text"
+                value={audienceInput}
+                onChange={handleAudienceInput}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' && audienceInput.trim()) {
+                        e.preventDefault();
+                        addAudienceChip(audienceInput.trim());
+                    }
+                }}
+                style={{
+                    ...styles.input,
+                    marginBottom: 0,
+                    borderBottomLeftRadius: showAudienceSuggestions ? '0' : '6px',
+                    borderBottomRightRadius: showAudienceSuggestions ? '0' : '6px'
+                }}
+                placeholder="Type and press Enter to add audience segments"
+                required={formData.targetAudience.length === 0}
+            />
+
+            {showAudienceSuggestions && (
+                <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    backgroundColor: 'white',
+                    border: '1px solid #d1d5db',
+                    borderTop: 'none',
+                    borderBottomLeftRadius: '6px',
+                    borderBottomRightRadius: '6px',
+                    zIndex: 1000,
+                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                    maxHeight: '200px',
+                    overflowY: 'auto'
+                }}>
+                    {Object.entries(audienceSuggestions).map(([category, suggestions]) => {
+                        const filtered = suggestions.filter(s => 
+                            s.toLowerCase().includes(audienceInput.toLowerCase()) && 
+                            !formData.targetAudience.includes(s)
+                        );
+                        if (filtered.length === 0) return null;
+
+                        return (
+                            <div key={category}>
+                                <div style={{
+                                    padding: '8px 12px',
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                    color: '#4b5563',
+                                    backgroundColor: '#f3f4f6',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em'
+                                }}>
+                                    {category}
                                 </div>
+
+                                {filtered.map((suggestion, idx) => (
+                                    <div
+                                        key={idx}
+                                        onClick={() => {
+                                            addAudienceChip(suggestion);
+                                            setAudienceInput('');
+                                        }}
+                                        style={{
+                                            padding: '8px 16px',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        {suggestion}
+                                    </div>
+                                ))}
                             </div>
+                        );
+                    })}
+
+                    {/* Custom audience option */}
+                    {audienceInput && !Object.values(audienceSuggestions)
+                        .flat()
+                        .some(s => s.toLowerCase() === audienceInput.toLowerCase()) && (
+                        <div
+                            onClick={() => {
+                                addAudienceChip(audienceInput);
+                                setAudienceInput('');
+                            }}
+                            style={{
+                                padding: '8px 16px',
+                                cursor: 'pointer',
+                                backgroundColor: '#f8fafc',
+                                borderTop: '1px solid #e5e7eb',
+                                color: '#3b82f6',
+                                fontWeight: 500
+                            }}
+                        >
+                            Add "{audienceInput}" as custom audience
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    </div>
+</div>
+
+                            
 
                             {/* ROW 4: Platform Input + Tone Input (2 Columns - Existing Logic) */}
                             <div style={twoColContainerStyle}>
@@ -1225,15 +1228,14 @@ const Captionandhastaggeneratorform = () => {
                                     </button>
                                 </div>
                             </div>
-
-                            {/* Advanced Features Container (Conditional) */}
                             {formData.showAdvanced && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: COLUMN_GAP, width: '100%' }}>
 
-                                    {/* ROW 7 (OLD ROW 8): CTA Type + Number of CTAs (2 Columns) */}
-                                    <div style={twoColContainerStyle}>
-                                        {/* CTA Type (Left Half) - UPDATED WITH TOGGLE */}
-                                        <div style={colHalfStyle}>
+                                    {/* ROW 7 (OLD ROW 8): CTA Type (Full Width) */}
+                                    <div style={colFullStyle}>
+                                        {/* CTA Type - UPDATED WITH TOGGLE */}
+                                        <div>
+
                                             <div style={styles.formGroup}>
                                                 <label style={styles.label}>CTA Type</label>
                                                 <div style={styles.radioGroup}>
@@ -1288,30 +1290,30 @@ const Captionandhastaggeneratorform = () => {
                                                 )}
                                             </div>
                                         </div>
+                                    </div>
 
-                                        {/* Number of CTAs (Right Half) */}
-                                        <div style={colHalfStyle}>
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="numberOfCta" style={styles.label}>
-                                                    Number of CTAs
-                                                    <span style={styles.infoIcon} data-tooltip-id="numberOfCta-tooltip" data-tooltip-content="Number of Call-to-Actions to include (max 3)">i</span>
-                                                </label>
-                                                <Tooltip id="numberOfCta-tooltip" />
-                                                <input
-                                                    type="number"
-                                                    id="numberOfCta"
-                                                    name="numberOfCta"
-                                                    min="0"
-                                                    max="3"
-                                                    value={formData.numberOfCta}
-                                                    onChange={handleChange}
-                                                    style={styles.input}
-                                                    disabled={formData.ctaSelection === 'predefined' && formData.includeCtaType === ctaTypeOptions.find(o => o.label === 'No CTA')?.key}
-                                                />
-                                            </div>
+                                    {/* ROW 8: Number of CTAs (Full Width) */}
+                                    <div style={colFullStyle}>
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="numberOfCta" style={styles.label}>
+                                                Number of CTAs
+                                                <span style={styles.infoIcon} data-tooltip-id="numberOfCta-tooltip" data-tooltip-content="Number of Call-to-Actions to include (max 3)">i</span>
+                                            </label>
+                                            <Tooltip id="numberOfCta-tooltip" />
+                                            <input
+                                                type="number"
+                                                id="numberOfCta"
+                                                name="numberOfCta"
+                                                min="0"
+                                                max="3"
+                                                value={formData.numberOfCta}
+                                                onChange={handleChange}
+                                                style={styles.input}
+                                                disabled={formData.ctaSelection === 'predefined' && formData.includeCtaType === ctaTypeOptions.find(o => o.label === 'No CTA')?.key}
+                                            />
                                         </div>
                                     </div>
-                                    
+
                                     {/* ROW 8 (OLD ROW 9): Caption Style + Hashtag Style (2 Columns) - UPDATED WITH TOGGLES */}
                                     <div style={twoColContainerStyle}>
                                         {/* Caption Style (Left Half) */}

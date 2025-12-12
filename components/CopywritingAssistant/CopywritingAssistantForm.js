@@ -34,7 +34,7 @@ const CopywritingAssistantForm = () => {
         languageMode: 'predefined',
         language: 'English',
         customLanguage: '',
-        lengthTarget: 'medium',
+        lengthTarget: 'auto-detect',
         customWordCount: 180,
         keyPoints: '',
         variants: 3,
@@ -57,21 +57,25 @@ const CopywritingAssistantForm = () => {
         contentStyleMode: 'predefined',
         contentStyle: '',
         customContentStyle: '',
-        formattingOptions: [],
-        includeWords: [],
-        excludeWords: [],
         emotionalIntentMode: 'predefined',
         emotionalIntent: '',
         customEmotionalIntent: '',
-        complianceNotes: '',
         writingFrameworkMode: 'predefined',
         writingFramework: '',
         customWritingFramework: '',
+        // --- UPDATED STATE FIELD FOR GRAMMAR STRICTNESS MODE ---
+        grammarStrictnessMode: 'predefined', 
+        grammarStrictness: 'medium',
+        customGrammarStrictness: '', 
+        // ----------------------------------------------------
+        formattingOptions: [],
+        includeWords: [],
+        excludeWords: [],
+        complianceNotes: '',
         outputStructure: 'markdown',
         creativityLevel: 5,
         referenceUrl: '',
         proofreading: true,
-        grammarStrictness: 'medium',
         submitted: false,
     });
 
@@ -107,7 +111,7 @@ const CopywritingAssistantForm = () => {
     const normalizeOptions = (items) =>
         (items || []).map((item) => {
             if (typeof item === 'string') {
-                return { value: item, label: item };
+                return { value: item.toLowerCase().replace(/\s+/g, '_'), label: item };
             }
             const value = item.key || item.value || item.id || '';
             const label = item.label || item.name || item.key || String(value);
@@ -115,7 +119,6 @@ const CopywritingAssistantForm = () => {
         });
 
     // Options for dropdowns (prefer API values, fallback to static presets)
-    // --- [All Options Constants remain unchanged] ---
     const useCaseOptions = normalizeOptions(
         getOptions('use_case').length
             ? getOptions('use_case')
@@ -160,16 +163,21 @@ const CopywritingAssistantForm = () => {
             ]
     );
 
-    const lengthTargetOptions = normalizeOptions(
-        getOptions('length_target').length
-            ? getOptions('length_target')
-            : [
-                { key: 'short', label: 'Short (50-150 words)' },
-                { key: 'medium', label: 'Medium (150-400 words)' },
-                { key: 'long', label: 'Long (400-800 words)' },
-                { key: 'custom', label: 'Custom' },
-            ]
-    );
+    // Length Target: always include an explicit Auto Detect option at the top
+    const rawLengthTargets = getOptions('length_target').length
+        ? getOptions('length_target')
+        : [
+            { key: 'short', label: 'Short (50-150 words)' },
+            { key: 'medium', label: 'Medium (150-400 words)' },
+            { key: 'long', label: 'Long (400-800 words)' },
+            { key: 'custom', label: 'Custom' },
+        ];
+
+    const lengthTargetOptions = normalizeOptions([
+        // Synthetic Auto Detect option that always exists and uses key/value 'auto-detect'
+        { key: 'auto-detect', label: 'Auto Detect' },
+        ...rawLengthTargets,
+    ]);
 
     const ctaStyleOptions = normalizeOptions(
         getOptions('cta_style').length
@@ -207,6 +215,13 @@ const CopywritingAssistantForm = () => {
                 { key: 'website', label: 'Website' },
                 { key: 'landing_page', label: 'Landing Page' },
             ]
+    );
+    
+    // Brand Voice - Using placeholders since API Options are not explicitly listed
+    const brandVoiceOptions = normalizeOptions(
+        getOptions('brand_voice').length
+            ? getOptions('brand_voice')
+            : [...Array(5)].map((_, i) => ({ key: `brand_${i + 1}`, label: `Brand Voice ${i + 1}` }))
     );
 
     const contentStyleOptions = normalizeOptions(
@@ -286,8 +301,12 @@ const CopywritingAssistantForm = () => {
 
         const list = getOptions(fieldKey);
         const match = list.find((opt) => opt.key === value || opt.value === value || opt.label === value);
+        
+        // Handle explicit custom or unrecognized value that isn't length custom
+        const isCustom = typeMode === 'custom' || (!match && fieldKey !== 'length_target');
+        const isLengthCustom = fieldKey === 'length_target' && value === 'custom';
 
-        if (typeMode === 'custom' || (!match && fieldKey === 'length_target' && value === 'custom')) {
+        if (isCustom || isLengthCustom) {
             return {
                 id: null,
                 value,
@@ -339,16 +358,17 @@ const CopywritingAssistantForm = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
+        // Basic validation for required fields
         if (!formData.primaryGoal || !formData.targetAudience || !formData.keyPoints) {
             alert('Please fill in all required fields (marked with *)');
             return;
         }
 
+        // Mode-specific validation
         if (formData.useCaseMode === 'predefined' && !formData.useCase) {
             alert('Please select a Use Case.');
             return;
         }
-
         if (formData.useCaseMode === 'custom' && !formData.customUseCase) {
             alert('Please enter a Custom Use Case.');
             return;
@@ -358,7 +378,6 @@ const CopywritingAssistantForm = () => {
             alert('Please select a Tone of Voice.');
             return;
         }
-
         if (formData.toneMode === 'custom' && !formData.customTone) {
             alert('Please enter a Custom Tone.');
             return;
@@ -368,6 +387,33 @@ const CopywritingAssistantForm = () => {
             alert('Please enter a Custom Language.');
             return;
         }
+
+        // Advanced Mode-specific validation for required custom fields
+        if (formData.showAdvanced) {
+             if (formData.brandVoiceMode === 'custom' && !formData.customBrandVoice) {
+                alert('Please enter a Custom Brand Voice Reference.');
+                return;
+            }
+             if (formData.contentStyleMode === 'custom' && !formData.customContentStyle) {
+                alert('Please enter a Custom Content Style Preference.');
+                return;
+            }
+             if (formData.emotionalIntentMode === 'custom' && !formData.customEmotionalIntent) {
+                alert('Please enter a Custom Emotional Intent.');
+                return;
+            }
+             if (formData.writingFrameworkMode === 'custom' && !formData.customWritingFramework) {
+                alert('Please enter a Custom Writing Framework.');
+                return;
+            }
+             // --- UPDATED VALIDATION FOR GRAMMAR STRICTNESS ---
+             if (formData.proofreading && formData.grammarStrictnessMode === 'custom' && !formData.customGrammarStrictness) {
+                alert('Please enter a Custom Grammar Strictness.');
+                return;
+            }
+            // ------------------------------------------------
+        }
+
 
         setShowSummary(true);
     };
@@ -379,175 +425,100 @@ const CopywritingAssistantForm = () => {
     const handleGenerate = async () => {
         if (isGenerating) return;
 
+        // --- Build Core Objects ---
         const useCaseType = formData.useCaseMode === 'custom' ? 'custom' : 'predefined';
         const useCaseValue = formData.useCaseMode === 'custom' ? formData.customUseCase : formData.useCase;
-        const useCaseObj = buildOptionObject('use_case', useCaseValue, useCaseType) || {
-            id: null,
-            value: useCaseValue,
-            type: useCaseType,
-        };
+        const useCaseObj = buildOptionObject('use_case', useCaseValue, useCaseType) || { id: null, value: useCaseValue, type: useCaseType };
 
         const toneType = formData.toneMode === 'custom' ? 'custom' : 'predefined';
         const toneValue = formData.toneMode === 'custom' ? formData.customTone : formData.toneOfVoice;
-        const toneObj = buildOptionObject('tone_of_voice', toneValue, toneType) || {
-            id: null,
-            value: toneValue,
-            type: toneType,
-        };
+        const toneObj = buildOptionObject('tone_of_voice', toneValue, toneType) || { id: null, value: toneValue, type: toneType };
 
         const languageType = formData.languageMode === 'custom' ? 'custom' : 'predefined';
         const languageValue = formData.languageMode === 'custom' ? formData.customLanguage : formData.language;
-        const languageObj = buildOptionObject('language', languageValue, languageType) || {
-            id: null,
-            value: languageValue,
-            type: languageType,
-        };
+        const languageObj = buildOptionObject('language', languageValue, languageType) || { id: null, value: languageValue, type: languageType };
 
         let lengthTargetObj;
         if (formData.lengthTarget === 'custom') {
-            lengthTargetObj = {
-                id: null,
-                value: formData.customWordCount,
-                type: 'custom',
-            };
+            lengthTargetObj = { id: null, value: formData.customWordCount, type: 'custom' };
+        } else if (formData.lengthTarget === 'auto-detect') {
+            lengthTargetObj = { id: 'auto-detect', value: null, type: 'predefined' };
         } else {
-            lengthTargetObj = buildOptionObject('length_target', formData.lengthTarget) || {
-                id: null,
-                value: formData.lengthTarget,
-                type: 'predefined',
-            };
+            lengthTargetObj =
+                buildOptionObject('length_target', formData.lengthTarget) || {
+                    id: null,
+                    value: formData.lengthTarget,
+                    type: 'predefined',
+                };
         }
-
+        
+        // --- Build Advanced Objects with Mode Support ---
+        
         let ctaStyleObj = null;
         if (formData.ctaStyleMode === 'custom' && formData.customCtaStyle) {
-            const type = 'custom';
-            const value = formData.customCtaStyle;
-            ctaStyleObj = buildOptionObject('cta_style', value, type) || {
-                id: null,
-                value,
-                type,
-            };
+            ctaStyleObj = { id: null, value: formData.customCtaStyle, type: 'custom' };
         } else if (formData.ctaStyleMode === 'predefined' && formData.ctaStyle) {
-            const type = 'predefined';
-            const value = formData.ctaStyle;
-            ctaStyleObj = buildOptionObject('cta_style', value, type) || {
-                id: null,
-                value,
-                type,
-            };
+            ctaStyleObj = buildOptionObject('cta_style', formData.ctaStyle) || { id: null, value: formData.ctaStyle, type: 'predefined' };
         }
-
+        
         let readingLevelObj = null;
         if (formData.readingLevelMode === 'custom' && formData.customReadingLevel) {
-            const type = 'custom';
-            const value = formData.customReadingLevel;
-            readingLevelObj = buildOptionObject('reading_level', value, type) || {
-                id: null,
-                value,
-                type,
-            };
+            readingLevelObj = { id: null, value: formData.customReadingLevel, type: 'custom' };
         } else if (formData.readingLevelMode === 'predefined' && formData.readingLevel) {
-            const type = 'predefined';
-            const value = formData.readingLevel;
-            readingLevelObj = buildOptionObject('reading_level', value, type) || {
-                id: null,
-                value,
-                type,
-            };
+            readingLevelObj = buildOptionObject('reading_level', formData.readingLevel) || { id: null, value: formData.readingLevel, type: 'predefined' };
         }
 
         let targetPlatformObj = null;
         if (formData.targetPlatformMode === 'custom' && formData.customTargetPlatform) {
-            const type = 'custom';
-            const value = formData.customTargetPlatform;
-            targetPlatformObj = buildOptionObject('target_platform', value, type) || {
-                id: null,
-                value,
-                type,
-            };
+            targetPlatformObj = { id: null, value: formData.customTargetPlatform, type: 'custom' };
         } else if (formData.targetPlatformMode === 'predefined' && formData.targetPlatform) {
-            const type = 'predefined';
-            const value = formData.targetPlatform;
-            targetPlatformObj = buildOptionObject('target_platform', value, type) || {
-                id: null,
-                value,
-                type,
-            };
+            targetPlatformObj = buildOptionObject('target_platform', formData.targetPlatform) || { id: null, value: formData.targetPlatform, type: 'predefined' };
+        }
+        
+        let brandVoiceObj = null;
+        if (formData.brandVoiceMode === 'custom' && formData.customBrandVoice) {
+            brandVoiceObj = { id: null, value: formData.customBrandVoice, type: 'custom' };
+        } else if (formData.brandVoiceMode === 'predefined' && formData.brandVoice) {
+            brandVoiceObj = buildOptionObject('brand_voice', formData.brandVoice) || { id: null, value: formData.brandVoice, type: 'predefined' };
         }
 
         let contentStyleObj = null;
         if (formData.contentStyleMode === 'custom' && formData.customContentStyle) {
-            const type = 'custom';
-            const value = formData.customContentStyle;
-            contentStyleObj = buildOptionObject('content_style_preference', value, type) || {
-                id: null,
-                value,
-                type,
-            };
+            contentStyleObj = { id: null, value: formData.customContentStyle, type: 'custom' };
         } else if (formData.contentStyleMode === 'predefined' && formData.contentStyle) {
-            const type = 'predefined';
-            const value = formData.contentStyle;
-            contentStyleObj = buildOptionObject('content_style_preference', value, type) || {
-                id: null,
-                value,
-                type,
-            };
+            contentStyleObj = buildOptionObject('content_style_preference', formData.contentStyle) || { id: null, value: formData.contentStyle, type: 'predefined' };
         }
-
+        
         let emotionalIntentObj = null;
         if (formData.emotionalIntentMode === 'custom' && formData.customEmotionalIntent) {
-            const type = 'custom';
-            const value = formData.customEmotionalIntent;
-            emotionalIntentObj = buildOptionObject('emotional_intent', value, type) || {
-                id: null,
-                value,
-                type,
-            };
+            emotionalIntentObj = { id: null, value: formData.customEmotionalIntent, type: 'custom' };
         } else if (formData.emotionalIntentMode === 'predefined' && formData.emotionalIntent) {
-            const type = 'predefined';
-            const value = formData.emotionalIntent;
-            emotionalIntentObj = buildOptionObject('emotional_intent', value, type) || {
-                id: null,
-                value,
-                type,
-            };
+            emotionalIntentObj = buildOptionObject('emotional_intent', formData.emotionalIntent) || { id: null, value: formData.emotionalIntent, type: 'predefined' };
         }
 
         let writingFrameworkObj = null;
         if (formData.writingFrameworkMode === 'custom' && formData.customWritingFramework) {
-            const type = 'custom';
-            const value = formData.customWritingFramework;
-            writingFrameworkObj = buildOptionObject('writing_framework', value, type) || {
-                id: null,
-                value,
-                type,
-            };
+            writingFrameworkObj = { id: null, value: formData.customWritingFramework, type: 'custom' };
         } else if (formData.writingFrameworkMode === 'predefined' && formData.writingFramework) {
-            const type = 'predefined';
-            const value = formData.writingFramework;
-            writingFrameworkObj = buildOptionObject('writing_framework', value, type) || {
-                id: null,
-                value,
-                type,
-            };
+            writingFrameworkObj = buildOptionObject('writing_framework', formData.writingFramework) || { id: null, value: formData.writingFramework, type: 'predefined' };
         }
 
+        // --- UPDATED LOGIC FOR GRAMMAR STRICTNESS ---
+        let grammarStrictnessObj = null;
+        if (formData.proofreading) {
+            if (formData.grammarStrictnessMode === 'custom' && formData.customGrammarStrictness) {
+                grammarStrictnessObj = { id: null, value: formData.customGrammarStrictness, type: 'custom' };
+            } else if (formData.grammarStrictnessMode === 'predefined' && formData.grammarStrictness) {
+                grammarStrictnessObj = buildOptionObject('grammar_strictness', formData.grammarStrictness) || { id: null, value: formData.grammarStrictness, type: 'predefined' };
+            }
+        }
+        // ------------------------------------------
+        
         const outputStructureObj = formData.outputStructure
-            ? buildOptionObject('output_structure_type', formData.outputStructure) || {
-                id: null,
-                value: formData.outputStructure,
-                type: 'predefined',
-            }
+            ? buildOptionObject('output_structure_type', formData.outputStructure) || { id: null, value: formData.outputStructure, type: 'predefined' }
             : null;
 
-        const grammarStrictnessObj = formData.grammarStrictness
-            ? buildOptionObject('grammar_strictness', formData.grammarStrictness) || {
-                id: null,
-                value: formData.grammarStrictness,
-                type: 'predefined',
-            }
-            : null;
-
+        // --- Prepare Payload ---
         const keywordsArray = formData.keywords
             ? formData.keywords
                 .split(',')
@@ -576,23 +547,7 @@ const CopywritingAssistantForm = () => {
             reference_text: formData.referenceText || null,
             reading_level: readingLevelObj,
             target_platform: targetPlatformObj,
-            brand_voice_reference: (() => {
-                if (formData.brandVoiceMode === 'custom' && formData.customBrandVoice) {
-                    return {
-                        id: null,
-                        value: formData.customBrandVoice,
-                        type: 'custom',
-                    };
-                }
-                if (formData.brandVoiceMode === 'predefined' && formData.brandVoice) {
-                    return {
-                        id: null,
-                        value: formData.brandVoice,
-                        type: 'predefined',
-                    };
-                }
-                return null;
-            })(),
+            brand_voice_reference: brandVoiceObj,
             content_style_preference: contentStyleObj,
             formatting_options: formData.formattingOptions || [],
             include_words: formData.includeWords || [],
@@ -604,11 +559,11 @@ const CopywritingAssistantForm = () => {
             creativity_level: Number(formData.creativityLevel) / 10,
             reference_url: formData.referenceUrl || null,
             proofreading_optimization: !!formData.proofreading,
-            grammar_strictness: grammarStrictnessObj,
+            grammar_strictness: grammarStrictnessObj, // UPDATED
         };
 
         setIsGenerating(true);
-        setModalTitle("Generated Variants"); 
+        setModalTitle("Generated Variants");
         setIsHistoryView(false);
         setIsApiLoading(true);
 
@@ -629,7 +584,7 @@ const CopywritingAssistantForm = () => {
                 setRequestId(result.request_id);
             }
 
-              if (result.variants && Array.isArray(result.variants) && result.variants.length > 0) {
+            if (result.variants && Array.isArray(result.variants) && result.variants.length > 0) {
                 setRequestId(result.request_id);
 
                 const structuredVariants = result.variants.map((content, index) => ({
@@ -707,8 +662,8 @@ const CopywritingAssistantForm = () => {
             return;
         }
 
-        setIsFetchingLog(true);       // so VariantsModal can show loading state if needed
-        setIsGenerating(true);         // reuse existing generating flag for buttons
+        setIsFetchingLog(true);       // so VariantsModal can show loading state if needed
+        setIsGenerating(true);         // reuse existing generating flag for buttons
         setModalTitle('Variants Log'); // set title for log view
         setIsHistoryView(true);
         setIsApiLoading(true);
@@ -856,15 +811,15 @@ const CopywritingAssistantForm = () => {
 
     // --- Layout Helpers (Unchanged) ---
     const COLUMN_GAP = '20px';
-    const twoColContainerStyle = { 
-        display: 'flex', 
-        flexWrap: 'wrap', 
-        justifyContent: 'space-between', 
+    const twoColContainerStyle = { 
+        display: 'flex', 
+        flexWrap: 'wrap', 
+        justifyContent: 'space-between', 
         gap: COLUMN_GAP,
         marginBottom: '20px',
         width: '100%'
     };
-    const colHalfStyle = { 
+    const colHalfStyle = { 
         flex: '1 1 calc(50% - 10px)',
     };
     const colFullStyle = {
@@ -872,6 +827,43 @@ const CopywritingAssistantForm = () => {
         marginBottom: '20px',
     };
     
+    // Helper function for radio buttons in the advanced section
+    const renderModeToggle = (modeName, labelText, tooltipContent, required = false) => (
+        <div className="col-12">
+            <div style={styles.formGroup}>
+                <label style={styles.label}>
+                    {labelText} {required && <span style={{ color: '#ef4444' }}>*</span>}
+                    {!required && " (optional)"}
+                    <span style={styles.infoIcon} data-tooltip-id={`${modeName}-tooltip`} data-tooltip-content={tooltipContent}>i</span>
+                </label>
+                <Tooltip id={`${modeName}-tooltip`} />
+                <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                        <input
+                            type="radio"
+                            name={modeName}
+                            value="predefined"
+                            checked={formData[modeName] === 'predefined'}
+                            onChange={handleChange}
+                            style={{ marginRight: '8px' }}
+                        />
+                        Predefined
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                        <input
+                            type="radio"
+                            name={modeName}
+                            value="custom"
+                            checked={formData[modeName] === 'custom'}
+                            onChange={handleChange}
+                            style={{ marginRight: '8px' }}
+                        />
+                        Custom
+                    </label>
+                </div>
+            </div>
+        </div>
+    );
 
     return (
         <div style={styles.container}>
@@ -1255,13 +1247,13 @@ const CopywritingAssistantForm = () => {
                                 </div>
                             </div>
 
-                            <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #e5e7eb', margin: '5px 0' }} />
+                            <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #1e293b', margin: '5px 0' }} />
 
                             {/* Advanced Features Toggle */}
                             <div className="col-12" style={{ margin: '16px 0' }}>
                                 <div style={{
                                     display: 'inline-flex',
-                                    backgroundColor: 'white',
+                                    backgroundColor: '#141b2d',
                                     borderRadius: '9999px',
                                     border: '1px solid #3b82f6',
                                     overflow: 'hidden',
@@ -1275,7 +1267,7 @@ const CopywritingAssistantForm = () => {
                                         padding: '6px 20px',
                                         border: 'none',
                                         backgroundColor: formData.showAdvanced ? 'transparent' : '#3b82f6',
-                                        color: formData.showAdvanced ? '#1f2937' : 'white',
+                                        color: formData.showAdvanced ? '#94a3b8' : 'white',
                                         fontWeight: 500,
                                         fontSize: '14px',
                                         cursor: 'pointer',
@@ -1294,7 +1286,7 @@ const CopywritingAssistantForm = () => {
                                         padding: '6px 20px',
                                         border: 'none',
                                         backgroundColor: formData.showAdvanced ? '#3b82f6' : 'transparent',
-                                        color: formData.showAdvanced ? 'white' : '#1f2937',
+                                        color: formData.showAdvanced ? 'white' : '#94a3b8',
                                         fontWeight: 500,
                                         fontSize: '14px',
                                         cursor: 'pointer',
@@ -1334,41 +1326,10 @@ const CopywritingAssistantForm = () => {
                                         </div>
                                     </div>
 
-                                    {/* CTA Style */}
-                                    <div className="col-12">
-                                        <div style={styles.formGroup}>
-                                            <label style={styles.label}>
-                                                CTA Style (optional)
-                                                <span style={styles.infoIcon} data-tooltip-id="cta-tooltip" data-tooltip-content="Select a CTA style or define your own">i</span>
-                                            </label>
-                                            <Tooltip id="cta-tooltip" />
-                                            <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
-                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                                    <input
-                                                        type="radio"
-                                                        name="ctaStyleMode"
-                                                        value="predefined"
-                                                        checked={formData.ctaStyleMode === 'predefined'}
-                                                        onChange={handleChange}
-                                                        style={{ marginRight: '8px' }}
-                                                    />
-                                                    Predefined
-                                                </label>
-                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                                    <input
-                                                        type="radio"
-                                                        name="ctaStyleMode"
-                                                        value="custom"
-                                                        checked={formData.ctaStyleMode === 'custom'}
-                                                        onChange={handleChange}
-                                                        style={{ marginRight: '8px' }}
-                                                    />
-                                                    Custom
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-
+                                    {/* CTA Style Mode Toggle */}
+                                    {renderModeToggle('ctaStyleMode', 'CTA Style', 'Choose between predefined CTA styles or define your own')}
+                                    
+                                    {/* CTA Style (Predefined/Custom Input) */}
                                     {formData.ctaStyleMode === 'predefined' && (
                                         <div className="col-md-6">
                                             <div style={styles.formGroup}>
@@ -1378,7 +1339,7 @@ const CopywritingAssistantForm = () => {
                                                 <select
                                                     id="ctaStyle"
                                                     name="ctaStyle"
-                                                    value={formData.ctaStyle}
+                                                    value={formData.ctaStyle || ''}
                                                     onChange={handleChange}
                                                     style={styles.select}
                                                 >
@@ -1445,49 +1406,17 @@ const CopywritingAssistantForm = () => {
                                                     />
                                                     <span>Rewrite Mode (optional)</span>
                                                     <span style={{ ...styles.infoIcon, marginLeft: '8px' }} data-tooltip-id="rewrite-tooltip" data-tooltip-content="Enable to rewrite the reference text in a different style">i</span>
-                                                    
                                                 </label>
                                                 <Tooltip id="rewrite-tooltip" />
                                             </div>
                                         </div>
-                                        <div style={colHalfStyle}></div> 
+                                        <div style={colHalfStyle}></div>
                                     </div>
 
-                                    {/* Reading Level */}
-                                    <div className="col-12">
-                                        <div style={styles.formGroup}>
-                                            <label style={styles.label}>
-                                                Reading Level (optional)
-                                                <span style={styles.infoIcon} data-tooltip-id="reading-tooltip" data-tooltip-content="Select the reading level for your content or describe a custom level">i</span>
-                                            </label>
-                                            <Tooltip id="reading-tooltip" />
-                                            <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
-                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                                    <input
-                                                        type="radio"
-                                                        name="readingLevelMode"
-                                                        value="predefined"
-                                                        checked={formData.readingLevelMode === 'predefined'}
-                                                        onChange={handleChange}
-                                                        style={{ marginRight: '8px' }}
-                                                    />
-                                                    Predefined
-                                                </label>
-                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                                    <input
-                                                        type="radio"
-                                                        name="readingLevelMode"
-                                                        value="custom"
-                                                        checked={formData.readingLevelMode === 'custom'}
-                                                        onChange={handleChange}
-                                                        style={{ marginRight: '8px' }}
-                                                    />
-                                                    Custom
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    {/* Reading Level Mode Toggle */}
+                                    {renderModeToggle('readingLevelMode', 'Reading Level', 'Select the reading level for your content or describe a custom level')}
 
+                                    {/* Reading Level (Predefined/Custom Input) */}
                                     {formData.readingLevelMode === 'predefined' && (
                                         <div className="col-md-6">
                                             <div style={styles.formGroup}>
@@ -1529,41 +1458,10 @@ const CopywritingAssistantForm = () => {
                                         </div>
                                     )}
 
-                                    {/* Target Platform */}
-                                    <div className="col-12">
-                                        <div style={styles.formGroup}>
-                                            <label style={styles.label}>
-                                                Target Platform (optional)
-                                                <span style={styles.infoIcon} data-tooltip-id="platform-tooltip" data-tooltip-content="Select the platform where this content will be published or specify your own">i</span>
-                                            </label>
-                                            <Tooltip id="platform-tooltip" />
-                                            <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
-                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                                    <input
-                                                        type="radio"
-                                                        name="targetPlatformMode"
-                                                        value="predefined"
-                                                        checked={formData.targetPlatformMode === 'predefined'}
-                                                        onChange={handleChange}
-                                                        style={{ marginRight: '8px' }}
-                                                    />
-                                                    Predefined
-                                                </label>
-                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                                    <input
-                                                        type="radio"
-                                                        name="targetPlatformMode"
-                                                        value="custom"
-                                                        checked={formData.targetPlatformMode === 'custom'}
-                                                        onChange={handleChange}
-                                                        style={{ marginRight: '8px' }}
-                                                    />
-                                                    Custom
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    {/* Target Platform Mode Toggle */}
+                                    {renderModeToggle('targetPlatformMode', 'Target Platform', 'Select the platform where this content will be published or specify your own')}
 
+                                    {/* Target Platform (Predefined/Custom Input) */}
                                     {formData.targetPlatformMode === 'predefined' && (
                                         <div className="col-md-6">
                                             <div style={styles.formGroup}>
@@ -1606,53 +1504,95 @@ const CopywritingAssistantForm = () => {
                                         </div>
                                     )}
 
-                                    {/* Brand Voice Reference */}
-                                    <div className="col-md-6">
-                                        <div style={styles.formGroup}>
-                                            <label htmlFor="brandVoice" style={styles.label}>
-                                                Brand Voice Reference (optional)
-                                                <span style={styles.infoIcon} data-tooltip-id="brand-voice-tooltip" data-tooltip-content="Select a predefined brand voice or upload your own">i</span>
-                                            </label>
-                                            <Tooltip id="brand-voice-tooltip" />
-                                            <div style={{ display: 'flex', gap: '10px' }}>
+                                    {/* --- BRAND VOICE REFERENCE --- */}
+                                    {renderModeToggle('brandVoiceMode', 'Brand Voice Reference', 'Select a predefined brand voice or describe your custom brand voice')}
+
+                                    {formData.brandVoiceMode === 'predefined' && (
+                                        <div className="col-md-6">
+                                            <div style={styles.formGroup}>
+                                                <label htmlFor="brandVoice" style={styles.label}>
+                                                    Select Brand Voice
+                                                </label>
                                                 <select
                                                     id="brandVoice"
                                                     name="brandVoice"
                                                     value={formData.brandVoice || ''}
                                                     onChange={handleChange}
-                                                    style={{ ...styles.select, flex: 1 }}
+                                                    style={styles.select}
                                                 >
                                                     <option value="">Select Brand Voice</option>
-                                                    {[...Array(10)].map((_, i) => (
-                                                        <option key={i} value={`brand-${i + 1}`}>Brand Style {i + 1}</option>
+                                                    {brandVoiceOptions.map((opt, index) => (
+                                                        <option key={index} value={opt.value}>{opt.label}</option>
                                                     ))}
                                                 </select>
                                             </div>
                                         </div>
-                                    </div>
+                                    )}
 
-                                    {/* Content Style Preference */}
-                                    <div className="col-md-6">
-                                        <div style={styles.formGroup}>
-                                            <label htmlFor="contentStyle" style={styles.label}>
-                                                Content Style Preference (optional)
-                                                <span style={styles.infoIcon} data-tooltip-id="content-style-tooltip" data-tooltip-content="Select the preferred style for your content">i</span>
-                                            </label>
-                                            <Tooltip id="content-style-tooltip" />
-                                            <select
-                                                id="contentStyle"
-                                                name="contentStyle"
-                                                value={formData.contentStyle || ''}
-                                                onChange={handleChange}
-                                                style={styles.select}
-                                            >
-                                                <option value="">Select Style</option>
-                                                {contentStyleOptions.map((opt, index) => (
-                                                    <option key={index} value={opt.value}>{opt.label}</option>
-                                                ))}
-                                            </select>
+                                    {formData.brandVoiceMode === 'custom' && (
+                                        <div className="col-md-6">
+                                            <div style={styles.formGroup}>
+                                                <label htmlFor="customBrandVoice" style={styles.label}>
+                                                    Custom Brand Voice Reference
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    id="customBrandVoice"
+                                                    name="customBrandVoice"
+                                                    value={formData.customBrandVoice}
+                                                    onChange={handleChange}
+                                                    style={styles.input}
+                                                    placeholder="e.g., Authoritative, technical, focused on sustainability"
+                                                    maxLength={120}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
+
+                                    {/* --- CONTENT STYLE PREFERENCE --- */}
+                                    {renderModeToggle('contentStyleMode', 'Content Style Preference', 'Select the preferred content style or describe a custom one')}
+
+                                    {formData.contentStyleMode === 'predefined' && (
+                                        <div className="col-md-6">
+                                            <div style={styles.formGroup}>
+                                                <label htmlFor="contentStyle" style={styles.label}>
+                                                    Select Content Style Preference
+                                                </label>
+                                                <select
+                                                    id="contentStyle"
+                                                    name="contentStyle"
+                                                    value={formData.contentStyle || ''}
+                                                    onChange={handleChange}
+                                                    style={styles.select}
+                                                >
+                                                    <option value="">Select Style</option>
+                                                    {contentStyleOptions.map((opt, index) => (
+                                                        <option key={index} value={opt.value}>{opt.label}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {formData.contentStyleMode === 'custom' && (
+                                        <div className="col-md-6">
+                                            <div style={styles.formGroup}>
+                                                <label htmlFor="customContentStyle" style={styles.label}>
+                                                    Custom Content Style Preference
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    id="customContentStyle"
+                                                    name="customContentStyle"
+                                                    value={formData.customContentStyle}
+                                                    onChange={handleChange}
+                                                    style={styles.input}
+                                                    placeholder="e.g., Short-form vertical video script style"
+                                                    maxLength={120}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Formatting Options */}
                                     <div className="col-12">
@@ -1687,18 +1627,7 @@ const CopywritingAssistantForm = () => {
                                                                             : (prev.formattingOptions || []).filter(item => item !== val)
                                                                     }));
                                                                 }}
-                                                                style={{
-                                                                    width: '16px',
-                                                                    height: '16px',
-                                                                    margin: 0,
-                                                                    cursor: 'pointer',
-                                                                    accentColor: '#3b82f6',
-                                                                    backgroundColor: '#0f1624',
-                                                                    border: '2px solid #64748b',
-                                                                    borderRadius: '4px',
-                                                                    outline: 'none',
-                                                                    transition: 'all 0.2s ease',
-                                                                }}
+                                                                style={styles.checkboxInput}
                                                             />
                                                             {label}
                                                         </label>
@@ -1758,28 +1687,50 @@ const CopywritingAssistantForm = () => {
                                         </div>
                                     </div>
 
-                                    {/* Emotional Intent */}
-                                    <div className="col-md-6">
-                                        <div style={styles.formGroup}>
-                                            <label htmlFor="emotionalIntent" style={styles.label}>
-                                                Emotional Intent (optional)
-                                                <span style={styles.infoIcon} data-tooltip-id="emotional-tooltip" data-tooltip-content="Select the emotional tone for your content">i</span>
-                                            </label>
-                                            <Tooltip id="emotional-tooltip" />
-                                            <select
-                                                id="emotionalIntent"
-                                                name="emotionalIntent"
-                                                value={formData.emotionalIntent}
-                                                onChange={handleChange}
-                                                style={styles.select}
-                                            >
-                                                <option value="">None (Neutral)</option>
-                                                {emotionalIntentOptions.map((opt, index) => (
-                                                    <option key={index} value={opt.value}>{opt.label}</option>
-                                                ))}
-                                            </select>
+                                    {/* --- EMOTIONAL INTENT --- */}
+                                    {renderModeToggle('emotionalIntentMode', 'Emotional Intent', 'Select the emotional tone for your content or describe a custom one')}
+                                    
+                                    {formData.emotionalIntentMode === 'predefined' && (
+                                        <div className="col-md-6">
+                                            <div style={styles.formGroup}>
+                                                <label htmlFor="emotionalIntent" style={styles.label}>
+                                                    Select Emotional Intent
+                                                </label>
+                                                <select
+                                                    id="emotionalIntent"
+                                                    name="emotionalIntent"
+                                                    value={formData.emotionalIntent}
+                                                    onChange={handleChange}
+                                                    style={styles.select}
+                                                >
+                                                    <option value="">None (Neutral)</option>
+                                                    {emotionalIntentOptions.map((opt, index) => (
+                                                        <option key={index} value={opt.value}>{opt.label}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
+
+                                    {formData.emotionalIntentMode === 'custom' && (
+                                        <div className="col-md-6">
+                                            <div style={styles.formGroup}>
+                                                <label htmlFor="customEmotionalIntent" style={styles.label}>
+                                                    Custom Emotional Intent
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    id="customEmotionalIntent"
+                                                    name="customEmotionalIntent"
+                                                    value={formData.customEmotionalIntent}
+                                                    onChange={handleChange}
+                                                    style={styles.input}
+                                                    placeholder="e.g., Inspire hope and joy"
+                                                    maxLength={120}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Compliance Notes */}
                                     <div className="col-12">
@@ -1801,30 +1752,52 @@ const CopywritingAssistantForm = () => {
                                         </div>
                                     </div>
 
-                                    {/* Writing Framework */}
-                                    <div className="col-md-6">
-                                        <div style={styles.formGroup}>
-                                            <label htmlFor="writingFramework" style={styles.label}>
-                                                Writing Framework (optional)
-                                                <span style={styles.infoIcon} data-tooltip-id="framework-tooltip" data-tooltip-content="Select a writing framework to structure your content">i</span>
-                                            </label>
-                                            <Tooltip id="framework-tooltip" />
-                                            <select
-                                                id="writingFramework"
-                                                name="writingFramework"
-                                                value={formData.writingFramework}
-                                                onChange={handleChange}
-                                                style={styles.select}
-                                            >
-                                                <option value="">None (Standard Structure)</option>
-                                                {writingFrameworkOptions.map((opt, index) => (
-                                                    <option key={index} value={opt.value}>{opt.label}</option>
-                                                ))}
-                                            </select>
+                                    {/* --- WRITING FRAMEWORK --- */}
+                                    {renderModeToggle('writingFrameworkMode', 'Writing Framework', 'Select a writing framework or specify a custom one for content structure')}
+                                    
+                                    {formData.writingFrameworkMode === 'predefined' && (
+                                        <div className="col-md-6">
+                                            <div style={styles.formGroup}>
+                                                <label htmlFor="writingFramework" style={styles.label}>
+                                                    Select Writing Framework
+                                                </label>
+                                                <select
+                                                    id="writingFramework"
+                                                    name="writingFramework"
+                                                    value={formData.writingFramework}
+                                                    onChange={handleChange}
+                                                    style={styles.select}
+                                                >
+                                                    <option value="">None (Standard Structure)</option>
+                                                    {writingFrameworkOptions.map((opt, index) => (
+                                                        <option key={index} value={opt.value}>{opt.label}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
 
-                                    {/* Output Structure Type */}
+                                    {formData.writingFrameworkMode === 'custom' && (
+                                        <div className="col-md-6">
+                                            <div style={styles.formGroup}>
+                                                <label htmlFor="customWritingFramework" style={styles.label}>
+                                                    Custom Writing Framework
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    id="customWritingFramework"
+                                                    name="customWritingFramework"
+                                                    value={formData.customWritingFramework}
+                                                    onChange={handleChange}
+                                                    style={styles.input}
+                                                    placeholder="e.g., Problem-Agitate-Solve with a storytelling intro"
+                                                    maxLength={120}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Output Structure Type (No mode change needed, kept as dropdown) */}
                                     <div className="col-md-6">
                                         <div style={styles.formGroup}>
                                             <label htmlFor="outputStructure" style={styles.label}>
@@ -1895,45 +1868,71 @@ const CopywritingAssistantForm = () => {
                                     <div style={twoColContainerStyle}>
                                         <div style={colHalfStyle}>
                                             <div style={styles.formGroup}>
-                                            <label style={{ display: 'flex', alignItems: 'center',gap: '8px', cursor: 'pointer' }}>
-                                                <input
-                                                    type="checkbox"
-                                                    name="proofreading"
-                                                    checked={formData.proofreading}
-                                                    onChange={handleChange}
-                                                    style={{ width: '16px', height: '16px' }}
-                                                />
-                                                <span>Enable Proofreading & Optimization (optional)</span>
-                                                <span style={{ ...styles.infoIcon, marginLeft: '8px' }} data-tooltip-id="proofreading-tooltip" data-tooltip-content="Automatically check for grammar, readability, and SEO optimization">i</span>
-                                            </label> 
-                                            <Tooltip id="proofreading-tooltip" />
+                                                <label style={{ display: 'flex', alignItems: 'center',gap: '8px', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        name="proofreading"
+                                                        checked={formData.proofreading}
+                                                        onChange={handleChange}
+                                                        style={{ width: '16px', height: '16px' }}
+                                                    />
+                                                    <span>Enable Proofreading & Optimization (optional)</span>
+                                                    <span style={{ ...styles.infoIcon, marginLeft: '8px' }} data-tooltip-id="proofreading-tooltip" data-tooltip-content="Automatically check for grammar, readability, and SEO optimization">i</span>
+                                                </label>
+                                                <Tooltip id="proofreading-tooltip" />
                                             </div>
                                         </div>
-                                        <div style={colHalfStyle}></div> 
+                                        <div style={colHalfStyle}></div>
                                     </div>
 
                                     {/* Grammar Strictness (shown when proofreading is enabled) */}
                                     {formData.proofreading && (
-                                        <div className="col-12">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="grammarStrictness" style={styles.label}>
-                                                    Grammar Strictness (optional)
-                                                    <span style={styles.infoIcon} data-tooltip-id="grammar-tooltip" data-tooltip-content="How strictly should grammar and style rules be applied?">i</span>
-                                                </label>
-                                                <Tooltip id="grammar-tooltip" />
-                                                <select
-                                                    id="grammarStrictness"
-                                                    name="grammarStrictness"
-                                                    value={formData.grammarStrictness}
-                                                    onChange={handleChange}
-                                                    style={styles.select}
-                                                >
-                                                    {grammarStrictnessOptions.map((opt, index) => (
-                                                        <option key={index} value={opt.value}>{opt.label}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
+                                        <>
+                                            {/* --- GRAMMAR STRICTNESS MODE TOGGLE - NEW --- */}
+                                            {renderModeToggle('grammarStrictnessMode', 'Grammar Strictness', 'Select how strictly grammar and style rules should be applied, or describe custom rules')}
+                                            
+                                            {/* Grammar Strictness (Predefined/Custom Input) */}
+                                            {formData.grammarStrictnessMode === 'predefined' && (
+                                                <div className="col-md-6">
+                                                    <div style={styles.formGroup}>
+                                                        <label htmlFor="grammarStrictness" style={styles.label}>
+                                                            Select Grammar Strictness
+                                                        </label>
+                                                        <select
+                                                            id="grammarStrictness"
+                                                            name="grammarStrictness"
+                                                            value={formData.grammarStrictness}
+                                                            onChange={handleChange}
+                                                            style={styles.select}
+                                                        >
+                                                            {grammarStrictnessOptions.map((opt, index) => (
+                                                                <option key={index} value={opt.value}>{opt.label}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {formData.grammarStrictnessMode === 'custom' && (
+                                                <div className="col-md-6">
+                                                    <div style={styles.formGroup}>
+                                                        <label htmlFor="customGrammarStrictness" style={styles.label}>
+                                                            Custom Grammar Strictness
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            id="customGrammarStrictness"
+                                                            name="customGrammarStrictness"
+                                                            value={formData.customGrammarStrictness}
+                                                            onChange={handleChange}
+                                                            style={styles.input}
+                                                            placeholder="e.g., Use Oxford comma, avoid passive voice"
+                                                            maxLength={120}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </>
                             )}
@@ -1987,7 +1986,7 @@ const CopywritingAssistantForm = () => {
                     inputs={generatedVariantsData.inputs}
                     onClose={() => {
                         setShowVariantsModal(false);
-                        setIsHistoryView(false); 
+                        setIsHistoryView(false);
                         setShowSummary(true); // Always return to summary
                     }}
                     onRequestRegenerate={handleRegenerateVariant}
@@ -1996,7 +1995,8 @@ const CopywritingAssistantForm = () => {
                     isHistoryView={isHistoryView}
                 />
             )}
-              {isApiLoading && (
+            
+            {isApiLoading && (
                 <SurfingLoading mode={isHistoryView ? "history" : "generate"} />
             )}
             
@@ -2040,16 +2040,6 @@ const CopywritingAssistantForm = () => {
                                         }}
                                     >
                                         Save Draft
-                                    </button>
-                                    <button
-                                        style={{
-                                            ...styles.btn,
-                                            ...styles.btnOutline,
-                                            padding: '8px 16px',
-                                            fontSize: '14px'
-                                        }}
-                                    >
-                                        Edit
                                     </button>
                                     <button
                                         style={{
