@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 // Assuming SummaryReviewModal is a separate file that you are importing
- import SummaryReviewModal from './SummaryReviewModal'; 
- import { Tooltip } from 'react-tooltip'; // Retained
+import SummaryReviewModal from './SummaryReviewModal';
+import { Tooltip } from 'react-tooltip'; // Retained
 import VariantModalContent from './VariantModalContent';
 import SurfingLoading from './SurfingLoading';
+import ToggleButton from '../Form/ToggleButton';
+import RemoveTagButton from '../Form/RemoveTagButton';
 
 // --- API Configuration (Defined internally to prevent build issues) ---
 const BASE_URL = 'https://olive-gull-905765.hostingersite.com/public/api/v1';
@@ -40,13 +42,13 @@ const mapSelectionToApiObject = (fieldName, selectedLabel, options, isAutoSelect
     if (fieldName === 'campaign_objective' && selectedLabel === 'Custom Objective') {
         return { type: "custom", id: null, value: selectedLabel };
     }
-    
+
     let optionList = options[fieldName];
     if (fieldName === 'primary_text_length') {
         optionList = options.primary_text_length;
     }
 
-    const selectedOption = optionList?.find(opt => 
+    const selectedOption = optionList?.find(opt =>
         selectedLabel === opt.label.replace('\t', '→')
     );
 
@@ -54,7 +56,7 @@ const mapSelectionToApiObject = (fieldName, selectedLabel, options, isAutoSelect
         return {
             type: "predefined",
             id: selectedOption.id,
-            value: selectedLabel 
+            value: selectedLabel
         };
     }
     return { type: "custom", id: null, value: selectedLabel };
@@ -69,7 +71,7 @@ const getLabelFromKey = (selectedKey, fieldName, options) => {
     if (!optionList) return selectedKey;
 
     const selectedOption = optionList.find(opt => opt.key === selectedKey);
-    
+
     if (selectedOption) {
         return selectedOption.label.replace('\t', '→');
     }
@@ -117,7 +119,7 @@ const AdCopyGeneratorForm = () => {
         brandVoicePersonalityOption: '',
         brandVoicePersonalityCustom: ''
     });
-    
+
     const [audienceInput, setAudienceInput] = useState('');
     const [showAudienceSuggestions, setShowAudienceSuggestions] = useState(false);
     const [placementMode, setPlacementMode] = useState('predefined');
@@ -133,7 +135,7 @@ const AdCopyGeneratorForm = () => {
     const [emotionalAngleCustom, setEmotionalAngleCustom] = useState('');
     const [assetReuseMode, setAssetReuseMode] = useState('predefined');
     const [assetReuseCustom, setAssetReuseCustom] = useState('');
-    
+
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     const [mounted, setMounted] = useState(false);
     const [availablePlacements, setAvailablePlacements] = useState([]);
@@ -141,17 +143,17 @@ const AdCopyGeneratorForm = () => {
     const [loadingOptions, setLoadingOptions] = useState(false);
     const [optionsError, setOptionsError] = useState('');
     const [showSummary, setShowSummary] = useState(false);
-    
+
     // UPDATED STATE MANAGEMENT FOR GENERATION FLOW
     const [isGenerating, setIsGenerating] = useState(false); // Controls button text on form
     const [isApiLoading, setIsApiLoading] = useState(false); // NEW: Controls the modal loading state (step 1 & 2)
     const [isHistoryView, setIsHistoryView] = useState(false);
-    
+
     const [requestId, setRequestId] = useState(null);
     const [showVariantsModal, setShowVariantsModal] = useState(false);
-    const [generatedVariantsData, setGeneratedVariantsData] = useState({ 
-        variants: [], 
-        inputs: {}, 
+    const [generatedVariantsData, setGeneratedVariantsData] = useState({
+        variants: [],
+        inputs: {},
     });
 
     const showNotification = useCallback((message, type) => {
@@ -163,12 +165,12 @@ const AdCopyGeneratorForm = () => {
     const updatePlacements = useCallback((platformLabel, allPlacements) => {
         if (!allPlacements) return;
 
-        const filteredPlacements = allPlacements.filter(opt => 
+        const filteredPlacements = allPlacements.filter(opt =>
             opt.parent_label === platformLabel
         );
 
         setAvailablePlacements(filteredPlacements);
-        
+
         // Set the new default placement to the first available option
         const newPlacement = filteredPlacements.length > 0 ? filteredPlacements[0].label : '';
         setFormData(prev => ({
@@ -197,7 +199,7 @@ const AdCopyGeneratorForm = () => {
                     const response = await fetch(API.GET_FIELD_OPTIONS, {
                         headers: { Authorization: AUTH_HEADER },
                     });
-                    
+
                     if (response.status === 429 && attempt < maxRetries - 1) {
                         attempt++;
                         continue;
@@ -208,19 +210,19 @@ const AdCopyGeneratorForm = () => {
                     }
 
                     const apiData = await response.json();
-                    
+
                     if (apiData && apiData.data && typeof apiData.data === 'object') {
                         const loadedOptions = {
                             ...defaultFieldOptions,
                             ...apiData.data
                         };
                         setFieldOptions(loadedOptions);
-                        
+
                         const defaultPlatform = loadedOptions.platform.find(opt => opt.label === formData.platform)?.label || formData.platform;
-                        
+
                         // Pass loaded placement data directly
                         updatePlacements(defaultPlatform, loadedOptions.placement);
-                        
+
                         // Update other defaults
                         setFormData(prev => ({
                             ...prev,
@@ -234,7 +236,7 @@ const AdCopyGeneratorForm = () => {
                             emotionalAngle: loadedOptions.emotional_angle.find(opt => opt.label.replace('\t', '→') === prev.emotionalAngle)?.label.replace('\t', '→') || prev.emotionalAngle,
                             assetReuseStrategy: loadedOptions.asset_reuse_strategy.find(opt => opt.label === prev.assetReuseStrategy || prev.assetReuseStrategy.includes('Auto'))?.label || prev.assetReuseStrategy,
                         }));
-                        
+
                         setLoadingOptions(false);
                         return;
                     } else {
@@ -252,7 +254,7 @@ const AdCopyGeneratorForm = () => {
         };
 
         fetchFieldOptions();
-        
+
     }, []); // Initial load only
 
     // FIXED: Runtime Platform Change Effect
@@ -262,7 +264,7 @@ const AdCopyGeneratorForm = () => {
         updatePlacements(formData.platform, fieldOptions.placement);
     }, [formData.platform, fieldOptions.placement, updatePlacements]);
 
-    
+
     const handlePlatformChange = (e) => {
         const selectedKey = e.target.value;
         const platformLabel = getLabelFromKey(selectedKey, 'platform', fieldOptions);
@@ -292,7 +294,7 @@ const AdCopyGeneratorForm = () => {
 
     const handleChange = (e) => {
         const { name, value: selectedKey, type, checked } = e.target;
-        
+
         if (type === 'checkbox') {
             setFormData(prev => ({ ...prev, [name]: checked }));
             return;
@@ -341,13 +343,13 @@ const AdCopyGeneratorForm = () => {
             if (e.target.tagName === 'SELECT') {
                 labelToStore = getLabelFromKey(selectedKey, fieldOptionsKey, fieldOptions);
             }
-            
+
             if (name === 'campaignObjective' && labelToStore !== 'Custom Objective') {
                 setFormData(prev => ({ ...prev, [name]: labelToStore, customObjective: '' }));
                 return;
             }
         }
-        
+
         setFormData(prev => ({ ...prev, [name]: labelToStore }));
     };
 
@@ -442,13 +444,13 @@ const AdCopyGeneratorForm = () => {
         // 1. Instantly open modal and show surfing animation
         setShowSummary(false); // Close summary modal
         setShowVariantsModal(true); // Open the variants modal
-           setIsHistoryView(false);
+        setIsHistoryView(false);
         setIsApiLoading(true); // START API LOADING - SHOWS SURFING ANIMATION IN MODAL
 
         // 2. While backend API request is in progress: modal shows surfing animation
         try {
             const payload = formatPayload();
-            
+
             const response = await fetch(API.GENERATE_AD_COPY, {
                 method: 'POST',
                 headers: {
@@ -470,13 +472,13 @@ const AdCopyGeneratorForm = () => {
             }
 
             const result = await response.json();
-            
+
             if (result.variants?.length > 0) {
                 // API SUCCESS: Stop the surfing loading
                 setIsApiLoading(false); // STOP API LOADING - HIDES SURFING, SHOWS VARIANT LIST
 
                 setRequestId(result.request_id);
-                
+
                 const structuredVariants = result.variants.map((content, index) => ({
                     id: content.id || `temp-${Date.now()}-${index}`,
                     content: content.content || content,
@@ -485,17 +487,17 @@ const AdCopyGeneratorForm = () => {
 
                 // Update the variant data. This will trigger the typing effect for the first variant 
                 // inside the now-visible VariantModalContent.
-                setGeneratedVariantsData({ 
-                    variants: structuredVariants, 
-                    inputs: result.inputs || payload 
+                setGeneratedVariantsData({
+                    variants: structuredVariants,
+                    inputs: result.inputs || payload
                 });
-                
+
                 // Note: The UI for variants 2+ will naturally display after variant 1's typing completes,
                 // as the structure is a map of variants, and only the first one has the typing logic.
             } else {
                 throw new Error("No variants were returned from the server");
             }
-            
+
         } catch (error) {
             console.error('Generation Error:', error);
             showNotification(`Error: ${error.message || 'Failed to generate ad copy'}`, 'error');
@@ -508,66 +510,66 @@ const AdCopyGeneratorForm = () => {
 
     // The handleGenerateFromSummary logic is merged into handleGenerate in this implementation,
     // but the summary step is kept for flow: Form -> Summary (Review) -> Generate (API Call)
-     const handleGenerateFromSummary = async () => {
-    try {
-        setIsGenerating(true); // START GENERATING - SHOWS LOADING SCREEN
-       setIsApiLoading(true);
-          setIsHistoryView(false);
-        // Reuse the formatPayload function to get the current form data
-        const payload = formatPayload();
-        console.log("payload:payload",payload);
-       
-        
-        // ... (validation remains the same) ...
+    const handleGenerateFromSummary = async () => {
+        try {
+            setIsGenerating(true); // START GENERATING - SHOWS LOADING SCREEN
+            setIsApiLoading(true);
+            setIsHistoryView(false);
+            // Reuse the formatPayload function to get the current form data
+            const payload = formatPayload();
+            console.log("payload:payload", payload);
 
-        showNotification('Generating ad copy, please wait...', 'info');
 
-        // Make the API call
-        const response = await fetch(API.GENERATE_AD_COPY, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Authorization': AUTH_HEADER,
-            },
-            body: JSON.stringify(payload)
-        });
+            // ... (validation remains the same) ...
 
-        // ... (error handling remains the same) ...
+            showNotification('Generating ad copy, please wait...', 'info');
 
-        const result = await response.json();
-        
-        // Process the response
-        if (result.variants?.length > 0) {
-            setRequestId(result.request_id);
-             setIsApiLoading(false);
-            const structuredVariants = result.variants.map((content, index) => ({
-                id: content.id || `temp-${Date.now()}-${index}`,
-                content: content.content || content,
-                show_variant: true
-            }));
-
-            setGeneratedVariantsData({ 
-                variants: structuredVariants, 
-                inputs: result.inputs || payload 
+            // Make the API call
+            const response = await fetch(API.GENERATE_AD_COPY, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': AUTH_HEADER,
+                },
+                body: JSON.stringify(payload)
             });
-            
-            setShowVariantsModal(true);
-            setShowSummary(false);
-         
-            // DO NOT show success notification here, as the typing effect should start now.
-        } else {
-            throw new Error("No variants were returned from the server");
+
+            // ... (error handling remains the same) ...
+
+            const result = await response.json();
+
+            // Process the response
+            if (result.variants?.length > 0) {
+                setRequestId(result.request_id);
+                setIsApiLoading(false);
+                const structuredVariants = result.variants.map((content, index) => ({
+                    id: content.id || `temp-${Date.now()}-${index}`,
+                    content: content.content || content,
+                    show_variant: true
+                }));
+
+                setGeneratedVariantsData({
+                    variants: structuredVariants,
+                    inputs: result.inputs || payload
+                });
+
+                setShowVariantsModal(true);
+                setShowSummary(false);
+
+                // DO NOT show success notification here, as the typing effect should start now.
+            } else {
+                throw new Error("No variants were returned from the server");
+            }
+
+        } catch (error) {
+            console.error('Generation Error:', error);
+            showNotification(`Error: ${error.message || 'Failed to generate ad copy'}`, 'error');
+        } finally {
+            setIsGenerating(false); // STOP GENERATING - TRIGGERS TYPING EFFECT
+            setIsApiLoading(false);
         }
-        
-    } catch (error) {
-        console.error('Generation Error:', error);
-        showNotification(`Error: ${error.message || 'Failed to generate ad copy'}`, 'error');
-    } finally {
-        setIsGenerating(false); // STOP GENERATING - TRIGGERS TYPING EFFECT
-          setIsApiLoading(false);
-    }
-};
+    };
 
 
     const handleEditFromSummary = () => {
@@ -589,7 +591,7 @@ const AdCopyGeneratorForm = () => {
         setShowVariantsModal(true); // Open modal
         setIsApiLoading(true); // Show surfing loader
         setIsHistoryView(true);
-        
+
         try {
             const response = await fetch(API.GET_VARIANTS_LOG(requestId), {
                 headers: { 'Authorization': AUTH_HEADER },
@@ -601,10 +603,10 @@ const AdCopyGeneratorForm = () => {
             }
 
             const result = await response.json();
-            
+
             if (result.variants && Array.isArray(result.variants) && result.variants.length > 0) {
-                 const structuredVariants = result.variants.map(variant => ({
-                    id: variant.id, 
+                const structuredVariants = result.variants.map(variant => ({
+                    id: variant.id,
                     content: variant.content,
                     show_variant: variant.show_variant || true,
                 }));
@@ -635,12 +637,12 @@ const AdCopyGeneratorForm = () => {
             const lang = parts.length > 1 ? parts[1]?.trim() : null;
             return { locale: geo || null, language: lang || null };
         };
-       
+
         const payload = {
             platform: mapSelectionToApiObject('platform', formData.platform, fieldOptions.platform, true),
             placement: mapSelectionToApiObject('placement', formData.placement, fieldOptions.placement, true),
-            campaign_objective: formData.campaignObjective === 'Custom Objective' ? 
-                { type: 'custom', id: null, value: formData.customObjective || 'Custom Objective' } : 
+            campaign_objective: formData.campaignObjective === 'Custom Objective' ?
+                { type: 'custom', id: null, value: formData.customObjective || 'Custom Objective' } :
                 mapSelectionToApiObject('campaign_objective', formData.campaignObjective, fieldOptions.campaign_objective, false),
             target_audience: formData.targetAudience,
             key_benefits: formData.keyBenefits,
@@ -665,7 +667,7 @@ const AdCopyGeneratorForm = () => {
             brand_voice_personality: (() => {
                 const mode = formData.brandVoicePersonalityMode;
                 const customValue = formData.brandVoicePersonalityCustom;
-    
+
                 if (mode === 'custom') {
                     return {
                         type: 'custom',
@@ -673,11 +675,11 @@ const AdCopyGeneratorForm = () => {
                         value: customValue || ''
                     };
                 }
-    
+
                 // Predefined option: find matching option by label from API options
                 const options = fieldOptions.brand_voice_personality || [];
                 const selected = options.find(opt => opt.label === formData.brandVoicePersonalityOption);
-    
+
                 if (selected) {
                     return {
                         type: 'predefined',
@@ -685,7 +687,7 @@ const AdCopyGeneratorForm = () => {
                         value: selected.label,
                     };
                 }
-    
+
                 return {
                     type: 'predefined',
                     id: null,
@@ -693,10 +695,10 @@ const AdCopyGeneratorForm = () => {
                 };
             })(),
         };
-        
+
         return payload;
     };
-    
+
     // Regenerate function is retained and works with the new state
     const handleRegenerateVariant = async (variantId) => {
         const variantIndex = generatedVariantsData.variants.findIndex(v => v.id === variantId);
@@ -717,14 +719,14 @@ const AdCopyGeneratorForm = () => {
                 const errorData = await response.json();
                 throw new Error(errorData.message || `Regeneration failed with status: ${response.status}`);
             }
-            
+
             const result = await response.json();
-            
+
             // Update the specific variant content in the state
             setGeneratedVariantsData(prev => {
                 const newVariants = [...prev.variants];
                 const updatedVariantIndex = newVariants.findIndex(v => v.id === result.variant_id);
-                
+
                 if (updatedVariantIndex !== -1) {
                     newVariants[updatedVariantIndex] = {
                         ...newVariants[updatedVariantIndex],
@@ -738,7 +740,7 @@ const AdCopyGeneratorForm = () => {
                         show_variant: true,
                     });
                 }
-                
+
                 return { ...prev, variants: newVariants };
             });
 
@@ -756,7 +758,7 @@ const AdCopyGeneratorForm = () => {
             showAdvanced: !prev.showAdvanced
         }));
     };
-    
+
     // Reset handler (Retained)
     const handleReset = () => {
         setFormData({
@@ -803,7 +805,7 @@ const AdCopyGeneratorForm = () => {
         setCtaTypeCustom('');
         setEmotionalAngleMode('predefined');
         setEmotionalAngleCustom('');
-        
+
         setAudienceInput('');
         setShowAudienceSuggestions(false);
         setShowSummary(false);
@@ -816,18 +818,18 @@ const AdCopyGeneratorForm = () => {
         showNotification('Form has been reset', 'info');
     };
 
-// Styles (Defined for the main component's structure)
+    // Styles (Defined for the main component's structure)
     const styles = {
         // ... (Styles object is large, keeping it concise here but retaining the original content)
         container: { maxWidth: '1100px', margin: '0 auto', padding: '24px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', backgroundColor: '#0a0e1a', minHeight: '100vh' },
         card: { backgroundColor: '#141b2d', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.3)', overflow: 'hidden', border: '1px solid #1e293b' },
-        header: { padding: '24px 32px', borderBottom: '1px solid #1e293b',},
+        header: { padding: '24px 32px', borderBottom: '1px solid #1e293b', },
         title: { margin: 0, fontSize: '24px', fontWeight: '600', color: '#f8fafc' },
         subtitle: { margin: '6px 0 0', fontSize: '14px', color: '#94a3b8' },
         formGroup: { marginBottom: '20px' },
         label: { display: 'block', marginBottom: '6px', fontSize: '16px', fontWeight: '500', color: '#e2e8f0' },
         input: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box' },
-        select: { width: '100%',height: '42px', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '20px', paddingRight: '40px', cursor: 'pointer' },
+        select: { width: '100%', height: '42px', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '20px', paddingRight: '40px', cursor: 'pointer' },
         textarea: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', resize: 'vertical', minHeight: '80px' },
         badge: { display: 'inline-flex', alignItems: 'center', padding: '6px 12px', fontSize: '13px', fontWeight: '500', borderRadius: '6px', gap: '6px' },
         badgePrimary: { backgroundColor: '#3b82f6', color: 'white' },
@@ -842,11 +844,11 @@ const AdCopyGeneratorForm = () => {
             justifyContent: 'center',
             gap: '8px',
             '&:hover': {
-            backgroundColor: '#2563eb',
+                backgroundColor: '#2563eb',
             },
             '&:disabled': {
-            backgroundColor: '#93c5fd',
-            cursor: 'not-allowed',
+                backgroundColor: '#93c5fd',
+                cursor: 'not-allowed',
             },
         },
         btnSuccess: { backgroundColor: '#10b981', color: 'white' },
@@ -860,7 +862,7 @@ const AdCopyGeneratorForm = () => {
         radioGroup: { display: 'flex', gap: '16px', marginTop: '8px' },
         radioItem: { display: 'flex', alignItems: 'center', gap: '8px' },
         toast: { position: 'fixed', top: '20px', right: '20px', padding: '16px 24px', color: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 9999 },
-        toolTip:{width:'40%'},
+        toolTip: { width: '40%' },
         summaryContainer: {
             backgroundColor: '#0f1624',
             borderRadius: '8px',
@@ -932,7 +934,7 @@ const AdCopyGeneratorForm = () => {
                     color: notification.type === 'error' ? '#b91c1c' : '#166534',
                 }}>
                     {notification.message}
-                    <button onClick={() => setNotification({...notification, show: false})} style={{
+                    <button onClick={() => setNotification({ ...notification, show: false })} style={{
                         background: 'none', border: 'none', color: 'inherit', marginLeft: '10px', cursor: 'pointer', fontSize: '18px'
                     }}>&times;</button>
                 </div>
@@ -945,1314 +947,662 @@ const AdCopyGeneratorForm = () => {
                         <h1 style={styles.title}>Ad Copy Generator</h1>
                         <p style={styles.subtitle}>Create compelling ad copy for your campaigns</p>
                     </div>
-                <div style={styles.card}>
+                    <div style={styles.card}>
 
-                    <div style={{ padding: '24px' }}>
-                        <form onSubmit={handleSubmit}>
-                            <div className="row g-4">
-                                <>
-                                {/* Platform & Placement - Two-Step Selector */}
-                                <div className="col-md-6">
-                                    <div style={styles.formGroup}>
-                                        <label htmlFor="platform" style={styles.label}>
-                                            Ad Platform <span style={{ color: '#ef4444' }}>*</span>
-                                            <span 
-                                                style={styles.infoIcon} 
-                                                data-tooltip-id="platform-tooltip" 
-                                                data-tooltip-content="Choose whether you want to use predefined platforms like Instagram, Facebook, Google, or enter your own custom platform. This helps the tool understand where your ad will be posted so the content format matches platform style."
-                                            >
-                                                i
-                                            </span>
-                                        </label>
-                                        <Tooltip style={styles.toolTip} id="platform-tooltip" />
-                                        {/* Platform mode: Predefined vs Custom */}
-                                        <div style={styles.radioGroup}>
-                                            <label style={styles.radioItem}>
-                                                <input
-                                                    type="radio"
-                                                    name="platformMode"
-                                                    value="predefined"
-                                                    checked={formData.platformMode === 'predefined'}
-                                                    onChange={(e) => {
-                                                        const mode = e.target.value;
-                                                        setFormData(prev => {
-                                                            const next = { ...prev, platformMode: mode };
-                                                            if (mode === 'predefined') {
-                                                                const predefinedLabels = (fieldOptions.platform || []).map(opt => opt.label);
-                                                                if (!predefinedLabels.includes(prev.platform)) {
-                                                                    const defaultLabel = (fieldOptions.platform && fieldOptions.platform[0]?.label) || prev.platform;
-                                                                    next.platform = defaultLabel;
-                                                                }
-                                                            }
-                                                            if (mode === 'custom') {
-                                                                next.platform = prev.platformCustom || '';
-                                                            }
-                                                            return next;
-                                                        });
-                                                    }}
-                                                />
-                                                <span>Predefined</span>
-                                            </label>
-                                            <label style={styles.radioItem}>
-                                                <input
-                                                    type="radio"
-                                                    name="platformMode"
-                                                    value="custom"
-                                                    checked={formData.platformMode === 'custom'}
-                                                    onChange={(e) => {
-                                                        const mode = e.target.value;
-                                                        setFormData(prev => ({
-                                                            ...prev,
-                                                            platformMode: mode,
-                                                            platform: prev.platformCustom || '',
-                                                        }));
-                                                    }}
-                                                />
-                                                <span>Custom</span>
-                                            </label>
-                                        </div>
+                        <div style={{ padding: '24px' }}>
+                            <form onSubmit={handleSubmit}>
+                                <div className="row g-4">
+                                    {/* Main (non-advanced) fields */}
+                                    {!formData.showAdvanced && (
+                                        <>
+                                            {/* Platform & Placement - Two-Step Selector */}
 
-                                        {formData.platformMode === 'predefined' && (
-                                            <select
-                                                id="platform"
-                                                name="platform"
-                                                // Use key for value attribute, label for display
-                                                value={fieldOptions.platform.find(opt => opt.label === formData.platform)?.key || formData.platform}
-                                                onChange={handlePlatformChange}
-                                                style={{ ...styles.select, marginTop: '8px' }}
-                                                required
-                                            >
-                                                {loadingOptions && <option value="">Loading Platforms...</option>}
-                                                {fieldOptions.platform && fieldOptions.platform.map((option) => (
-                                                    <option
-                                                        key={option.key || option.id}
-                                                        value={option.key}
-                                                    >
-                                                        {option.label}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        )}
-
-                                        {formData.platformMode === 'custom' && (
-                                            <input
-                                                type="text"
-                                                id="platformCustom"
-                                                name="platformCustom"
-                                                value={formData.platformCustom}
-                                                onChange={handleChange}
-                                                style={{ ...styles.input, marginTop: '8px' }}
-                                                placeholder="Enter custom ad platform"
-                                                required
-                                            />
-                                        )}
-                                        {optionsError && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{optionsError}</p>}
-                                    </div>
-                                </div>
-
-                                <div className="col-md-6">
-                                    <div style={styles.formGroup}>
-                                        <label htmlFor="placement" style={styles.label}>
-                                            Ad Placement <span style={{ color: '#ef4444' }}>*</span>
-                                            <span 
-                                                style={styles.infoIcon} 
-                                                data-tooltip-id="placement-tooltip" 
-                                                data-tooltip-content="Select where the ad will appear (example: feed, story, search results, sidebar). Placement affects length, tone, and visual structure of the generated ad, so choosing correctly helps improve conversion and readability."
-                                            >
-                                                i
-                                            </span>
-                                        </label>
-                                        <Tooltip style={styles.toolTip} id="placement-tooltip" />
-                                        <div style={styles.radioGroup}>
-                                            <label style={styles.radioItem}>
-                                                <input
-                                                    type="radio"
-                                                    name="placementMode"
-                                                    value="predefined"
-                                                    checked={placementMode === 'predefined'}
-                                                    onChange={() => {
-                                                        setPlacementMode('predefined');
-                                                        setFormData(prev => {
-                                                            const labels = availablePlacements.map(p => p.label);
-                                                            let nextPlacement = prev.placement;
-                                                            if (!labels.includes(nextPlacement) && availablePlacements[0]) {
-                                                                nextPlacement = availablePlacements[0].label;
-                                                            }
-                                                            return { ...prev, placement: nextPlacement };
-                                                        });
-                                                    }}
-                                                />
-                                                <span>Predefined</span>
-                                            </label>
-                                            <label style={styles.radioItem}>
-                                                <input
-                                                    type="radio"
-                                                    name="placementMode"
-                                                    value="custom"
-                                                    checked={placementMode === 'custom'}
-                                                    onChange={() => {
-                                                        setPlacementMode('custom');
-                                                        setFormData(prev => ({
-                                                            ...prev,
-                                                            placement: placementCustom || '',
-                                                        }));
-                                                    }}
-                                                />
-                                                <span>Custom</span>
-                                            </label>
-                                        </div>
-
-                                        {placementMode === 'predefined' && (
-                                            <select
-                                                id="placement"
-                                                name="placement"
-                                                // Use key for value attribute, label for display
-                                                value={fieldOptions.placement.find(opt => opt.label === formData.placement)?.key || formData.placement}
-                                                onChange={handleChange}
-                                                style={{ ...styles.select, marginTop: '8px' }}
-                                                required
-                                                disabled={!formData.platform || availablePlacements.length === 0}
-                                            >
-                                                <option value="">Select Placement</option>
-                                                {availablePlacements.map((option) => (
-                                                    <option
-                                                        key={option.key || option.id}
-                                                        value={option.key} 
-                                                    >
-                                                        {option.label}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        )}
-
-                                        {placementMode === 'custom' && (
-                                            <input
-                                                type="text"
-                                                id="placementCustom"
-                                                value={placementCustom}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    setPlacementCustom(val);
-                                                    setFormData(prev => ({ ...prev, placement: val }));
-                                                }}
-                                                style={{ ...styles.input, marginTop: '8px' }}
-                                                placeholder="Enter custom ad placement"
-                                                required
-                                            />
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Campaign Objective */}
-                                <div className="col-12">
-                                    <div style={styles.formGroup}>
-                                        <label htmlFor="campaignObjective" style={styles.label}>
-                                            Campaign Objective <span style={{ color: '#ef4444' }}>*</span>
-                                            <span 
-                                                style={styles.infoIcon}
-                                                data-tooltip-id="campaignObjective-tooltip"
-                                                data-tooltip-html="Select the main goal of your campaign, such as leads, sales, awareness, traffic, or engagement. The tool uses your objective to shape message style, content strength, and call-to-action direction to drive results effectively."
-                                            >
-                                                i
-                                            </span>
-                                        </label>
-                                        <Tooltip id="campaignObjective-tooltip" />
-                                        <div style={styles.radioGroup}>
-                                            <label style={styles.radioItem}>
-                                                <input
-                                                    type="radio"
-                                                    name="campaignObjectiveMode"
-                                                    value="predefined"
-                                                    checked={campaignObjectiveMode === 'predefined'}
-                                                    onChange={() => {
-                                                        setCampaignObjectiveMode('predefined');
-                                                        setFormData(prev => ({
-                                                            ...prev,
-                                                            campaignObjective: fieldOptions.campaign_objective.find(opt => opt.label === prev.campaignObjective)?.label || prev.campaignObjective,
-                                                        }));
-                                                    }}
-                                                />
-                                                <span>Predefined</span>
-                                            </label>
-                                            <label style={styles.radioItem}>
-                                                <input
-                                                    type="radio"
-                                                    name="campaignObjectiveMode"
-                                                    value="custom"
-                                                    checked={campaignObjectiveMode === 'custom'}
-                                                    onChange={() => {
-                                                        setCampaignObjectiveMode('custom');
-                                                        setFormData(prev => ({ ...prev, campaignObjective: 'Custom Objective' }));
-                                                    }}
-                                                />
-                                                <span>Custom</span>
-                                            </label>
-                                        </div>
-
-                                        {campaignObjectiveMode === 'predefined' && (
-                                            <select
-                                                id="campaignObjective"
-                                                name="campaignObjective"
-                                                // Use key for value attribute, label for display
-                                                value={fieldOptions.campaign_objective.find(opt => opt.label === formData.campaignObjective)?.key || formData.campaignObjective}
-                                                onChange={handleChange}
-                                                style={{ ...styles.select, marginTop: '8px' }}
-                                                required
-                                            >
-                                                {fieldOptions.campaign_objective && fieldOptions.campaign_objective.map((option) => (
-                                                    <option
-                                                        key={option.key || option.id}
-                                                        value={option.key}
-                                                    >
-                                                        {option.label}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        )}
-
-                                        {campaignObjectiveMode === 'custom' && (
-                                            <div style={{ marginTop: '12px' }}>
-                                                <input
-                                                    type="text"
-                                                    name="customObjective"
-                                                    value={formData.customObjective}
-                                                    onChange={handleChange}
-                                                    style={styles.input}
-                                                    placeholder="Describe your custom objective"
-                                                    required={formData.campaignObjective === 'Custom Objective'}
-                                                />
-                                               
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Target Audience */}
-                                <div className="col-12">
-                                    <div style={styles.formGroup}>
-                                        <label style={styles.label}>
-                                            Target Audience <span style={{ color: '#ef4444' }}>*</span>
-                                            <span 
-                                                style={styles.infoIcon}
-                                                data-tooltip-id="targetAudience-tooltip"
-                                                data-tooltip-html="Describe who you want to reach with this ad. Include audience characteristics like age, profession, interests, and behavior. This helps generate messaging that speaks directly to the right people and increases conversions."
-                                            >
-                                                i
-                                            </span>
-                                        </label>
-                                        <Tooltip id="targetAudience-tooltip" />
-                                        
-                                        {/* Audience Chips and Input (No change here as it's a multi-select custom input) */}
-                                        {/* ... (Audience Input/Chips render logic remains the same) ... */}
-                                        <div style={{ 
-                                            display: 'flex', 
-                                            flexWrap: 'wrap', 
-                                            gap: '8px', 
-                                            marginBottom: '8px',
-                                            minHeight: '40px',
-                                            alignItems: 'center',
-                                            padding: '4px',
-                                            border: '1px solid #d1d5db',
-                                            borderRadius: '6px',
-                                            backgroundColor: formData.targetAudience.length > 0 ? '#f9fafb' : 'white'
-                                        }}>
-                                            {formData.targetAudience.length === 0 && (
-                                                <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
-                                                    Add audience segments (e.g., 'Women 25-34', 'Fitness Enthusiasts')
-                                                </span>
-                                            )}
-                                            {formData.targetAudience.map((chip, index) => (
-                                                <span 
-                                                    key={index} 
-                                                    style={{
-                                                        ...styles.badge,
-                                                        ...styles.badgePrimary,
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '6px',
-                                                        padding: '4px 10px'
-                                                    }}
-                                                >
-                                                    {chip}
-                                                    <button 
-                                                        type="button" 
-                                                        onClick={() => removeAudienceChip(chip)}
-                                                         style={styles.removeBtn} 
-                                                    >
-                                                        ×
-                                                    </button>
-                                                </span>
-                                            ))}
-                                        </div>
-
-                                        <div style={{ position: 'relative' }}>
-                                            <input
-                                                type="text"
-                                                value={audienceInput}
-                                                onChange={handleAudienceInput}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter' && audienceInput.trim()) {
-                                                        e.preventDefault();
-                                                        addAudienceChip(audienceInput.trim());
-                                                    }
-                                                }}
-                                                style={{
-                                                    ...styles.input,
-                                                    marginBottom: 0,
-                                                    borderBottomLeftRadius: showAudienceSuggestions ? '0' : '6px',
-                                                    borderBottomRightRadius: showAudienceSuggestions ? '0' : '6px'
-                                                }}
-                                                placeholder="Type and press Enter to add audience segments"
-                                                required={formData.targetAudience.length === 0}
-                                            />
-                                            
-                                            {showAudienceSuggestions && (
-                                                <div style={{
-                                                    position: 'absolute',
-                                                    top: '100%',
-                                                    left: 0,
-                                                    right: 0,
-                                                    backgroundColor: 'white',
-                                                    border: '1px solid #d1d5db',
-                                                    borderTop: 'none',
-                                                    borderBottomLeftRadius: '6px',
-                                                    borderBottomRightRadius: '6px',
-                                                    zIndex: 1000,
-                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                                                    maxHeight: '200px',
-                                                    overflowY: 'auto'
-                                                }}>
-                                                    {Object.entries(audienceSuggestions).map(([category, suggestions]) => {
-                                                        const filtered = suggestions.filter(s => 
-                                                            s.toLowerCase().includes(audienceInput.toLowerCase()) && 
-                                                            !formData.targetAudience.includes(s)
-                                                        );
-                                                        
-                                                        if (filtered.length === 0) return null;
-                                                        
-                                                        return (
-                                                            <div key={category}>
-                                                                <div style={{
-                                                                    padding: '8px 12px',
-                                                                    fontSize: '12px',
-                                                                    fontWeight: 600,
-                                                                    color: '#4b5563',
-                                                                    backgroundColor: '#f3f4f6',
-                                                                    textTransform: 'uppercase',
-                                                                    letterSpacing: '0.05em'
-                                                                }}>
-                                                                    {category}
-                                                                </div>
-                                                                {filtered.map((suggestion, idx) => (
-                                                                    <div
-                                                                        key={idx}
-                                                                        onClick={() => {
-                                                                            addAudienceChip(suggestion);
-                                                                            setAudienceInput('');
-                                                                        }}
-                                                                        style={{ padding: '8px 16px', cursor: 'pointer'}}
-                                                                    >
-                                                                        {suggestion}
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        );
-                                                    })}
-                                                    
-                                                    {audienceInput && !Object.values(audienceSuggestions)
-                                                        .flat()
-                                                        .some(s => s.toLowerCase() === audienceInput.toLowerCase()) && (
-                                                        <div
-                                                            onClick={() => {
-                                                                addAudienceChip(audienceInput);
-                                                                setAudienceInput('');
-                                                            }}
-                                                            style={{
-                                                                padding: '8px 16px',
-                                                                cursor: 'pointer',
-                                                                backgroundColor: '#f8fafc',
-                                                                borderTop: '1px solid #e5e7eb',
-                                                                color: '#3b82f6',
-                                                                fontWeight: 500
-                                                            }}
+                                            <div className="col-md-6">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="platform" style={styles.label}>
+                                                        Ad Platform <span style={{ color: '#ef4444' }}>*</span>
+                                                        <span
+                                                            style={styles.infoIcon}
+                                                            data-tooltip-id="platform-tooltip"
+                                                            data-tooltip-content="Choose whether you want to use predefined platforms like Instagram, Facebook, Google, or enter your own custom platform. This helps the tool understand where your ad will be posted so the content format matches platform style."
                                                         >
-                                                            Add **"{audienceInput}"** as custom audience
+                                                            i
+                                                        </span>
+                                                    </label>
+                                                    <Tooltip style={styles.toolTip} id="platform-tooltip" />
+                                                    {/* Platform mode: Predefined vs Custom */}
+                                                    <div style={styles.radioGroup}>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="platformMode"
+                                                                value="predefined"
+                                                                checked={formData.platformMode === 'predefined'}
+                                                                onChange={(e) => {
+                                                                    const mode = e.target.value;
+                                                                    setFormData(prev => {
+                                                                        const next = { ...prev, platformMode: mode };
+                                                                        if (mode === 'predefined') {
+                                                                            const predefinedLabels = (fieldOptions.platform || []).map(opt => opt.label);
+                                                                            if (!predefinedLabels.includes(prev.platform)) {
+                                                                                const defaultLabel = (fieldOptions.platform && fieldOptions.platform[0]?.label) || prev.platform;
+                                                                                next.platform = defaultLabel;
+                                                                            }
+                                                                        }
+                                                                        if (mode === 'custom') {
+                                                                            next.platform = prev.platformCustom || '';
+                                                                        }
+                                                                        return next;
+                                                                    });
+                                                                }}
+                                                            />
+                                                            <span>Predefined</span>
+                                                        </label>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="platformMode"
+                                                                value="custom"
+                                                                checked={formData.platformMode === 'custom'}
+                                                                onChange={(e) => {
+                                                                    const mode = e.target.value;
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        platformMode: mode,
+                                                                        platform: prev.platformCustom || '',
+                                                                    }));
+                                                                }}
+                                                            />
+                                                            <span>Custom</span>
+                                                        </label>
+                                                    </div>
+
+                                                    {formData.platformMode === 'predefined' && (
+                                                        <select
+                                                            id="platform"
+                                                            name="platform"
+                                                            // Use key for value attribute, label for display
+                                                            value={fieldOptions.platform.find(opt => opt.label === formData.platform)?.key || formData.platform}
+                                                            onChange={handlePlatformChange}
+                                                            style={{ ...styles.select, marginTop: '8px' }}
+                                                            required
+                                                        >
+                                                            {loadingOptions && <option value="">Loading Platforms...</option>}
+                                                            {fieldOptions.platform && fieldOptions.platform.map((option) => (
+                                                                <option
+                                                                    key={option.key || option.id}
+                                                                    value={option.key}
+                                                                >
+                                                                    {option.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    )}
+
+                                                    {formData.platformMode === 'custom' && (
+                                                        <input
+                                                            type="text"
+                                                            id="platformCustom"
+                                                            name="platformCustom"
+                                                            value={formData.platformCustom}
+                                                            onChange={handleChange}
+                                                            style={{ ...styles.input, marginTop: '8px' }}
+                                                            placeholder="Enter custom ad platform"
+                                                            required
+                                                        />
+                                                    )}
+                                                    {optionsError && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{optionsError}</p>}
+                                                </div>
+                                            </div>
+
+                                            <div className="col-md-6">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="placement" style={styles.label}>
+                                                        Ad Placement <span style={{ color: '#ef4444' }}>*</span>
+                                                        <span
+                                                            style={styles.infoIcon}
+                                                            data-tooltip-id="placement-tooltip"
+                                                            data-tooltip-content="Select where the ad will appear (example: feed, story, search results, sidebar). Placement affects length, tone, and visual structure of the generated ad, so choosing correctly helps improve conversion and readability."
+                                                        >
+                                                            i
+                                                        </span>
+                                                    </label>
+                                                    <Tooltip style={styles.toolTip} id="placement-tooltip" />
+                                                    <div style={styles.radioGroup}>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="placementMode"
+                                                                value="predefined"
+                                                                checked={placementMode === 'predefined'}
+                                                                onChange={() => {
+                                                                    setPlacementMode('predefined');
+                                                                    setFormData(prev => {
+                                                                        const labels = availablePlacements.map(p => p.label);
+                                                                        let nextPlacement = prev.placement;
+                                                                        if (!labels.includes(nextPlacement) && availablePlacements[0]) {
+                                                                            nextPlacement = availablePlacements[0].label;
+                                                                        }
+                                                                        return { ...prev, placement: nextPlacement };
+                                                                    });
+                                                                }}
+                                                            />
+                                                            <span>Predefined</span>
+                                                        </label>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="placementMode"
+                                                                value="custom"
+                                                                checked={placementMode === 'custom'}
+                                                                onChange={() => {
+                                                                    setPlacementMode('custom');
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        placement: placementCustom || '',
+                                                                    }));
+                                                                }}
+                                                            />
+                                                            <span>Custom</span>
+                                                        </label>
+                                                    </div>
+
+                                                    {placementMode === 'predefined' && (
+                                                        <select
+                                                            id="placement"
+                                                            name="placement"
+                                                            // Use key for value attribute, label for display
+                                                            value={fieldOptions.placement.find(opt => opt.label === formData.placement)?.key || formData.placement}
+                                                            onChange={handleChange}
+                                                            style={{ ...styles.select, marginTop: '8px' }}
+                                                            required
+                                                            disabled={!formData.platform || availablePlacements.length === 0}
+                                                        >
+                                                            <option value="">Select Placement</option>
+                                                            {availablePlacements.map((option) => (
+                                                                <option
+                                                                    key={option.key || option.id}
+                                                                    value={option.key}
+                                                                >
+                                                                    {option.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    )}
+
+                                                    {placementMode === 'custom' && (
+                                                        <input
+                                                            type="text"
+                                                            id="placementCustom"
+                                                            value={placementCustom}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                setPlacementCustom(val);
+                                                                setFormData(prev => ({ ...prev, placement: val }));
+                                                            }}
+                                                            style={{ ...styles.input, marginTop: '8px' }}
+                                                            placeholder="Enter custom ad placement"
+                                                            required
+                                                        />
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Campaign Objective */}
+                                            <div className="col-12">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="campaignObjective" style={styles.label}>
+                                                        Campaign Objective <span style={{ color: '#ef4444' }}>*</span>
+                                                        <span
+                                                            style={styles.infoIcon}
+                                                            data-tooltip-id="campaignObjective-tooltip"
+                                                            data-tooltip-html="Select the main goal of your campaign, such as leads, sales, awareness, traffic, or engagement. The tool uses your objective to shape message style, content strength, and call-to-action direction to drive results effectively."
+                                                        >
+                                                            i
+                                                        </span>
+                                                    </label>
+                                                    <Tooltip id="campaignObjective-tooltip" />
+                                                    <div style={styles.radioGroup}>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="campaignObjectiveMode"
+                                                                value="predefined"
+                                                                checked={campaignObjectiveMode === 'predefined'}
+                                                                onChange={() => {
+                                                                    setCampaignObjectiveMode('predefined');
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        campaignObjective: fieldOptions.campaign_objective.find(opt => opt.label === prev.campaignObjective)?.label || prev.campaignObjective,
+                                                                    }));
+                                                                }}
+                                                            />
+                                                            <span>Predefined</span>
+                                                        </label>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="campaignObjectiveMode"
+                                                                value="custom"
+                                                                checked={campaignObjectiveMode === 'custom'}
+                                                                onChange={() => {
+                                                                    setCampaignObjectiveMode('custom');
+                                                                    setFormData(prev => ({ ...prev, campaignObjective: 'Custom Objective' }));
+                                                                }}
+                                                            />
+                                                            <span>Custom</span>
+                                                        </label>
+                                                    </div>
+
+                                                    {campaignObjectiveMode === 'predefined' && (
+                                                        <select
+                                                            id="campaignObjective"
+                                                            name="campaignObjective"
+                                                            // Use key for value attribute, label for display
+                                                            value={fieldOptions.campaign_objective.find(opt => opt.label === formData.campaignObjective)?.key || formData.campaignObjective}
+                                                            onChange={handleChange}
+                                                            style={{ ...styles.select, marginTop: '8px' }}
+                                                            required
+                                                        >
+                                                            {fieldOptions.campaign_objective && fieldOptions.campaign_objective.map((option) => (
+                                                                <option
+                                                                    key={option.key || option.id}
+                                                                    value={option.key}
+                                                                >
+                                                                    {option.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    )}
+
+                                                    {campaignObjectiveMode === 'custom' && (
+                                                        <div style={{ marginTop: '12px' }}>
+                                                            <input
+                                                                type="text"
+                                                                name="customObjective"
+                                                                value={formData.customObjective}
+                                                                onChange={handleChange}
+                                                                style={styles.input}
+                                                                placeholder="Describe your custom objective"
+                                                                required={formData.campaignObjective === 'Custom Objective'}
+                                                            />
+
                                                         </div>
                                                     )}
                                                 </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
+                                            </div>
 
-                                {/* Product/Services */}
-                                <div className="col-12">
-                                    <div style={styles.formGroup}>
-                                        <label htmlFor="productServices" style={styles.label}>
-                                            Product/Services <span style={{ color: '#ef4444' }}>*</span>
-                                            <span 
-                                                style={styles.infoIcon}
-                                                data-tooltip-id="productServices-tooltip"
-                                                data-tooltip-html="Write important information about your product or service, including features, purpose, and key details. Clear information allows the system to create accurate ad content that explains your offering effectively to potential customers."
-                                            >
-                                                i
-                                            </span>
-                                        </label>
-                                        <Tooltip id="productServices-tooltip" />
-                                        <textarea
-                                            id="productServices"
-                                            name="productServices"
-                                            value={formData.productServices}
-                                            onChange={handleChange}
-                                            style={{...styles.textarea, minHeight: '100px'}}
-                                            placeholder="Describe your product or service in detail. What makes it unique? What problems does it solve?"
-                                            required
-                                        />
-                                    </div>
-                                </div>
+                                            {/* Target Audience */}
+                                            <div className="col-12">
+                                                <div style={styles.formGroup}>
+                                                    <label style={styles.label}>
+                                                        Target Audience <span style={{ color: '#ef4444' }}>*</span>
+                                                        <span
+                                                            style={styles.infoIcon}
+                                                            data-tooltip-id="targetAudience-tooltip"
+                                                            data-tooltip-html="Describe who you want to reach with this ad. Include audience characteristics like age, profession, interests, and behavior. This helps generate messaging that speaks directly to the right people and increases conversions."
+                                                        >
+                                                            i
+                                                        </span>
+                                                    </label>
+                                                    <Tooltip id="targetAudience-tooltip" />
 
-                                {/* Tone */}
-                                <div className="col-md-6">
-                                    <div style={styles.formGroup}>
-                                        <label htmlFor="tone" style={styles.label}>
-                                            Tone <span style={{ color: '#ef4444' }}>*</span>
-                                            <span 
-                                                style={styles.infoIcon}
-                                                data-tooltip-id="tone-tooltip"
-                                                data-tooltip-html="Select the personality or feel of the ad copy (such as professional, friendly, urgent, funny, bold). Tone guides how the message connects emotionally with your target audience."
-                                            >
-                                                i
-                                            </span>
-                                        </label>
-                                        <Tooltip id="tone-tooltip" />
-                                        <div style={styles.radioGroup}>
-                                            <label style={styles.radioItem}>
-                                                <input
-                                                    type="radio"
-                                                    name="toneMode"
-                                                    value="predefined"
-                                                    checked={toneMode === 'predefined'}
-                                                    onChange={() => {
-                                                        setToneMode('predefined');
-                                                        setFormData(prev => ({ ...prev, tone: 'Auto-Detect (Based on Platform)' }));
-                                                    }}
-                                                />
-                                                <span>Predefined</span>
-                                            </label>
-                                            <label style={styles.radioItem}>
-                                                <input
-                                                    type="radio"
-                                                    name="toneMode"
-                                                    value="custom"
-                                                    checked={toneMode === 'custom'}
-                                                    onChange={() => {
-                                                        setToneMode('custom');
-                                                        setFormData(prev => ({ ...prev, tone: toneCustom || '' }));
-                                                    }}
-                                                />
-                                                <span>Custom</span>
-                                            </label>
-                                        </div>
-
-                                        {toneMode === 'predefined' && (
-                                            <select
-                                                id="tone"
-                                                name="tone"
-                                                // Use key for value attribute, label for display
-                                                value={fieldOptions.tone_style.find(opt => opt.label === formData.tone)?.key || formData.tone}
-                                                onChange={handleChange}
-                                                style={{ ...styles.select, marginTop: '8px' }}
-                                                required
-                                            >
-                                                <option value="Auto-Detect (Based on Platform)">Auto-Detect (Based on Platform)</option>
-                                                {fieldOptions.tone_style && fieldOptions.tone_style.map((option) => (
-                                                    <option
-                                                        key={option.key || option.id}
-                                                        value={option.key}
-                                                    >
-                                                        {option.label}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        )}
-
-                                        {toneMode === 'custom' && (
-                                            <input
-                                                type="text"
-                                                id="toneCustom"
-                                                value={toneCustom}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    setToneCustom(val);
-                                                    setFormData(prev => ({ ...prev, tone: val }));
-                                                }}
-                                                style={{ ...styles.input, marginTop: '8px' }}
-                                                placeholder="Enter custom tone"
-                                                required
-                                            />
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Headline Focus */}
-                                <div className="col-md-6">
-                                    <div style={styles.formGroup}>
-                                        <label htmlFor="headlineFocus" style={styles.label}>
-                                            Headline Focus
-                                            <span 
-                                                style={styles.infoIcon}
-                                                data-tooltip-id="headlineFocus-tooltip"
-                                                data-tooltip-html="Choose what you want the headline to highlight, such as problem-solution, transformation, discount, or urgency. A good hook catches immediate attention and improves click-through rates."
-                                            >
-                                                i
-                                            </span>
-                                        </label>
-                                        <Tooltip id="headlineFocus-tooltip" />
-                                        <div style={styles.radioGroup}>
-                                            <label style={styles.radioItem}>
-                                                <input
-                                                    type="radio"
-                                                    name="headlineFocusMode"
-                                                    value="predefined"
-                                                    checked={headlineFocusMode === 'predefined'}
-                                                    onChange={() => {
-                                                        setHeadlineFocusMode('predefined');
-                                                        setFormData(prev => ({ ...prev, headlineFocus: 'Auto-Select (Recommended)' }));
-                                                    }}
-                                                />
-                                                <span>Predefined</span>
-                                            </label>
-                                            <label style={styles.radioItem}>
-                                                <input
-                                                    type="radio"
-                                                    name="headlineFocusMode"
-                                                    value="custom"
-                                                    checked={headlineFocusMode === 'custom'}
-                                                    onChange={() => {
-                                                        setHeadlineFocusMode('custom');
-                                                        setFormData(prev => ({ ...prev, headlineFocus: headlineFocusCustom || '' }));
-                                                    }}
-                                                />
-                                                <span>Custom</span>
-                                            </label>
-                                        </div>
-
-                                        {headlineFocusMode === 'predefined' && (
-                                            <select
-                                                id="headlineFocus"
-                                                name="headlineFocus"
-                                                // Use key for value attribute, label for display
-                                                value={fieldOptions.headline_focus.find(opt => opt.label === formData.headlineFocus)?.key || formData.headlineFocus}
-                                                onChange={handleChange}
-                                                style={{ ...styles.select, marginTop: '8px' }}
-                                            >
-                                                <option value="Auto-Select (Recommended)">Auto-Select (Recommended)</option>
-                                                {fieldOptions.headline_focus && fieldOptions.headline_focus.map((option) => (
-                                                    <option
-                                                        key={option.key || option.id}
-                                                        value={option.key}
-                                                    >
-                                                        {option.label}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        )}
-
-                                        {headlineFocusMode === 'custom' && (
-                                            <input
-                                                type="text"
-                                                id="headlineFocusCustom"
-                                                value={headlineFocusCustom}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    setHeadlineFocusCustom(val);
-                                                    setFormData(prev => ({ ...prev, headlineFocus: val }));
-                                                }}
-                                                style={{ ...styles.input, marginTop: '8px' }}
-                                                placeholder="Enter custom headline focus"
-                                                required
-                                            />
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Ad Text Length (full width) */}
-                                <div className="col-12">
-                                    <div style={styles.formGroup}>
-                                        <label htmlFor="adTextLength" style={styles.label}>
-                                            Ad Text Length
-                                            <span 
-                                                style={styles.infoIcon}
-                                                data-tooltip-id="adTextLength-tooltip"
-                                                data-tooltip-content="Select the desired length for your ad copy."
-                                            >
-                                                i
-                                            </span>
-                                        </label>
-                                        <Tooltip id="adTextLength-tooltip" />
-                                        <select
-                                            id="adTextLength"
-                                            name="adTextLength"
-                                            // Use key for value attribute, label for display
-                                            value={fieldOptions.primary_text_length.find(opt => opt.label === formData.adTextLength)?.key || formData.adTextLength}
-                                            onChange={handleChange}
-                                            style={styles.select}
-                                        >
-                                            <option value="Auto-Length (Platform Optimized)">Auto-Length (Platform Optimized)</option>
-                                            {fieldOptions.primary_text_length && fieldOptions.primary_text_length.map((option) => (
-                                                <option
-                                                    key={option.key || option.id}
-                                                    value={option.key}
-                                                >
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-
-                                {/* CTA Type (full width) */}
-                                <div className="col-12">
-                                    <div style={styles.formGroup}>
-                                        <label htmlFor="ctaType" style={styles.label}>
-                                            Call to Action (CTA)
-                                            <span 
-                                                style={styles.infoIcon}
-                                                data-tooltip-id="ctaType-tooltip"
-                                                data-tooltip-html="Choose what action you want users to take (example: Buy Now, Learn More, Sign Up). A strong CTA increases conversions by telling the audience exactly what to do next."
-                                            >
-                                                i
-                                            </span>
-                                        </label>
-                                        <Tooltip id="ctaType-tooltip" />
-                                        <div style={styles.radioGroup}>
-                                            <label style={styles.radioItem}>
-                                                <input
-                                                    type="radio"
-                                                    name="ctaTypeMode"
-                                                    value="predefined"
-                                                    checked={ctaTypeMode === 'predefined'}
-                                                    onChange={() => {
-                                                        setCtaTypeMode('predefined');
-                                                        setFormData(prev => ({ ...prev, ctaType: 'Learn More' }));
-                                                    }}
-                                                />
-                                                <span>Predefined</span>
-                                            </label>
-                                            <label style={styles.radioItem}>
-                                                <input
-                                                    type="radio"
-                                                    name="ctaTypeMode"
-                                                    value="custom"
-                                                    checked={ctaTypeMode === 'custom'}
-                                                    onChange={() => {
-                                                        setCtaTypeMode('custom');
-                                                        setFormData(prev => ({ ...prev, ctaType: ctaTypeCustom || '' }));
-                                                    }}
-                                                />
-                                                <span>Custom</span>
-                                            </label>
-                                        </div>
-
-                                        {ctaTypeMode === 'predefined' && (
-                                            <select
-                                                id="ctaType"
-                                                name="ctaType"
-                                                // Use key for value attribute, label for display
-                                                value={fieldOptions.cta_type.find(opt => opt.label === formData.ctaType)?.key || formData.ctaType}
-                                                onChange={handleChange}
-                                                style={{ ...styles.select, marginTop: '8px' }}
-                                            >
-                                                <option value="">Select CTA Type</option>
-                                                {fieldOptions.cta_type && fieldOptions.cta_type.map((option) => (
-                                                    <option
-                                                        key={option.key || option.id}
-                                                        value={option.key}
-                                                    >
-                                                        {option.label}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        )}
-
-                                        {ctaTypeMode === 'custom' && (
-                                            <input
-                                                type="text"
-                                                id="ctaTypeCustom"
-                                                value={ctaTypeCustom}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    setCtaTypeCustom(val);
-                                                    setFormData(prev => ({ ...prev, ctaType: val }));
-                                                }}
-                                                style={{ ...styles.input, marginTop: '8px' }}
-                                                placeholder="Enter custom CTA"
-                                                required
-                                            />
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Key Benefits */}
-                                <div className="col-12">
-                                    <div style={styles.formGroup}>
-                                        <label style={styles.label}>
-                                            Key Benefits
-                                            <span style={styles.infoIcon} data-tooltip-id="keyBenefits-tooltip" data-tooltip-content="List the main benefits of your product/service (press Enter to add)">i</span>
-                                        </label>
-                                        <Tooltip id="keyBenefits-tooltip" />
-
-                                        {/* Chips container with inline placeholder when empty, mirroring Target Audience UX */}
-                                        <div style={{ 
-                                            display: 'flex', 
-                                            flexWrap: 'wrap', 
-                                            gap: '8px', 
-                                            marginBottom: '8px',
-                                            minHeight: '40px',
-                                            alignItems: 'center',
-                                            padding: '4px',
-                                            border: '1px solid #d1d5db',
-                                            borderRadius: '6px',
-                                            backgroundColor: formData.keyBenefits.length > 0 ? '#f9fafb' : 'white'
-                                        }}>
-                                            {formData.keyBenefits.length === 0 && (
-                                                <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
-                                                    Type and press Enter to add key benefits
-                                                </span>
-                                            )}
-                                            {formData.keyBenefits.map((benefit, index) => (
-                                                <span 
-                                                    key={index} 
-                                                    style={{
-                                                        ...styles.badge,
-                                                        ...styles.badgePrimary,
+                                                    {/* Audience Chips and Input (No change here as it's a multi-select custom input) */}
+                                                    {/* ... (Audience Input/Chips render logic remains the same) ... */}
+                                                    <div style={{
                                                         display: 'flex',
+                                                        flexWrap: 'wrap',
+                                                        gap: '8px',
+                                                        marginBottom: '8px',
+                                                        minHeight: '40px',
                                                         alignItems: 'center',
-                                                        gap: '6px',
-                                                        padding: '4px 10px'
-                                                    }}
-                                                >
-                                                    {benefit}
-                                                    <button 
-                                                        type="button" 
-                                                        style={styles.removeBtn} 
-                                                        onClick={() => removeItem('keyBenefits', index)}
-                                                    >
-                                                        ×
-                                                    </button>
-                                                </span>
-                                            ))}
-                                        </div>
-
-                                        {/* Input to add new key benefits, same interaction as before */}
-                                        <input
-                                            type="text"
-                                            style={styles.input}
-                                            placeholder="Type and press Enter to add key benefits"
-                                            onKeyPress={(e) => handleArrayChange(e, 'keyBenefits')}
-                                            disabled={formData.keyBenefits.length >= 10}
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Number of Variants */}
-                                <div className="col-12">
-                                    <div style={styles.formGroup}>
-                                        <label htmlFor="variants" style={styles.label}>
-                                            Number of Variants: {formData.variants}
-                                            <span style={styles.infoIcon} data-tooltip-id="variants-tooltip" data-tooltip-content="How many different ad variations would you like to generate?">i</span>
-                                        </label>
-                                        <Tooltip id="variants-tooltip" />
-                                        <input
-                                            type="range"
-                                            id="variants"
-                                            name="variants"
-                                            min="1"
-                                            max="5"
-                                            value={formData.variants}
-                                            onChange={handleChange}
-                                            style={styles.rangeInput}
-                                        />
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                                            <span>1</span>
-                                            <span>2</span>
-                                            <span>3</span>
-                                            <span>4</span>
-                                            <span>5</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Emotional Angle */}
-                                <div className="col-md-6">
-                                    <div style={styles.formGroup}>
-                                        <label htmlFor="emotionalAngle" style={styles.label}>
-                                            Emotional Angle
-                                        </label>
-                                        <div style={styles.radioGroup}>
-                                            <label style={styles.radioItem}>
-                                                <input
-                                                    type="radio"
-                                                    name="emotionalAngleMode"
-                                                    value="predefined"
-                                                    checked={emotionalAngleMode === 'predefined'}
-                                                    onChange={() => {
-                                                        setEmotionalAngleMode('predefined');
-                                                        setFormData(prev => ({ ...prev, emotionalAngle: 'Pain → Solution' }));
-                                                    }}
-                                                />
-                                                <span>Predefined</span>
-                                            </label>
-                                            <label style={styles.radioItem}>
-                                                <input
-                                                    type="radio"
-                                                    name="emotionalAngleMode"
-                                                    value="custom"
-                                                    checked={emotionalAngleMode === 'custom'}
-                                                    onChange={() => {
-                                                        setEmotionalAngleMode('custom');
-                                                        setFormData(prev => ({ ...prev, emotionalAngle: emotionalAngleCustom || '' }));
-                                                    }}
-                                                />
-                                                <span>Custom</span>
-                                            </label>
-                                        </div>
-
-                                        {emotionalAngleMode === 'predefined' && (
-                                            <select
-                                                id="emotionalAngle"
-                                                name="emotionalAngle"
-                                                // Use key for value attribute, label for display
-                                                value={fieldOptions.emotional_angle.find(opt => opt.label.replace('\t', '→') === formData.emotionalAngle)?.key || formData.emotionalAngle}
-                                                onChange={handleChange}
-                                                style={{ ...styles.select, marginTop: '8px' }}
-                                            >
-                                                <option value="">Select Emotional Angle</option>
-                                                {fieldOptions.emotional_angle && fieldOptions.emotional_angle.map((option) => (
-                                                    <option
-                                                        key={option.key || option.id}
-                                                        value={option.key} 
-                                                    >
-                                                        {option.label.replace('\t', '→')}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        )}
-
-                                        {emotionalAngleMode === 'custom' && (
-                                            <input
-                                                type="text"
-                                                id="emotionalAngleCustom"
-                                                value={emotionalAngleCustom}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    setEmotionalAngleCustom(val);
-                                                    setFormData(prev => ({ ...prev, emotionalAngle: val }));
-                                                }}
-                                                style={{ ...styles.input, marginTop: '8px' }}
-                                                placeholder="Enter custom emotional angle"
-                                                required
-                                            />
-                                        )}
-                                    </div>
-                                </div>
-
-                                <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #e5e7eb', margin: '5px 0' }} />
-                                </>
-                            
-
-                                {/* Advanced Features Toggle */}
-                                <div className="col-12" style={{ margin: '16px 0' }}>
-                                    <div style={{
-                                        display: 'inline-flex',
-                                        backgroundColor: 'white',
-                                        borderRadius: '9999px',
-                                        border: '1px solid #3b82f6',
-                                        overflow: 'hidden',
-                                        width: 'fit-content',
-                                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                                    }}>
-                                        <button
-                                            type="button"
-                                            onClick={toggleAdvanced}
-                                            style={{
-                                                padding: '6px 20px',
-                                                border: 'none',
-                                                backgroundColor: formData.showAdvanced ? 'transparent' : '#3b82f6',
-                                                color: formData.showAdvanced ? '#1f2937' : 'white',
-                                                fontWeight: 500,
-                                                fontSize: '14px',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s ease',
-                                                borderRadius: '9999px',
-                                                margin: '2px',
-                                                whiteSpace: 'nowrap'
-                                            }}
-                                        >
-                                            <span>Hide Advanced</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={toggleAdvanced}
-                                            style={{
-                                                padding: '6px 20px',
-                                                border: 'none',
-                                                backgroundColor: formData.showAdvanced ? '#3b82f6' : 'transparent',
-                                                color: formData.showAdvanced ? 'white' : '#1f2937',
-                                                fontWeight: 500,
-                                                fontSize: '14px',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s ease',
-                                                borderRadius: '9999px',
-                                                margin: '2px',
-                                                whiteSpace: 'nowrap'
-                                            }}
-                                        >
-                                            <span>Show Advanced</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Advanced Features */}
-                                {formData.showAdvanced && (
-                                    <>
-                                        {/* Brand Voice */}
-                                        <div className="col-12">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="brandVoice" style={styles.label}>
-                                                    Brand Voice (Optional)
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    id="brandVoice"
-                                                    name="brandVoice"
-                                                    value={formData.brandVoice}
-                                                    onChange={handleChange}
-                                                    style={styles.input}
-                                                    placeholder="Describe your brand's tone and personality"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* USP (Unique Selling Proposition) */}
-                                        <div className="col-12">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="usp" style={styles.label}>
-                                                    USP [Unique Selling Proposition](Optional)
-                                                </label>
-                                                <textarea
-                                                    id="usp"
-                                                    name="usp"
-                                                    value={formData.usp}
-                                                    onChange={handleChange}
-                                                    style={{...styles.textarea, minHeight: '80px'}}
-                                                    placeholder="Strongest differentiator vs competitors. E.g., 'First AI tool with multi-variant regeneration in one click.'"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Feature Highlight */}
-                                        <div className="col-12">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="featureHighlight" style={styles.label}>
-                                                    Feature Highlight (Optional)
-                                                </label>
-                                                <textarea
-                                                    id="featureHighlight"
-                                                    name="featureHighlight"
-                                                    value={formData.featureHighlight}
-                                                    onChange={handleChange}
-                                                    style={{...styles.textarea, minHeight: '80px'}}
-                                                    placeholder="Most important product feature showcased. E.g., 'Automated campaign generation in 30 seconds.'"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Problem Scenario */}
-                                        <div className="col-12">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="problemScenario" style={styles.label}>
-                                                    Problem Scenario (Optional)
-                                                </label>
-                                                <textarea
-                                                    id="problemScenario"
-                                                    name="problemScenario"
-                                                    value={formData.problemScenario}
-                                                    onChange={handleChange}
-                                                    style={{...styles.textarea, minHeight: '80px'}}
-                                                    placeholder="When/where customer needs your solution. E.g., 'When agencies need to scale content fast without hiring more writers during seasonal sales events.'"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Offer & Pricing */}
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="offerPricing" style={styles.label}>
-                                                    Offer & Pricing (Optional)
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    id="offerPricing"
-                                                    name="offerPricing"
-                                                    value={formData.offerPricing}
-                                                    onChange={handleChange}
-                                                    style={styles.input}
-                                                    placeholder="e.g., 20% off, Free trial, Limited time offer"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Asset Reuse Strategy */}
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="assetReuseStrategy" style={styles.label}>
-                                                    Asset Reuse Strategy (Optional)
-                                                </label>
-
-                                                {/* Mode toggle */}
-                                                <div style={styles.radioGroup}>
-                                                    <label style={styles.radioItem}>
-                                                        <input
-                                                            type="radio"
-                                                            name="assetReuseMode"
-                                                            value="predefined"
-                                                            checked={assetReuseMode === 'predefined'}
-                                                            onChange={() => {
-                                                                setAssetReuseMode('predefined');
-                                                                setFormData(prev => ({
-                                                                    ...prev,
-                                                                    assetReuseStrategy: prev.assetReuseStrategy || 'Auto-Detect (Recommended)',
-                                                                }));
-                                                            }}
-                                                        />
-                                                        <span>Predefined</span>
-                                                    </label>
-                                                    <label style={styles.radioItem}>
-                                                        <input
-                                                            type="radio"
-                                                            name="assetReuseMode"
-                                                            value="custom"
-                                                            checked={assetReuseMode === 'custom'}
-                                                            onChange={() => {
-                                                                setAssetReuseMode('custom');
-                                                                setFormData(prev => ({
-                                                                    ...prev,
-                                                                    assetReuseStrategy: assetReuseCustom || prev.assetReuseStrategy,
-                                                                }));
-                                                            }}
-                                                        />
-                                                        <span>Custom</span>
-                                                    </label>
-                                                </div>
-
-                                                {/* Predefined select */}
-                                                {assetReuseMode === 'predefined' && (
-                                                    <select
-                                                        id="assetReuseStrategy"
-                                                        name="assetReuseStrategy"
-                                                        // Use key for value attribute, label for display
-                                                        value={fieldOptions.asset_reuse_strategy.find(opt => opt.label === formData.assetReuseStrategy)?.key || formData.assetReuseStrategy}
-                                                        onChange={handleChange}
-                                                        style={{ ...styles.select, marginTop: '8px' }}
-                                                    >
-                                                        <option value="">Select Strategy</option>
-                                                        <option value="Auto-Detect (Recommended)">Auto-Detect (Recommended)</option>
-                                                        {fieldOptions.asset_reuse_strategy && fieldOptions.asset_reuse_strategy.map((option) => (
-                                                            <option
-                                                                key={option.key || option.id}
-                                                                value={option.key}
+                                                        padding: '4px',
+                                                        border: '1px solid #d1d5db',
+                                                        borderRadius: '6px',
+                                                        backgroundColor: formData.targetAudience.length > 0 ? '#f9fafb' : 'white'
+                                                    }}>
+                                                        {formData.targetAudience.length === 0 && (
+                                                            <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
+                                                                Add audience segments (e.g., 'Women 25-34', 'Fitness Enthusiasts')
+                                                            </span>
+                                                        )}
+                                                        {formData.targetAudience.map((chip, index) => (
+                                                            <span
+                                                                key={index}
+                                                                style={{
+                                                                    ...styles.badge,
+                                                                    ...styles.badgePrimary,
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '6px',
+                                                                    padding: '4px 10px'
+                                                                }}
                                                             >
-                                                                {option.label}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                )}
+                                                                {chip}
 
-                                                {/* Custom input */}
-                                                {assetReuseMode === 'custom' && (
-                                                    <div style={{ marginTop: '8px' }}>
+                                                                <RemoveTagButton
+                                                                    style={styles.removeBtn}
+                                                                    onClick={() => removeAudienceChip(chip)}
+                                                                />
+                                                            </span>
+                                                        ))}
+                                                    </div>
+
+                                                    <div style={{ position: 'relative' }}>
                                                         <input
                                                             type="text"
-                                                            id="assetReuseCustom"
-                                                            name="assetReuseCustom"
-                                                            value={assetReuseCustom}
+                                                            value={audienceInput}
+                                                            onChange={handleAudienceInput}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter' && audienceInput.trim()) {
+                                                                    e.preventDefault();
+                                                                    addAudienceChip(audienceInput.trim());
+                                                                }
+                                                            }}
+                                                            style={{
+                                                                ...styles.input,
+                                                                marginBottom: 0,
+                                                                borderBottomLeftRadius: showAudienceSuggestions ? '0' : '6px',
+                                                                borderBottomRightRadius: showAudienceSuggestions ? '0' : '6px'
+                                                            }}
+                                                            placeholder="Type and press Enter to add audience segments"
+                                                            required={formData.targetAudience.length === 0}
+                                                        />
+
+                                                        {showAudienceSuggestions && (
+                                                            <div style={{
+                                                                position: 'absolute',
+                                                                top: '100%',
+                                                                left: 0,
+                                                                right: 0,
+                                                                backgroundColor: 'white',
+                                                                border: '1px solid #d1d5db',
+                                                                borderTop: 'none',
+                                                                borderBottomLeftRadius: '6px',
+                                                                borderBottomRightRadius: '6px',
+                                                                zIndex: 1000,
+                                                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                                                                maxHeight: '200px',
+                                                                overflowY: 'auto'
+                                                            }}>
+                                                                {Object.entries(audienceSuggestions).map(([category, suggestions]) => {
+                                                                    const filtered = suggestions.filter(s =>
+                                                                        s.toLowerCase().includes(audienceInput.toLowerCase()) &&
+                                                                        !formData.targetAudience.includes(s)
+                                                                    );
+
+                                                                    if (filtered.length === 0) return null;
+
+                                                                    return (
+                                                                        <div key={category}>
+                                                                            <div style={{
+                                                                                padding: '8px 12px',
+                                                                                fontSize: '12px',
+                                                                                fontWeight: 600,
+                                                                                color: '#4b5563',
+                                                                                backgroundColor: '#f3f4f6',
+                                                                                textTransform: 'uppercase',
+                                                                                letterSpacing: '0.05em'
+                                                                            }}>
+                                                                                {category}
+                                                                            </div>
+                                                                            {filtered.map((suggestion, idx) => (
+                                                                                <div
+                                                                                    key={idx}
+                                                                                    onClick={() => {
+                                                                                        addAudienceChip(suggestion);
+                                                                                        setAudienceInput('');
+                                                                                    }}
+                                                                                    style={{ padding: '8px 16px', cursor: 'pointer' }}
+                                                                                >
+                                                                                    {suggestion}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    );
+                                                                })}
+
+                                                                {audienceInput && !Object.values(audienceSuggestions)
+                                                                    .flat()
+                                                                    .some(s => s.toLowerCase() === audienceInput.toLowerCase()) && (
+                                                                        <div
+                                                                            onClick={() => {
+                                                                                addAudienceChip(audienceInput);
+                                                                                setAudienceInput('');
+                                                                            }}
+                                                                            style={{
+                                                                                padding: '8px 16px',
+                                                                                cursor: 'pointer',
+                                                                                backgroundColor: '#f8fafc',
+                                                                                borderTop: '1px solid #e5e7eb',
+                                                                                color: '#3b82f6',
+                                                                                fontWeight: 500
+                                                                            }}
+                                                                        >
+                                                                            Add **"{audienceInput}"** as custom audience
+                                                                        </div>
+                                                                    )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Product/Services */}
+                                            <div className="col-12">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="productServices" style={styles.label}>
+                                                        Product/Services <span style={{ color: '#ef4444' }}>*</span>
+                                                        <span
+                                                            style={styles.infoIcon}
+                                                            data-tooltip-id="productServices-tooltip"
+                                                            data-tooltip-html="Write important information about your product or service, including features, purpose, and key details. Clear information allows the system to create accurate ad content that explains your offering effectively to potential customers."
+                                                        >
+                                                            i
+                                                        </span>
+                                                    </label>
+                                                    <Tooltip id="productServices-tooltip" />
+                                                    <textarea
+                                                        id="productServices"
+                                                        name="productServices"
+                                                        value={formData.productServices}
+                                                        onChange={handleChange}
+                                                        style={{ ...styles.textarea, minHeight: '100px' }}
+                                                        placeholder="Describe your product or service in detail. What makes it unique? What problems does it solve?"
+                                                        required
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Tone */}
+                                            <div className="col-md-6">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="tone" style={styles.label}>
+                                                        Tone <span style={{ color: '#ef4444' }}>*</span>
+                                                        <span
+                                                            style={styles.infoIcon}
+                                                            data-tooltip-id="tone-tooltip"
+                                                            data-tooltip-html="Select the personality or feel of the ad copy (such as professional, friendly, urgent, funny, bold). Tone guides how the message connects emotionally with your target audience."
+                                                        >
+                                                            i
+                                                        </span>
+                                                    </label>
+                                                    <Tooltip id="tone-tooltip" />
+                                                    <div style={styles.radioGroup}>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="toneMode"
+                                                                value="predefined"
+                                                                checked={toneMode === 'predefined'}
+                                                                onChange={() => {
+                                                                    setToneMode('predefined');
+                                                                    setFormData(prev => ({ ...prev, tone: 'Auto-Detect (Based on Platform)' }));
+                                                                }}
+                                                            />
+                                                            <span>Predefined</span>
+                                                        </label>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="toneMode"
+                                                                value="custom"
+                                                                checked={toneMode === 'custom'}
+                                                                onChange={() => {
+                                                                    setToneMode('custom');
+                                                                    setFormData(prev => ({ ...prev, tone: toneCustom || '' }));
+                                                                }}
+                                                            />
+                                                            <span>Custom</span>
+                                                        </label>
+                                                    </div>
+
+                                                    {toneMode === 'predefined' && (
+                                                        <select
+                                                            id="tone"
+                                                            name="tone"
+                                                            // Use key for value attribute, label for display
+                                                            value={fieldOptions.tone_style.find(opt => opt.label === formData.tone)?.key || formData.tone}
+                                                            onChange={handleChange}
+                                                            style={{ ...styles.select, marginTop: '8px' }}
+                                                            required
+                                                        >
+                                                            <option value="Auto-Detect (Based on Platform)">Auto-Detect (Based on Platform)</option>
+                                                            {fieldOptions.tone_style && fieldOptions.tone_style.map((option) => (
+                                                                <option
+                                                                    key={option.key || option.id}
+                                                                    value={option.key}
+                                                                >
+                                                                    {option.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    )}
+
+                                                    {toneMode === 'custom' && (
+                                                        <input
+                                                            type="text"
+                                                            id="toneCustom"
+                                                            value={toneCustom}
                                                             onChange={(e) => {
                                                                 const val = e.target.value;
-                                                                setAssetReuseCustom(val);
-                                                                setFormData(prev => ({
-                                                                    ...prev,
-                                                                    assetReuseStrategy: val,
-                                                                }));
+                                                                setToneCustom(val);
+                                                                setFormData(prev => ({ ...prev, tone: val }));
                                                             }}
-                                                            style={styles.input}
-                                                            placeholder="Describe how existing assets should be reused"
+                                                            style={{ ...styles.input, marginTop: '8px' }}
+                                                            placeholder="Enter custom tone"
+                                                            required
                                                         />
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Headline Focus */}
+                                            <div className="col-md-6">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="headlineFocus" style={styles.label}>
+                                                        Headline Focus
+                                                        <span
+                                                            style={styles.infoIcon}
+                                                            data-tooltip-id="headlineFocus-tooltip"
+                                                            data-tooltip-html="Choose what you want the headline to highlight, such as problem-solution, transformation, discount, or urgency. A good hook catches immediate attention and improves click-through rates."
+                                                        >
+                                                            i
+                                                        </span>
+                                                    </label>
+                                                    <Tooltip id="headlineFocus-tooltip" />
+                                                    <div style={styles.radioGroup}>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="headlineFocusMode"
+                                                                value="predefined"
+                                                                checked={headlineFocusMode === 'predefined'}
+                                                                onChange={() => {
+                                                                    setHeadlineFocusMode('predefined');
+                                                                    setFormData(prev => ({ ...prev, headlineFocus: 'Auto-Select (Recommended)' }));
+                                                                }}
+                                                            />
+                                                            <span>Predefined</span>
+                                                        </label>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="headlineFocusMode"
+                                                                value="custom"
+                                                                checked={headlineFocusMode === 'custom'}
+                                                                onChange={() => {
+                                                                    setHeadlineFocusMode('custom');
+                                                                    setFormData(prev => ({ ...prev, headlineFocus: headlineFocusCustom || '' }));
+                                                                }}
+                                                            />
+                                                            <span>Custom</span>
+                                                        </label>
                                                     </div>
-                                                )}
-                                            </div>
-                                        </div>
 
-                                        {/* Audience Pain Points */}
-                                        <div className="col-12">
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>
-                                                    Audience Pain Points (Optional)
-                                                    <span style={styles.infoIcon} data-tooltip-id="audiencePain-tooltip" data-tooltip-content="What problems or pain points does your product/service solve? (press Enter to add)">i</span>
-                                                </label>
-                                                <Tooltip id="audiencePain-tooltip" />
-                                                <input
-                                                    type="text"
-                                                    style={styles.input}
-                                                    placeholder="Add a pain point and press Enter"
-                                                    onKeyPress={(e) => handleArrayChange(e, 'audiencePain')}
-                                                />
-                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
-                                                    {formData.audiencePain.length === 0 && (
-                                                        <span style={{ color: '#9ca3af', fontSize: '14px' }}>
-                                                            Type and press Enter to add audience pain points
-                                                        </span>
-                                                    )}
-                                                    {formData.audiencePain.map((pain, index) => (
-                                                        <span key={index} style={{...styles.badge, ...styles.badgeSecondary}}>
-                                                            {pain}
-                                                            <button type="button" style={styles.removeBtn} onClick={() => removeItem('audiencePain', index)}>×</button>
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Campaign Duration */}
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>Campaign Start Date (Optional)</label>
-                                                <input
-                                                    type="date"
-                                                    name="start"
-                                                    value={formData.campaignDuration.start}
-                                                    onChange={handleDateChange}
-                                                    style={styles.input}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>Campaign End Date (Optional)</label>
-                                                <input
-                                                    type="date"
-                                                    name="end"
-                                                    value={formData.campaignDuration.end}
-                                                    onChange={handleDateChange}
-                                                    style={styles.input}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Geo & Language Targeting */}
-                                        <div className="col-12">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="geoLanguageTarget" style={styles.label}>
-                                                    Geo & Language Targeting (Optional)
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    id="geoLanguageTarget"
-                                                    name="geoLanguageTarget"
-                                                    value={formData.geoLanguageTarget}
-                                                    onChange={handleChange}
-                                                    style={styles.input}
-                                                    placeholder="e.g., United States, English"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Proof & Credibility */}
-                                        <div className="col-12">
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>
-                                                    Proof & Credibility Elements (Optional)
-                                                    <span style={styles.infoIcon} data-tooltip-id="proofCredibility-tooltip" data-tooltip-content="Add trust signals (press Enter to add)">i</span>
-                                                </label>
-                                                <Tooltip id="proofCredibility-tooltip" />
-                                                <input
-                                                    type="text"
-                                                    style={styles.input}
-                                                    placeholder="e.g., '10,000+ happy customers', 'Rated 4.9/5 stars'"
-                                                    onKeyPress={(e) => handleArrayChange(e, 'proofCredibility')}
-                                                />
-                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
-                                                    {formData.proofCredibility.length === 0 && (
-                                                        <span style={{ color: '#9ca3af', fontSize: '14px' }}>
-                                                            Type and press Enter to add proof & credibility elements
-                                                        </span>
-                                                    )}
-                                                    {formData.proofCredibility.map((item, index) => (
-                                                        <span key={index} style={{...styles.badge, ...styles.badgeSuccess}}>
-                                                            {item}
-                                                            <button type="button" style={styles.removeBtn} onClick={() => removeItem('proofCredibility', index)}>×</button>
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Compliance Note */}
-                                        <div className="col-12">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="complianceNote" style={styles.label}>
-                                                    Compliance Note (Optional)
-                                                </label>
-                                                <textarea
-                                                    id="complianceNote"
-                                                    name="complianceNote"
-                                                    value={formData.complianceNote}
-                                                    onChange={handleChange}
-                                                    style={{...styles.textarea, minHeight: '80px'}}
-                                                    placeholder="Any legal disclaimers or compliance requirements for your ads"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Brand Voice Personality */}
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="brandVoicePersonality" style={styles.label}>
-                                                    Brand Voice Personality (Optional)
-                                                </label>
-                                                <div style={{ ...styles.radioGroup, marginBottom: '8px' }}>
-                                                    <label style={styles.radioItem}>
-                                                        <input
-                                                            type="radio"
-                                                            name="brandVoicePersonalityMode"
-                                                            value="predefined"
-                                                            checked={formData.brandVoicePersonalityMode === 'predefined'}
+                                                    {headlineFocusMode === 'predefined' && (
+                                                        <select
+                                                            id="headlineFocus"
+                                                            name="headlineFocus"
+                                                            // Use key for value attribute, label for display
+                                                            value={fieldOptions.headline_focus.find(opt => opt.label === formData.headlineFocus)?.key || formData.headlineFocus}
                                                             onChange={handleChange}
-                                                        />
-                                                        <span>Predefined</span>
-                                                    </label>
-                                                    <label style={styles.radioItem}>
-                                                        <input
-                                                            type="radio"
-                                                            name="brandVoicePersonalityMode"
-                                                            value="custom"
-                                                            checked={formData.brandVoicePersonalityMode === 'custom'}
-                                                            onChange={handleChange}
-                                                        />
-                                                        <span>Custom</span>
-                                                    </label>
-                                                </div>
+                                                            style={{ ...styles.select, marginTop: '8px' }}
+                                                        >
+                                                            <option value="Auto-Select (Recommended)">Auto-Select (Recommended)</option>
+                                                            {fieldOptions.headline_focus && fieldOptions.headline_focus.map((option) => (
+                                                                <option
+                                                                    key={option.key || option.id}
+                                                                    value={option.key}
+                                                                >
+                                                                    {option.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    )}
 
-                                                {formData.brandVoicePersonalityMode === 'predefined' && (
+                                                    {headlineFocusMode === 'custom' && (
+                                                        <input
+                                                            type="text"
+                                                            id="headlineFocusCustom"
+                                                            value={headlineFocusCustom}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                setHeadlineFocusCustom(val);
+                                                                setFormData(prev => ({ ...prev, headlineFocus: val }));
+                                                            }}
+                                                            style={{ ...styles.input, marginTop: '8px' }}
+                                                            placeholder="Enter custom headline focus"
+                                                            required
+                                                        />
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Ad Text Length (full width) */}
+                                            <div className="col-12">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="adTextLength" style={styles.label}>
+                                                        Ad Text Length
+                                                        <span
+                                                            style={styles.infoIcon}
+                                                            data-tooltip-id="adTextLength-tooltip"
+                                                            data-tooltip-content="Select the desired length for your ad copy."
+                                                        >
+                                                            i
+                                                        </span>
+                                                    </label>
+                                                    <Tooltip id="adTextLength-tooltip" />
                                                     <select
-                                                        name="brandVoicePersonalityOption"
-                                                        // Use key from API as value, map to label in handleChange
-                                                        value={(fieldOptions.brand_voice_personality || []).find(opt => opt.label === formData.brandVoicePersonalityOption)?.key || ''}
+                                                        id="adTextLength"
+                                                        name="adTextLength"
+                                                        // Use key for value attribute, label for display
+                                                        value={fieldOptions.primary_text_length.find(opt => opt.label === formData.adTextLength)?.key || formData.adTextLength}
                                                         onChange={handleChange}
                                                         style={styles.select}
                                                     >
-                                                        <option value="">Select Brand Voice Personality</option>
-                                                        {(fieldOptions.brand_voice_personality || []).map((option) => (
+                                                        <option value="Auto-Length (Platform Optimized)">Auto-Length (Platform Optimized)</option>
+                                                        {fieldOptions.primary_text_length && fieldOptions.primary_text_length.map((option) => (
                                                             <option
                                                                 key={option.key || option.id}
                                                                 value={option.key}
@@ -2261,197 +1611,807 @@ const AdCopyGeneratorForm = () => {
                                                             </option>
                                                         ))}
                                                     </select>
-                                                )}
+                                                </div>
+                                            </div>
 
-                                                {formData.brandVoicePersonalityMode === 'custom' && (
+                                            {/* CTA Type (full width) */}
+                                            <div className="col-12">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="ctaType" style={styles.label}>
+                                                        Call to Action (CTA)
+                                                        <span
+                                                            style={styles.infoIcon}
+                                                            data-tooltip-id="ctaType-tooltip"
+                                                            data-tooltip-html="Choose what action you want users to take (example: Buy Now, Learn More, Sign Up). A strong CTA increases conversions by telling the audience exactly what to do next."
+                                                        >
+                                                            i
+                                                        </span>
+                                                    </label>
+                                                    <Tooltip id="ctaType-tooltip" />
+                                                    <div style={styles.radioGroup}>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="ctaTypeMode"
+                                                                value="predefined"
+                                                                checked={ctaTypeMode === 'predefined'}
+                                                                onChange={() => {
+                                                                    setCtaTypeMode('predefined');
+                                                                    setFormData(prev => ({ ...prev, ctaType: 'Learn More' }));
+                                                                }}
+                                                            />
+                                                            <span>Predefined</span>
+                                                        </label>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="ctaTypeMode"
+                                                                value="custom"
+                                                                checked={ctaTypeMode === 'custom'}
+                                                                onChange={() => {
+                                                                    setCtaTypeMode('custom');
+                                                                    setFormData(prev => ({ ...prev, ctaType: ctaTypeCustom || '' }));
+                                                                }}
+                                                            />
+                                                            <span>Custom</span>
+                                                        </label>
+                                                    </div>
+
+                                                    {ctaTypeMode === 'predefined' && (
+                                                        <select
+                                                            id="ctaType"
+                                                            name="ctaType"
+                                                            // Use key for value attribute, label for display
+                                                            value={fieldOptions.cta_type.find(opt => opt.label === formData.ctaType)?.key || formData.ctaType}
+                                                            onChange={handleChange}
+                                                            style={{ ...styles.select, marginTop: '8px' }}
+                                                        >
+                                                            <option value="">Select CTA Type</option>
+                                                            {fieldOptions.cta_type && fieldOptions.cta_type.map((option) => (
+                                                                <option
+                                                                    key={option.key || option.id}
+                                                                    value={option.key}
+                                                                >
+                                                                    {option.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    )}
+
+                                                    {ctaTypeMode === 'custom' && (
+                                                        <input
+                                                            type="text"
+                                                            id="ctaTypeCustom"
+                                                            value={ctaTypeCustom}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                setCtaTypeCustom(val);
+                                                                setFormData(prev => ({ ...prev, ctaType: val }));
+                                                            }}
+                                                            style={{ ...styles.input, marginTop: '8px' }}
+                                                            placeholder="Enter custom CTA"
+                                                            required
+                                                        />
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Key Benefits */}
+                                            <div className="col-12">
+                                                <div style={styles.formGroup}>
+                                                    <label style={styles.label}>
+                                                        Key Benefits
+                                                        <span style={styles.infoIcon} data-tooltip-id="keyBenefits-tooltip" data-tooltip-content="List the main benefits of your product/service (press Enter to add)">i</span>
+                                                    </label>
+                                                    <Tooltip id="keyBenefits-tooltip" />
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        flexWrap: 'wrap',
+                                                        gap: '8px',
+                                                        marginBottom: '8px',
+                                                        minHeight: '40px',
+                                                        alignItems: 'center',
+                                                        padding: '4px',
+                                                        border: '1px solid #d1d5db',
+                                                        borderRadius: '6px',
+                                                        backgroundColor: formData.keyBenefits.length > 0 ? '#f9fafb' : 'white'
+                                                    }}>
+                                                        {formData.keyBenefits.length === 0 && (
+                                                            <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
+                                                                Type and press Enter to add key benefits
+                                                            </span>
+                                                        )}
+                                                        {formData.keyBenefits.map((benefit, index) => (
+                                                            <span
+                                                                key={index}
+                                                                style={{
+                                                                    ...styles.badge,
+                                                                    ...styles.badgePrimary,
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '6px',
+                                                                    padding: '4px 10px'
+                                                                }}
+                                                            >
+                                                                {benefit}
+
+                                                                <RemoveTagButton
+                                                                    style={styles.removeBtn}
+                                                                    onClick={() => removeItem('keyBenefits', index)}
+                                                                />
+                                                            </span>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* Input to add new key benefits, same interaction as before */}
                                                     <input
                                                         type="text"
-                                                        name="brandVoicePersonalityCustom"
-                                                        value={formData.brandVoicePersonalityCustom}
+                                                        style={styles.input}
+                                                        placeholder="Type and press Enter to add key benefits"
+                                                        onKeyPress={(e) => handleArrayChange(e, 'keyBenefits')}
+                                                        disabled={formData.keyBenefits.length >= 10}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Number of Variants */}
+                                            <div className="col-12">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="variants" style={styles.label}>
+                                                        Number of Variants: {formData.variants}
+                                                        <span style={styles.infoIcon} data-tooltip-id="variants-tooltip" data-tooltip-content="How many different ad variations would you like to generate?">i</span>
+                                                    </label>
+                                                    <Tooltip id="variants-tooltip" />
+                                                    <input
+                                                        type="range"
+                                                        id="variants"
+                                                        name="variants"
+                                                        min="1"
+                                                        max="5"
+                                                        value={formData.variants}
+                                                        onChange={handleChange}
+                                                        style={styles.rangeInput}
+                                                    />
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                                                        <span>1</span>
+                                                        <span>2</span>
+                                                        <span>3</span>
+                                                        <span>4</span>
+                                                        <span>5</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Emotional Angle */}
+                                            <div className="col-md-6">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="emotionalAngle" style={styles.label}>
+                                                        Emotional Angle
+                                                    </label>
+                                                    <div style={styles.radioGroup}>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="emotionalAngleMode"
+                                                                value="predefined"
+                                                                checked={emotionalAngleMode === 'predefined'}
+                                                                onChange={() => {
+                                                                    setEmotionalAngleMode('predefined');
+                                                                    setFormData(prev => ({ ...prev, emotionalAngle: 'Pain → Solution' }));
+                                                                }}
+                                                            />
+                                                            <span>Predefined</span>
+                                                        </label>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="emotionalAngleMode"
+                                                                value="custom"
+                                                                checked={emotionalAngleMode === 'custom'}
+                                                                onChange={() => {
+                                                                    setEmotionalAngleMode('custom');
+                                                                    setFormData(prev => ({ ...prev, emotionalAngle: emotionalAngleCustom || '' }));
+                                                                }}
+                                                            />
+                                                            <span>Custom</span>
+                                                        </label>
+                                                    </div>
+
+                                                    {emotionalAngleMode === 'predefined' && (
+                                                        <select
+                                                            id="emotionalAngle"
+                                                            name="emotionalAngle"
+                                                            // Use key for value attribute, label for display
+                                                            value={fieldOptions.emotional_angle.find(opt => opt.label.replace('\t', '→') === formData.emotionalAngle)?.key || formData.emotionalAngle}
+                                                            onChange={handleChange}
+                                                            style={{ ...styles.select, marginTop: '8px' }}
+                                                        >
+                                                            <option value="">Select Emotional Angle</option>
+                                                            {fieldOptions.emotional_angle && fieldOptions.emotional_angle.map((option) => (
+                                                                <option
+                                                                    key={option.key || option.id}
+                                                                    value={option.key}
+                                                                >
+                                                                    {option.label.replace('\t', '→')}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    )}
+
+                                                    {emotionalAngleMode === 'custom' && (
+                                                        <input
+                                                            type="text"
+                                                            id="emotionalAngleCustom"
+                                                            value={emotionalAngleCustom}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                setEmotionalAngleCustom(val);
+                                                                setFormData(prev => ({ ...prev, emotionalAngle: val }));
+                                                            }}
+                                                            style={{ ...styles.input, marginTop: '8px' }}
+                                                            placeholder="Enter custom emotional angle"
+                                                            required
+                                                        />
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #e5e7eb', margin: '5px 0' }} />
+                                        </>
+
+                                    )}
+                                    {/* Advanced Features Toggle */}
+                                    <div className="col-12" style={{ margin: '16px 0' }}>
+                                        <ToggleButton showAdvanced={formData.showAdvanced} onToggle={toggleAdvanced} />
+                                    </div>
+
+                                    {/* Advanced Features */}
+                                    {formData.showAdvanced && (
+                                        <>
+                                            {/* Brand Voice */}
+                                            <div className="col-12">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="brandVoice" style={styles.label}>
+                                                        Brand Voice (Optional)
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        id="brandVoice"
+                                                        name="brandVoice"
+                                                        value={formData.brandVoice}
                                                         onChange={handleChange}
                                                         style={styles.input}
-                                                        placeholder="Describe your brand voice personality (e.g., Calm, Educational, Bold)"
+                                                        placeholder="Describe your brand's tone and personality"
                                                     />
-                                                )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    </>
-                                )}
 
-                                {/* Submit Button */}
-                                <div className="col-12 mt-4">
-                                    <div style={{ display: 'flex', gap: '12px' }}>
-                                        <button 
-                                            type="button" 
-                                            style={{...styles.btn, ...styles.btnOutline}}
-                                            onClick={handleReset}
-                                            disabled={isGenerating || isApiLoading}
-                                        >
-                                            Reset Form
-                                        </button>
-                                        <button 
-                                            type="submit" 
-                                            style={{...styles.btn, ...styles.btnPrimary}}
-                                            disabled={isGenerating || isApiLoading}
-                                        >
-                                            {isGenerating || isApiLoading ? (
-                                                <>
-                                                    <span>Loading Summary...</span>
-                                                    <div style={{
-                                                        width: '16px',
-                                                        height: '16px',
-                                                        border: '2px solid rgba(255,255,255,0.3)',
-                                                        borderTopColor: 'white',
-                                                        borderRadius: '50%',
-                                                        animation: 'spin 1s linear infinite',
-                                                        display: 'inline-block',
-                                                        marginLeft: '8px'
-                                                    }} />
-                                                </>
-                                            ) : 'Generate Ad Copy'}</button>
+                                            {/* USP (Unique Selling Proposition) */}
+                                            <div className="col-12">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="usp" style={styles.label}>
+                                                        USP [Unique Selling Proposition](Optional)
+                                                    </label>
+                                                    <textarea
+                                                        id="usp"
+                                                        name="usp"
+                                                        value={formData.usp}
+                                                        onChange={handleChange}
+                                                        style={{ ...styles.textarea, minHeight: '80px' }}
+                                                        placeholder="Strongest differentiator vs competitors. E.g., 'First AI tool with multi-variant regeneration in one click.'"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Feature Highlight */}
+                                            <div className="col-12">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="featureHighlight" style={styles.label}>
+                                                        Feature Highlight (Optional)
+                                                    </label>
+                                                    <textarea
+                                                        id="featureHighlight"
+                                                        name="featureHighlight"
+                                                        value={formData.featureHighlight}
+                                                        onChange={handleChange}
+                                                        style={{ ...styles.textarea, minHeight: '80px' }}
+                                                        placeholder="Most important product feature showcased. E.g., 'Automated campaign generation in 30 seconds.'"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Problem Scenario */}
+                                            <div className="col-12">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="problemScenario" style={styles.label}>
+                                                        Problem Scenario (Optional)
+                                                    </label>
+                                                    <textarea
+                                                        id="problemScenario"
+                                                        name="problemScenario"
+                                                        value={formData.problemScenario}
+                                                        onChange={handleChange}
+                                                        style={{ ...styles.textarea, minHeight: '80px' }}
+                                                        placeholder="When/where customer needs your solution. E.g., 'When agencies need to scale content fast without hiring more writers during seasonal sales events.'"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Offer & Pricing */}
+                                            <div className="col-md-6">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="offerPricing" style={styles.label}>
+                                                        Offer & Pricing (Optional)
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        id="offerPricing"
+                                                        name="offerPricing"
+                                                        value={formData.offerPricing}
+                                                        onChange={handleChange}
+                                                        style={styles.input}
+                                                        placeholder="e.g., 20% off, Free trial, Limited time offer"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Asset Reuse Strategy */}
+                                            <div className="col-md-6">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="assetReuseStrategy" style={styles.label}>
+                                                        Asset Reuse Strategy (Optional)
+                                                    </label>
+
+                                                    {/* Mode toggle */}
+                                                    <div style={styles.radioGroup}>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="assetReuseMode"
+                                                                value="predefined"
+                                                                checked={assetReuseMode === 'predefined'}
+                                                                onChange={() => {
+                                                                    setAssetReuseMode('predefined');
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        assetReuseStrategy: prev.assetReuseStrategy || 'Auto-Detect (Recommended)',
+                                                                    }));
+                                                                }}
+                                                            />
+                                                            <span>Predefined</span>
+                                                        </label>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="assetReuseMode"
+                                                                value="custom"
+                                                                checked={assetReuseMode === 'custom'}
+                                                                onChange={() => {
+                                                                    setAssetReuseMode('custom');
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        assetReuseStrategy: assetReuseCustom || prev.assetReuseStrategy,
+                                                                    }));
+                                                                }}
+                                                            />
+                                                            <span>Custom</span>
+                                                        </label>
+                                                    </div>
+
+                                                    {/* Predefined select */}
+                                                    {assetReuseMode === 'predefined' && (
+                                                        <select
+                                                            id="assetReuseStrategy"
+                                                            name="assetReuseStrategy"
+                                                            // Use key for value attribute, label for display
+                                                            value={fieldOptions.asset_reuse_strategy.find(opt => opt.label === formData.assetReuseStrategy)?.key || formData.assetReuseStrategy}
+                                                            onChange={handleChange}
+                                                            style={{ ...styles.select, marginTop: '8px' }}
+                                                        >
+                                                            <option value="">Select Strategy</option>
+                                                            <option value="Auto-Detect (Recommended)">Auto-Detect (Recommended)</option>
+                                                            {fieldOptions.asset_reuse_strategy && fieldOptions.asset_reuse_strategy.map((option) => (
+                                                                <option
+                                                                    key={option.key || option.id}
+                                                                    value={option.key}
+                                                                >
+                                                                    {option.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    )}
+
+                                                    {/* Custom input */}
+                                                    {assetReuseMode === 'custom' && (
+                                                        <div style={{ marginTop: '8px' }}>
+                                                            <input
+                                                                type="text"
+                                                                id="assetReuseCustom"
+                                                                name="assetReuseCustom"
+                                                                value={assetReuseCustom}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    setAssetReuseCustom(val);
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        assetReuseStrategy: val,
+                                                                    }));
+                                                                }}
+                                                                style={styles.input}
+                                                                placeholder="Describe how existing assets should be reused"
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Audience Pain Points */}
+                                            <div className="col-12">
+                                                <div style={styles.formGroup}>
+                                                    <label style={styles.label}>
+                                                        Audience Pain Points (Optional)
+                                                        <span style={styles.infoIcon} data-tooltip-id="audiencePain-tooltip" data-tooltip-content="What problems or pain points does your product/service solve? (press Enter to add)">i</span>
+                                                    </label>
+                                                    <Tooltip id="audiencePain-tooltip" />
+                                                    <input
+                                                        type="text"
+                                                        style={styles.input}
+                                                        placeholder="Add a pain point and press Enter"
+                                                        onKeyPress={(e) => handleArrayChange(e, 'audiencePain')}
+                                                    />
+                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+                                                        {formData.audiencePain.length === 0 && (
+                                                            <span style={{ color: '#9ca3af', fontSize: '14px' }}>
+                                                                Type and press Enter to add audience pain points
+                                                            </span>
+                                                        )}
+                                                        {formData.audiencePain.map((pain, index) => (
+                                                            <span key={index} style={{ ...styles.badge, ...styles.badgeSecondary }}>
+                                                                {pain}
+
+                                                                <RemoveTagButton
+                                                                    style={styles.removeBtn}
+                                                                    onClick={() => removeItem('audiencePain', index)}
+                                                                />
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Campaign Duration */}
+                                            <div className="col-md-6">
+                                                <div style={styles.formGroup}>
+                                                    <label style={styles.label}>Campaign Start Date (Optional)</label>
+                                                    <input
+                                                        type="date"
+                                                        name="start"
+                                                        value={formData.campaignDuration.start}
+                                                        onChange={handleDateChange}
+                                                        style={styles.input}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="col-md-6">
+                                                <div style={styles.formGroup}>
+                                                    <label style={styles.label}>Campaign End Date (Optional)</label>
+                                                    <input
+                                                        type="date"
+                                                        name="end"
+                                                        value={formData.campaignDuration.end}
+                                                        onChange={handleDateChange}
+                                                        style={styles.input}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Geo & Language Targeting */}
+                                            <div className="col-12">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="geoLanguageTarget" style={styles.label}>
+                                                        Geo & Language Targeting (Optional)
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        id="geoLanguageTarget"
+                                                        name="geoLanguageTarget"
+                                                        value={formData.geoLanguageTarget}
+                                                        onChange={handleChange}
+                                                        style={styles.input}
+                                                        placeholder="e.g., United States, English"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Proof & Credibility */}
+                                            <div className="col-12">
+                                                <div style={styles.formGroup}>
+                                                    <label style={styles.label}>
+                                                        Proof & Credibility Elements (Optional)
+                                                        <span style={styles.infoIcon} data-tooltip-id="proofCredibility-tooltip" data-tooltip-content="Add trust signals (press Enter to add)">i</span>
+                                                    </label>
+                                                    <Tooltip id="proofCredibility-tooltip" />
+                                                    <input
+                                                        type="text"
+                                                        style={styles.input}
+                                                        placeholder="e.g., '10,000+ happy customers', 'Rated 4.9/5 stars'"
+                                                        onKeyPress={(e) => handleArrayChange(e, 'proofCredibility')}
+                                                    />
+                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+                                                        {formData.proofCredibility.length === 0 && (
+                                                            <span style={{ color: '#9ca3af', fontSize: '14px' }}>
+                                                                Type and press Enter to add proof & credibility elements
+                                                            </span>
+                                                        )}
+                                                        {formData.proofCredibility.map((item, index) => (
+                                                            <span key={index} style={{ ...styles.badge, ...styles.badgeSuccess }}>
+                                                                {item}
+
+                                                                <RemoveTagButton
+                                                                    style={styles.removeBtn}
+                                                                    onClick={() => removeItem('proofCredibility', index)}
+                                                                />
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Compliance Note */}
+                                            <div className="col-12">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="complianceNote" style={styles.label}>
+                                                        Compliance Note (Optional)
+                                                    </label>
+                                                    <textarea
+                                                        id="complianceNote"
+                                                        name="complianceNote"
+                                                        value={formData.complianceNote}
+                                                        onChange={handleChange}
+                                                        style={{ ...styles.textarea, minHeight: '80px' }}
+                                                        placeholder="Any legal disclaimers or compliance requirements for your ads"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Brand Voice Personality */}
+                                            <div className="col-md-6">
+                                                <div style={styles.formGroup}>
+                                                    <label htmlFor="brandVoicePersonality" style={styles.label}>
+                                                        Brand Voice Personality (Optional)
+                                                    </label>
+                                                    <div style={{ ...styles.radioGroup, marginBottom: '8px' }}>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="brandVoicePersonalityMode"
+                                                                value="predefined"
+                                                                checked={formData.brandVoicePersonalityMode === 'predefined'}
+                                                                onChange={handleChange}
+                                                            />
+                                                            <span>Predefined</span>
+                                                        </label>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="brandVoicePersonalityMode"
+                                                                value="custom"
+                                                                checked={formData.brandVoicePersonalityMode === 'custom'}
+                                                                onChange={handleChange}
+                                                            />
+                                                            <span>Custom</span>
+                                                        </label>
+                                                    </div>
+
+                                                    {formData.brandVoicePersonalityMode === 'predefined' && (
+                                                        <select
+                                                            name="brandVoicePersonalityOption"
+                                                            // Use key from API as value, map to label in handleChange
+                                                            value={(fieldOptions.brand_voice_personality || []).find(opt => opt.label === formData.brandVoicePersonalityOption)?.key || ''}
+                                                            onChange={handleChange}
+                                                            style={styles.select}
+                                                        >
+                                                            <option value="">Select Brand Voice Personality</option>
+                                                            {(fieldOptions.brand_voice_personality || []).map((option) => (
+                                                                <option
+                                                                    key={option.key || option.id}
+                                                                    value={option.key}
+                                                                >
+                                                                    {option.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    )}
+
+                                                    {formData.brandVoicePersonalityMode === 'custom' && (
+                                                        <input
+                                                            type="text"
+                                                            name="brandVoicePersonalityCustom"
+                                                            value={formData.brandVoicePersonalityCustom}
+                                                            onChange={handleChange}
+                                                            style={styles.input}
+                                                            placeholder="Describe your brand voice personality (e.g., Calm, Educational, Bold)"
+                                                        />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {/* Submit Button */}
+                                    <div className="col-12 mt-4">
+                                        <div style={{ display: 'flex', gap: '12px' }}>
+                                            <button
+                                                type="button"
+                                                style={{ ...styles.btn, ...styles.btnOutline }}
+                                                onClick={handleReset}
+                                                disabled={isGenerating || isApiLoading}
+                                            >
+                                                Reset Form
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                style={{ ...styles.btn, ...styles.btnPrimary }}
+                                                disabled={isGenerating || isApiLoading}
+                                            >
+                                                {isGenerating || isApiLoading ? (
+                                                    <>
+                                                        <span>Loading Summary...</span>
+                                                        <div style={{
+                                                            width: '16px',
+                                                            height: '16px',
+                                                            border: '2px solid rgba(255,255,255,0.3)',
+                                                            borderTopColor: 'white',
+                                                            borderRadius: '50%',
+                                                            animation: 'spin 1s linear infinite',
+                                                            display: 'inline-block',
+                                                            marginLeft: '8px'
+                                                        }} />
+                                                    </>
+                                                ) : 'Generate Ad Copy'}</button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
                     </div>
-                </div>
                 </>
             ) : (
-            // --- Summary Review Modal/View ---
-            <div style={styles.card}>
-                <div style={styles.header}>
-                    <h1 style={styles.title}>Review Your Selections</h1>
-                    <p style={styles.subtitle}>Please review your ad copy details before generating</p>
-                </div>
-                <div style={{ padding: '24px' }}>
-                    {/* The SummaryReviewModal component is used for the summary display - assuming it exists */}
-                    <SummaryReviewModal 
-                        formData={formData}
-                        onGenerate={handleGenerateFromSummary} // Calls updated logic
-                        onEdit={handleEditFromSummary}
-                        onViewLog={handleViewHistory}
-                        isGenerating={isGenerating || isApiLoading} 
-                    />
+                // --- Summary Review Modal/View ---
+                <div style={styles.card}>
+                    <div style={styles.header}>
+                        <h1 style={styles.title}>Review Your Selections</h1>
+                        <p style={styles.subtitle}>Please review your ad copy details before generating</p>
+                    </div>
+                    <div style={{ padding: '24px' }}>
+                        {/* The SummaryReviewModal component is used for the summary display - assuming it exists */}
+                        <SummaryReviewModal
+                            formData={formData}
+                            onGenerate={handleGenerateFromSummary} // Calls updated logic
+                            onEdit={handleEditFromSummary}
+                            onViewLog={handleViewHistory}
+                            isGenerating={isGenerating || isApiLoading}
+                        />
 
-                    {/* Rendering basic summary content inline for completeness */}
-                    <div style={styles.summaryGrid}>
-                        <div style={styles.summarySection}>
-                            <h5 style={styles.summarySectionTitle}>Product & Objective</h5>
-                            <p><strong>Platform:</strong> {formData.platform} / {formData.placement}</p>
-                            <p><strong>Objective:</strong> {formData.campaignObjective === 'Custom Objective' ? (formData.customObjective || 'Custom Objective') : formData.campaignObjective}</p>
-                            <p><strong>Product:</strong> {formData.productServices.substring(0, 50)}...</p>
-                            <p><strong>Variants:</strong> {formData.variants}</p>
-                        </div>
-                        <div style={styles.summarySection}>
-                            <h5 style={styles.summarySectionTitle}>Targeting</h5>
-                            <p><strong>Target Audience:</strong></p>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-                                {formData.targetAudience.length > 0 ? (
-                                    formData.targetAudience.map((audience, index) => (
-                                        <span key={index} style={styles.summaryChip}>{audience}</span>
-                                    ))
-                                ) : (
-                                    <span style={{ color: '#6b7280' }}>No audience segments added</span>
+                        {/* Rendering basic summary content inline for completeness */}
+                        <div style={styles.summaryGrid}>
+                            <div style={styles.summarySection}>
+                                <h5 style={styles.summarySectionTitle}>Product & Objective</h5>
+                                <p><strong>Platform:</strong> {formData.platform} / {formData.placement}</p>
+                                <p><strong>Objective:</strong> {formData.campaignObjective === 'Custom Objective' ? (formData.customObjective || 'Custom Objective') : formData.campaignObjective}</p>
+                                <p><strong>Product:</strong> {formData.productServices.substring(0, 50)}...</p>
+                                <p><strong>Variants:</strong> {formData.variants}</p>
+                            </div>
+                            <div style={styles.summarySection}>
+                                <h5 style={styles.summarySectionTitle}>Targeting</h5>
+                                <p><strong>Target Audience:</strong></p>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+                                    {formData.targetAudience.length > 0 ? (
+                                        formData.targetAudience.map((audience, index) => (
+                                            <span key={index} style={styles.summaryChip}>{audience}</span>
+                                        ))
+                                    ) : (
+                                        <span style={{ color: '#6b7280' }}>No audience segments added</span>
+                                    )}
+                                </div>
+                                {formData.geoLanguageTarget && (
+                                    <p><strong>Geo/Language:</strong> {formData.geoLanguageTarget}</p>
                                 )}
                             </div>
-                            {formData.geoLanguageTarget && (
-                                <p><strong>Geo/Language:</strong> {formData.geoLanguageTarget}</p>
+
+                            <div style={styles.summarySection}>
+                                <h5 style={styles.summarySectionTitle}>Content Style</h5>
+                                <p><strong>Tone:</strong> {formData.tone}</p>
+                                <p><strong>Headline Focus:</strong> {formData.headlineFocus}</p>
+                                <p><strong>Ad Text Length:</strong> {formData.adTextLength}</p>
+                                <p><strong>CTA:</strong> {formData.ctaType}</p>
+                                <p><strong>Emotional Angle:</strong> {formData.emotionalAngle}</p>
+                            </div>
+                            {formData.showAdvanced && (
+                                <div style={styles.summarySection}>
+                                    <h5 style={styles.summarySectionTitle}>Advanced Settings</h5>
+                                    {formData.brandVoice && <p><strong>Brand Voice:</strong> {formData.brandVoice}</p>}
+                                    {(formData.brandVoicePersonalityMode === 'predefined' && formData.brandVoicePersonalityOption) && (
+                                        <p><strong>Brand Voice Personality:</strong> {formData.brandVoicePersonalityOption}</p>
+                                    )}
+                                    {(formData.brandVoicePersonalityMode === 'custom' && formData.brandVoicePersonalityCustom) && (
+                                        <p><strong>Brand Voice Personality (Custom):</strong> {formData.brandVoicePersonalityCustom}</p>
+                                    )}
+                                    {formData.offerPricing && <p><strong>Offer & Pricing:</strong> {formData.offerPricing}</p>}
+                                    {formData.assetReuseStrategy && <p><strong>Asset Reuse:</strong> {formData.assetReuseStrategy}</p>}
+                                    {formData.complianceNote && (
+                                        <div>
+                                            <p><strong>Compliance Note:</strong></p>
+                                            <p style={styles.complianceNote}>{formData.complianceNote}</p>
+                                        </div>
+                                    )}
+                                </div>
                             )}
                         </div>
 
-                        <div style={styles.summarySection}>
-                            <h5 style={styles.summarySectionTitle}>Content Style</h5>
-                            <p><strong>Tone:</strong> {formData.tone}</p>
-                            <p><strong>Headline Focus:</strong> {formData.headlineFocus}</p>
-                            <p><strong>Ad Text Length:</strong> {formData.adTextLength}</p>
-                            <p><strong>CTA:</strong> {formData.ctaType}</p>
-                            <p><strong>Emotional Angle:</strong> {formData.emotionalAngle}</p>
-                        </div>
-                        {formData.showAdvanced && (
-                            <div style={styles.summarySection}>
-                                <h5 style={styles.summarySectionTitle}>Advanced Settings</h5>
-                                {formData.brandVoice && <p><strong>Brand Voice:</strong> {formData.brandVoice}</p>}
-                                {(formData.brandVoicePersonalityMode === 'predefined' && formData.brandVoicePersonalityOption) && (
-                                    <p><strong>Brand Voice Personality:</strong> {formData.brandVoicePersonalityOption}</p>
-                                )}
-                                {(formData.brandVoicePersonalityMode === 'custom' && formData.brandVoicePersonalityCustom) && (
-                                    <p><strong>Brand Voice Personality (Custom):</strong> {formData.brandVoicePersonalityCustom}</p>
-                                )}
-                                {formData.offerPricing && <p><strong>Offer & Pricing:</strong> {formData.offerPricing}</p>}
-                                {formData.assetReuseStrategy && <p><strong>Asset Reuse:</strong> {formData.assetReuseStrategy}</p>}
-                                {formData.complianceNote && (
-                                    <div>
-                                        <p><strong>Compliance Note:</strong></p>
-                                        <p style={styles.complianceNote}>{formData.complianceNote}</p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
-                        {requestId && (
+                        <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
+                            {requestId && (
+                                <button
+                                    type="button"
+                                    onClick={handleViewHistory}
+                                    style={{ ...styles.btn, ...styles.btnSuccess, backgroundColor: '#fcd34d', color: '#111827' }}
+                                    disabled={isGenerating || isApiLoading}
+                                >
+                                    {isGenerating || isApiLoading ? 'Loading history...' : 'View history'}
+                                </button>
+                            )}
                             <button
                                 type="button"
-                                onClick={handleViewHistory}
-                                style={{...styles.btn, ...styles.btnSuccess, backgroundColor: '#fcd34d', color: '#111827'}}
+                                onClick={handleEditFromSummary}
+                                style={{ ...styles.btn, ...styles.btnOutline }}
                                 disabled={isGenerating || isApiLoading}
                             >
-                                {isGenerating || isApiLoading ? 'Loading history...' : 'View history'}
+                                Back to Edit
                             </button>
-                        )}
-                        <button 
-                            type="button" 
-                            onClick={handleEditFromSummary}
-                            style={{...styles.btn, ...styles.btnOutline}}
-                            disabled={isGenerating || isApiLoading}
-                        >
-                            Back to Edit
-                        </button>
-                        <button 
-                            type="button" 
-                            onClick={handleGenerateFromSummary} // This is the button that starts the API call
-                            style={{...styles.btn, ...styles.btnPrimary}}
-                            disabled={isGenerating || isApiLoading}
-                        >
-                            {isGenerating || isApiLoading ? (
-                                <>
-                                    <span>Generating</span>
-                                    <div style={{
-                                        width: '16px',
-                                        height: '16px',
-                                        border: '2px solid rgba(255,255,255,0.3)',
-                                        borderTopColor: 'white',
-                                        borderRadius: '50%',
-                                        animation: 'spin 1s linear infinite',
-                                        display: 'inline-block',
-                                        marginLeft: '8px'
-                                    }} />
-                                </>
-                            ) : 'Generate Ad Copy'}
-                        </button>
+                            <button
+                                type="button"
+                                onClick={handleGenerateFromSummary} // This is the button that starts the API call
+                                style={{ ...styles.btn, ...styles.btnPrimary }}
+                                disabled={isGenerating || isApiLoading}
+                            >
+                                {isGenerating || isApiLoading ? (
+                                    <>
+                                        <span>Generating</span>
+                                        <div style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            border: '2px solid rgba(255,255,255,0.3)',
+                                            borderTopColor: 'white',
+                                            borderRadius: '50%',
+                                            animation: 'spin 1s linear infinite',
+                                            display: 'inline-block',
+                                            marginLeft: '8px'
+                                        }} />
+                                    </>
+                                ) : 'Generate Ad Copy'}
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
             )}
-            
+
             {/* -------------------- Variant Display Modal -------------------- */}
             {showVariantsModal && (
-              <VariantModalContent
-                    variants={generatedVariantsData.variants}  
+                <VariantModalContent
+                    variants={generatedVariantsData.variants}
                     inputs={generatedVariantsData.inputs}
                     onClose={() => {
-                        setShowVariantsModal(false); 
+                        setShowVariantsModal(false);
                         setIsHistoryView(false); // *** NEW: Reset flag on close ***
                         setShowSummary(true);
-                    }} 
+                    }}
                     onRequestRegenerate={handleRegenerateVariant}
                     showNotification={showNotification}
-                    isLoading={isApiLoading} 
+                    isLoading={isApiLoading}
                     isHistoryView={isHistoryView} // *** NEW PROP PASSED DOWN ***
                 />
             )}
-         
+
             {isApiLoading && (
                 <SurfingLoading mode={isHistoryView ? "history" : "generate"} />
             )}

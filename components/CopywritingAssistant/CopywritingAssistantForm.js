@@ -4,6 +4,8 @@ import 'react-tooltip/dist/react-tooltip.css';
 import SummaryReviewModal from './SummaryReviewModal';
 import VariantModalContent from './VariantModalContent';
 import SurfingLoading from './SurfingLoading';
+import ToggleButton from '../Form/ToggleButton';
+import RemoveTagButton from '../Form/RemoveTagButton';
 
 // --- API Constants (Provided by User) ---
 const BASE_URL = 'https://olive-gull-905765.hostingersite.com/public/api/v1';
@@ -64,9 +66,9 @@ const CopywritingAssistantForm = () => {
         writingFramework: '',
         customWritingFramework: '',
         // --- UPDATED STATE FIELD FOR GRAMMAR STRICTNESS MODE ---
-        grammarStrictnessMode: 'predefined', 
+        grammarStrictnessMode: 'predefined',
         grammarStrictness: 'medium',
-        customGrammarStrictness: '', 
+        customGrammarStrictness: '',
         // ----------------------------------------------------
         formattingOptions: [],
         includeWords: [],
@@ -216,7 +218,7 @@ const CopywritingAssistantForm = () => {
                 { key: 'landing_page', label: 'Landing Page' },
             ]
     );
-    
+
     // Brand Voice - Using placeholders since API Options are not explicitly listed
     const brandVoiceOptions = normalizeOptions(
         getOptions('brand_voice').length
@@ -301,7 +303,7 @@ const CopywritingAssistantForm = () => {
 
         const list = getOptions(fieldKey);
         const match = list.find((opt) => opt.key === value || opt.value === value || opt.label === value);
-        
+
         // Handle explicit custom or unrecognized value that isn't length custom
         const isCustom = typeMode === 'custom' || (!match && fieldKey !== 'length_target');
         const isLengthCustom = fieldKey === 'length_target' && value === 'custom';
@@ -390,24 +392,24 @@ const CopywritingAssistantForm = () => {
 
         // Advanced Mode-specific validation for required custom fields
         if (formData.showAdvanced) {
-             if (formData.brandVoiceMode === 'custom' && !formData.customBrandVoice) {
+            if (formData.brandVoiceMode === 'custom' && !formData.customBrandVoice) {
                 alert('Please enter a Custom Brand Voice Reference.');
                 return;
             }
-             if (formData.contentStyleMode === 'custom' && !formData.customContentStyle) {
+            if (formData.contentStyleMode === 'custom' && !formData.customContentStyle) {
                 alert('Please enter a Custom Content Style Preference.');
                 return;
             }
-             if (formData.emotionalIntentMode === 'custom' && !formData.customEmotionalIntent) {
+            if (formData.emotionalIntentMode === 'custom' && !formData.customEmotionalIntent) {
                 alert('Please enter a Custom Emotional Intent.');
                 return;
             }
-             if (formData.writingFrameworkMode === 'custom' && !formData.customWritingFramework) {
+            if (formData.writingFrameworkMode === 'custom' && !formData.customWritingFramework) {
                 alert('Please enter a Custom Writing Framework.');
                 return;
             }
-             // --- UPDATED VALIDATION FOR GRAMMAR STRICTNESS ---
-             if (formData.proofreading && formData.grammarStrictnessMode === 'custom' && !formData.customGrammarStrictness) {
+            // --- UPDATED VALIDATION FOR GRAMMAR STRICTNESS ---
+            if (formData.proofreading && formData.grammarStrictnessMode === 'custom' && !formData.customGrammarStrictness) {
                 alert('Please enter a Custom Grammar Strictness.');
                 return;
             }
@@ -451,16 +453,16 @@ const CopywritingAssistantForm = () => {
                     type: 'predefined',
                 };
         }
-        
+
         // --- Build Advanced Objects with Mode Support ---
-        
+
         let ctaStyleObj = null;
         if (formData.ctaStyleMode === 'custom' && formData.customCtaStyle) {
             ctaStyleObj = { id: null, value: formData.customCtaStyle, type: 'custom' };
         } else if (formData.ctaStyleMode === 'predefined' && formData.ctaStyle) {
             ctaStyleObj = buildOptionObject('cta_style', formData.ctaStyle) || { id: null, value: formData.ctaStyle, type: 'predefined' };
         }
-        
+
         let readingLevelObj = null;
         if (formData.readingLevelMode === 'custom' && formData.customReadingLevel) {
             readingLevelObj = { id: null, value: formData.customReadingLevel, type: 'custom' };
@@ -474,7 +476,7 @@ const CopywritingAssistantForm = () => {
         } else if (formData.targetPlatformMode === 'predefined' && formData.targetPlatform) {
             targetPlatformObj = buildOptionObject('target_platform', formData.targetPlatform) || { id: null, value: formData.targetPlatform, type: 'predefined' };
         }
-        
+
         let brandVoiceObj = null;
         if (formData.brandVoiceMode === 'custom' && formData.customBrandVoice) {
             brandVoiceObj = { id: null, value: formData.customBrandVoice, type: 'custom' };
@@ -488,7 +490,7 @@ const CopywritingAssistantForm = () => {
         } else if (formData.contentStyleMode === 'predefined' && formData.contentStyle) {
             contentStyleObj = buildOptionObject('content_style_preference', formData.contentStyle) || { id: null, value: formData.contentStyle, type: 'predefined' };
         }
-        
+
         let emotionalIntentObj = null;
         if (formData.emotionalIntentMode === 'custom' && formData.customEmotionalIntent) {
             emotionalIntentObj = { id: null, value: formData.customEmotionalIntent, type: 'custom' };
@@ -513,7 +515,7 @@ const CopywritingAssistantForm = () => {
             }
         }
         // ------------------------------------------
-        
+
         const outputStructureObj = formData.outputStructure
             ? buildOptionObject('output_structure_type', formData.outputStructure) || { id: null, value: formData.outputStructure, type: 'predefined' }
             : null;
@@ -662,8 +664,8 @@ const CopywritingAssistantForm = () => {
             return;
         }
 
-        setIsFetchingLog(true);       // so VariantsModal can show loading state if needed
-        setIsGenerating(true);         // reuse existing generating flag for buttons
+        setIsFetchingLog(true);     // so VariantsModal can show loading state if needed
+        setIsGenerating(true);     // reuse existing generating flag for buttons
         setModalTitle('Variants Log'); // set title for log view
         setIsHistoryView(true);
         setIsApiLoading(true);
@@ -685,7 +687,7 @@ const CopywritingAssistantForm = () => {
                 const errorMessage = errorData.message || response.statusText;
                 console.error('Failed to fetch variants log:', errorData || response.statusText);
                 alert('Failed to load log. Check console for details.');
-                
+
                 // Set error data in the expected object structure
                 setGeneratedVariantsData({
                     requestId: requestId,
@@ -694,7 +696,7 @@ const CopywritingAssistantForm = () => {
                 });
             } else {
                 const result = await response.json();
-                
+
                 if (result.variants && Array.isArray(result.variants) && result.variants.length > 0) {
                     const structuredVariants = result.variants.map((content, index) => ({
                         id: content.id || `temp-${Date.now()}-${index}`,
@@ -788,7 +790,7 @@ const CopywritingAssistantForm = () => {
             outline: 'none',
             transition: 'all 0.2s ease',
         },
-        select: { width: '100%', height:'42px', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '20px', paddingRight: '40px', cursor: 'pointer' },
+        select: { width: '100%', height: '42px', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '20px', paddingRight: '40px', cursor: 'pointer' },
         textarea: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', resize: 'vertical', minHeight: '80px' },
         badge: { display: 'inline-flex', alignItems: 'center', padding: '6px 12px', fontSize: '13px', fontWeight: '500', borderRadius: '6px', gap: '6px' },
         badgePrimary: { backgroundColor: '#3b82f6', color: 'white' },
@@ -811,22 +813,22 @@ const CopywritingAssistantForm = () => {
 
     // --- Layout Helpers (Unchanged) ---
     const COLUMN_GAP = '20px';
-    const twoColContainerStyle = { 
-        display: 'flex', 
-        flexWrap: 'wrap', 
-        justifyContent: 'space-between', 
+    const twoColContainerStyle = {
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
         gap: COLUMN_GAP,
         marginBottom: '20px',
         width: '100%'
     };
-    const colHalfStyle = { 
+    const colHalfStyle = {
         flex: '1 1 calc(50% - 10px)',
     };
     const colFullStyle = {
         width: '100%',
         marginBottom: '20px',
     };
-    
+
     // Helper function for radio buttons in the advanced section
     const renderModeToggle = (modeName, labelText, tooltipContent, required = false) => (
         <div className="col-12">
@@ -876,431 +878,361 @@ const CopywritingAssistantForm = () => {
                 <div style={{ padding: '24px' }}>
                     <form onSubmit={handleSubmit}>
                         <div className="row g-4">
-                            {/* Use Case */}
-                            <div className="col-12">
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>
-                                        Use Case <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} data-tooltip-id="useCase-tooltip" data-tooltip-content="Select a predefined use case or define your own custom use case">i</span>
-                                    </label>
-                                    <Tooltip id="useCase-tooltip" />
-                                    <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
-                                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                            <input
-                                                type="radio"
-                                                name="useCaseMode"
-                                                value="predefined"
-                                                checked={formData.useCaseMode === 'predefined'}
-                                                onChange={handleChange}
-                                                style={{ marginRight: '8px' }}
-                                            />
-                                            Predefined
-                                        </label>
-                                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                            <input
-                                                type="radio"
-                                                name="useCaseMode"
-                                                value="custom"
-                                                checked={formData.useCaseMode === 'custom'}
-                                                onChange={handleChange}
-                                                style={{ marginRight: '8px' }}
-                                            />
-                                            Custom
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
+                            {/* Main (non-advanced) fields */}
+                            {!formData.showAdvanced && (
+                                <>
+                                    {/* Use Case */}
+                                    <div className="col-12">
+                                        <div style={styles.formGroup}>
+                                            <label style={styles.label}>
+                                                Use Case <span style={{ color: '#ef4444' }}>*</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="useCase-tooltip" data-tooltip-content="Select a predefined use case or define your own custom use case">i</span>
+                                            </label>
+                                            <Tooltip id="useCase-tooltip" />
+                                            <div style={{ display: 'flex', gap: '20px', marginBottom: '12px' }}>
+                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="radio"
+                                                        name="useCaseMode"
+                                                        value="predefined"
+                                                        checked={formData.useCaseMode === 'predefined'}
+                                                        onChange={handleChange}
+                                                        style={{ marginRight: '8px' }}
+                                                    />
+                                                    Predefined
+                                                </label>
+                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="radio"
+                                                        name="useCaseMode"
+                                                        value="custom"
+                                                        checked={formData.useCaseMode === 'custom'}
+                                                        onChange={handleChange}
+                                                        style={{ marginRight: '8px' }}
+                                                    />
+                                                    Custom
+                                                </label>
+                                            </div>
+                                      
+                                   
 
-                            {/* Predefined Use Case (shown when predefined is selected) */}
-                            {formData.useCaseMode === 'predefined' && (
-                                <div className="col-md-6">
-                                    <div style={styles.formGroup}>
-                                        <label htmlFor="useCase" style={styles.label}>
-                                            Select Use Case <span style={{ color: '#ef4444' }}>*</span>
-                                        </label>
-                                        <select
-                                            id="useCase"
-                                            name="useCase"
-                                            value={formData.useCase}
-                                            onChange={handleChange}
-                                            style={styles.select}
-                                            required={formData.useCaseMode === 'predefined'}
-                                        >
-                                            <option value="">Select a use case</option>
-                                            {useCaseOptions.map((option, index) => (
-                                                <option key={index} value={option.value}>{option.label}</option>
-                                            ))}
-                                        </select>
+                                    {/* Predefined Use Case (shown when predefined is selected) */}
+                                    {formData.useCaseMode === 'predefined' && (
+                                        <div className="col-md-6">
+                                            <div style={styles.formGroup}>
+                                                <select
+                                                    id="useCase"
+                                                    name="useCase"
+                                                    value={formData.useCase}
+                                                    onChange={handleChange}
+                                                    style={styles.select}
+                                                    required={formData.useCaseMode === 'predefined'}
+                                                >
+                                                    <option value="">Select a use case</option>
+                                                    {useCaseOptions.map((option, index) => (
+                                                        <option key={index} value={option.value}>{option.label}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    )}
+
+
+                                    {/* Custom Use Case (shown when custom is selected) */}
+                                    {formData.useCaseMode === 'custom' && (
+                                        <div className="col-md-6">
+                                            <div style={styles.formGroup}>
+                                                <input
+                                                    type="text"
+                                                    id="customUseCase"
+                                                    name="customUseCase"
+                                                    value={formData.customUseCase}
+                                                    onChange={handleChange}
+                                                    style={styles.input}
+                                                    placeholder="Describe your specific use case"
+                                                    maxLength={150}
+                                                    required={formData.useCaseMode === 'custom'}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                     </div>
+                                       </div>
+
+                                    {/* Primary Goal */}
+                                    <div className="col-12">
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="primaryGoal" style={styles.label}>
+                                                Primary Goal <span style={{ color: '#ef4444' }}>*</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="primaryGoal-tooltip" data-tooltip-content="Describe the main objective of your content (max 150 words)">i</span>
+                                            </label>
+                                            <Tooltip id="primaryGoal-tooltip" />
+                                            <textarea
+                                                id="primaryGoal"
+                                                name="primaryGoal"
+                                                value={formData.primaryGoal}
+                                                onChange={handleChange}
+                                                style={{ ...styles.textarea, minHeight: '80px' }}
+                                                placeholder="What do you want to achieve with this content?"
+                                                maxLength={750} // ~150 words
+                                                required
+                                            />
+                                        </div>
                                     </div>
-                                </div>
+
+                                    {/* Target Audience */}
+                                    <div className="col-12">
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="targetAudience" style={styles.label}>
+                                                Target Audience <span style={{ color: '#ef4444' }}>*</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="audience-tooltip" data-tooltip-content="Describe your target audience (max 120 words)">i</span>
+                                            </label>
+                                            <Tooltip id="audience-tooltip" />
+                                            <textarea
+                                                id="targetAudience"
+                                                name="targetAudience"
+                                                value={formData.targetAudience}
+                                                onChange={handleChange}
+                                                style={{ ...styles.textarea, minHeight: '60px' }}
+                                                placeholder="Who is your target audience? (e.g., age, interests, profession)"
+                                                maxLength={600} // ~120 words
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Tone Selection + Language (two columns) */}
+                                    <div style={twoColContainerStyle}>
+                                        {/* Tone (Left Half) */}
+                                        <div style={colHalfStyle}>
+                                            <div style={styles.formGroup}>
+                                                <label style={styles.label}>
+                                                    Tone Selection <span style={{ color: '#ef4444' }}>*</span>
+                                                    <span style={styles.infoIcon} data-tooltip-id="toneMode-tooltip" data-tooltip-content="Choose between predefined tones or define a custom tone">i</span>
+                                                </label>
+                                                <Tooltip id="toneMode-tooltip" />
+                                                <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
+                                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                        <input
+                                                            type="radio"
+                                                            name="toneMode"
+                                                            value="predefined"
+                                                            checked={formData.toneMode === 'predefined'}
+                                                            onChange={handleChange}
+                                                            style={{ marginRight: '8px' }}
+                                                        />
+                                                        Predefined
+                                                    </label>
+                                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                        <input
+                                                            type="radio"
+                                                            name="toneMode"
+                                                            value="custom"
+                                                            checked={formData.toneMode === 'custom'}
+                                                            onChange={handleChange}
+                                                            style={{ marginRight: '8px' }}
+                                                        />
+                                                        Custom
+                                                    </label>
+                                                </div>
+
+                                                {formData.toneMode === 'predefined' && (
+                                                    <div style={{ marginTop: '8px' }}>
+                                                        <Tooltip id="tone-tooltip" />
+                                                        <select
+                                                            id="toneOfVoice"
+                                                            name="toneOfVoice"
+                                                            value={formData.toneOfVoice}
+                                                            onChange={handleChange}
+                                                            style={styles.select}
+                                                            required={formData.toneMode === 'predefined'}
+                                                        >
+                                                            <option value="">Select a tone</option>
+                                                            {toneOptions.map((tone, index) => (
+                                                                <option key={index} value={tone.value}>{tone.label}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                )}
+
+                                                {formData.toneMode === 'custom' && (
+                                                    <div style={{ marginTop: '8px' }}>
+                                                        <input
+                                                            type="text"
+                                                            id="customTone"
+                                                            name="customTone"
+                                                            value={formData.customTone}
+                                                            onChange={handleChange}
+                                                            style={styles.input}
+                                                            placeholder="Describe your desired tone in a few words (max 12 words)"
+                                                            maxLength={100}
+                                                            required={formData.toneMode === 'custom'}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Language (Right Half) */}
+                                        <div style={colHalfStyle}>
+                                            <div style={styles.formGroup}>
+                                                <label style={styles.label}>
+                                                    Language <span style={{ color: '#ef4444' }}>*</span>
+                                                    <span style={styles.infoIcon} data-tooltip-id="language-tooltip" data-tooltip-content="Select the language for your content or define a custom language">i</span>
+                                                </label>
+                                                <Tooltip id="language-tooltip" />
+                                                <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
+                                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                        <input
+                                                            type="radio"
+                                                            name="languageMode"
+                                                            value="predefined"
+                                                            checked={formData.languageMode === 'predefined'}
+                                                            onChange={handleChange}
+                                                            style={{ marginRight: '8px' }}
+                                                        />
+                                                        Predefined
+                                                    </label>
+                                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                        <input
+                                                            type="radio"
+                                                            name="languageMode"
+                                                            value="custom"
+                                                            checked={formData.languageMode === 'custom'}
+                                                            onChange={handleChange}
+                                                            style={{ marginRight: '8px' }}
+                                                        />
+                                                        Custom
+                                                    </label>
+                                                </div>
+
+                                                {formData.languageMode === 'predefined' && (
+                                                    <div style={{ marginTop: '8px' }}>
+                                                        <select
+                                                            id="language"
+                                                            name="language"
+                                                            value={formData.language}
+                                                            onChange={handleChange}
+                                                            style={styles.select}
+                                                            required={formData.languageMode === 'predefined'}
+                                                        >
+                                                            {languageOptions.map((lang, index) => (
+                                                                <option key={index} value={lang.value}>{lang.label}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                )}
+
+                                                {formData.languageMode === 'custom' && (
+                                                    <div style={{ marginTop: '8px' }}>
+                                                        <input
+                                                            type="text"
+                                                            id="customLanguage"
+                                                            name="customLanguage"
+                                                            value={formData.customLanguage}
+                                                            onChange={handleChange}
+                                                            style={styles.input}
+                                                            placeholder="e.g., English (Canada), Hinglish"
+                                                            maxLength={100}
+                                                            required={formData.languageMode === 'custom'}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Length Target */}
+                                    <div className="col-12">
+                                        <div style={styles.formGroup}>
+                                            <label style={styles.label}>
+                                                Length Target <span style={{ color: '#ef4444' }}>*</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="length-tooltip" data-tooltip-content="Select or specify your desired word count">i</span>
+                                            </label>
+                                            <Tooltip id="length-tooltip" />
+                                            <div style={{ display: 'flex', gap: '10px' }}>
+                                                <select
+                                                    id="lengthTarget"
+                                                    name="lengthTarget"
+                                                    value={formData.lengthTarget}
+                                                    onChange={handleChange}
+                                                    style={{ ...styles.select, flex: 1 }}
+                                                >
+                                                    {lengthTargetOptions.map((opt, index) => (
+                                                        <option key={index} value={opt.value}>{opt.label}</option>
+                                                    ))}
+                                                </select>
+                                                {formData.lengthTarget === 'custom' && (
+                                                    <input
+                                                        type="number"
+                                                        name="customWordCount"
+                                                        value={formData.customWordCount}
+                                                        onChange={handleChange}
+                                                        min="50"
+                                                        max="2000"
+                                                        style={{ ...styles.input, width: '100px' }}
+                                                        placeholder="Words"
+                                                    />
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Key Points */}
+                                    <div className="col-12">
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="keyPoints" style={styles.label}>
+                                                Key Points <span style={{ color: '#ef4444' }}>*</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="keyPoints-tooltip" data-tooltip-content="List the main points to include in your content (max 1200 characters)">i</span>
+                                            </label>
+                                            <Tooltip id="keyPoints-tooltip" />
+                                            <textarea
+                                                id="keyPoints"
+                                                name="keyPoints"
+                                                value={formData.keyPoints}
+                                                onChange={handleChange}
+                                                style={{ ...styles.textarea, minHeight: '100px' }}
+                                                placeholder="Enter the key points you want to cover, one per line"
+                                                maxLength={1200}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Number of Variants */}
+                                    <div className="col-12">
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="variants" style={styles.label}>
+                                                Number of Variants: {formData.variants}
+                                                <span style={styles.infoIcon} data-tooltip-id="variants-tooltip" data-tooltip-content="How many different versions of the content would you like to generate?">i</span>
+                                            </label>
+                                            <Tooltip id="variants-tooltip" />
+                                            <input
+                                                type="range"
+                                                id="variants"
+                                                name="variants"
+                                                min="1"
+                                                max="5"
+                                                value={formData.variants}
+                                                onChange={handleChange}
+                                                style={{ width: '100%' }}
+                                            />
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                                                <span>1</span>
+                                                <span>2</span>
+                                                <span>3</span>
+                                                <span>4</span>
+                                                <span>5</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #1e293b', margin: '5px 0' }} />
+                                </>
                             )}
-
-                            {/* Custom Use Case (shown when custom is selected) */}
-                            {formData.useCaseMode === 'custom' && (
-                                <div className="col-md-6">
-                                    <div style={styles.formGroup}>
-                                        <label htmlFor="customUseCase" style={styles.label}>
-                                            Custom Use Case <span style={{ color: '#ef4444' }}>*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="customUseCase"
-                                            name="customUseCase"
-                                            value={formData.customUseCase}
-                                            onChange={handleChange}
-                                            style={styles.input}
-                                            placeholder="Describe your specific use case"
-                                            maxLength={150}
-                                            required={formData.useCaseMode === 'custom'}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Primary Goal */}
-                            <div className="col-12">
-                                <div style={styles.formGroup}>
-                                    <label htmlFor="primaryGoal" style={styles.label}>
-                                        Primary Goal <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} data-tooltip-id="primaryGoal-tooltip" data-tooltip-content="Describe the main objective of your content (max 150 words)">i</span>
-                                    </label>
-                                    <Tooltip id="primaryGoal-tooltip" />
-                                    <textarea
-                                        id="primaryGoal"
-                                        name="primaryGoal"
-                                        value={formData.primaryGoal}
-                                        onChange={handleChange}
-                                        style={{ ...styles.textarea, minHeight: '80px' }}
-                                        placeholder="What do you want to achieve with this content?"
-                                        maxLength={750} // ~150 words
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Target Audience */}
-                            <div className="col-12">
-                                <div style={styles.formGroup}>
-                                    <label htmlFor="targetAudience" style={styles.label}>
-                                        Target Audience <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} data-tooltip-id="audience-tooltip" data-tooltip-content="Describe your target audience (max 120 words)">i</span>
-                                    </label>
-                                    <Tooltip id="audience-tooltip" />
-                                    <textarea
-                                        id="targetAudience"
-                                        name="targetAudience"
-                                        value={formData.targetAudience}
-                                        onChange={handleChange}
-                                        style={{ ...styles.textarea, minHeight: '60px' }}
-                                        placeholder="Who is your target audience? (e.g., age, interests, profession)"
-                                        maxLength={600} // ~120 words
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Tone Selection */}
-                            <div className="col-12">
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>
-                                        Tone Selection <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} data-tooltip-id="toneMode-tooltip" data-tooltip-content="Choose between predefined tones or define a custom tone">i</span>
-                                    </label>
-                                    <Tooltip id="toneMode-tooltip" />
-                                    <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
-                                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                            <input
-                                                type="radio"
-                                                name="toneMode"
-                                                value="predefined"
-                                                checked={formData.toneMode === 'predefined'}
-                                                onChange={handleChange}
-                                                style={{ marginRight: '8px' }}
-                                            />
-                                            Predefined
-                                        </label>
-                                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                            <input
-                                                type="radio"
-                                                name="toneMode"
-                                                value="custom"
-                                                checked={formData.toneMode === 'custom'}
-                                                onChange={handleChange}
-                                                style={{ marginRight: '8px' }}
-                                            />
-                                            Custom
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Tone of Voice (shown when predefined is selected) */}
-                            {formData.toneMode === 'predefined' && (
-                                <div className="col-md-6">
-                                    <div style={styles.formGroup}>
-                                        <label htmlFor="toneOfVoice" style={styles.label}>
-                                            Tone of Voice <span style={{ color: '#ef4444' }}>*</span>
-                                            <span style={styles.infoIcon} data-tooltip-id="tone-tooltip" data-tooltip-content="Select the tone that best matches your brand voice">i</span>
-                                        </label>
-                                        <Tooltip id="tone-tooltip" />
-                                        <select
-                                            id="toneOfVoice"
-                                            name="toneOfVoice"
-                                            value={formData.toneOfVoice}
-                                            onChange={handleChange}
-                                            style={styles.select}
-                                            required={formData.toneMode === 'predefined'}
-                                        >
-                                            <option value="">Select a tone</option>
-                                            {toneOptions.map((tone, index) => (
-                                                <option key={index} value={tone.value}>{tone.label}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Custom Tone (shown when custom is selected) */}
-                            {formData.toneMode === 'custom' && (
-                                <div className="col-md-6">
-                                    <div style={styles.formGroup}>
-                                        <label htmlFor="customTone" style={styles.label}>
-                                            Custom Tone <span style={{ color: '#ef4444' }}>*</span>
-                                            <span style={styles.infoIcon} data-tooltip-id="customTone-tooltip" data-tooltip-content="Describe your desired tone in a few words (max 12 words)">i</span>
-                                        </label>
-                                        <Tooltip id="customTone-tooltip" />
-                                        <input
-                                            type="text"
-                                            id="customTone"
-                                            name="customTone"
-                                            value={formData.customTone}
-                                            onChange={handleChange}
-                                            style={styles.input}
-                                            placeholder="e.g., Friendly, professional, and slightly humorous"
-                                            maxLength={100}
-                                            required={formData.toneMode === 'custom'}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Language */}
-                            <div className="col-12">
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>
-                                        Language <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} data-tooltip-id="language-tooltip" data-tooltip-content="Select the language for your content or define a custom language">i</span>
-                                    </label>
-                                    <Tooltip id="language-tooltip" />
-                                    <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
-                                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                            <input
-                                                type="radio"
-                                                name="languageMode"
-                                                value="predefined"
-                                                checked={formData.languageMode === 'predefined'}
-                                                onChange={handleChange}
-                                                style={{ marginRight: '8px' }}
-                                            />
-                                            Predefined
-                                        </label>
-                                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                            <input
-                                                type="radio"
-                                                name="languageMode"
-                                                value="custom"
-                                                checked={formData.languageMode === 'custom'}
-                                                onChange={handleChange}
-                                                style={{ marginRight: '8px' }}
-                                            />
-                                            Custom
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {formData.languageMode === 'predefined' && (
-                                <div className="col-md-6">
-                                    <div style={styles.formGroup}>
-                                        <label htmlFor="language" style={styles.label}>
-                                            Select Language <span style={{ color: '#ef4444' }}>*</span>
-                                        </label>
-                                        <select
-                                            id="language"
-                                            name="language"
-                                            value={formData.language}
-                                            onChange={handleChange}
-                                            style={styles.select}
-                                            required={formData.languageMode === 'predefined'}
-                                        >
-                                            {languageOptions.map((lang, index) => (
-                                                <option key={index} value={lang.value}>{lang.label}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-                            )}
-
-                            {formData.languageMode === 'custom' && (
-                                <div className="col-md-6">
-                                    <div style={styles.formGroup}>
-                                        <label htmlFor="customLanguage" style={styles.label}>
-                                            Custom Language <span style={{ color: '#ef4444' }}>*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="customLanguage"
-                                            name="customLanguage"
-                                            value={formData.customLanguage}
-                                            onChange={handleChange}
-                                            style={styles.input}
-                                            placeholder="e.g., English (Canada), Hinglish"
-                                            maxLength={100}
-                                            required={formData.languageMode === 'custom'}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Length Target */}
-                            <div className="col-md-6">
-                                <div style={styles.formGroup}>
-                                    <label htmlFor="lengthTarget" style={styles.label}>
-                                        Length Target <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} data-tooltip-id="length-tooltip" data-tooltip-content="Select or specify your desired word count">i</span>
-                                    </label>
-                                    <Tooltip id="length-tooltip" />
-                                    <div style={{ display: 'flex', gap: '10px' }}>
-                                        <select
-                                            id="lengthTarget"
-                                            name="lengthTarget"
-                                            value={formData.lengthTarget}
-                                            onChange={handleChange}
-                                            style={{ ...styles.select, flex: 1 }}
-                                        >
-                                            {lengthTargetOptions.map((opt, index) => (
-                                                <option key={index} value={opt.value}>{opt.label}</option>
-                                            ))}
-                                        </select>
-                                        {formData.lengthTarget === 'custom' && (
-                                            <input
-                                                type="number"
-                                                name="customWordCount"
-                                                value={formData.customWordCount}
-                                                onChange={handleChange}
-                                                min="50"
-                                                max="2000"
-                                                style={{ ...styles.input, width: '100px' }}
-                                                placeholder="Words"
-                                            />
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Key Points */}
-                            <div className="col-12">
-                                <div style={styles.formGroup}>
-                                    <label htmlFor="keyPoints" style={styles.label}>
-                                        Key Points <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} data-tooltip-id="keyPoints-tooltip" data-tooltip-content="List the main points to include in your content (max 1200 characters)">i</span>
-                                    </label>
-                                    <Tooltip id="keyPoints-tooltip" />
-                                    <textarea
-                                        id="keyPoints"
-                                        name="keyPoints"
-                                        value={formData.keyPoints}
-                                        onChange={handleChange}
-                                        style={{ ...styles.textarea, minHeight: '100px' }}
-                                        placeholder="Enter the key points you want to cover, one per line"
-                                        maxLength={1200}
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Number of Variants */}
-                            <div className="col-12">
-                                <div style={styles.formGroup}>
-                                    <label htmlFor="variants" style={styles.label}>
-                                        Number of Variants: {formData.variants}
-                                        <span style={styles.infoIcon} data-tooltip-id="variants-tooltip" data-tooltip-content="How many different versions of the content would you like to generate?">i</span>
-                                    </label>
-                                    <Tooltip id="variants-tooltip" />
-                                    <input
-                                        type="range"
-                                        id="variants"
-                                        name="variants"
-                                        min="1"
-                                        max="5"
-                                        value={formData.variants}
-                                        onChange={handleChange}
-                                        style={{ width: '100%' }}
-                                    />
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                                        <span>1</span>
-                                        <span>2</span>
-                                        <span>3</span>
-                                        <span>4</span>
-                                        <span>5</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #1e293b', margin: '5px 0' }} />
-
                             {/* Advanced Features Toggle */}
                             <div className="col-12" style={{ margin: '16px 0' }}>
-                                <div style={{
-                                    display: 'inline-flex',
-                                    backgroundColor: '#141b2d',
-                                    borderRadius: '9999px',
-                                    border: '1px solid #3b82f6',
-                                    overflow: 'hidden',
-                                    width: 'fit-content',
-                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                                }}>
-                                    <button
-                                    type="button"
-                                    onClick={toggleAdvanced}
-                                    style={{
-                                        padding: '6px 20px',
-                                        border: 'none',
-                                        backgroundColor: formData.showAdvanced ? 'transparent' : '#3b82f6',
-                                        color: formData.showAdvanced ? '#94a3b8' : 'white',
-                                        fontWeight: 500,
-                                        fontSize: '14px',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease',
-                                        borderRadius: '9999px',
-                                        margin: '2px',
-                                        whiteSpace: 'nowrap'
-                                    }}
-                                    >
-                                    <span>Hide Advanced</span>
-                                    </button>
-                                    <button
-                                    type="button"
-                                    onClick={toggleAdvanced}
-                                    style={{
-                                        padding: '6px 20px',
-                                        border: 'none',
-                                        backgroundColor: formData.showAdvanced ? '#3b82f6' : 'transparent',
-                                        color: formData.showAdvanced ? 'white' : '#94a3b8',
-                                        fontWeight: 500,
-                                        fontSize: '14px',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease',
-                                        borderRadius: '9999px',
-                                        margin: '2px',
-                                        whiteSpace: 'nowrap'
-                                    }}
-                                    >
-                                    <span>Show Advanced</span>
-                                    </button>
-                                </div>
+                                <ToggleButton showAdvanced={formData.showAdvanced} onToggle={toggleAdvanced} />
                             </div>
-
 
                             {/* Advanced Features */}
                             {formData.showAdvanced && (
@@ -1328,14 +1260,11 @@ const CopywritingAssistantForm = () => {
 
                                     {/* CTA Style Mode Toggle */}
                                     {renderModeToggle('ctaStyleMode', 'CTA Style', 'Choose between predefined CTA styles or define your own')}
-                                    
+
                                     {/* CTA Style (Predefined/Custom Input) */}
                                     {formData.ctaStyleMode === 'predefined' && (
                                         <div className="col-md-6">
                                             <div style={styles.formGroup}>
-                                                <label htmlFor="ctaStyle" style={styles.label}>
-                                                    Select CTA Style
-                                                </label>
                                                 <select
                                                     id="ctaStyle"
                                                     name="ctaStyle"
@@ -1355,9 +1284,6 @@ const CopywritingAssistantForm = () => {
                                     {formData.ctaStyleMode === 'custom' && (
                                         <div className="col-md-6">
                                             <div style={styles.formGroup}>
-                                                <label htmlFor="customCtaStyle" style={styles.label}>
-                                                    Custom CTA Style
-                                                </label>
                                                 <input
                                                     type="text"
                                                     id="customCtaStyle"
@@ -1396,7 +1322,7 @@ const CopywritingAssistantForm = () => {
                                     <div style={twoColContainerStyle}>
                                         <div style={colHalfStyle}>
                                             <div style={styles.formGroup}>
-                                                <label style={{ display: 'flex', alignItems: 'center',gap: '8px', cursor: 'pointer' }}>
+                                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                                                     <input
                                                         type="checkbox"
                                                         name="rewriteMode"
@@ -1413,186 +1339,166 @@ const CopywritingAssistantForm = () => {
                                         <div style={colHalfStyle}></div>
                                     </div>
 
-                                    {/* Reading Level Mode Toggle */}
-                                    {renderModeToggle('readingLevelMode', 'Reading Level', 'Select the reading level for your content or describe a custom level')}
+                                    {/* Reading Level + Target Platform (two-column row) */}
+                                    <div style={twoColContainerStyle}>
+                                        {/* Reading Level (Left Half) */}
+                                        <div style={colHalfStyle}>
+                                            {renderModeToggle('readingLevelMode', 'Reading Level', 'Select the reading level for your content or describe a custom level')}
 
-                                    {/* Reading Level (Predefined/Custom Input) */}
-                                    {formData.readingLevelMode === 'predefined' && (
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="readingLevel" style={styles.label}>
-                                                    Select Reading Level
-                                                </label>
-                                                <select
-                                                    id="readingLevel"
-                                                    name="readingLevel"
-                                                    value={formData.readingLevel}
-                                                    onChange={handleChange}
-                                                    style={styles.select}
-                                                >
-                                                    {readingLevelOptions.map((opt, index) => (
-                                                        <option key={index} value={opt.value}>{opt.label}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
+                                            {formData.readingLevelMode === 'predefined' && (
+                                                <div style={styles.formGroup}>
+                                                    <select
+                                                        id="readingLevel"
+                                                        name="readingLevel"
+                                                        value={formData.readingLevel}
+                                                        onChange={handleChange}
+                                                        style={styles.select}
+                                                    >
+                                                        {readingLevelOptions.map((opt, index) => (
+                                                            <option key={index} value={opt.value}>{opt.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+
+                                            {formData.readingLevelMode === 'custom' && (
+                                                <div style={styles.formGroup}>
+                                                    <input
+                                                        type="text"
+                                                        id="customReadingLevel"
+                                                        name="customReadingLevel"
+                                                        value={formData.customReadingLevel}
+                                                        onChange={handleChange}
+                                                        style={styles.input}
+                                                        placeholder="Describe the reading level"
+                                                        maxLength={120}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
 
-                                    {formData.readingLevelMode === 'custom' && (
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="customReadingLevel" style={styles.label}>
-                                                    Custom Reading Level
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    id="customReadingLevel"
-                                                    name="customReadingLevel"
-                                                    value={formData.customReadingLevel}
-                                                    onChange={handleChange}
-                                                    style={styles.input}
-                                                    placeholder="Describe the reading level"
-                                                    maxLength={120}
-                                                />
-                                            </div>
+                                        {/* Target Platform (Right Half) */}
+                                        <div style={colHalfStyle}>
+                                            {renderModeToggle('targetPlatformMode', 'Target Platform (optional)', 'Select the platform where this content will be published or specify your own')}
+
+                                            {formData.targetPlatformMode === 'predefined' && (
+                                                <div style={styles.formGroup}>
+                                                    <select
+                                                        id="targetPlatform"
+                                                        name="targetPlatform"
+                                                        value={formData.targetPlatform || ''}
+                                                        onChange={handleChange}
+                                                        style={styles.select}
+                                                    >
+                                                        <option value="">Any Platform</option>
+                                                        {targetPlatformOptions.map((opt, index) => (
+                                                            <option key={index} value={opt.value}>{opt.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+
+                                            {formData.targetPlatformMode === 'custom' && (
+                                                <div style={styles.formGroup}>
+                                                    <input
+                                                        type="text"
+                                                        id="customTargetPlatform"
+                                                        name="customTargetPlatform"
+                                                        value={formData.customTargetPlatform}
+                                                        onChange={handleChange}
+                                                        style={styles.input}
+                                                        placeholder="Describe the platform"
+                                                        maxLength={120}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
+                                    </div>
 
-                                    {/* Target Platform Mode Toggle */}
-                                    {renderModeToggle('targetPlatformMode', 'Target Platform', 'Select the platform where this content will be published or specify your own')}
+                                    {/* --- BRAND VOICE REFERENCE + CONTENT STYLE (two-column row) --- */}
+                                    <div style={twoColContainerStyle}>
+                                        {/* Brand Voice Reference (Left Half) */}
+                                        <div style={colHalfStyle}>
+                                            {renderModeToggle(
+                                                'brandVoiceMode',
+                                                'Brand Voice Reference',
+                                                'Select a predefined brand voice or describe your custom brand voice'
+                                            )}
 
-                                    {/* Target Platform (Predefined/Custom Input) */}
-                                    {formData.targetPlatformMode === 'predefined' && (
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="targetPlatform" style={styles.label}>
-                                                    Select Target Platform
-                                                </label>
-                                                <select
-                                                    id="targetPlatform"
-                                                    name="targetPlatform"
-                                                    value={formData.targetPlatform || ''}
-                                                    onChange={handleChange}
-                                                    style={styles.select}
-                                                >
-                                                    <option value="">Any Platform</option>
-                                                    {targetPlatformOptions.map((opt, index) => (
-                                                        <option key={index} value={opt.value}>{opt.label}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
+                                            {formData.brandVoiceMode === 'predefined' && (
+                                                <div style={styles.formGroup}>
+                                                    <select
+                                                        id="brandVoice"
+                                                        name="brandVoice"
+                                                        value={formData.brandVoice || ''}
+                                                        onChange={handleChange}
+                                                        style={styles.select}
+                                                    >
+                                                        <option value="">Select Brand Voice</option>
+                                                        {brandVoiceOptions.map((opt, index) => (
+                                                            <option key={index} value={opt.value}>{opt.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+
+                                            {formData.brandVoiceMode === 'custom' && (
+                                                <div style={styles.formGroup}>
+                                                    <input
+                                                        type="text"
+                                                        id="customBrandVoice"
+                                                        name="customBrandVoice"
+                                                        value={formData.customBrandVoice}
+                                                        onChange={handleChange}
+                                                        style={styles.input}
+                                                        placeholder="e.g., Authoritative, technical, focused on sustainability"
+                                                        maxLength={120}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
 
-                                    {formData.targetPlatformMode === 'custom' && (
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="customTargetPlatform" style={styles.label}>
-                                                    Custom Target Platform
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    id="customTargetPlatform"
-                                                    name="customTargetPlatform"
-                                                    value={formData.customTargetPlatform}
-                                                    onChange={handleChange}
-                                                    style={styles.input}
-                                                    placeholder="Describe the platform"
-                                                    maxLength={120}
-                                                />
-                                            </div>
+                                        {/* Content Style Preference (Right Half) */}
+                                        <div style={colHalfStyle}>
+                                            {renderModeToggle(
+                                                'contentStyleMode',
+                                                'Content Style Preference',
+                                                'Select the preferred content style or describe a custom one'
+                                            )}
+
+                                            {formData.contentStyleMode === 'predefined' && (
+                                                <div style={styles.formGroup}>
+                                                    <select
+                                                        id="contentStyle"
+                                                        name="contentStyle"
+                                                        value={formData.contentStyle || ''}
+                                                        onChange={handleChange}
+                                                        style={styles.select}
+                                                    >
+                                                        <option value="">Select Style</option>
+                                                        {contentStyleOptions.map((opt, index) => (
+                                                            <option key={index} value={opt.value}>{opt.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+
+                                            {formData.contentStyleMode === 'custom' && (
+                                                <div style={styles.formGroup}>
+                                                    <input
+                                                        type="text"
+                                                        id="customContentStyle"
+                                                        name="customContentStyle"
+                                                        value={formData.customContentStyle}
+                                                        onChange={handleChange}
+                                                        style={styles.input}
+                                                        placeholder="e.g., Short-form vertical video script style"
+                                                        maxLength={120}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-
-                                    {/* --- BRAND VOICE REFERENCE --- */}
-                                    {renderModeToggle('brandVoiceMode', 'Brand Voice Reference', 'Select a predefined brand voice or describe your custom brand voice')}
-
-                                    {formData.brandVoiceMode === 'predefined' && (
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="brandVoice" style={styles.label}>
-                                                    Select Brand Voice
-                                                </label>
-                                                <select
-                                                    id="brandVoice"
-                                                    name="brandVoice"
-                                                    value={formData.brandVoice || ''}
-                                                    onChange={handleChange}
-                                                    style={styles.select}
-                                                >
-                                                    <option value="">Select Brand Voice</option>
-                                                    {brandVoiceOptions.map((opt, index) => (
-                                                        <option key={index} value={opt.value}>{opt.label}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {formData.brandVoiceMode === 'custom' && (
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="customBrandVoice" style={styles.label}>
-                                                    Custom Brand Voice Reference
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    id="customBrandVoice"
-                                                    name="customBrandVoice"
-                                                    value={formData.customBrandVoice}
-                                                    onChange={handleChange}
-                                                    style={styles.input}
-                                                    placeholder="e.g., Authoritative, technical, focused on sustainability"
-                                                    maxLength={120}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* --- CONTENT STYLE PREFERENCE --- */}
-                                    {renderModeToggle('contentStyleMode', 'Content Style Preference', 'Select the preferred content style or describe a custom one')}
-
-                                    {formData.contentStyleMode === 'predefined' && (
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="contentStyle" style={styles.label}>
-                                                    Select Content Style Preference
-                                                </label>
-                                                <select
-                                                    id="contentStyle"
-                                                    name="contentStyle"
-                                                    value={formData.contentStyle || ''}
-                                                    onChange={handleChange}
-                                                    style={styles.select}
-                                                >
-                                                    <option value="">Select Style</option>
-                                                    {contentStyleOptions.map((opt, index) => (
-                                                        <option key={index} value={opt.value}>{opt.label}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {formData.contentStyleMode === 'custom' && (
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="customContentStyle" style={styles.label}>
-                                                    Custom Content Style Preference
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    id="customContentStyle"
-                                                    name="customContentStyle"
-                                                    value={formData.customContentStyle}
-                                                    onChange={handleChange}
-                                                    style={styles.input}
-                                                    placeholder="e.g., Short-form vertical video script style"
-                                                    maxLength={120}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
+                                    </div>
 
                                     {/* Formatting Options */}
                                     <div className="col-12">
@@ -1655,82 +1561,100 @@ const CopywritingAssistantForm = () => {
                                                 {formData.includeWords.map((word, index) => (
                                                     <span key={index} style={{ ...styles.badge, ...styles.badgeSecondary, marginRight: '8px', marginBottom: '8px' }}>
                                                         {word}
-                                                        <button type="button" style={styles.removeBtn} onClick={() => removeItem('includeWords', index)}>×</button>
+                                                        <RemoveTagButton
+                                                            style={styles.removeBtn}
+                                                            onClick={() => removeItem('includeWords', index)}
+                                                        />
                                                     </span>
                                                 ))}
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Exclude Words */}
-                                    <div className="col-md-6">
-                                        <div style={styles.formGroup}>
-                                            <label style={styles.label}>
-                                                Exclude Words (optional)
-                                                <span style={styles.infoIcon} data-tooltip-id="exclude-tooltip" data-tooltip-content="Words that should not appear in the content (press Enter to add)">i</span>
-                                            </label>
-                                            <Tooltip id="exclude-tooltip" />
-                                            <input
-                                                type="text"
-                                                style={styles.input}
-                                                placeholder="Add a word and press Enter"
-                                                onKeyPress={(e) => handleArrayChange(e, 'excludeWords')}
-                                            />
-                                            <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: '8px' }}>
-                                                {formData.excludeWords.map((word, index) => (
-                                                    <span key={index} style={{ ...styles.badge, ...styles.badgeDanger, marginRight: '8px', marginBottom: '8px' }}>
-                                                        {word}
-                                                        <button type="button" style={styles.removeBtn} onClick={() => removeItem('excludeWords', index)}>×</button>
-                                                    </span>
-                                                ))}
-                                            </div>
+                                    {/* --- EMOTIONAL INTENT + WRITING FRAMEWORK (two-column row) --- */}
+                                    <div style={twoColContainerStyle}>
+                                        {/* Emotional Intent (Left Half) */}
+                                        <div style={colHalfStyle}>
+                                            {renderModeToggle(
+                                                'emotionalIntentMode',
+                                                'Emotional Intent (optional)',
+                                                'Select the emotional tone for your content or describe a custom one'
+                                            )}
+
+                                            {formData.emotionalIntentMode === 'predefined' && (
+                                                <div style={styles.formGroup}>
+                                                    <select
+                                                        id="emotionalIntent"
+                                                        name="emotionalIntent"
+                                                        value={formData.emotionalIntent}
+                                                        onChange={handleChange}
+                                                        style={styles.select}
+                                                    >
+                                                        <option value="">None (Neutral)</option>
+                                                        {emotionalIntentOptions.map((opt, index) => (
+                                                            <option key={index} value={opt.value}>{opt.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+
+                                            {formData.emotionalIntentMode === 'custom' && (
+                                                <div style={styles.formGroup}>
+                                                    <input
+                                                        type="text"
+                                                        id="customEmotionalIntent"
+                                                        name="customEmotionalIntent"
+                                                        value={formData.customEmotionalIntent}
+                                                        onChange={handleChange}
+                                                        style={styles.input}
+                                                        placeholder="e.g., Inspire hope and joy"
+                                                        maxLength={120}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Writing Framework (Right Half) */}
+                                        <div style={colHalfStyle}>
+                                            {renderModeToggle(
+                                                'writingFrameworkMode',
+                                                'Writing Framework (optional)',
+                                                'Select a writing framework or specify a custom one for content structure'
+                                            )}
+
+                                            {formData.writingFrameworkMode === 'predefined' && (
+                                                <div style={styles.formGroup}>
+                                                    <select
+                                                        id="writingFramework"
+                                                        name="writingFramework"
+                                                        value={formData.writingFramework}
+                                                        onChange={handleChange}
+                                                        style={styles.select}
+                                                    >
+                                                        <option value="">None (Standard Structure)</option>
+                                                        {writingFrameworkOptions.map((opt, index) => (
+                                                            <option key={index} value={opt.value}>{opt.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+
+                                            {formData.writingFrameworkMode === 'custom' && (
+                                                <div style={styles.formGroup}>
+                                                    <input
+                                                        type="text"
+                                                        id="customWritingFramework"
+                                                        name="customWritingFramework"
+                                                        value={formData.customWritingFramework}
+                                                        onChange={handleChange}
+                                                        style={styles.input}
+                                                        placeholder="e.g., Problem-Agitate-Solve with a storytelling intro"
+                                                        maxLength={120}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-
-                                    {/* --- EMOTIONAL INTENT --- */}
-                                    {renderModeToggle('emotionalIntentMode', 'Emotional Intent', 'Select the emotional tone for your content or describe a custom one')}
-                                    
-                                    {formData.emotionalIntentMode === 'predefined' && (
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="emotionalIntent" style={styles.label}>
-                                                    Select Emotional Intent
-                                                </label>
-                                                <select
-                                                    id="emotionalIntent"
-                                                    name="emotionalIntent"
-                                                    value={formData.emotionalIntent}
-                                                    onChange={handleChange}
-                                                    style={styles.select}
-                                                >
-                                                    <option value="">None (Neutral)</option>
-                                                    {emotionalIntentOptions.map((opt, index) => (
-                                                        <option key={index} value={opt.value}>{opt.label}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {formData.emotionalIntentMode === 'custom' && (
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="customEmotionalIntent" style={styles.label}>
-                                                    Custom Emotional Intent
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    id="customEmotionalIntent"
-                                                    name="customEmotionalIntent"
-                                                    value={formData.customEmotionalIntent}
-                                                    onChange={handleChange}
-                                                    style={styles.input}
-                                                    placeholder="e.g., Inspire hope and joy"
-                                                    maxLength={120}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
 
                                     {/* Compliance Notes */}
                                     <div className="col-12">
@@ -1752,59 +1676,14 @@ const CopywritingAssistantForm = () => {
                                         </div>
                                     </div>
 
-                                    {/* --- WRITING FRAMEWORK --- */}
-                                    {renderModeToggle('writingFrameworkMode', 'Writing Framework', 'Select a writing framework or specify a custom one for content structure')}
-                                    
-                                    {formData.writingFrameworkMode === 'predefined' && (
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="writingFramework" style={styles.label}>
-                                                    Select Writing Framework
-                                                </label>
-                                                <select
-                                                    id="writingFramework"
-                                                    name="writingFramework"
-                                                    value={formData.writingFramework}
-                                                    onChange={handleChange}
-                                                    style={styles.select}
-                                                >
-                                                    <option value="">None (Standard Structure)</option>
-                                                    {writingFrameworkOptions.map((opt, index) => (
-                                                        <option key={index} value={opt.value}>{opt.label}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {formData.writingFrameworkMode === 'custom' && (
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="customWritingFramework" style={styles.label}>
-                                                    Custom Writing Framework
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    id="customWritingFramework"
-                                                    name="customWritingFramework"
-                                                    value={formData.customWritingFramework}
-                                                    onChange={handleChange}
-                                                    style={styles.input}
-                                                    placeholder="e.g., Problem-Agitate-Solve with a storytelling intro"
-                                                    maxLength={120}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Output Structure Type (No mode change needed, kept as dropdown) */}
-                                    <div className="col-md-6">
+                                    {/* Output Structure */}
+                                    <div className="col-12">
                                         <div style={styles.formGroup}>
                                             <label htmlFor="outputStructure" style={styles.label}>
-                                                Output Structure (optional)
-                                                <span style={styles.infoIcon} data-tooltip-id="output-tooltip" data-tooltip-content="Select the format for the generated content">i</span>
+                                                Output Structure
+                                                <span style={styles.infoIcon} data-tooltip-id="output-structure-tooltip" data-tooltip-content="Select the desired output structure">i</span>
                                             </label>
-                                            <Tooltip id="output-tooltip" />
+                                            <Tooltip id="output-structure-tooltip" />
                                             <select
                                                 id="outputStructure"
                                                 name="outputStructure"
@@ -1868,7 +1747,7 @@ const CopywritingAssistantForm = () => {
                                     <div style={twoColContainerStyle}>
                                         <div style={colHalfStyle}>
                                             <div style={styles.formGroup}>
-                                                <label style={{ display: 'flex', alignItems: 'center',gap: '8px', cursor: 'pointer' }}>
+                                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                                                     <input
                                                         type="checkbox"
                                                         name="proofreading"
@@ -1890,7 +1769,7 @@ const CopywritingAssistantForm = () => {
                                         <>
                                             {/* --- GRAMMAR STRICTNESS MODE TOGGLE - NEW --- */}
                                             {renderModeToggle('grammarStrictnessMode', 'Grammar Strictness', 'Select how strictly grammar and style rules should be applied, or describe custom rules')}
-                                            
+
                                             {/* Grammar Strictness (Predefined/Custom Input) */}
                                             {formData.grammarStrictnessMode === 'predefined' && (
                                                 <div className="col-md-6">
@@ -1995,11 +1874,11 @@ const CopywritingAssistantForm = () => {
                     isHistoryView={isHistoryView}
                 />
             )}
-            
+
             {isApiLoading && (
                 <SurfingLoading mode={isHistoryView ? "history" : "generate"} />
             )}
-            
+
             {/* Output Section (initially hidden) - This remains unchanged */}
             {formData.submitted && (
                 <div style={{ marginTop: '40px' }}>
