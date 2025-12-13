@@ -52,7 +52,10 @@ const Captionandhastaggeneratorform = () => {
         emotionalIntentSelection: 'predefined', // <--- NEW STATE
         emotionalIntent: '', // key from API options
         customEmotionalIntent: '', // <--- NEW STATE
-        postLength: 'auto-detect', // <--- SET DEFAULT TO AUTO-DETECT
+        // Post length selection & value
+        postLengthSelection: 'predefined',
+        postLength: 'auto-detect', // default to Auto-Detect (Platform Optimized)
+        customPostLength: '',
         formattingOptions: [], // Multi-select checkbox array (e.g., ['emoji', 'linebreaks'])
         // CTA selection - NEW LOGIC TOGGLES ADDED
         ctaSelection: 'predefined', // <--- NEW STATE
@@ -114,7 +117,8 @@ const Captionandhastaggeneratorform = () => {
             return {
                 type: null,
                 id: 'auto-detect',
-                value: 'Auto-Length (Platform Optimized)'
+                value: 'Auto-Length (Platform Optimized)',
+                isAuto: true
             };
         }
 
@@ -127,6 +131,7 @@ const Captionandhastaggeneratorform = () => {
         if (fieldKey === 'caption_emotional_intent' && formData.emotionalIntentSelection === 'custom') isCustomMode = true;
         if (fieldKey === 'caption_style' && formData.captionStyleSelection === 'custom') isCustomMode = true;
         if (fieldKey === 'caption_hashtag_style' && formData.hashtagStyleSelection === 'custom') isCustomMode = true;
+        if (fieldKey === 'caption_post_length' && formData.postLengthSelection === 'custom') isCustomMode = true;
 
         const type = typeOverride || (isCustomMode ? 'custom' : 'predefined');
 
@@ -142,6 +147,8 @@ const Captionandhastaggeneratorform = () => {
                 finalCustomValue = formData.customLanguage;
             } else if (fieldKey === 'caption_emotional_intent') {
                 finalCustomValue = formData.customEmotionalIntent;
+            } else if (fieldKey === 'caption_post_length') {
+                finalCustomValue = formData.customPostLength;
             } else if (fieldKey === 'caption_style') {
                 finalCustomValue = formData.customCaptionStyle;
             } else if (fieldKey === 'caption_hashtag_style') {
@@ -151,7 +158,8 @@ const Captionandhastaggeneratorform = () => {
             return {
                 type: 'custom',
                 id: null,
-                value: finalCustomValue || 'Custom Input Required'
+                value: finalCustomValue || 'Custom Input Required',
+                isAuto: false
             };
         }
 
@@ -161,7 +169,8 @@ const Captionandhastaggeneratorform = () => {
             type: 'predefined',
             id: option?.id || null,
             // Use label for user-facing display, fall back to key/value if label is missing
-            value: option?.label || option?.key || value || 'N/A'
+            value: option?.label || option?.key || value || 'N/A',
+            isAuto: false
         };
     };
 
@@ -637,7 +646,7 @@ const Captionandhastaggeneratorform = () => {
         title: { margin: 0, fontSize: '24px', fontWeight: '600', color: '#f8fafc' },
         subtitle: { margin: '6px 0 0', fontSize: '14px', color: '#94a3b8' },
         formGroup: { marginBottom: '20px' },
-        label: { display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: '500', color: '#e2e8f0' },
+        label: { display: 'block', marginBottom: '6px', fontSize: '16px', fontWeight: '500', color: '#e2e8f0' },
         input: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box' },
         select: { width: '100%', height: '42px', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'\x3e\x3c/polyline\x3e\x3c/svg\x3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '20px', paddingRight: '40px', cursor: 'pointer' },
         textarea: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', resize: 'vertical', minHeight: '80px' },
@@ -1129,22 +1138,81 @@ const Captionandhastaggeneratorform = () => {
                                             </div>
                                         </div>
 
-                                        {/* Post Length (Right Half) - ADDED AUTO-DETECT */}
+                                        {/* Post Length (Right Half) - with Predefined/Custom toggle */}
                                         <div style={colHalfStyle}>
                                             <div style={styles.formGroup}>
                                                 <label htmlFor="postLength" style={styles.label}>Post Length</label>
-                                                <select
-                                                    id="postLength"
-                                                    name="postLength"
-                                                    value={formData.postLength}
-                                                    onChange={handleChange}
-                                                    style={styles.select}
-                                                >
-                                                    {/* Mapping over the combined list including Auto-Detect */}
-                                                    {postLengthOptions.map((option) => (
-                                                        <option key={option.key} value={option.key}>{option.label}</option>
-                                                    ))}
-                                                </select>
+
+                                                {/* Mode toggle: Predefined vs Custom */}
+                                                <div style={styles.radioGroup}>
+                                                    <label style={styles.radioItem}>
+                                                        <input
+                                                            type="radio"
+                                                            name="postLengthSelection"
+                                                            value="predefined"
+                                                            checked={formData.postLengthSelection === 'predefined'}
+                                                            onChange={handleChange}
+                                                        />
+                                                        Predefined
+                                                    </label>
+                                                    <label style={styles.radioItem}>
+                                                        <input
+                                                            type="radio"
+                                                            name="postLengthSelection"
+                                                            value="custom"
+                                                            checked={formData.postLengthSelection === 'custom'}
+                                                            onChange={handleChange}
+                                                        />
+                                                        Custom
+                                                    </label>
+                                                </div>
+
+                                                {formData.postLengthSelection === 'predefined' && (
+                                                    <select
+                                                        id="postLength"
+                                                        name="postLength"
+                                                        value={formData.postLength}
+                                                        onChange={handleChange}
+                                                        style={styles.select}
+                                                    >
+                                                        {postLengthOptions.map((option) => (
+                                                            <option key={option.key} value={option.key}>{option.label}</option>
+                                                        ))}
+                                                    </select>
+                                                )}
+
+                                                {formData.postLengthSelection === 'custom' && (
+                                                    <div>
+                                                        <input
+                                                            type="number"
+                                                            id="customPostLength"
+                                                            name="customPostLength"
+                                                            value={formData.customPostLength}
+                                                            onChange={(e) => {
+                                                                let val = e.target.value;
+                                                                // allow empty, otherwise clamp to 1-2000
+                                                                if (val === '') {
+                                                                    setFormData(prev => ({ ...prev, customPostLength: '' }));
+                                                                    return;
+                                                                }
+                                                                const num = parseInt(val, 10);
+                                                                if (isNaN(num)) return;
+                                                                const clamped = Math.max(1, Math.min(2000, num));
+                                                                setFormData(prev => ({ ...prev, customPostLength: clamped.toString() }));
+                                                            }}
+                                                            min={1}
+                                                            max={2000}
+                                                            step={1}
+                                                            style={styles.input}
+                                                            placeholder="Enter desired post length (1-2000 characters)"
+                                                        />
+                                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+                                                                <span style={{ color: '#9ca3af', fontSize: '14px' }}>
+                                                                    Custom post  length must be an integer between 1 and 2000 characters.
+                                                                </span>
+                                                            </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
