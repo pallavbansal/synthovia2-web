@@ -129,6 +129,8 @@ const AdCopyGeneratorForm = () => {
     const [toneCustom, setToneCustom] = useState('');
     const [headlineFocusMode, setHeadlineFocusMode] = useState('predefined');
     const [headlineFocusCustom, setHeadlineFocusCustom] = useState('');
+    const [adTextLengthMode, setAdTextLengthMode] = useState('predefined');
+    const [adTextLengthCustom, setAdTextLengthCustom] = useState('');
     const [ctaTypeMode, setCtaTypeMode] = useState('predefined');
     const [ctaTypeCustom, setCtaTypeCustom] = useState('');
     const [emotionalAngleMode, setEmotionalAngleMode] = useState('predefined');
@@ -774,7 +776,9 @@ const AdCopyGeneratorForm = () => {
             variants: 3,
             tone: 'Auto-Detect (Based on Platform)',
             headlineFocus: 'Auto-Select (Recommended)',
+            adTextLengthMode: 'predefined',
             adTextLength: 'Auto-Length (Platform Optimized)',
+            adTextLengthCustom: '',
             ctaType: 'Learn More',
             emotionalAngle: 'Pain → Solution',
             complianceNote: '',
@@ -801,6 +805,8 @@ const AdCopyGeneratorForm = () => {
         setToneCustom('');
         setHeadlineFocusMode('predefined');
         setHeadlineFocusCustom('');
+        setAdTextLengthMode('predefined');
+        setAdTextLengthCustom('');
         setCtaTypeMode('predefined');
         setCtaTypeCustom('');
         setEmotionalAngleMode('predefined');
@@ -1579,43 +1585,120 @@ const AdCopyGeneratorForm = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Ad Text Length (full width) */}
-                                            <div className="col-12">
+                                            {/* Ad Text Length (6-column on desktop, full-width on mobile) */}
+                                            <div className="col-12 col-md-6">
                                                 <div style={styles.formGroup}>
                                                     <label htmlFor="adTextLength" style={styles.label}>
                                                         Ad Text Length
                                                         <span
                                                             style={styles.infoIcon}
                                                             data-tooltip-id="adTextLength-tooltip"
-                                                            data-tooltip-content="Select the desired length for your ad copy."
+                                                            data-tooltip-content="Select the desired length for your ad copy, or define a custom description."
                                                         >
                                                             i
                                                         </span>
                                                     </label>
                                                     <Tooltip id="adTextLength-tooltip" />
-                                                    <select
-                                                        id="adTextLength"
-                                                        name="adTextLength"
-                                                        // Use key for value attribute, label for display
-                                                        value={fieldOptions.primary_text_length.find(opt => opt.label === formData.adTextLength)?.key || formData.adTextLength}
-                                                        onChange={handleChange}
-                                                        style={styles.select}
-                                                    >
-                                                        <option value="Auto-Length (Platform Optimized)">Auto-Length (Platform Optimized)</option>
-                                                        {fieldOptions.primary_text_length && fieldOptions.primary_text_length.map((option) => (
-                                                            <option
-                                                                key={option.key || option.id}
-                                                                value={option.key}
-                                                            >
-                                                                {option.label}
-                                                            </option>
-                                                        ))}
-                                                    </select>
+
+                                                    {/* Mode toggle: Predefined vs Custom */}
+                                                    <div style={styles.radioGroup}>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="adTextLengthMode"
+                                                                value="predefined"
+                                                                checked={adTextLengthMode === 'predefined'}
+                                                                onChange={() => {
+                                                                    setAdTextLengthMode('predefined');
+                                                                    // Reset to default auto-length option when switching back
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        adTextLength: 'Auto-Length (Platform Optimized)',
+                                                                    }));
+                                                                }}
+                                                            />
+                                                            <span>Predefined</span>
+                                                        </label>
+                                                        <label style={styles.radioItem}>
+                                                            <input
+                                                                type="radio"
+                                                                name="adTextLengthMode"
+                                                                value="custom"
+                                                                checked={adTextLengthMode === 'custom'}
+                                                                onChange={() => {
+                                                                    setAdTextLengthMode('custom');
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        adTextLength: adTextLengthCustom || prev.adTextLength,
+                                                                    }));
+                                                                }}
+                                                            />
+                                                            <span>Custom</span>
+                                                        </label>
+                                                    </div>
+
+                                                    {/* Predefined length select */}
+                                                    {adTextLengthMode === 'predefined' && (
+                                                        <select
+                                                            id="adTextLength"
+                                                            name="adTextLength"
+                                                            // Use key for value attribute, label for display
+                                                            value={fieldOptions.primary_text_length.find(opt => opt.label === formData.adTextLength)?.key || formData.adTextLength}
+                                                            onChange={handleChange}
+                                                            style={styles.select}
+                                                        >
+                                                            <option value="Auto-Length (Platform Optimized)">Auto-Length (Platform Optimized)</option>
+                                                            {fieldOptions.primary_text_length && fieldOptions.primary_text_length.map((option) => (
+                                                                <option
+                                                                    key={option.key || option.id}
+                                                                    value={option.key}
+                                                                >
+                                                                    {option.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    )}
+
+                                                    {/* Custom length description (numeric, max 2000) */}
+                                                    {adTextLengthMode === 'custom' && (
+                                                        <>
+                                                            <input
+                                                                type="number"
+                                                                id="adTextLengthCustom"
+                                                                name="adTextLengthCustom"
+                                                                value={adTextLengthCustom}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    // Allow empty value while typing, otherwise clamp to 0-2000 range
+                                                                    if (val === '') {
+                                                                        setAdTextLengthCustom(val);
+                                                                        setFormData(prev => ({ ...prev, adTextLength: val }));
+                                                                        return;
+                                                                    }
+
+                                                                    const numeric = Math.min(2000, Math.max(0, parseInt(val, 10) || 0));
+                                                                    const next = String(numeric);
+                                                                    setAdTextLengthCustom(next);
+                                                                    setFormData(prev => ({ ...prev, adTextLength: next }));
+                                                                }}
+                                                                style={{ ...styles.input, marginTop: '8px' }}
+                                                                placeholder="Enter desired length (1 - 2000 characters)"
+                                                                min={0}
+                                                                max={2000}
+                                                                step={1}
+                                                            />
+                                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+                                                                <span style={{ color: '#9ca3af', fontSize: '14px' }}>
+                                                                    Custom ad text length must be an integer between 1 and 2000 characters.
+                                                                </span>
+                                                            </div>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </div>
 
-                                            {/* CTA Type (full width) */}
-                                            <div className="col-12">
+                                            {/* CTA Type (6-column on desktop, full-width on mobile) */}
+                                            <div className="col-12 col-md-6">
                                                 <div style={styles.formGroup}>
                                                     <label htmlFor="ctaType" style={styles.label}>
                                                         Call to Action (CTA)

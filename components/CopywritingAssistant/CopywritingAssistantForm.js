@@ -29,16 +29,19 @@ const CopywritingAssistantForm = () => {
         useCase: '',
         customUseCase: '',
         primaryGoal: '',
-        targetAudience: '',
+        targetAudience: [],
+
         toneMode: 'predefined',
         toneOfVoice: '',
         customTone: '',
         languageMode: 'predefined',
         language: 'English',
         customLanguage: '',
+        lengthTargetMode: 'predefined',
         lengthTarget: 'auto-detect',
         customWordCount: 180,
-        keyPoints: '',
+        keyPoints: [],
+
         variants: 3,
         showAdvanced: false,
         keywords: '',
@@ -65,11 +68,9 @@ const CopywritingAssistantForm = () => {
         writingFrameworkMode: 'predefined',
         writingFramework: '',
         customWritingFramework: '',
-        // --- UPDATED STATE FIELD FOR GRAMMAR STRICTNESS MODE ---
         grammarStrictnessMode: 'predefined',
         grammarStrictness: 'medium',
         customGrammarStrictness: '',
-        // ----------------------------------------------------
         formattingOptions: [],
         includeWords: [],
         excludeWords: [],
@@ -100,6 +101,19 @@ const CopywritingAssistantForm = () => {
     const [isFetchingLog, setIsFetchingLog] = useState(false);
     const [isApiLoading, setIsApiLoading] = useState(false);
     const [isHistoryView, setIsHistoryView] = useState(false);
+
+    // Target Audience (multi-tag) state
+    const audienceSuggestions = {
+        'Demographics': ['Women 25-34', 'Men 35-44', 'Parents of Toddlers'],
+        'Interests': ['Fitness Enthusiasts', 'Tech Early Adopters', 'Travel Lovers'],
+        'Professions': ['Marketing Managers', 'Small Business Owners', 'Software Engineers']
+    };
+
+    const [audienceInput, setAudienceInput] = useState('');
+    const [showAudienceSuggestions, setShowAudienceSuggestions] = useState(false);
+
+    const [keyPointsInput, setKeyPointsInput] = useState('');
+    const [showKeyPointsSuggestions, setShowKeyPointsSuggestions] = useState(false);
 
     const showNotification = (message, type) => {
         setNotification({ show: true, message, type });
@@ -343,6 +357,64 @@ const CopywritingAssistantForm = () => {
         }
     };
 
+    const addAudienceChip = (value) => {
+        const trimmed = value.trim();
+        if (!trimmed) return;
+
+        setFormData((prev) => {
+            if (prev.targetAudience.includes(trimmed)) return prev;
+            return {
+                ...prev,
+                targetAudience: [...prev.targetAudience, trimmed],
+            };
+        });
+
+        setAudienceInput('');
+        setShowAudienceSuggestions(false);
+    };
+
+    const removeAudienceChip = (chip) => {
+        setFormData((prev) => ({
+            ...prev,
+            targetAudience: prev.targetAudience.filter((item) => item !== chip),
+        }));
+    };
+
+    const handleAudienceInput = (e) => {
+        const value = e.target.value;
+        setAudienceInput(value);
+        setShowAudienceSuggestions(value.trim().length > 0);
+    };
+
+    const addKeyPointsChip = (value) => {
+        const trimmed = value.trim();
+        if (!trimmed) return;
+
+        setFormData((prev) => {
+            if (prev.keyPoints.includes(trimmed)) return prev;
+            return {
+                ...prev,
+                keyPoints: [...prev.keyPoints, trimmed],
+            };
+        });
+
+        setKeyPointsInput('');
+        setShowKeyPointsSuggestions(false);
+    };
+
+    const removeKeyPointsChip = (chip) => {
+        setFormData((prev) => ({
+            ...prev,
+            keyPoints: prev.keyPoints.filter((item) => item !== chip),
+        }));
+    };
+
+    const handleKeyPointsInput = (e) => {
+        const value = e.target.value;
+        setKeyPointsInput(value);
+        setShowKeyPointsSuggestions(value.trim().length > 0);
+    };
+
     const removeItem = (field, index) => {
         setFormData((prev) => ({
             ...prev,
@@ -361,7 +433,13 @@ const CopywritingAssistantForm = () => {
         e.preventDefault();
 
         // Basic validation for required fields
-        if (!formData.primaryGoal || !formData.targetAudience || !formData.keyPoints) {
+        if (
+            !formData.primaryGoal ||
+            !formData.targetAudience ||
+            formData.targetAudience.length === 0 ||
+            !formData.keyPoints ||
+            (Array.isArray(formData.keyPoints) && formData.keyPoints.length === 0)
+        ) {
             alert('Please fill in all required fields (marked with *)');
             return;
         }
@@ -408,14 +486,11 @@ const CopywritingAssistantForm = () => {
                 alert('Please enter a Custom Writing Framework.');
                 return;
             }
-            // --- UPDATED VALIDATION FOR GRAMMAR STRICTNESS ---
             if (formData.proofreading && formData.grammarStrictnessMode === 'custom' && !formData.customGrammarStrictness) {
                 alert('Please enter a Custom Grammar Strictness.');
                 return;
             }
-            // ------------------------------------------------
         }
-
 
         setShowSummary(true);
     };
@@ -441,11 +516,14 @@ const CopywritingAssistantForm = () => {
         const languageObj = buildOptionObject('language', languageValue, languageType) || { id: null, value: languageValue, type: languageType };
 
         let lengthTargetObj;
-        if (formData.lengthTarget === 'custom') {
+        if (formData.lengthTargetMode === 'custom') {
+            // Custom numeric word count
             lengthTargetObj = { id: null, value: formData.customWordCount, type: 'custom' };
         } else if (formData.lengthTarget === 'auto-detect') {
+            // Auto-detect remains a special predefined option
             lengthTargetObj = { id: 'auto-detect', value: null, type: 'predefined' };
         } else {
+            // Standard predefined option from API/static list
             lengthTargetObj =
                 buildOptionObject('length_target', formData.lengthTarget) || {
                     id: null,
@@ -540,7 +618,12 @@ const CopywritingAssistantForm = () => {
             tone_of_voice: toneObj,
             language: languageObj,
             length_target: lengthTargetObj,
-            key_points: formData.keyPoints,
+            key_points: Array.isArray(formData.keyPoints)
+                ? formData.keyPoints
+                : String(formData.keyPoints)
+                    .split('\n')
+                    .map((v) => v.trim())
+                    .filter(Boolean),
             number_of_variants: parseInt(formData.variants, 10) || 1,
             show_advanced_features: !!formData.showAdvanced,
             keywords: keywordsArray,
@@ -913,51 +996,48 @@ const CopywritingAssistantForm = () => {
                                                     Custom
                                                 </label>
                                             </div>
-                                      
-                                   
 
-                                    {/* Predefined Use Case (shown when predefined is selected) */}
-                                    {formData.useCaseMode === 'predefined' && (
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <select
-                                                    id="useCase"
-                                                    name="useCase"
-                                                    value={formData.useCase}
-                                                    onChange={handleChange}
-                                                    style={styles.select}
-                                                    required={formData.useCaseMode === 'predefined'}
-                                                >
-                                                    <option value="">Select a use case</option>
-                                                    {useCaseOptions.map((option, index) => (
-                                                        <option key={index} value={option.value}>{option.label}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
+                                            {/* Predefined Use Case (shown when predefined is selected) */}
+                                            {formData.useCaseMode === 'predefined' && (
+                                                <div className="col-md-6">
+                                                    <div style={styles.formGroup}>
+                                                        <select
+                                                            id="useCase"
+                                                            name="useCase"
+                                                            value={formData.useCase}
+                                                            onChange={handleChange}
+                                                            style={styles.select}
+                                                            required={formData.useCaseMode === 'predefined'}
+                                                        >
+                                                            <option value="">Select a use case</option>
+                                                            {useCaseOptions.map((option, index) => (
+                                                                <option key={index} value={option.value}>{option.label}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Custom Use Case (shown when custom is selected) */}
+                                            {formData.useCaseMode === 'custom' && (
+                                                <div className="col-md-6">
+                                                    <div style={styles.formGroup}>
+                                                        <input
+                                                            type="text"
+                                                            id="customUseCase"
+                                                            name="customUseCase"
+                                                            value={formData.customUseCase}
+                                                            onChange={handleChange}
+                                                            style={styles.input}
+                                                            placeholder="Describe your specific use case"
+                                                            maxLength={150}
+                                                            required={formData.useCaseMode === 'custom'}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-
-
-                                    {/* Custom Use Case (shown when custom is selected) */}
-                                    {formData.useCaseMode === 'custom' && (
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <input
-                                                    type="text"
-                                                    id="customUseCase"
-                                                    name="customUseCase"
-                                                    value={formData.customUseCase}
-                                                    onChange={handleChange}
-                                                    style={styles.input}
-                                                    placeholder="Describe your specific use case"
-                                                    maxLength={150}
-                                                    required={formData.useCaseMode === 'custom'}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-                                     </div>
-                                       </div>
+                                    </div>
 
                                     {/* Primary Goal */}
                                     <div className="col-12">
@@ -983,20 +1063,155 @@ const CopywritingAssistantForm = () => {
                                     {/* Target Audience */}
                                     <div className="col-12">
                                         <div style={styles.formGroup}>
-                                            <label htmlFor="targetAudience" style={styles.label}>
+                                            <label style={styles.label}>
                                                 Target Audience <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} data-tooltip-id="audience-tooltip" data-tooltip-content="Describe your target audience (max 120 words)">i</span>
+                                                <span
+                                                    style={styles.infoIcon}
+                                                    data-tooltip-id="targetAudience-tooltip"
+                                                    data-tooltip-html="Describe who you want to reach with this ad. Include audience characteristics like age, profession, interests, and behavior. This helps generate messaging that speaks directly to the right people and increases conversions."
+                                                >
+                                                    i
+                                                </span>
                                             </label>
-                                            <Tooltip id="audience-tooltip" />
-                                            <textarea
-                                                id="targetAudience"
-                                                name="targetAudience"
-                                                value={formData.targetAudience}
-                                                onChange={handleChange}
-                                                style={{ ...styles.textarea, minHeight: '60px' }}
-                                                placeholder="Who is your target audience? (e.g., age, interests, profession)"
-                                                maxLength={600} // ~120 words
-                                            />
+                                            <Tooltip id="targetAudience-tooltip" />
+
+                                            {/* Audience Chips and Input (multi-select custom input) */}
+                                            <div style={{
+                                                display: 'flex',
+                                                flexWrap: 'wrap',
+                                                gap: '8px',
+                                                marginBottom: '8px',
+                                                minHeight: '40px',
+                                                alignItems: 'center',
+                                                padding: '4px',
+                                                border: '1px solid #d1d5db',
+                                                borderRadius: '6px',
+                                                backgroundColor: formData.targetAudience.length > 0 ? '#f9fafb' : 'white'
+                                            }}>
+                                                {formData.targetAudience.length === 0 && (
+                                                    <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
+                                                        Add audience segments (e.g., 'Women 25-34', 'Fitness Enthusiasts')
+                                                    </span>
+                                                )}
+                                                {formData.targetAudience.map((chip, index) => (
+                                                    <span
+                                                        key={index}
+                                                        style={{
+                                                            ...styles.badge,
+                                                            ...styles.badgePrimary,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '6px',
+                                                            padding: '4px 10px'
+                                                        }}
+                                                    >
+                                                        {chip}
+
+                                                        <RemoveTagButton
+                                                            style={styles.removeBtn}
+                                                            onClick={() => removeAudienceChip(chip)}
+                                                        />
+                                                    </span>
+                                                ))}
+                                            </div>
+
+                                            <div style={{ position: 'relative' }}>
+                                                <input
+                                                    type="text"
+                                                    value={audienceInput}
+                                                    onChange={handleAudienceInput}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter' && audienceInput.trim()) {
+                                                            e.preventDefault();
+                                                            addAudienceChip(audienceInput.trim());
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        ...styles.input,
+                                                        marginBottom: 0,
+                                                        borderBottomLeftRadius: showAudienceSuggestions ? '0' : '6px',
+                                                        borderBottomRightRadius: showAudienceSuggestions ? '0' : '6px'
+                                                    }}
+                                                    placeholder="Type and press Enter to add audience segments"
+                                                    required={formData.targetAudience.length === 0}
+                                                />
+
+                                                {showAudienceSuggestions && (
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        top: '100%',
+                                                        left: 0,
+                                                        right: 0,
+                                                        backgroundColor: 'white',
+                                                        border: '1px solid #d1d5db',
+                                                        borderTop: 'none',
+                                                        borderBottomLeftRadius: '6px',
+                                                        borderBottomRightRadius: '6px',
+                                                        zIndex: 1000,
+                                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                                                        maxHeight: '200px',
+                                                        overflowY: 'auto'
+                                                    }}>
+                                                        {Object.entries(audienceSuggestions).map(([category, suggestions]) => {
+                                                            const filtered = suggestions.filter(s =>
+                                                                s.toLowerCase().includes(audienceInput.toLowerCase()) &&
+                                                                !formData.targetAudience.includes(s)
+                                                            );
+
+                                                            if (filtered.length === 0) return null;
+
+                                                            return (
+                                                                <div key={category}>
+                                                                    <div style={{
+                                                                        padding: '8px 12px',
+                                                                        fontSize: '12px',
+                                                                        fontWeight: 600,
+                                                                        color: '#4b5563',
+                                                                        backgroundColor: '#f3f4f6',
+                                                                        textTransform: 'uppercase',
+                                                                        letterSpacing: '0.05em'
+                                                                    }}>
+                                                                        {category}
+                                                                    </div>
+                                                                    {filtered.map((suggestion, idx) => (
+                                                                        <div
+                                                                            key={idx}
+                                                                            onClick={() => {
+                                                                                addAudienceChip(suggestion);
+                                                                                setAudienceInput('');
+                                                                            }}
+                                                                            style={{ padding: '8px 16px', cursor: 'pointer' }}
+                                                                        >
+                                                                            {suggestion}
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            );
+                                                        })}
+
+                                                        {audienceInput && !Object.values(audienceSuggestions)
+                                                            .flat()
+                                                            .some(s => s.toLowerCase() === audienceInput.toLowerCase()) && (
+                                                                <div
+                                                                    onClick={() => {
+                                                                        addAudienceChip(audienceInput);
+                                                                        setAudienceInput('');
+                                                                    }}
+                                                                    style={{
+                                                                        padding: '8px 16px',
+                                                                        cursor: 'pointer',
+                                                                        backgroundColor: '#f8fafc',
+                                                                        borderTop: '1px solid #e5e7eb',
+                                                                        color: '#3b82f6',
+                                                                        fontWeight: 500
+                                                                    }}
+                                                                >
+                                                                    Add **"{audienceInput}"** as custom audience
+                                                                </div>
+                                                            )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1141,6 +1356,80 @@ const CopywritingAssistantForm = () => {
                                         </div>
                                     </div>
 
+                                    {/* Key Points */}
+                                    <div className="col-12">
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="keyPoints" style={styles.label}>
+                                                Key Points <span style={{ color: '#ef4444' }}>*</span>
+                                                <span
+                                                    style={styles.infoIcon}
+                                                    data-tooltip-id="keyPoints-tooltip"
+                                                    data-tooltip-content="List the main points to include in your content as short bullets."
+                                                >
+                                                    i
+                                                </span>
+                                            </label>
+                                            <Tooltip id="keyPoints-tooltip" />
+
+                                            <div style={{
+                                                display: 'flex',
+                                                flexWrap: 'wrap',
+                                                gap: '8px',
+                                                marginBottom: '8px',
+                                                minHeight: '40px',
+                                                alignItems: 'center',
+                                                padding: '4px',
+                                                border: '1px solid #d1d5db',
+                                                borderRadius: '6px',
+                                                backgroundColor: formData.keyPoints.length > 0 ? '#f9fafb' : 'white'
+                                            }}>
+                                                {formData.keyPoints.length === 0 && (
+                                                    <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
+                                                        Add key points (e.g., 'Highlight main benefit', 'Mention free trial')
+                                                    </span>
+                                                )}
+                                                {formData.keyPoints.map((chip, index) => (
+                                                    <span
+                                                        key={index}
+                                                       style={{
+                                                            ...styles.badge,
+                                                            ...styles.badgePrimary,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '6px',
+                                                            padding: '4px 10px'
+                                                        }}
+                                                    >
+                                                        {chip}
+
+                                                        <RemoveTagButton
+                                                            style={styles.removeBtn}
+                                                            onClick={() => removeKeyPointsChip(chip)}
+                                                        />
+                                                    </span>
+                                                ))}
+                                            </div>
+
+                                            <input
+                                                type="text"
+                                                value={keyPointsInput}
+                                                onChange={handleKeyPointsInput}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' && keyPointsInput.trim()) {
+                                                        e.preventDefault();
+                                                        addKeyPointsChip(keyPointsInput.trim());
+                                                    }
+                                                }}
+                                                style={{
+                                                    ...styles.input,
+                                                    marginBottom: 0,
+                                                }}
+                                                placeholder="Type a key point and press Enter to add"
+                                                required={formData.keyPoints.length === 0}
+                                            />
+                                        </div>
+                                    </div>
+
                                     {/* Length Target */}
                                     <div className="col-12">
                                         <div style={styles.formGroup}>
@@ -1149,19 +1438,51 @@ const CopywritingAssistantForm = () => {
                                                 <span style={styles.infoIcon} data-tooltip-id="length-tooltip" data-tooltip-content="Select or specify your desired word count">i</span>
                                             </label>
                                             <Tooltip id="length-tooltip" />
-                                            <div style={{ display: 'flex', gap: '10px' }}>
-                                                <select
-                                                    id="lengthTarget"
-                                                    name="lengthTarget"
-                                                    value={formData.lengthTarget}
-                                                    onChange={handleChange}
-                                                    style={{ ...styles.select, flex: 1 }}
-                                                >
-                                                    {lengthTargetOptions.map((opt, index) => (
-                                                        <option key={index} value={opt.value}>{opt.label}</option>
-                                                    ))}
-                                                </select>
-                                                {formData.lengthTarget === 'custom' && (
+
+                                            {/* Mode toggle: Predefined vs Custom */}
+                                            <div style={{ display: 'flex', gap: '20px', marginTop: '4px', marginBottom: '8px' }}>
+                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="radio"
+                                                        name="lengthTargetMode"
+                                                        value="predefined"
+                                                        checked={formData.lengthTargetMode === 'predefined'}
+                                                        onChange={handleChange}
+                                                        style={{ marginRight: '8px' }}
+                                                    />
+                                                    Predefined
+                                                </label>
+                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="radio"
+                                                        name="lengthTargetMode"
+                                                        value="custom"
+                                                        checked={formData.lengthTargetMode === 'custom'}
+                                                        onChange={handleChange}
+                                                        style={{ marginRight: '8px' }}
+                                                    />
+                                                    Custom
+                                                </label>
+                                            </div>
+
+                                            {formData.lengthTargetMode === 'predefined' && (
+                                                <div style={{ display: 'flex', gap: '10px' }}>
+                                                    <select
+                                                        id="lengthTarget"
+                                                        name="lengthTarget"
+                                                        value={formData.lengthTarget}
+                                                        onChange={handleChange}
+                                                        style={{ ...styles.select, flex: 1 }}
+                                                    >
+                                                        {lengthTargetOptions.map((opt, index) => (
+                                                            <option key={index} value={opt.value}>{opt.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+
+                                            {formData.lengthTargetMode === 'custom' && (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                                     <input
                                                         type="number"
                                                         name="customWordCount"
@@ -1169,32 +1490,14 @@ const CopywritingAssistantForm = () => {
                                                         onChange={handleChange}
                                                         min="50"
                                                         max="2000"
-                                                        style={{ ...styles.input, width: '100px' }}
-                                                        placeholder="Words"
+                                                        style={{ ...styles.input, maxWidth: '160px' }}
+                                                        placeholder="Target words (50-2000)"
                                                     />
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Key Points */}
-                                    <div className="col-12">
-                                        <div style={styles.formGroup}>
-                                            <label htmlFor="keyPoints" style={styles.label}>
-                                                Key Points <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} data-tooltip-id="keyPoints-tooltip" data-tooltip-content="List the main points to include in your content (max 1200 characters)">i</span>
-                                            </label>
-                                            <Tooltip id="keyPoints-tooltip" />
-                                            <textarea
-                                                id="keyPoints"
-                                                name="keyPoints"
-                                                value={formData.keyPoints}
-                                                onChange={handleChange}
-                                                style={{ ...styles.textarea, minHeight: '100px' }}
-                                                placeholder="Enter the key points you want to cover, one per line"
-                                                maxLength={1200}
-                                                required
-                                            />
+                                                    <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+                                                        Custom length target should be between 50 and 2000 words. The generator will aim for this length.
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
