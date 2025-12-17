@@ -1167,7 +1167,7 @@ const AdCopyGeneratorForm = () => {
                                                             i
                                                         </span>
                                                     </label>
-                                                    <Tooltip id="campaignObjective-tooltip" />
+                                                    <Tooltip style={styles.toolTip} id="campaignObjective-tooltip" />
                                                     <div style={styles.radioGroup}>
                                                         <label style={styles.radioItem}>
                                                             <input
@@ -1251,7 +1251,7 @@ const AdCopyGeneratorForm = () => {
                                                             i
                                                         </span>
                                                     </label>
-                                                    <Tooltip id="targetAudience-tooltip" />
+                                                    <Tooltip style={styles.toolTip} id="targetAudience-tooltip" />
 
                                                     {/* Audience Chips and Input (No change here as it's a multi-select custom input) */}
                                                     {/* ... (Audience Input/Chips render logic remains the same) ... */}
@@ -1407,7 +1407,7 @@ const AdCopyGeneratorForm = () => {
                                                             i
                                                         </span>
                                                     </label>
-                                                    <Tooltip id="productServices-tooltip" />
+                                                    <Tooltip style={styles.toolTip} id="productServices-tooltip" />
                                                     <textarea
                                                         id="productServices"
                                                         name="productServices"
@@ -1433,7 +1433,7 @@ const AdCopyGeneratorForm = () => {
                                                             i
                                                         </span>
                                                     </label>
-                                                    <Tooltip id="tone-tooltip" />
+                                                    <Tooltip style={styles.toolTip} id="tone-tooltip" />
                                                     <div style={styles.radioGroup}>
                                                         <label style={styles.radioItem}>
                                                             <input
@@ -1516,7 +1516,7 @@ const AdCopyGeneratorForm = () => {
                                                             i
                                                         </span>
                                                     </label>
-                                                    <Tooltip id="headlineFocus-tooltip" />
+                                                    <Tooltip style={styles.toolTip} id="headlineFocus-tooltip" />
                                                     <div style={styles.radioGroup}>
                                                         <label style={styles.radioItem}>
                                                             <input
@@ -1598,7 +1598,7 @@ const AdCopyGeneratorForm = () => {
                                                             i
                                                         </span>
                                                     </label>
-                                                    <Tooltip id="adTextLength-tooltip" />
+                                                    <Tooltip style={styles.toolTip} id="adTextLength-tooltip" />
 
                                                     {/* Mode toggle: Predefined vs Custom */}
                                                     <div style={styles.radioGroup}>
@@ -1710,7 +1710,7 @@ const AdCopyGeneratorForm = () => {
                                                             i
                                                         </span>
                                                     </label>
-                                                    <Tooltip id="ctaType-tooltip" />
+                                                    <Tooltip style={styles.toolTip} id="ctaType-tooltip" />
                                                     <div style={styles.radioGroup}>
                                                         <label style={styles.radioItem}>
                                                             <input
@@ -1786,7 +1786,7 @@ const AdCopyGeneratorForm = () => {
                                                         Key Benefits
                                                         <span style={styles.infoIcon} data-tooltip-id="keyBenefits-tooltip" data-tooltip-content="List the main benefits of your product/service (press Enter to add)">i</span>
                                                     </label>
-                                                    <Tooltip id="keyBenefits-tooltip" />
+                                                    <Tooltip style={styles.toolTip} id="keyBenefits-tooltip" />
                                                     <div style={{
                                                         display: 'flex',
                                                         flexWrap: 'wrap',
@@ -1844,7 +1844,7 @@ const AdCopyGeneratorForm = () => {
                                                         Number of Variants: {formData.variants}
                                                         <span style={styles.infoIcon} data-tooltip-id="variants-tooltip" data-tooltip-content="How many different ad variations would you like to generate?">i</span>
                                                     </label>
-                                                    <Tooltip id="variants-tooltip" />
+                                                    <Tooltip style={styles.toolTip} id="variants-tooltip" />
                                                     <input
                                                         type="range"
                                                         id="variants"
@@ -2135,7 +2135,7 @@ const AdCopyGeneratorForm = () => {
                                                         Audience Pain Points (Optional)
                                                         <span style={styles.infoIcon} data-tooltip-id="audiencePain-tooltip" data-tooltip-content="What problems or pain points does your product/service solve? (press Enter to add)">i</span>
                                                     </label>
-                                                    <Tooltip id="audiencePain-tooltip" />
+                                                    <Tooltip style={styles.toolTip} id="audiencePain-tooltip" />
                                                     <input
                                                         type="text"
                                                         style={styles.input}
@@ -2213,7 +2213,7 @@ const AdCopyGeneratorForm = () => {
                                                         Proof & Credibility Elements (Optional)
                                                         <span style={styles.infoIcon} data-tooltip-id="proofCredibility-tooltip" data-tooltip-content="Add trust signals (press Enter to add)">i</span>
                                                     </label>
-                                                    <Tooltip id="proofCredibility-tooltip" />
+                                                    <Tooltip style={styles.toolTip} id="proofCredibility-tooltip" />
                                                     <input
                                                         type="text"
                                                         style={styles.input}

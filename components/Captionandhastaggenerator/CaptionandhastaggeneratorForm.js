@@ -642,10 +642,10 @@ const Captionandhastaggeneratorform = () => {
     const styles = {
         container: { maxWidth: '1100px', margin: '0 auto', padding: '24px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', backgroundColor: '#0a0e1a', minHeight: '100vh' },
         card: { backgroundColor: '#141b2d', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.3)', overflow: 'hidden', border: '1px solid #1e293b' },
-        header: { padding: '24px 32px', borderBottom: '1px solid #1e293b', backgroundColor: '#0f1624' },
+        header: { padding: '24px 32px', borderBottom: '1px solid #1e293b' },
         title: { margin: 0, fontSize: '24px', fontWeight: '600', color: '#f8fafc' },
         subtitle: { margin: '6px 0 0', fontSize: '14px', color: '#94a3b8' },
-        formGroup: { marginBottom: '20px' },
+        formGroup: { marginBottom: '8px' },
         label: { display: 'block', marginBottom: '6px', fontSize: '16px', fontWeight: '500', color: '#e2e8f0' },
         input: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box' },
         select: { width: '100%', height: '42px', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'\x3e\x3c/polyline\x3e\x3c/svg\x3e")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '20px', paddingRight: '40px', cursor: 'pointer' },
@@ -675,6 +675,7 @@ const Captionandhastaggeneratorform = () => {
                 backgroundColor: 'rgba(255, 255, 255, 0.05)'
             }
         },
+        toolTip: { width: '40%' },
         checkboxInput: {
             width: '18px',
             height: '18px',
@@ -699,7 +700,7 @@ const Captionandhastaggeneratorform = () => {
         flexWrap: 'wrap',
         justifyContent: 'space-between',
         gap: COLUMN_GAP,
-        marginBottom: '20px',
+        marginBottom: '8px',
         width: '100%'
     };
     const colHalfStyle = {
@@ -707,7 +708,7 @@ const Captionandhastaggeneratorform = () => {
     };
     const colFullStyle = {
         width: '100%',
-        marginBottom: '20px',
+        marginBottom: '8px',
     };
 
 
@@ -736,13 +737,13 @@ const Captionandhastaggeneratorform = () => {
                     {notification.message}
                 </div>
             )}
-
-            <div style={styles.card}>
-                {/* Header */}
+            {/* Header */}
                 <div style={styles.header} id="caption-form-top">
-                    <h1 style={styles.title}>Caption & Hashtag Generator ✍️</h1>
+                    <h1 style={styles.title}>Caption & Hashtag Generator</h1>
                     <p style={styles.subtitle}>Create engaging captions and hashtags for your social media posts</p>
                 </div>
+
+            <div style={styles.card}>
 
                 <div style={{ padding: '24px' }}>
                     <form onSubmit={handleSubmit}>
@@ -757,7 +758,7 @@ const Captionandhastaggeneratorform = () => {
                                                 Post Theme / Topic <span style={{ color: '#ef4444' }}>*</span>
                                                 <span style={styles.infoIcon} data-tooltip-id="postTheme-tooltip" data-tooltip-content="Describe the main theme or topic of your post (max 1200 characters)">i</span>
                                             </label>
-                                            <Tooltip id="postTheme-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="postTheme-tooltip" />
                                             <textarea
                                                 id="postTheme"
                                                 name="postTheme"
@@ -778,7 +779,7 @@ const Captionandhastaggeneratorform = () => {
                                                 Primary Goal <span style={{ color: '#ef4444' }}>*</span>
                                                 <span style={styles.infoIcon} data-tooltip-id="primaryGoal-tooltip" data-tooltip-content="What is the main goal of this post? (e.g., drive traffic, increase engagement, announce launch)">i</span>
                                             </label>
-                                            <Tooltip id="primaryGoal-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="primaryGoal-tooltip" />
                                             <input
                                                 type="text"
                                                 id="primaryGoal"
@@ -807,7 +808,7 @@ const Captionandhastaggeneratorform = () => {
                                                 </span>
                                             </label>
 
-                                            <Tooltip id="targetAudience-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="targetAudience-tooltip" />
 
                                             {/* Chips container */}
                                             <div style={{
@@ -964,7 +965,7 @@ const Captionandhastaggeneratorform = () => {
                                                     Platform & Post Type <span style={{ color: '#ef4444' }}>*</span>
                                                     <span style={styles.infoIcon} data-tooltip-id="platformType-tooltip" data-tooltip-content="Select whether to use a predefined platform/post type or enter a custom one">i</span>
                                                 </label>
-                                                <Tooltip id="platformType-tooltip" />
+                                                <Tooltip style={styles.toolTip} id="platformType-tooltip" />
                                                 <div style={styles.radioGroup}>
                                                     <label style={styles.radioItem}>
                                                         <input
@@ -1016,7 +1017,7 @@ const Captionandhastaggeneratorform = () => {
                                                                 Custom Platform Description <span style={{ color: '#ef4444' }}>*</span>
                                                                 <span style={styles.infoIcon} data-tooltip-id="customPlatform-tooltip" data-tooltip-content="Enter a description of your custom platform and desired post type">i</span>
                                                             </label>
-                                                            <Tooltip id="customPlatform-tooltip" />
+                                                            <Tooltip style={styles.toolTip} id="customPlatform-tooltip" />
                                                             <input
                                                                 type="text"
                                                                 id="customPlatform"
@@ -1042,7 +1043,7 @@ const Captionandhastaggeneratorform = () => {
                                                     Tone Selection <span style={{ color: '#ef4444' }}>*</span>
                                                     <span style={styles.infoIcon} data-tooltip-id="toneSelection-tooltip" data-tooltip-content="Select whether to use a predefined tone or enter a custom one">i</span>
                                                 </label>
-                                                <Tooltip id="toneSelection-tooltip" />
+                                                <Tooltip style={styles.toolTip} id="toneSelection-tooltip" />
                                                 <div style={styles.radioGroup}>
                                                     <label style={styles.radioItem}>
                                                         <input
@@ -1090,7 +1091,7 @@ const Captionandhastaggeneratorform = () => {
                                                             Custom Tone <span style={{ color: '#ef4444' }}>*</span>
                                                             <span style={styles.infoIcon} data-tooltip-id="customTone-tooltip" data-tooltip-content="Describe your custom tone (max 60 characters)">i</span>
                                                         </label>
-                                                        <Tooltip id="customTone-tooltip" />
+                                                        <Tooltip style={styles.toolTip} id="customTone-tooltip" />
                                                         <input
                                                             type="text"
                                                             id="customTone"
@@ -1117,7 +1118,7 @@ const Captionandhastaggeneratorform = () => {
                                                     Number of Variants: {formData.variants}
                                                     <span style={styles.infoIcon} data-tooltip-id="variants-tooltip" data-tooltip-content="Choose how many caption variations to generate">i</span>
                                                 </label>
-                                                <Tooltip id="variants-tooltip" />
+                                                <Tooltip style={styles.toolTip} id="variants-tooltip" />
                                                 <input
                                                     type="range"
                                                     id="variants"
@@ -1224,7 +1225,7 @@ const Captionandhastaggeneratorform = () => {
                                                 Formatting Options
                                                 <span style={styles.infoIcon} data-tooltip-id="formattingOptions-tooltip" data-tooltip-content="Select formatting options for your caption">i</span>
                                             </label>
-                                            <Tooltip id="formattingOptions-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="formattingOptions-tooltip" />
                                             <div style={styles.checkboxGroup}>
                                                 {formattingOptionsList.map((option) => (
                                                     <label key={option.value} style={styles.checkboxItem}>
@@ -1321,7 +1322,7 @@ const Captionandhastaggeneratorform = () => {
                                                 Number of CTAs
                                                 <span style={styles.infoIcon} data-tooltip-id="numberOfCta-tooltip" data-tooltip-content="Number of Call-to-Actions to include (max 3)">i</span>
                                             </label>
-                                            <Tooltip id="numberOfCta-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="numberOfCta-tooltip" />
                                             <input
                                                 type="number"
                                                 id="numberOfCta"
@@ -1432,7 +1433,7 @@ const Captionandhastaggeneratorform = () => {
                                                     Emotional Intent
                                                     <span style={styles.infoIcon} data-tooltip-id="emotionalIntent-tooltip" data-tooltip-content="Select the emotional tone for your caption">i</span>
                                                 </label>
-                                                <Tooltip id="emotionalIntent-tooltip" />
+                                                <Tooltip style={styles.toolTip} id="emotionalIntent-tooltip" />
                                                 <div style={styles.radioGroup}>
                                                     <label style={styles.radioItem}>
                                                         <input type="radio" name="emotionalIntentSelection" value="predefined" checked={formData.emotionalIntentSelection === 'predefined'} onChange={handleChange} style={{ marginRight: '8px' }} />
@@ -1521,7 +1522,7 @@ const Captionandhastaggeneratorform = () => {
                                                 Required Keywords/Hashtags
                                                 <span style={styles.infoIcon} data-tooltip-id="requiredKeywords-tooltip" data-tooltip-content="Add keywords or hashtags that must be included (press Enter to add multiple, max 30)">i</span>
                                             </label>
-                                            <Tooltip id="requiredKeywords-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="requiredKeywords-tooltip" />
                                             <input
                                                 type="text"
                                                 style={styles.input}
@@ -1550,7 +1551,7 @@ const Captionandhastaggeneratorform = () => {
                                                 Exclude Words/Topics
                                                 <span style={styles.infoIcon} data-tooltip-id="excludeWords-tooltip" data-tooltip-content="Add words or topics to avoid in the generated captions">i</span>
                                             </label>
-                                            <Tooltip id="excludeWords-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="excludeWords-tooltip" />
                                             <input
                                                 type="text"
                                                 style={styles.input}
@@ -1580,7 +1581,7 @@ const Captionandhastaggeneratorform = () => {
                                                     Creativity Level: {formData.creativityLevel}/10
                                                     <span style={styles.infoIcon} data-tooltip-id="creativityLevel-tooltip" data-tooltip-content="Adjust how creative or conservative the generated captions should be">i</span>
                                                 </label>
-                                                <Tooltip id="creativityLevel-tooltip" />
+                                                <Tooltip style={styles.toolTip} id="creativityLevel-tooltip" />
                                                 <input
                                                     type="range"
                                                     id="creativityLevel"
@@ -1605,7 +1606,7 @@ const Captionandhastaggeneratorform = () => {
                                                     Hashtag Limit (Max Number)
                                                     <span style={styles.infoIcon} data-tooltip-id="hashtagLimit-tooltip" data-tooltip-content="Maximum number of hashtags to include (select limit)">i</span>
                                                 </label>
-                                                <Tooltip id="hashtagLimit-tooltip" />
+                                                <Tooltip style={styles.toolTip} id="hashtagLimit-tooltip" />
                                                 {/* Replaced input type="number" with select */}
                                                 <select
                                                     id="hashtagLimit"
@@ -1640,7 +1641,7 @@ const Captionandhastaggeneratorform = () => {
                                                     <span>Proofread & Optimize</span>
                                                     <span style={styles.infoIcon} data-tooltip-id="proofread-tooltip" data-tooltip-content="Automatically proofread and optimize the generated captions">i</span>
                                                 </label>
-                                                <Tooltip id="proofread-tooltip" />
+                                                <Tooltip style={styles.toolTip} id="proofread-tooltip" />
                                             </div>
                                         </div>
 
@@ -1655,7 +1656,7 @@ const Captionandhastaggeneratorform = () => {
                                                 Compliance Notes
                                                 <span style={styles.infoIcon} data-tooltip-id="complianceNotes-tooltip" data-tooltip-content="Add any compliance requirements or legal disclaimers (max 1500 characters)">i</span>
                                             </label>
-                                            <Tooltip id="complianceNotes-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="complianceNotes-tooltip" />
                                             <textarea
                                                 id="complianceNotes"
                                                 name="complianceNotes"
