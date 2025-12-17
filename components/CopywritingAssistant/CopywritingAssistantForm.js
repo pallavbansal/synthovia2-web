@@ -1528,7 +1528,7 @@ const CopywritingAssistantForm = () => {
                                                 id="variants"
                                                 name="variants"
                                                 min="1"
-                                                max="5"
+                                                max="2"
                                                 value={formData.variants}
                                                 onChange={handleChange}
                                                 style={{ width: '100%' }}
@@ -1536,9 +1536,9 @@ const CopywritingAssistantForm = () => {
                                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
                                                 <span>1</span>
                                                 <span>2</span>
-                                                <span>3</span>
+                                                {/* <span>3</span>
                                                 <span>4</span>
-                                                <span>5</span>
+                                                <span>5</span> */}
                                             </div>
                                         </div>
                                     </div>
