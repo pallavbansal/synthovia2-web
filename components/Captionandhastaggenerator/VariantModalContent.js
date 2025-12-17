@@ -6,7 +6,7 @@ import SurfingLoading from './SurfingLoading';
 const TypingEffect = ({ text, onComplete }) => {
     const [displayedText, setDisplayedText] = useState('');
     const indexRef = useRef(0);
-    const delay = 30; // Typing speed in ms
+    const delay = 10; // Typing speed in ms
 
     useEffect(() => {
         // Reset displayed text when 'text' prop changes (e.g., regeneration starts)

@@ -1128,6 +1128,11 @@ const CopywritingAssistantForm = () => {
                                                             addAudienceChip(audienceInput.trim());
                                                         }
                                                     }}
+                                                    onBlur={(e) => {
+                                                                if (audienceInput.trim()) {
+                                                                    addAudienceChip(audienceInput.trim());
+                                                                }
+                                                            }}
                                                     style={{
                                                         ...styles.input,
                                                         marginBottom: 0,
@@ -1136,6 +1141,7 @@ const CopywritingAssistantForm = () => {
                                                     }}
                                                     placeholder="Type and press Enter to add audience segments"
                                                     required={formData.targetAudience.length === 0}
+                                                    inputMode='text'
                                                 />
 
                                                 {showAudienceSuggestions && (
@@ -1362,7 +1368,7 @@ const CopywritingAssistantForm = () => {
                                     <div className="col-12">
                                         <div style={styles.formGroup}>
                                             <label htmlFor="keyPoints" style={styles.label}>
-                                                Key Points <span style={{ color: '#ef4444' }}>*</span>
+                                                Key Benefits <span style={{ color: '#ef4444' }}>*</span>
                                                 <span
                                                     style={styles.infoIcon}
                                                     data-tooltip-id="keyPoints-tooltip"
@@ -1422,12 +1428,18 @@ const CopywritingAssistantForm = () => {
                                                         addKeyPointsChip(keyPointsInput.trim());
                                                     }
                                                 }}
+                                                onBlur={(e) => {
+                                                                if (keyPointsInput.trim()) {
+                                                                    addKeyPointsChip(keyPointsInput.trim());
+                                                                }
+                                                            }}
                                                 style={{
                                                     ...styles.input,
                                                     marginBottom: 0,
                                                 }}
                                                 placeholder="Type a key point and press Enter to add"
                                                 required={formData.keyPoints.length === 0}
+                                                inputMode='text'
                                             />
                                         </div>
                                     </div>
@@ -1861,6 +1873,15 @@ const CopywritingAssistantForm = () => {
                                                 style={styles.input}
                                                 placeholder="Add a word and press Enter"
                                                 onKeyPress={(e) => handleArrayChange(e, 'includeWords')}
+                                                onBlur={(e) => {
+                                                                const value = e.target.value.trim();
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        includeWords: [...prev.includeWords, value]
+                                                                    }));
+                                                                    e.target.value = '';
+                                                            }}
+                                                inputMode='text'
                                             />
                                             <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: '8px' }}>
                                                 {formData.includeWords.map((word, index) => (

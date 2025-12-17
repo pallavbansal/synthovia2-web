@@ -862,6 +862,11 @@ const Captionandhastaggeneratorform = () => {
                                                             addAudienceChip(audienceInput.trim());
                                                         }
                                                     }}
+                                                    onBlur={(e) => {
+                                                                if (audienceInput.trim()) {
+                                                                    addAudienceChip(audienceInput.trim());
+                                                                }
+                                                            }}
                                                     style={{
                                                         ...styles.input,
                                                         marginBottom: 0,
@@ -870,6 +875,7 @@ const Captionandhastaggeneratorform = () => {
                                                     }}
                                                     placeholder="Type and press Enter to add audience segments"
                                                     required={formData.targetAudience.length === 0}
+                                                    inputMode='text'
                                                 />
 
                                                 {showAudienceSuggestions && (
@@ -1528,7 +1534,18 @@ const Captionandhastaggeneratorform = () => {
                                                 style={styles.input}
                                                 placeholder="Add a keyword or hashtag and press Enter"
                                                 onKeyPress={(e) => handleArrayChange(e, 'requiredKeywords')}
+                                                onBlur={(e) => {
+                                                                const value = e.target.value.trim();
+                                                                if (value && formData.requiredKeywords.length <30) {
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        requiredKeywords: [...prev.requiredKeywords, value]
+                                                                    }));
+                                                                    e.target.value = '';
+                                                                }
+                                                            }}
                                                 disabled={formData.requiredKeywords.length >= 30}
+                                                inputMode='text'
                                             />
                                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
                                                 {formData.requiredKeywords.map((keyword, index) => (
@@ -1557,6 +1574,18 @@ const Captionandhastaggeneratorform = () => {
                                                 style={styles.input}
                                                 placeholder="Add a word or topic to exclude and press Enter"
                                                 onKeyPress={(e) => handleArrayChange(e, 'excludeWords')}
+                                                onBlur={(e) => {
+                                                                const value = e.target.value.trim();
+                                                                if (value && formData.excludeWords.length < 30) {
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        excludeWords: [...prev.excludeWords, value]
+                                                                    }));
+                                                                    e.target.value = '';
+                                                                }
+                                                            }}
+                                                disabled={formData.excludeWords.length >= 30}
+                                                inputMode='text'
                                             />
                                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
                                                 {formData.excludeWords.map((word, index) => (
