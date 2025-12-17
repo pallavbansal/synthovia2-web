@@ -855,10 +855,10 @@ const CopywritingAssistantForm = () => {
     const styles = {
         container: { maxWidth: '1100px', margin: '0 auto', padding: '24px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', backgroundColor: '#0a0e1a', minHeight: '100vh' },
         card: { backgroundColor: '#141b2d', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.3)', overflow: 'hidden', border: '1px solid #1e293b' },
-        header: { padding: '24px 32px', borderBottom: '1px solid #1e293b', backgroundColor: '#0f1624' },
+        header: { padding: '24px 32px', borderBottom: '1px solid #1e293b' },
         title: { margin: 0, fontSize: '24px', fontWeight: '600', color: '#f8fafc' },
         subtitle: { margin: '6px 0 0', fontSize: '14px', color: '#94a3b8' },
-        formGroup: { marginBottom: '20px' },
+        formGroup: { marginBottom: '8px' },
         label: { display: 'block', marginBottom: '6px', fontSize: '16px', fontWeight: '500', color: '#e2e8f0' },
         input: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box' },
         checkboxInput: {
@@ -891,6 +891,7 @@ const CopywritingAssistantForm = () => {
         checkboxItem: { display: 'flex', alignItems: 'center', gap: '8px' },
         radioGroup: { display: 'flex', gap: '16px', marginTop: '8px' },
         radioItem: { display: 'flex', alignItems: 'center', gap: '8px' },
+        toolTip: { width: '40%' },
         toast: { position: 'fixed', top: '20px', right: '20px', padding: '16px 24px', color: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 9999 },
     };
 
@@ -921,7 +922,7 @@ const CopywritingAssistantForm = () => {
                     {!required && " (optional)"}
                     <span style={styles.infoIcon} data-tooltip-id={`${modeName}-tooltip`} data-tooltip-content={tooltipContent}>i</span>
                 </label>
-                <Tooltip id={`${modeName}-tooltip`} />
+                <Tooltip style={styles.toolTip} id={`${modeName}-tooltip`} />
                 <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
                     <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                         <input
@@ -952,11 +953,12 @@ const CopywritingAssistantForm = () => {
 
     return (
         <div style={styles.container}>
-            <div style={styles.card}>
-                <div style={styles.header}>
+            <div style={styles.header}>
                     <h1 style={styles.title}>Copywriting Assistant Tool</h1>
                     <p style={styles.subtitle}>Generate high-quality copy for your needs</p>
                 </div>
+            <div style={styles.card}>
+                
 
                 <div style={{ padding: '24px' }}>
                     <form onSubmit={handleSubmit}>
@@ -971,8 +973,8 @@ const CopywritingAssistantForm = () => {
                                                 Use Case <span style={{ color: '#ef4444' }}>*</span>
                                                 <span style={styles.infoIcon} data-tooltip-id="useCase-tooltip" data-tooltip-content="Select a predefined use case or define your own custom use case">i</span>
                                             </label>
-                                            <Tooltip id="useCase-tooltip" />
-                                            <div style={{ display: 'flex', gap: '20px', marginBottom: '12px' }}>
+                                            <Tooltip style={styles.toolTip} id="useCase-tooltip" />
+                                            <div style={{ display: 'flex', gap: '20px', marginBottom: '8px' }}>
                                                 <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                                                     <input
                                                         type="radio"
@@ -1046,7 +1048,7 @@ const CopywritingAssistantForm = () => {
                                                 Primary Goal <span style={{ color: '#ef4444' }}>*</span>
                                                 <span style={styles.infoIcon} data-tooltip-id="primaryGoal-tooltip" data-tooltip-content="Describe the main objective of your content (max 150 words)">i</span>
                                             </label>
-                                            <Tooltip id="primaryGoal-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="primaryGoal-tooltip" />
                                             <textarea
                                                 id="primaryGoal"
                                                 name="primaryGoal"
@@ -1073,7 +1075,7 @@ const CopywritingAssistantForm = () => {
                                                     i
                                                 </span>
                                             </label>
-                                            <Tooltip id="targetAudience-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="targetAudience-tooltip" />
 
                                             {/* Audience Chips and Input (multi-select custom input) */}
                                             <div style={{
@@ -1224,7 +1226,7 @@ const CopywritingAssistantForm = () => {
                                                     Tone Selection <span style={{ color: '#ef4444' }}>*</span>
                                                     <span style={styles.infoIcon} data-tooltip-id="toneMode-tooltip" data-tooltip-content="Choose between predefined tones or define a custom tone">i</span>
                                                 </label>
-                                                <Tooltip id="toneMode-tooltip" />
+                                                <Tooltip style={styles.toolTip} id="toneMode-tooltip" />
                                                 <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
                                                     <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                                                         <input
@@ -1252,7 +1254,7 @@ const CopywritingAssistantForm = () => {
 
                                                 {formData.toneMode === 'predefined' && (
                                                     <div style={{ marginTop: '8px' }}>
-                                                        <Tooltip id="tone-tooltip" />
+                                                        <Tooltip style={styles.toolTip} id="tone-tooltip" />
                                                         <select
                                                             id="toneOfVoice"
                                                             name="toneOfVoice"
@@ -1294,7 +1296,7 @@ const CopywritingAssistantForm = () => {
                                                     Language <span style={{ color: '#ef4444' }}>*</span>
                                                     <span style={styles.infoIcon} data-tooltip-id="language-tooltip" data-tooltip-content="Select the language for your content or define a custom language">i</span>
                                                 </label>
-                                                <Tooltip id="language-tooltip" />
+                                                <Tooltip style={styles.toolTip} id="language-tooltip" />
                                                 <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
                                                     <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                                                         <input
@@ -1369,7 +1371,7 @@ const CopywritingAssistantForm = () => {
                                                     i
                                                 </span>
                                             </label>
-                                            <Tooltip id="keyPoints-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="keyPoints-tooltip" />
 
                                             <div style={{
                                                 display: 'flex',
@@ -1437,7 +1439,7 @@ const CopywritingAssistantForm = () => {
                                                 Length Target <span style={{ color: '#ef4444' }}>*</span>
                                                 <span style={styles.infoIcon} data-tooltip-id="length-tooltip" data-tooltip-content="Select or specify your desired word count">i</span>
                                             </label>
-                                            <Tooltip id="length-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="length-tooltip" />
 
                                             {/* Mode toggle: Predefined vs Custom */}
                                             <div style={{ display: 'flex', gap: '20px', marginTop: '4px', marginBottom: '8px' }}>
@@ -1508,7 +1510,7 @@ const CopywritingAssistantForm = () => {
                                                 Number of Variants: {formData.variants}
                                                 <span style={styles.infoIcon} data-tooltip-id="variants-tooltip" data-tooltip-content="How many different versions of the content would you like to generate?">i</span>
                                             </label>
-                                            <Tooltip id="variants-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="variants-tooltip" />
                                             <input
                                                 type="range"
                                                 id="variants"
@@ -1547,7 +1549,7 @@ const CopywritingAssistantForm = () => {
                                                 Keywords (optional)
                                                 <span style={styles.infoIcon} data-tooltip-id="keywords-tooltip" data-tooltip-content="Add keywords to include in your content (max 250 characters)">i</span>
                                             </label>
-                                            <Tooltip id="keywords-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="keywords-tooltip" />
                                             <input
                                                 type="text"
                                                 id="keywords"
@@ -1559,9 +1561,7 @@ const CopywritingAssistantForm = () => {
                                                 maxLength={250}
                                             />
                                         </div>
-                                    </div>
-
-                                    {/* CTA Style Mode Toggle */}
+                                        {/* CTA Style Mode Toggle */}
                                     {renderModeToggle('ctaStyleMode', 'CTA Style', 'Choose between predefined CTA styles or define your own')}
 
                                     {/* CTA Style (Predefined/Custom Input) */}
@@ -1601,6 +1601,8 @@ const CopywritingAssistantForm = () => {
                                         </div>
                                     )}
 
+                                    </div>
+
                                     {/* Reference Text */}
                                     <div className="col-12">
                                         <div style={styles.formGroup}>
@@ -1608,7 +1610,7 @@ const CopywritingAssistantForm = () => {
                                                 Reference Text (optional)
                                                 <span style={styles.infoIcon} data-tooltip-id="reference-tooltip" data-tooltip-content="Add any reference text or examples (max 5000 characters)">i</span>
                                             </label>
-                                            <Tooltip id="reference-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="reference-tooltip" />
                                             <textarea
                                                 id="referenceText"
                                                 name="referenceText"
@@ -1636,7 +1638,7 @@ const CopywritingAssistantForm = () => {
                                                     <span>Rewrite Mode (optional)</span>
                                                     <span style={{ ...styles.infoIcon, marginLeft: '8px' }} data-tooltip-id="rewrite-tooltip" data-tooltip-content="Enable to rewrite the reference text in a different style">i</span>
                                                 </label>
-                                                <Tooltip id="rewrite-tooltip" />
+                                                <Tooltip style={styles.toolTip} id="rewrite-tooltip" />
                                             </div>
                                         </div>
                                         <div style={colHalfStyle}></div>
@@ -1810,7 +1812,7 @@ const CopywritingAssistantForm = () => {
                                                 Formatting Options (optional)
                                                 <span style={styles.infoIcon} data-tooltip-id="formatting-tooltip" data-tooltip-content="Select the formatting options you want to include">i</span>
                                             </label>
-                                            <Tooltip id="formatting-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="formatting-tooltip" />
                                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginTop: '8px' }}>
                                                 {formattingOptionsList.map((option) => {
                                                     const value = typeof option === 'string'
@@ -1853,7 +1855,7 @@ const CopywritingAssistantForm = () => {
                                                 Include Words (optional)
                                                 <span style={styles.infoIcon} data-tooltip-id="include-tooltip" data-tooltip-content="Words that must be included in the content (press Enter to add)">i</span>
                                             </label>
-                                            <Tooltip id="include-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="include-tooltip" />
                                             <input
                                                 type="text"
                                                 style={styles.input}
@@ -1966,7 +1968,7 @@ const CopywritingAssistantForm = () => {
                                                 Compliance Notes (optional)
                                                 <span style={styles.infoIcon} data-tooltip-id="compliance-tooltip" data-tooltip-content="Any legal or compliance requirements (max 200 words)">i</span>
                                             </label>
-                                            <Tooltip id="compliance-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="compliance-tooltip" />
                                             <textarea
                                                 id="complianceNotes"
                                                 name="complianceNotes"
@@ -1986,7 +1988,7 @@ const CopywritingAssistantForm = () => {
                                                 Output Structure
                                                 <span style={styles.infoIcon} data-tooltip-id="output-structure-tooltip" data-tooltip-content="Select the desired output structure">i</span>
                                             </label>
-                                            <Tooltip id="output-structure-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="output-structure-tooltip" />
                                             <select
                                                 id="outputStructure"
                                                 name="outputStructure"
@@ -2008,7 +2010,7 @@ const CopywritingAssistantForm = () => {
                                                 Creativity Level (optional): {formData.creativityLevel}/10
                                                 <span style={styles.infoIcon} data-tooltip-id="creativity-tooltip" data-tooltip-content="Adjust how creative or conservative the output should be">i</span>
                                             </label>
-                                            <Tooltip id="creativity-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="creativity-tooltip" />
                                             <input
                                                 type="range"
                                                 id="creativityLevel"
@@ -2033,7 +2035,7 @@ const CopywritingAssistantForm = () => {
                                                 Reference URL (optional)
                                                 <span style={styles.infoIcon} data-tooltip-id="url-tooltip" data-tooltip-content="Add a URL for reference or to extract content from">i</span>
                                             </label>
-                                            <Tooltip id="url-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="url-tooltip" />
                                             <input
                                                 type="url"
                                                 id="referenceUrl"
@@ -2061,7 +2063,7 @@ const CopywritingAssistantForm = () => {
                                                     <span>Enable Proofreading & Optimization (optional)</span>
                                                     <span style={{ ...styles.infoIcon, marginLeft: '8px' }} data-tooltip-id="proofreading-tooltip" data-tooltip-content="Automatically check for grammar, readability, and SEO optimization">i</span>
                                                 </label>
-                                                <Tooltip id="proofreading-tooltip" />
+                                                <Tooltip style={styles.toolTip} id="proofreading-tooltip" />
                                             </div>
                                         </div>
                                         <div style={colHalfStyle}></div>
