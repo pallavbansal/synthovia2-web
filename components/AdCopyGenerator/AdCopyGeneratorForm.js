@@ -1269,7 +1269,7 @@ const AdCopyGeneratorForm = () => {
                                                     }}>
                                                         {formData.targetAudience.length === 0 && (
                                                             <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
-                                                                Add audience segments (e.g., 'Women 25-34', 'Fitness Enthusiasts')
+                                                                Type and press Enter to add audience segments (e.g., 'Women 25-34', 'Fitness Enthusiasts')
                                                             </span>
                                                         )}
                                                         {formData.targetAudience.map((chip, index) => (
@@ -1305,14 +1305,23 @@ const AdCopyGeneratorForm = () => {
                                                                     addAudienceChip(audienceInput.trim());
                                                                 }
                                                             }}
+                                                            onBlur={(e) => {
+                                                                if (audienceInput.trim()) {
+                                                                    addAudienceChip(audienceInput.trim());
+                                                                }
+                                                            }}
                                                             style={{
                                                                 ...styles.input,
                                                                 marginBottom: 0,
                                                                 borderBottomLeftRadius: showAudienceSuggestions ? '0' : '6px',
-                                                                borderBottomRightRadius: showAudienceSuggestions ? '0' : '6px'
+                                                                borderBottomRightRadius: showAudienceSuggestions ? '0' : '6px',
+                                                                WebkitAppearance: 'none' // Removes inner shadow on iOS
                                                             }}
-                                                            placeholder="Type and press Enter to add audience segments"
+                                                            placeholder={formData.targetAudience.length === 0 
+                                                                ? "Type and press Enter to Add audience segments (e.g., 'Women 25-34')" 
+                                                                : "Type and press Enter to Add another segment"}
                                                             required={formData.targetAudience.length === 0}
+                                                            inputMode="text"
                                                         />
 
                                                         {showAudienceSuggestions && (
@@ -1832,7 +1841,18 @@ const AdCopyGeneratorForm = () => {
                                                         style={styles.input}
                                                         placeholder="Type and press Enter to add key benefits"
                                                         onKeyPress={(e) => handleArrayChange(e, 'keyBenefits')}
+                                                        onBlur={(e) => {
+                                                                const value = e.target.value.trim();
+                                                                if (value && formData.keyBenefits.length < 10) {
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        keyBenefits: [...prev.keyBenefits, value]
+                                                                    }));
+                                                                    e.target.value = '';
+                                                                }
+                                                            }}
                                                         disabled={formData.keyBenefits.length >= 10}
+                                                        inputMode='text'
                                                     />
                                                 </div>
                                             </div>
