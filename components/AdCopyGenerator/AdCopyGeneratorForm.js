@@ -97,7 +97,7 @@ const AdCopyGeneratorForm = () => {
         targetAudience: [],
         productServices: '',
         keyBenefits: [],
-        variants: 3,
+        variants: 1,
         tone: 'Auto-Detect (Based on Platform)',
         headlineFocus: 'Auto-Select (Recommended)',
         adTextLength: 'Auto-Length (Platform Optimized)',
@@ -773,7 +773,7 @@ const AdCopyGeneratorForm = () => {
             targetAudience: [],
             productServices: '',
             keyBenefits: [],
-            variants: 3,
+            variants: 1,
             tone: 'Auto-Detect (Based on Platform)',
             headlineFocus: 'Auto-Select (Recommended)',
             adTextLengthMode: 'predefined',
@@ -1654,7 +1654,7 @@ const AdCopyGeneratorForm = () => {
                                                             // Use key for value attribute, label for display
                                                             value={fieldOptions.primary_text_length.find(opt => opt.label === formData.adTextLength)?.key || formData.adTextLength}
                                                             onChange={handleChange}
-                                                            style={styles.select}
+                                                            style={{ ...styles.select, marginTop: '8px' }}
                                                         >
                                                             <option value="Auto-Length (Platform Optimized)">Auto-Length (Platform Optimized)</option>
                                                             {fieldOptions.primary_text_length && fieldOptions.primary_text_length.map((option) => (

@@ -41,7 +41,7 @@ const Captionandhastaggeneratorform = () => {
         toneOfVoice: '', // key from API options
         customTone: '',
         targetAudience: [],
-        variants: 3,
+        variants: 1,
         showAdvanced: false,
         requiredKeywords: [],
         // Language / locale selection - NEW LOGIC TOGGLES ADDED
@@ -597,7 +597,7 @@ const Captionandhastaggeneratorform = () => {
             toneOfVoice: defaultTone,
             customTone: '',
             targetAudience: [],
-            variants: 3,
+            variants: 1,
             showAdvanced: false,
             requiredKeywords: [],
             // Reset new fields to defaults

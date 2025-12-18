@@ -42,7 +42,7 @@ const CopywritingAssistantForm = () => {
         customWordCount: 180,
         keyPoints: [],
 
-        variants: 3,
+        variants: 1,
         showAdvanced: false,
         keywords: '',
         ctaStyleMode: 'predefined',
@@ -75,7 +75,7 @@ const CopywritingAssistantForm = () => {
         includeWords: [],
         excludeWords: [],
         complianceNotes: '',
-        outputStructure: 'markdown',
+        outputStructure: 'plain_text',
         creativityLevel: 5,
         referenceUrl: '',
         proofreading: true,
@@ -284,10 +284,8 @@ const CopywritingAssistantForm = () => {
         getOptions('output_structure_type').length
             ? getOptions('output_structure_type')
             : [
-                { key: 'markdown', label: 'Markdown' },
                 { key: 'plain_text', label: 'Plain Text' },
                 { key: 'html', label: 'HTML' },
-                { key: 'json', label: 'JSON' },
             ]
     );
 
