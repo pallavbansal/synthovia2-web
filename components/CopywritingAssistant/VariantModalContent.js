@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 // Assuming SurfingLoading is imported correctly and accessible
 import SurfingLoading from './SurfingLoading'; 
 
@@ -40,7 +41,6 @@ const TypingEffect = ({ text, onComplete }) => {
     );
 };
 // -----------------------------------------------------------
-
 
 const VariantModalContent = ({ 
     variants, 
@@ -140,6 +140,14 @@ const VariantModalContent = ({
         } finally {
             setRegeneratingId(null);
         }
+    };
+
+    const processContent = (content) => {
+        if (!content) return '';
+        // Replace <strong> tags with markdown ** **
+        return content
+            .replace(/<strong>(.*?)<\/strong>/g, '**$1**')
+            .replace(/<b>(.*?)<\/b>/g, '**$1**');
     };
 
     // --- Styles (Retained) ---
@@ -264,7 +272,7 @@ const VariantModalContent = ({
                         
                         const isInteractionDisabled = isUILocked; 
 
-                        let contentToRender = variant.content;
+                        let contentToRender = processContent(variant.content);
 
                         // Safely access copywriting fields
                         const displayUseCase = inputs?.use_case?.value || 'Content';
@@ -303,7 +311,7 @@ const VariantModalContent = ({
                                                 ...modalStyles.actionButton,
                                                 backgroundColor: '#10b981', color: 'white', border: 'none',
                                             }}
-                                            onClick={() => handleCopy(variant.content, index + 1)}
+                                            onClick={() => handleCopy(contentToRender, index + 1)}
                                             // ENFORCE GLOBAL LOCK: Copy Button
                                             disabled={isInteractionDisabled} 
                                         >
@@ -363,9 +371,9 @@ const VariantModalContent = ({
                                                     }} 
                                                 />
                                             ) : (
-                                                <p style={{ margin: 0, fontFamily: 'inherit', whiteSpace: 'pre-wrap', color: '#1f2937' }}>
-                                                    {contentToRender}
-                                                </p>
+                                                <div style={{ margin: 0, fontFamily: 'inherit', whiteSpace: 'pre-wrap', color: '#1f2937'}}>
+                                                    <ReactMarkdown>{contentToRender}</ReactMarkdown>
+                                                </div>
                                             )}
                                         </div>
                                     </div>
