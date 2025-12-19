@@ -211,7 +211,7 @@ p {
 	font-size: var(--font-size-b1);
 	line-height: var(--line-height-b1);
 	font-weight: var(--p-regular);
-	color: var(--color-body);
+	// color: var(--color-body);
 	margin: 0 0 30px;
 
 	@media #{$sm-layout} {
@@ -320,7 +320,7 @@ ul {
 			li {
 				font-size: 18px;
 				line-height: 30px;
-				color: var(--color-body);
+				// color: var(--color-body);
 				position: relative;
 				padding-left: 30px;
 
@@ -351,12 +351,12 @@ ul {
 		line-height: var(--line-height-b1);
 		margin-top: 10px;
 		margin-bottom: 10px;
-		color: var(--color-body);
+		// color: var(--color-body);
 		font-weight: 400;
 
 		a {
 			text-decoration: none;
-			color: var(--color-body);
+			// color: var(--color-body);
 			@extend %transition;
 
 			&:hover {
