@@ -7,6 +7,8 @@ import SurfingLoading from './SurfingLoading';
 import ToggleButton from '../Form/ToggleButton';
 import RemoveTagButton from '../Form/RemoveTagButton';
 
+import { getAuthHeader } from "@/utils/auth";
+
 // --- API Configuration (Defined internally to prevent build issues) ---
 const BASE_URL = 'https://olive-gull-905765.hostingersite.com/public/api/v1';
 const API = {
@@ -16,9 +18,7 @@ const API = {
     GET_VARIANTS_LOG: (requestId) => `${BASE_URL}/ad-copy/${requestId}/variants`,
     // New endpoint for regenerating a single variant using variant_id
     REGENERATE_VARIANT: (variantId) => `${BASE_URL}/ad-copy/variants/${variantId}/regenerate`,
-    AUTH_TOKEN: '3|WwYYaSEAfSr1guYBFdPQlPtGg0dKphy1sVMDLBmX647db358',
 };
-const AUTH_HEADER = `Bearer ${API.AUTH_TOKEN}`;
 // --------------------------------------------------------------------
 
 const defaultFieldOptions = {
@@ -199,7 +199,7 @@ const AdCopyGeneratorForm = () => {
                     }
 
                     const response = await fetch(API.GET_FIELD_OPTIONS, {
-                        headers: { Authorization: AUTH_HEADER },
+                        headers: { Authorization: getAuthHeader() },
                     });
 
                     if (response.status === 429 && attempt < maxRetries - 1) {
@@ -458,7 +458,7 @@ const AdCopyGeneratorForm = () => {
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'Authorization': AUTH_HEADER,
+                    'Authorization': getAuthHeader(),
                 },
                 body: JSON.stringify(payload)
             });
@@ -532,7 +532,7 @@ const AdCopyGeneratorForm = () => {
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'Authorization': AUTH_HEADER,
+                    'Authorization': getAuthHeader(),
                 },
                 body: JSON.stringify(payload)
             });
@@ -596,7 +596,7 @@ const AdCopyGeneratorForm = () => {
 
         try {
             const response = await fetch(API.GET_VARIANTS_LOG(requestId), {
-                headers: { 'Authorization': AUTH_HEADER },
+                headers: { 'Authorization': getAuthHeader() },
             });
 
             if (!response.ok) {
@@ -713,7 +713,7 @@ const AdCopyGeneratorForm = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': AUTH_HEADER,
+                    'Authorization': getAuthHeader(),
                 },
             });
 

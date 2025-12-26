@@ -9,6 +9,8 @@ import SurfingLoading from './SurfingLoading';
 import ToggleButton from '../Form/ToggleButton';
 import RemoveTagButton from '../Form/RemoveTagButton';
 
+import { getAuthHeader } from "@/utils/auth";
+
 // --- API Constants (Provided by User) ---
 const BASE_URL = 'https://olive-gull-905765.hostingersite.com/public/api/v1';
 const API = {
@@ -16,11 +18,7 @@ const API = {
     GENERATE_CAPTION_HASHTAG: `${BASE_URL}/caption-hashtag/generate`, // Corrected typo in variable name
     GET_VARIANTS_LOG: (requestId) => `${BASE_URL}/caption-hashtag/${requestId}/variants`,
     REGENERATE_VARIANT: (variantId) => `${BASE_URL}/caption-hashtag/variants/${variantId}/regenerate`,
-    AUTH_TOKEN: '3|WwYYaSEAfSr1guYBFdPQlPtGg0dKphy1sVMDLBmX647db358',
 };
-
-// Authorization header structure
-const AUTH_HEADER = `Bearer ${API.AUTH_TOKEN}`;
 
 // --- MANUAL CONSTANT FOR AUTO-DETECT POST LENGTH ---
 const AUTO_DETECT_POST_LENGTH = {
@@ -208,7 +206,7 @@ const Captionandhastaggeneratorform = () => {
         const fetchOptions = async () => {
             try {
                 const response = await fetch(API.GET_FIELD_OPTIONS, {
-                    headers: { Authorization: AUTH_HEADER, 'Content-Type': 'application/json' },
+                    headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' },
                 });
                 if (!response.ok) {
                     const errorBody = await response.json().catch(() => ({ message: 'Unknown error' }));
@@ -405,7 +403,7 @@ const Captionandhastaggeneratorform = () => {
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'Authorization': AUTH_HEADER,
+                    'Authorization': getAuthHeader(),
                 },
                 body: JSON.stringify(payload),
             });
@@ -450,7 +448,7 @@ const Captionandhastaggeneratorform = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': AUTH_HEADER,
+                    'Authorization': getAuthHeader(),
                 },
             });
 
@@ -508,7 +506,7 @@ const Captionandhastaggeneratorform = () => {
         try {
             const response = await fetch(API.GET_VARIANTS_LOG(requestId), {
                 headers: {
-                    Authorization: AUTH_HEADER,
+                    Authorization: getAuthHeader(),
                 },
             });
 

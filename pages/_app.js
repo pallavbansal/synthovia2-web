@@ -1,6 +1,9 @@
 import { Router } from "next/router";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import Loading from "./loading";
+
+import { getToken } from "@/utils/auth";
 
 import "bootstrap/scss/bootstrap.scss";
 
@@ -18,6 +21,7 @@ import "../public/scss/style.scss";
 
 export default function App({ Component, pageProps }) {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     require("bootstrap/dist/js/bootstrap.bundle.min.js");
@@ -35,6 +39,49 @@ export default function App({ Component, pageProps }) {
       Router.events.off("routeChangeError", handleComplete);
     };
   }, []);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    const token = getToken();
+    const isAuthed = !!token;
+
+    const protectedPrefixes = [
+      "/dashboard",
+      "/application",
+      "/ad-copy-generator",
+      "/caption-and-hastag-generator",
+      "/code-generator",
+      "/copywriting-assistant",
+      "/email-generator",
+      "/image-editor",
+      "/image-generator",
+      "/seo-keyword-meta-tag-generator",
+      "/script-story-writer-tool",
+      "/text-generator",
+      "/vedio-generator",
+      "/chat-export",
+      "/appearance",
+      "/notification",
+      "/plans-billing",
+      "/profile-details",
+      "/sessions",
+      "/utilize",
+    ];
+
+    const isProtectedRoute = protectedPrefixes.some(
+      (prefix) => router.pathname === prefix || router.pathname.startsWith(`${prefix}/`)
+    );
+
+    if (!isAuthed && isProtectedRoute) {
+      router.replace("/signin");
+      return;
+    }
+
+    if (isAuthed && router.pathname === "/signin") {
+      router.replace("/dashboard");
+    }
+  }, [router.isReady, router.pathname]);
 
   return <>{loading ? <Loading /> : <Component {...pageProps} />}</>;
 }
