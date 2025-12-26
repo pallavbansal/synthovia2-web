@@ -1,10 +1,22 @@
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/router";
+import { useAppContext } from "@/context/Context";
 
 import avatar from "../../public/images/team/team-01sm.jpg";
 import UserMenuItems from "./HeaderProps/UserMenuItem";
+import { logout } from "@/utils/auth";
 
 const UserMenu = () => {
+  const router = useRouter();
+  const { setMobile } = useAppContext();
+
+  const handleLogout = (e) => {
+    e.preventDefault();
+    setMobile(false);
+    logout();
+    router.replace("/signin");
+  };
   return (
     <>
       <div className="inner">
@@ -23,6 +35,7 @@ const UserMenu = () => {
           </div>
         </div> */}
         {/* <UserMenuItems parentClass="user-list-wrapper user-nav" /> */}
+        <UserMenuItems parentClass="user-list-wrapper user-nav" />
         {/* <hr className="mt--10 mb--10" /> */}
         {/* <ul className="user-list-wrapper user-nav">
           <li>
@@ -41,7 +54,7 @@ const UserMenu = () => {
         {/* <hr className="mt--10 mb--10" /> */}
         <ul className="user-list-wrapper">
           <li>
-            <Link href="/AuthPage">
+            <Link href="/signin" onClick={handleLogout}>
               <i className="fa-sharp fa-solid fa-right-to-bracket"></i>
               <span>Logout</span>
             </Link>

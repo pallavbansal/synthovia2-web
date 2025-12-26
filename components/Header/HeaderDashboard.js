@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useAppContext } from "@/context/Context";
 
 import logo from "../../public/images/logo/logo.png";
@@ -8,6 +9,8 @@ import avatar from "../../public/images/team/team-01sm.jpg";
 
 import Nav from "./Nav";
 import UserMenu from "./UserMenu";
+
+import { getUser } from "@/utils/auth";
 
 const HeaderDashboard = ({ display }) => {
   const {
@@ -19,6 +22,13 @@ const HeaderDashboard = ({ display }) => {
     setActiveMobileMenu,
     isLightTheme,
   } = useAppContext();
+
+  const [userEmail, setUserEmail] = useState("-");
+
+  useEffect(() => {
+    const user = getUser();
+    setUserEmail(user?.email || "-");
+  }, []);
   return (
     <>
       <header className="rbt-dashboard-header rainbow-header header-default header-left-align rbt-fluid-header">
@@ -36,6 +46,18 @@ const HeaderDashboard = ({ display }) => {
                     <i className="fa-sharp fa-regular fa-sidebar"></i>
                   </button>
                 </div> */}
+                <div className="expand-btn-grp">
+                  <button
+                    type="button"
+                    aria-label="Toggle side navigation"
+                    className={`bg-solid-primary popup-dashboardleft-btn ${
+                      mobile ? "" : "collapsed"
+                    }`}
+                    onClick={() => setMobile(!mobile)}
+                  >
+                    <i className="fa-sharp fa-regular fa-sidebar"></i>
+                  </button>
+                </div>
                 <div className="logo">
                   <Link href="/">
                     <Image
@@ -78,7 +100,7 @@ const HeaderDashboard = ({ display }) => {
                         </div>
                         <div className="content">
                           <span className="title ">RainbowIT</span>
-                          <p>adam@gmail.com</p>
+                          <p>{userEmail}</p>
                         </div>
                       </div>
                       <div className="icon">

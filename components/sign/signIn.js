@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/router";
 
 import logo from "../../public/images/logo/logo.png";
 import logoDark from "../../public/images/light/logo/logo-dark.png";
@@ -10,9 +11,29 @@ import google from "../../public/images/sign-up/google.png";
 import facebook from "../../public/images/sign-up/facebook.png";
 import DarkSwitch from "../Header/dark-switch";
 import { useAppContext } from "@/context/Context";
+import { login } from "@/utils/auth";
 
 const SignIn = () => {
   const { isLightTheme, toggleTheme } = useAppContext();
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSubmitting(true);
+    try {
+      await login({ email, password });
+      router.replace("/dashboard");
+    } catch (err) {
+      setError(err?.message || "Login failed");
+    } finally {
+      setSubmitting(false);
+    }
+  };
   return (
     <>
       <DarkSwitch isLight={isLightTheme} switchTheme={toggleTheme} />
@@ -34,7 +55,7 @@ const SignIn = () => {
                   </div>
                   <div className="signup-box-bottom">
                     <div className="signup-box-content">
-                      <div className="social-btn-grp">
+                      {/* <div className="social-btn-grp">
                         <a className="btn-default btn-border" href="#">
                           <span className="icon-left">
                             <Image
@@ -57,13 +78,13 @@ const SignIn = () => {
                           </span>
                           Login with Facebook
                         </a>
-                      </div>
-                      <div className="text-social-area">
+                      </div> */}
+                      {/* <div className="text-social-area">
                         <hr />
                         <span>Or continue with</span>
                         <hr />
-                      </div>
-                      <form>
+                      </div> */}
+                      <form onSubmit={handleSubmit}>
                         <div className="input-section mail-section">
                           <div className="icon">
                             <i className="fa-sharp fa-regular fa-envelope"></i>
@@ -71,21 +92,33 @@ const SignIn = () => {
                           <input
                             type="email"
                             placeholder="Enter email address"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                           />
                         </div>
                         <div className="input-section password-section">
                           <div className="icon">
                             <i className="fa-sharp fa-regular fa-lock"></i>
                           </div>
-                          <input type="password" placeholder="Password" />
+                          <input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                          />
                         </div>
+                        {error ? <p className="mt--10">{error}</p> : null}
                         <div className="forget-text">
                           <a className="btn-read-more" href="#">
                             <span>Forgot password</span>
                           </a>
                         </div>
-                        <button type="submit" className="btn-default">
-                          Sign In
+                        <button
+                          type="submit"
+                          className="btn-default"
+                          disabled={submitting}
+                        >
+                          {submitting ? "Signing In..." : "Sign In"}
                         </button>
                       </form>
                     </div>
