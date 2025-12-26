@@ -9,7 +9,6 @@ const TypingEffect = ({ text, onComplete }) => {
     const delay = 10; // Typing speed in ms
 
     useEffect(() => {
-        // Reset displayed text when 'text' prop changes (e.g., regeneration starts)
         setDisplayedText('');
         indexRef.current = 0;
     }, [text]);
@@ -39,7 +38,49 @@ const TypingEffect = ({ text, onComplete }) => {
         </p>
     );
 };
-// -----------------------------------------------------------
+
+// --- NEW: Hashtag Grid System Component ---
+const HashtagGridSystem = ({ text }) => {
+    // Logic to separate the main body from the hashtags section
+    const parts = text.split(/Hashtags:/i);
+    const bodyText = parts[0];
+    const hashtagPart = parts[1] || "";
+
+    // Extract hashtags based on # symbol
+    const tags = hashtagPart.trim().split(/\s+/).filter(tag => tag.startsWith('#'));
+
+    if (tags.length === 0) return <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{text}</p>;
+
+    return (
+        <div>
+            <p style={{ margin: 0, whiteSpace: 'pre-wrap', marginBottom: '16px' }}>{bodyText.trim()}</p>
+            
+            <p style={{ fontWeight: 'bold', margin: '0 0 8px 0', color: '#1e293b' }}>Hashtags:</p>
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '8px 12px',
+                backgroundColor: '#111827', // Dark professional background
+                padding: '16px',
+                borderRadius: '8px',
+                fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+                fontSize: '13px',
+                border: '1px solid #374151'
+            }}>
+                {tags.map((tag, idx) => (
+                    <div key={idx} style={{ 
+                        color: '#ff4b4b', // Proper red hashtags as per screenshot
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                    }}>
+                        {tag}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
 
 
 const VariantModalContent = ({ 
@@ -60,7 +101,6 @@ const VariantModalContent = ({
     const [isTypingCompleted, setIsTypingCompleted] = useState(initialTypingState); 
 
     useEffect(() => {
-        // Global Typing Logic (Only for initial, non-history load)
         if (isHistoryView || variants.length === 0) {
              setIsTypingCompleted(true);
         } else {
@@ -69,17 +109,13 @@ const VariantModalContent = ({
         if (variants.length > 0) {
             setExpandedIndex(0);
         }
-        // Clear regeneration typing state if the whole variant set changes
         setTypingRegeneratedId(null); 
     }, [variants.length, isHistoryView]);
 
 
     const toggleExpand = (index) => {
-        // This function is implicitly blocked via pointerEvents: none on the UI element.
         setExpandedIndex(index === expandedIndex ? null : index);
     };
-
-    // --- Action Handlers ---
 
     const handleCopy = (text, variantId) => {
         try {
@@ -107,13 +143,10 @@ const VariantModalContent = ({
             const blob = new Blob([variant.content], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
-
             const platform = inputs?.platform?.value || 'Platform';
             const textLength = inputs?.adTextLength?.value || 'TextLength'; 
-
             link.href = url;
             link.download = `adcopy_variant_${index + 1}_${platform}_${textLength}.txt`.replace(/\s+/g, '_');
-
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -128,23 +161,18 @@ const VariantModalContent = ({
     
     const handleRegenerate = async (variantId) => {
         setRegeneratingId(variantId);
-
-        // Ensure the current variant is expanded to show the typing
         const indexToExpand = variants.findIndex(v => v.id === variantId);
         if (indexToExpand !== -1) {
             setExpandedIndex(indexToExpand);
         }
-        
         try {
             await onRequestRegenerate(variantId);
             setTypingRegeneratedId(variantId); 
-            
         } finally {
             setRegeneratingId(null);
         }
     };
 
-    // --- Styles (Retained) ---
     const modalStyles = {
         overlay: {
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -188,7 +216,6 @@ const VariantModalContent = ({
             marginLeft: '8px', transition: 'background-color 0.15s ease-in-out',
         }
     };
-    // --- End Styles ---
     
     if (isLoading) {
         return (
@@ -206,15 +233,8 @@ const VariantModalContent = ({
     
     if (!variants || variants.length === 0) return null;
 
-    // **FIXED LOGIC:** Calculate Global Lock States OUTSIDE the map
-    
-    // 1. Is initial generation typing running? (Only for first variant, not history, not complete)
     const isInitialTypingActive = variants.length > 0 && !isTypingCompleted && !isHistoryView;
-
-    // 2. Is any typing (initial or regeneration) currently active?
     const isTypingActiveGlobally = isInitialTypingActive || (typingRegeneratedId !== null);
-    
-    // 3. Is the UI locked (Typing running OR API call running)?
     const isUILocked = isTypingActiveGlobally || (regeneratingId !== null);
     
     return (
@@ -228,7 +248,6 @@ const VariantModalContent = ({
                             </span>
                         )}
                     </h2>
-                    {/* ENFORCE GLOBAL LOCK: Close Button */}
                     <button 
                         onClick={onClose} 
                         disabled={isUILocked}
@@ -243,7 +262,6 @@ const VariantModalContent = ({
                 </div>
                 
                 <div style={modalStyles.body}>
-                    
                     <p style={{marginBottom: '20px', color: '#475569', fontSize: '14px'}}>
                         Click on any variant card to expand and view the full ad copy.
                         {isUILocked && (
@@ -257,18 +275,10 @@ const VariantModalContent = ({
                         const isExpanded = index === expandedIndex;
                         const isRegenerating = regeneratingId === variant.id;
                         const isFirstVariant = index === 0;
-                        
-                        // Typing condition specific to this variant
-                        // NOTE: isInitialTypingActive is already calculated globally
                         const isInitialTyping = isFirstVariant && isInitialTypingActive;
                         const isRegenTyping = typingRegeneratedId === variant.id && !isRegenerating;
-
                         const showTypingEffect = isInitialTyping || isRegenTyping;
-                        
-                        // The lock condition for elements in this map is the global lock state
                         const isInteractionDisabled = isUILocked; 
-
-                        let contentToRender = variant.content;
 
                         return (
                             <div key={variant.id || index} style={{
@@ -283,8 +293,6 @@ const VariantModalContent = ({
                                         backgroundColor: isExpanded ? '#e0f2fe' : '#ffffff',
                                         borderBottom: isExpanded ? '1px solid #93c5fd' : '1px solid transparent',
                                         color: isExpanded ? '#0369a1' : '#1f2937',
-                                        
-                                        // ENFORCE GLOBAL LOCK: Variant Header (Collapsing/Expanding)
                                         cursor: isInteractionDisabled ? 'wait' : 'pointer',
                                         pointerEvents: isInteractionDisabled ? 'none' : 'auto', 
                                     }}
@@ -293,14 +301,12 @@ const VariantModalContent = ({
                                     <span style={{flexGrow: 1}}>Variant {index + 1}: {inputs.platform?.value} ({inputs.placement?.value})</span>
                                     
                                     <div onClick={(e) => e.stopPropagation()} style={{display: 'flex', alignItems: 'center'}}>
-                                        
                                         <button 
                                             style={{
                                                 ...modalStyles.actionButton,
                                                 backgroundColor: '#10b981', color: 'white', border: 'none',
                                             }}
                                             onClick={() => handleCopy(variant.content, index + 1)}
-                                            // ENFORCE GLOBAL LOCK: Copy Button
                                             disabled={isInteractionDisabled} 
                                         >
                                             Copy
@@ -312,11 +318,9 @@ const VariantModalContent = ({
                                                 backgroundColor: isInteractionDisabled ? '#9ca3af' : '#f97316', 
                                                 color: 'white', 
                                                 border: 'none',
-                                                // Disable if currently regenerating (API call) OR if any typing is active
                                                 cursor: isInteractionDisabled ? 'wait' : 'pointer'
                                             }}
                                             onClick={() => handleRegenerate(variant.id)}
-                                            // ENFORCE GLOBAL LOCK: Regenerate Button
                                             disabled={isInteractionDisabled} 
                                         >
                                             {isRegenerating ? 'Regenerating...' : 'Regenerate'}
@@ -331,37 +335,30 @@ const VariantModalContent = ({
                                                 cursor: isInteractionDisabled ? 'default' : 'pointer'
                                             }}
                                             onClick={() => handleDownload(variant, index)}
-                                            // ENFORCE GLOBAL LOCK: Download Button
                                             disabled={isInteractionDisabled}
                                         >
                                             Download
                                         </button>
                                     </div>
-                                    
                                     <span style={{ opacity: isInteractionDisabled ? 0.3 : 1 }}>{isExpanded ? '▲' : '▼'}</span>
                                 </div>
                                 
                                 {isExpanded && (
                                     <div style={modalStyles.cardContent}>
-                                        <div style={{ margin: 0, fontFamily: 'inherit', whiteSpace: 'pre-wrap' }}>
+                                        <div style={{ margin: 0, fontFamily: 'inherit' }}>
                                             <p style={{ fontWeight: 'bold', margin: '0 0 8px 0' }}>Variant Content:</p>
                                             
                                             {showTypingEffect ? (
                                                 <TypingEffect 
-                                                    text={contentToRender} 
+                                                    text={variant.content} 
                                                     onComplete={() => {
-                                                        if (isInitialTyping) {
-                                                            setIsTypingCompleted(true);
-                                                        }
-                                                        if (isRegenTyping) {
-                                                            setTypingRegeneratedId(null); // Clear ID after typing is complete
-                                                        }
+                                                        if (isInitialTyping) setIsTypingCompleted(true);
+                                                        if (isRegenTyping) setTypingRegeneratedId(null);
                                                     }} 
                                                 />
                                             ) : (
-                                                <p style={{ margin: 0, fontFamily: 'inherit', whiteSpace: 'pre-wrap', color: '#1f2937' }}>
-                                                    {contentToRender}
-                                                </p>
+                                                /* MODIFIED: Using HashtagGridSystem for final rendered state */
+                                                <HashtagGridSystem text={variant.content} />
                                             )}
                                         </div>
                                     </div>
@@ -380,7 +377,6 @@ const VariantModalContent = ({
                                 color: '#4b5563',
                                 border: '1px solid #d1d5db', 
                             }}
-                            // ENFORCE GLOBAL LOCK: Close Modal Button
                             disabled={isUILocked}
                         >
                             Close Modal

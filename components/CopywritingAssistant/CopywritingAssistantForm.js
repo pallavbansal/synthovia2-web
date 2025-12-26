@@ -7,6 +7,8 @@ import SurfingLoading from './SurfingLoading';
 import ToggleButton from '../Form/ToggleButton';
 import RemoveTagButton from '../Form/RemoveTagButton';
 
+import { getAuthHeader } from "@/utils/auth";
+
 // --- API Constants (Provided by User) ---
 const BASE_URL = 'https://olive-gull-905765.hostingersite.com/public/api/v1';
 
@@ -17,10 +19,7 @@ const API = {
     REGENERATE_COPYWRITING_VARIANT: (variantId) =>
         `${BASE_URL}/copy-writing/variants/${variantId}/regenerate`,
     GET_VARIANTS_LOG: (requestId) => `${BASE_URL}/copy-writing/${requestId}/variants`,
-    AUTH_TOKEN: '3|WwYYaSEAfSr1guYBFdPQlPtGg0dKphy1sVMDLBmX647db358',
 };
-
-const AUTH_HEADER = `Bearer ${API.AUTH_TOKEN}`;
 
 const CopywritingAssistantForm = () => {
     // State for all form fields
@@ -656,7 +655,7 @@ const CopywritingAssistantForm = () => {
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
-                    Authorization: AUTH_HEADER,
+                    Authorization: getAuthHeader(),
                 },
                 body: JSON.stringify(payload),
             });
@@ -701,7 +700,7 @@ const CopywritingAssistantForm = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: AUTH_HEADER,
+                    Authorization: getAuthHeader(),
                 },
             });
 
@@ -745,8 +744,8 @@ const CopywritingAssistantForm = () => {
             return;
         }
 
-        setIsFetchingLog(true);     // so VariantsModal can show loading state if needed
-        setIsGenerating(true);     // reuse existing generating flag for buttons
+        setIsFetchingLog(true);    // so VariantsModal can show loading state if needed
+        setIsGenerating(true);    // reuse existing generating flag for buttons
         setModalTitle('Variants Log'); // set title for log view
         setIsHistoryView(true);
         setIsApiLoading(true);
@@ -754,7 +753,7 @@ const CopywritingAssistantForm = () => {
         try {
             const response = await fetch(API.GET_VARIANTS_LOG(requestId), {
                 headers: {
-                    Authorization: AUTH_HEADER,
+                    Authorization: getAuthHeader(),
                 },
             });
 
@@ -825,7 +824,7 @@ const CopywritingAssistantForm = () => {
             try {
                 const response = await fetch(API.GET_COPYWRITING_OPTIONS, {
                     headers: {
-                        Authorization: AUTH_HEADER,
+                        Authorization: getAuthHeader(),
                         'Content-Type': 'application/json',
                     },
                 });

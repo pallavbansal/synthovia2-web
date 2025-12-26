@@ -4,12 +4,12 @@ import Context from "@/context/Context";
 import HeaderDashboard from "@/components/Header/HeaderDashboard";
 import PopupMobileMenu from "@/components/Header/PopUpMobileMenu";
 import LeftDashboardSidebar from "@/components/Header/LeftDashboardSidebar";
-import DashboardOverview from "@/components/Dashboard/DashboardOverview";
+import ScriptStoryWriterTool from "@/components/ScriptStoryWriterTool/ScriptStoryWriterTool";
 
-const DashboardPage = () => {
+const ScriptStoryWriterToolPage = () => {
   return (
     <>
-      <PageHead title="Dashboard" />
+      <PageHead title="Script & Story Writer Tool" />
 
       <main className="page-wrapper rbt-dashboard-page">
         <Context>
@@ -18,7 +18,7 @@ const DashboardPage = () => {
             <PopupMobileMenu />
             <LeftDashboardSidebar />
 
-            <DashboardOverview />
+            <ScriptStoryWriterTool />
           </div>
         </Context>
       </main>
@@ -26,4 +26,4 @@ const DashboardPage = () => {
   );
 };
 
-export default DashboardPage;
+export default ScriptStoryWriterToolPage;

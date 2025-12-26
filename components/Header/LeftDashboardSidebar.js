@@ -14,6 +14,10 @@ const LeftSidebar = () => {
   const { shouldCollapseLeftbar, isLightTheme, toggleTheme } = useAppContext();
 
   const isActive = (href) => router.pathname === href;
+  const getLinkClassName = (href, isDisable) => {
+    if (isDisable) return "disabled";
+    return isActive(href) ? "active" : "";
+  };
   return (
     <>
       <div
@@ -33,13 +37,7 @@ const LeftSidebar = () => {
                         .map((data, index) => (
                           <li key={index}>
                             <Link
-                              className={
-                                isActive(data.link)
-                                  ? "active"
-                                  : "" || data.isDisable
-                                  ? "disabled"
-                                  : ""
-                              }
+                              className={getLinkClassName(data.link, data.isDisable)}
                               href={data.link}
                             >
                               <Image
