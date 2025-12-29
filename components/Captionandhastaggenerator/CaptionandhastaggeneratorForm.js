@@ -42,6 +42,7 @@ const Captionandhastaggeneratorform = () => {
         variants: 1,
         showAdvanced: false,
         requiredKeywords: [],
+        mentionHandles: [],
         // Language / locale selection - NEW LOGIC TOGGLES ADDED
         languageSelection: 'predefined', // <--- NEW STATE
         language: 'en_global', // key from API options
@@ -260,6 +261,13 @@ const Captionandhastaggeneratorform = () => {
         const { name, value, type, checked } = e.target;
         setFormData(prev => {
             if (name === 'formattingOptions') {
+                if (!checked && value === 'mentions') {
+                    return {
+                        ...prev,
+                        mentionHandles: [],
+                        [name]: prev[name].filter(v => v !== value)
+                    };
+                }
                 return {
                     ...prev,
                     [name]: checked
@@ -312,6 +320,11 @@ const Captionandhastaggeneratorform = () => {
     // --- HANDLER: Show Summary Modal ---
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        if (formData.formattingOptions.includes('mentions') && (!formData.mentionHandles || formData.mentionHandles.length === 0)) {
+            showNotification('Please add at least one mention when "Add Mentions" is selected', 'error');
+            return;
+        }
 
         // Basic Validation check for required fields
         if (!formData.postTheme || !formData.primaryGoal || formData.targetAudience.length === 0 ||
@@ -379,6 +392,7 @@ const Captionandhastaggeneratorform = () => {
             custom_cta_text: ctaPayload.type === 'custom' ? formData.customCta : null,
             number_of_ctas: formData.includeCtaType !== ctaTypeOptions.find(o => o.label === 'No CTA')?.key ? parseInt(formData.numberOfCta) : 0,
             formatting_options: formattedOptions,
+            mentions: formData.formattingOptions.includes('mentions') ? (formData.mentionHandles || []) : [],
             hashtag_style: hashtagStylePayload,
             // FIX: Send the predefined object structure for hashtag_limit
             hashtag_limit: {
@@ -598,6 +612,7 @@ const Captionandhastaggeneratorform = () => {
             variants: 1,
             showAdvanced: false,
             requiredKeywords: [],
+            mentionHandles: [],
             // Reset new fields to defaults
             languageSelection: 'predefined',
             language: defaultLanguage,
@@ -822,7 +837,7 @@ const Captionandhastaggeneratorform = () => {
                                                 backgroundColor: formData.targetAudience.length > 0 ? '#f9fafb' : 'white'
                                             }}>
                                                 {formData.targetAudience.length === 0 && (
-                                                    <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
+                                                    <span style={{ color: '#9ca3af', fontSize: '14px' }}>
                                                         Add audience segments (e.g., 'Women 25-34', 'Fitness Enthusiasts')
                                                     </span>
                                                 )}
@@ -1247,6 +1262,45 @@ const Captionandhastaggeneratorform = () => {
                                             </div>
                                         </div>
                                     </div>
+
+                                    {formData.formattingOptions.includes('mentions') && (
+                                        <div style={colFullStyle}>
+                                            <div style={styles.formGroup}>
+                                                <label style={styles.label}>
+                                                    Mentions <span style={{ color: '#ef4444' }}>*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    style={styles.input}
+                                                    placeholder="Add a mention (e.g., @yourbrand) and press Enter"
+                                                    onKeyPress={(e) => handleArrayChange(e, 'mentionHandles')}
+                                                    onBlur={(e) => {
+                                                        const value = e.target.value.trim();
+                                                        if (value && formData.mentionHandles.length < 10) {
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                mentionHandles: [...prev.mentionHandles, value]
+                                                            }));
+                                                            e.target.value = '';
+                                                        }
+                                                    }}
+                                                    disabled={formData.mentionHandles.length >= 10}
+                                                    inputMode='text'
+                                                />
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+                                                    {formData.mentionHandles.map((mention, index) => (
+                                                        <span key={index} style={{ ...styles.badge, ...styles.badgeSecondary }}>
+                                                            {mention}
+                                                            <RemoveTagButton
+                                                                style={styles.removeBtn}
+                                                                onClick={() => removeItem('mentionHandles', index)}
+                                                            />
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #334155', margin: '5px 0' }} />
                                 </>

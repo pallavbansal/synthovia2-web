@@ -4,6 +4,8 @@ export const API = {
   GET_FIELD_OPTIONS: `${BASE_URL}/ad-copy/options?field_type=all`,
   GENERATE_AD_COPY: `${BASE_URL}/ad-copy/generate`,
   AUTH_LOGIN: `${BASE_URL}/auth/login`,
+  AUTH_GOOGLE: `${BASE_URL}/auth/google`,
+  AUTH_REGISTER: `${BASE_URL}/auth/register`,
 
   DASHBOARD_CREDIT_USAGE: `${BASE_URL}/dashboard/credit-usage`,
   DASHBOARD_MOST_USED_TOOL: `${BASE_URL}/dashboard/most-used-tool`,

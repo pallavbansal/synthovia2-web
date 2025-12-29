@@ -1,18 +1,60 @@
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/router";
 
 import logo from "../../public/images/logo/logo.png";
 import logoDark from "../../public/images/light/logo/logo-dark.png";
-import userImg from "../../public/images/team/team-02sm.jpg";
-import brandImg from "../../public/images/brand/brand-t.png";
 import google from "../../public/images/sign-up/google.png";
 import facebook from "../../public/images/sign-up/facebook.png";
 import { useAppContext } from "@/context/Context";
 import DarkSwitch from "../Header/dark-switch";
+import { register } from "@/utils/auth";
 
 const SignUp = () => {
   const { isLightTheme, toggleTheme } = useAppContext();
+  const router = useRouter();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password) {
+      setError("Please fill all required fields");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await register({
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        email: email.trim(),
+        password,
+        password_confirmation: confirmPassword,
+      });
+      setSuccess("Registration successful. Redirecting to Dashboard...");
+      router.replace("/dashboard");
+    } catch (err) {
+      setError(err?.message || "Registration failed");
+    } finally {
+      setSubmitting(false);
+    }
+  };
   return (
     <>
       <DarkSwitch isLight={isLightTheme} switchTheme={toggleTheme} />
@@ -63,12 +105,28 @@ const SignUp = () => {
                         <span>Or continue with</span>
                         <hr />
                       </div>
-                      <form>
+                      <form onSubmit={handleSubmit}>
                         <div className="input-section">
                           <div className="icon">
                             <i className="feather-user"></i>
                           </div>
-                          <input type="text" placeholder="Enter Your Name" />
+                          <input
+                            type="text"
+                            placeholder="First name"
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
+                          />
+                        </div>
+                        <div className="input-section">
+                          <div className="icon">
+                            <i className="feather-user"></i>
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Last name"
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
+                          />
                         </div>
                         <div className="input-section mail-section">
                           <div className="icon">
@@ -77,6 +135,8 @@ const SignUp = () => {
                           <input
                             type="email"
                             placeholder="Enter email address"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                           />
                         </div>
                         <div className="input-section password-section">
@@ -86,6 +146,8 @@ const SignUp = () => {
                           <input
                             type="password"
                             placeholder="Create Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                           />
                         </div>{" "}
                         <div className="input-section password-section">
@@ -95,15 +157,23 @@ const SignUp = () => {
                           <input
                             type="password"
                             placeholder="Confirm Password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
                           />
                         </div>
+                        {error ? <p className="mt--10">{error}</p> : null}
+                        {success ? <p className="mt--10">{success}</p> : null}
                         <div className="forget-text">
                           <a className="btn-read-more" href="#">
                             <span>Forgot password</span>
                           </a>
                         </div>
-                        <button type="submit" className="btn-default">
-                          Sign Up
+                        <button
+                          type="submit"
+                          className="btn-default"
+                          disabled={submitting}
+                        >
+                          {submitting ? "Signing Up..." : "Sign Up"}
                         </button>
                       </form>
                     </div>

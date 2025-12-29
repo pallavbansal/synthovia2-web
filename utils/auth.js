@@ -83,3 +83,81 @@ export const login = async ({ email, password }) => {
 
   return data;
 };
+
+export const register = async ({
+  first_name,
+  last_name,
+  email,
+  password,
+  password_confirmation,
+}) => {
+  const response = await fetch(API.AUTH_REGISTER, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      first_name,
+      last_name,
+      email,
+      password,
+      password_confirmation,
+    }),
+  });
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    throw new Error((data && data.message) || "Registration failed");
+  }
+
+  if (!data || data.status_code !== 1) {
+    throw new Error((data && data.message) || "Registration failed");
+  }
+
+  if (!data.token) {
+    throw new Error((data && data.message) || "Registration failed");
+  }
+
+  setToken(data.token);
+  setUser(data.user);
+
+  return data;
+};
+
+export const googleLogin = async ({ id_token }) => {
+  const response = await fetch(API.AUTH_GOOGLE, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ id_token }),
+  });
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    throw new Error((data && data.message) || "Google login failed");
+  }
+
+  if (!data || data.status_code !== 1 || !data.token) {
+    throw new Error((data && data.message) || "Google login failed");
+  }
+
+  setToken(data.token);
+  setUser(data.user);
+
+  return data;
+};

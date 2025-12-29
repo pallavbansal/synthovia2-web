@@ -2,16 +2,13 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import Script from "next/script";
 
 import logo from "../../public/images/logo/logo.png";
 import logoDark from "../../public/images/light/logo/logo-dark.png";
-import userImg from "../../public/images/team/team-02sm.jpg";
-import brandImg from "../../public/images/brand/brand-t.png";
-import google from "../../public/images/sign-up/google.png";
-import facebook from "../../public/images/sign-up/facebook.png";
 import DarkSwitch from "../Header/dark-switch";
 import { useAppContext } from "@/context/Context";
-import { login } from "@/utils/auth";
+import { googleLogin, login } from "@/utils/auth";
 
 const SignIn = () => {
   const { isLightTheme, toggleTheme } = useAppContext();
@@ -20,6 +17,61 @@ const SignIn = () => {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [googleBtnReady, setGoogleBtnReady] = useState(false);
+  const googleButtonRef = React.useRef(null);
+
+  const initGoogle = () => {
+    if (googleBtnReady) return;
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+    if (!googleClientId) {
+      setError("Google Client ID is not configured");
+      return;
+    }
+
+    if (
+      typeof window === "undefined" ||
+      !window.google ||
+      !window.google.accounts ||
+      !window.google.accounts.id
+    ) {
+      setError("Google SDK failed to load");
+      return;
+    }
+
+    if (!googleButtonRef.current) return;
+
+    window.google.accounts.id.initialize({
+      client_id: googleClientId,
+      ux_mode: "popup",
+      callback: async (credentialResponse) => {
+        setError("");
+        setSubmitting(true);
+        try {
+          const id_token = credentialResponse && credentialResponse.credential;
+          if (!id_token) {
+            throw new Error("Google login failed");
+          }
+          await googleLogin({ id_token });
+          router.replace("/dashboard");
+        } catch (err) {
+          setError(err?.message || "Google login failed");
+        } finally {
+          setSubmitting(false);
+        }
+      },
+    });
+
+    window.google.accounts.id.renderButton(googleButtonRef.current, {
+      theme: "outline",
+      size: "large",
+      text: "signin_with",
+      shape: "rectangular",
+      width: 320,
+    });
+
+    setGoogleBtnReady(true);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,6 +88,12 @@ const SignIn = () => {
   };
   return (
     <>
+      <Script
+        src="https://accounts.google.com/gsi/client"
+        async
+        defer
+        onLoad={initGoogle}
+      />
       <DarkSwitch isLight={isLightTheme} switchTheme={toggleTheme} />
       <main className="page-wrapper">
         <div className="signup-area">
@@ -55,35 +113,14 @@ const SignIn = () => {
                   </div>
                   <div className="signup-box-bottom">
                     <div className="signup-box-content">
-                      {/* <div className="social-btn-grp">
-                        <a className="btn-default btn-border" href="#">
-                          <span className="icon-left">
-                            <Image
-                              src={google}
-                              width={18}
-                              height={18}
-                              alt="Google Icon"
-                            />
-                          </span>
-                          Login with Google
-                        </a>
-                        <a className="btn-default btn-border" href="#">
-                          <span className="icon-left">
-                            <Image
-                              src={facebook}
-                              width={18}
-                              height={18}
-                              alt="Facebook Icon"
-                            />
-                          </span>
-                          Login with Facebook
-                        </a>
-                      </div> */}
-                      {/* <div className="text-social-area">
+                      <div className="social-btn-grp">
+                        <div ref={googleButtonRef} />
+                      </div>
+                      <div className="text-social-area">
                         <hr />
                         <span>Or continue with</span>
                         <hr />
-                      </div> */}
+                      </div> 
                       <form onSubmit={handleSubmit}>
                         <div className="input-section mail-section">
                           <div className="icon">
