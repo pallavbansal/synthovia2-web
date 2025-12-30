@@ -20,6 +20,8 @@ const SignIn = () => {
   const [googleBtnReady, setGoogleBtnReady] = useState(false);
   const [googleSdkLoaded, setGoogleSdkLoaded] = useState(false);
   const googleButtonRef = useRef(null);
+  const googleInitializedRef = useRef(false);
+  const googleBtnWidthRef = useRef(0);
 
   useEffect(() => {
     if (
@@ -32,8 +34,36 @@ const SignIn = () => {
     }
   }, []);
 
+  const renderGoogleButton = () => {
+    if (
+      typeof window === "undefined" ||
+      !window.google ||
+      !window.google.accounts ||
+      !window.google.accounts.id ||
+      !googleButtonRef.current
+    ) {
+      return;
+    }
+
+    const container = googleButtonRef.current.parentElement || googleButtonRef.current;
+    const nextWidth = Math.round(container.getBoundingClientRect().width || 0);
+    if (!nextWidth) return;
+    if (googleBtnReady && googleBtnWidthRef.current === nextWidth) return;
+
+    googleButtonRef.current.innerHTML = "";
+    window.google.accounts.id.renderButton(googleButtonRef.current, {
+      theme: "outline",
+      size: "large",
+      text: "signin_with",
+      shape: "rectangular",
+      width: nextWidth,
+    });
+
+    googleBtnWidthRef.current = nextWidth;
+    setGoogleBtnReady(true);
+  };
+
   const initGoogle = () => {
-    if (googleBtnReady) return;
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
     if (!googleClientId) {
@@ -53,49 +83,66 @@ const SignIn = () => {
 
     if (!googleButtonRef.current) return;
 
-    googleButtonRef.current.innerHTML = "";
-
-    const buttonWidth =
-      googleButtonRef.current.offsetWidth ||
-      googleButtonRef.current.parentElement?.offsetWidth ||
-      320;
-
-    window.google.accounts.id.initialize({
-      client_id: googleClientId,
-      ux_mode: "popup",
-      callback: async (credentialResponse) => {
-        setError("");
-        setSubmitting(true);
-        try {
-          const id_token = credentialResponse && credentialResponse.credential;
-          if (!id_token) {
-            throw new Error("Google login failed");
+    if (!googleInitializedRef.current) {
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        ux_mode: "popup",
+        callback: async (credentialResponse) => {
+          setError("");
+          setSubmitting(true);
+          try {
+            const id_token = credentialResponse && credentialResponse.credential;
+            if (!id_token) {
+              throw new Error("Google login failed");
+            }
+            await googleLogin({ id_token });
+            router.replace("/dashboard");
+          } catch (err) {
+            setError(err?.message || "Google login failed");
+          } finally {
+            setSubmitting(false);
           }
-          await googleLogin({ id_token });
-          router.replace("/dashboard");
-        } catch (err) {
-          setError(err?.message || "Google login failed");
-        } finally {
-          setSubmitting(false);
-        }
-      },
-    });
+        },
+      });
+      googleInitializedRef.current = true;
+    }
 
-    window.google.accounts.id.renderButton(googleButtonRef.current, {
-      theme: "outline",
-      size: "large",
-      text: "signin_with",
-      shape: "rectangular",
-      width: buttonWidth,
-    });
-
-    setGoogleBtnReady(true);
+    renderGoogleButton();
   };
 
   useEffect(() => {
     if (!googleSdkLoaded || googleBtnReady) return;
     initGoogle();
   }, [googleSdkLoaded, googleBtnReady]);
+
+  useEffect(() => {
+    if (!googleSdkLoaded) return;
+    const container = googleButtonRef.current?.parentElement;
+    if (!container) return;
+
+    let ro;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => {
+        renderGoogleButton();
+      });
+      ro.observe(container);
+    }
+
+    const handleWindowResize = () => {
+      renderGoogleButton();
+    };
+    window.addEventListener("resize", handleWindowResize);
+
+    const t = window.setTimeout(() => {
+      initGoogle();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener("resize", handleWindowResize);
+      if (ro) ro.disconnect();
+    };
+  }, [googleSdkLoaded]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -144,21 +144,8 @@ const DashboardLayout = ({ children, title }) => {
 
       <section className={styles.main}>
         <header className={styles.topbar}>
-          <div className={styles.search}>
-            <span className={styles.searchIcon}>
-              <i className="fa-solid fa-magnifying-glass" />
-            </span>
-            <input className={styles.searchInput} placeholder="Search" />
-          </div>
-
           <div className={styles.topbarRight}>
             <div className={styles.datePill}>{dateText}</div>
-            <button className={styles.iconBtn} type="button" aria-label="Notifications">
-              <i className="fa-regular fa-bell" />
-            </button>
-            <button className={styles.iconBtn} type="button" aria-label="Help">
-              <i className="fa-regular fa-circle-question" />
-            </button>
             <div className={styles.userMenu} ref={userMenuRef}>
               <button
                 className={styles.avatarBtn}

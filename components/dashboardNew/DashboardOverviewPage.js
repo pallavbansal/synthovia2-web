@@ -8,6 +8,68 @@ const TIMELINES = [
   { value: "week", label: "This Week" },
   { value: "month", label: "This Month" },
   { value: "all", label: "All" },
+  { value: "custom", label: "Custom" },
+];
+
+const normalizeToolName = (value) =>
+  String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+
+const toNumberSafe = (value) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+};
+
+const niceCeil = (value) => {
+  const v = toNumberSafe(value);
+  if (v <= 0) return 1;
+
+  const exp = Math.floor(Math.log10(v));
+  const base = 10 ** exp;
+  const frac = v / base;
+
+  if (frac <= 1) return 1 * base;
+  if (frac <= 2) return 2 * base;
+  if (frac <= 5) return 5 * base;
+  return 10 * base;
+};
+
+const CHART_TOOLS = [
+  {
+    label: "Ad Copy Generator",
+    displayLines: ["Ad Copy", "Generator"],
+    matches: ["Ad Copy Generator"],
+  },
+  {
+    label: "Copywriting Assistant",
+    displayLines: ["Copywriting", "Assistant"],
+    matches: ["Copywriting Assistant"],
+  },
+  {
+    label: "Caption & Hashtag Generator",
+    displayLines: ["Caption &", "Hashtag", "Generator"],
+    matches: ["Caption & Hashtag Generator"],
+  },
+  {
+    label: "Email & Newsletter Writer",
+    displayLines: ["Email &", "Newsletter", "Writer"],
+    matches: ["Email & Newsletter Writer", "Email & Newsletter Generator"],
+  },
+  {
+    label: "Script & Story Writer",
+    displayLines: ["Script &", "Story", "Writer"],
+    matches: ["Script & Story Writer", "Script Writer", "Script & Story Writer Tool"],
+  },
+  {
+    label: "SEO Keyword & Meta Tag Generator",
+    displayLines: ["SEO", "Keyword &", "Meta Tag", "Generator"],
+    matches: [
+      "SEO Keyword & Meta Tag Generator",
+      "SEO Keyword & Meta Tag Generator Tool",
+      "SEO & Keyword Generator",
+    ],
+  },
 ];
 
 const pad2 = (n) => String(n).padStart(2, "0");
@@ -97,6 +159,7 @@ const DashboardOverviewPage = () => {
     "User";
 
   const now = useMemo(() => new Date(), []);
+  const [timelineSelection, setTimelineSelection] = useState("month");
   const [timeline, setTimeline] = useState("month");
   const initialRange = useMemo(() => getRangeForTimeline("month", now, null), [now]);
   const [startDate, setStartDate] = useState(toDateInputValue(initialRange.start));
@@ -115,9 +178,12 @@ const DashboardOverviewPage = () => {
 
       try {
         const url = new URL(API.DASHBOARD_STATS);
-        url.searchParams.set("timeline", timeline);
-        url.searchParams.set("start_date", startDate);
-        url.searchParams.set("end_date", endDate);
+        if (timelineSelection === "custom") {
+          url.searchParams.set("start_date", startDate);
+          url.searchParams.set("end_date", endDate);
+        } else {
+          url.searchParams.set("timeline", timeline);
+        }
 
         const response = await fetch(url.toString(), {
           method: "GET",
@@ -157,14 +223,19 @@ const DashboardOverviewPage = () => {
       }
     };
 
-    if (timeline && startDate && endDate) {
+    const canFetch =
+      timelineSelection === "custom"
+        ? Boolean(startDate) && Boolean(endDate)
+        : Boolean(timeline);
+
+    if (canFetch) {
       fetchStats();
     }
 
     return () => {
       cancelled = true;
     };
-  }, [timeline, startDate, endDate]);
+  }, [timeline, timelineSelection, startDate, endDate]);
 
   const creditsUsed = stats?.credits_usage?.credits_used ?? 0;
   const creditsRemaining = stats?.credits_usage?.credits_remaining ?? 0;
@@ -175,12 +246,73 @@ const DashboardOverviewPage = () => {
   const mostUsedToolName = stats?.most_used_tool?.tool_name || "—";
   const mostUsedToolCount = stats?.most_used_tool?.generation_count ?? 0;
 
+  const toolsGenerationItems = useMemo(() => {
+    const items = stats?.tools_generation_count?.items || [];
+    return [...items].sort(
+      (a, b) => toNumberSafe(b?.generation_count) - toNumberSafe(a?.generation_count)
+    );
+  }, [stats]);
+
+  const toolCounts = useMemo(() => {
+    const items = stats?.tools_generation_count?.items || [];
+    const map = new Map();
+
+    items.forEach((it) => {
+      const c = toNumberSafe(it?.generation_count);
+      const label = it?.label;
+      const toolName = it?.tool_name;
+      if (label) map.set(normalizeToolName(label), c);
+      if (toolName) map.set(normalizeToolName(toolName), c);
+    });
+
+    return CHART_TOOLS.map((t) => {
+      const raw =
+        t.matches.map((m) => map.get(normalizeToolName(m))).find((v) => v != null) ?? 0;
+      const count = toNumberSafe(raw);
+      return { label: t.label, displayLines: t.displayLines, count };
+    });
+  }, [stats]);
+
+  const toolsMaxCount = useMemo(() => {
+    if (!toolsGenerationItems.length) return 0;
+    return toolsGenerationItems.reduce(
+      (max, item) => Math.max(max, toNumberSafe(item?.generation_count)),
+      0
+    );
+  }, [toolsGenerationItems]);
+
+  const chartMax = useMemo(() => {
+    const max = toolCounts.reduce((m, t) => Math.max(m, toNumberSafe(t.count)), 0);
+
+    const MULTIPLIER = 1.25;
+    const TICK_COUNT = 5;
+
+    const scaledMax = Math.max(1, max * MULTIPLIER);
+    const step = niceCeil(scaledMax / (TICK_COUNT - 1));
+    return step * (TICK_COUNT - 1);
+  }, [toolCounts]);
+
+  const chartTicks = useMemo(() => {
+    const TICK_COUNT = 5;
+    const step = chartMax / (TICK_COUNT - 1);
+    return Array.from({ length: TICK_COUNT }, (_, idx) => Math.round(chartMax - idx * step));
+  }, [chartMax]);
+
+  const hasToolUsage = useMemo(() => {
+    return toolCounts.some((t) => toNumberSafe(t.count) > 0);
+  }, [toolCounts]);
+
   const recentLogs = useMemo(() => {
     const items = stats?.recent_logs?.items || [];
     return items.slice(0, 6);
   }, [stats]);
 
   const onTimelineChange = (value) => {
+    setTimelineSelection(value);
+    if (value === "custom") {
+      setTimeline("all");
+      return;
+    }
     setTimeline(value);
     const range = getRangeForTimeline(value, new Date(), null);
     setStartDate(toDateInputValue(range.start));
@@ -194,6 +326,53 @@ const DashboardOverviewPage = () => {
           <div className={styles.greetingTitle}>Hello, {name}!</div>
           <div className={styles.greetingSub}>
             Here’s your credits usage and recent generation activity.
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.filterBar}>
+        <div className={styles.filters}>
+          <div className={styles.control}>
+            <div className={styles.label}>Timeline</div>
+            <select
+              className={styles.select}
+              value={timelineSelection}
+              onChange={(e) => onTimelineChange(e.target.value)}
+            >
+              {TIMELINES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {timelineSelection === "custom" ? (
+            <>
+              <div className={styles.control}>
+                <div className={styles.label}>Start date</div>
+                <input
+                  className={styles.input}
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+
+              <div className={styles.control}>
+                <div className={styles.label}>End date</div>
+                <input
+                  className={styles.input}
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+            </>
+          ) : null}
+
+          <div className={styles.filterHint}>
+            {loading ? "Loading..." : error ? error : `${startDate} to ${endDate}`}
           </div>
         </div>
       </div>
@@ -234,88 +413,100 @@ const DashboardOverviewPage = () => {
             <div className={styles.progressFill} style={{ width: `${creditsRemainingPct}%` }} />
           </div>
         </div>
+
+        <div className={`${styles.creditCard} ${styles.creditCardTopTool}`}>
+          <div className={styles.creditCardHeader}>
+            <div className={styles.creditIcon} aria-hidden="true">
+              <i className="fa-solid fa-chart-simple" />
+            </div>
+            <div>
+              <div className={styles.creditLabel}>{mostUsedToolLabel}</div>
+              <div className={styles.creditSub}>
+                {loading ? "Loading..." : mostUsedToolName}
+              </div>
+            </div>
+          </div>
+          <div className={styles.creditValue}>{loading ? "..." : mostUsedToolCount}</div>
+          <div className={styles.muted}>Generations</div>
+        </div>
       </div>
 
       <div className={styles.grid}>
         <div className={styles.leftCol}>
           <div className={styles.card}>
-            <div className={styles.cardTitleRow}>
-              <div>
-                <div className={styles.cardTitle}>Credits Usage</div>
-                <div className={styles.muted}>Aggregate credits usage per period</div>
-              </div>
-              <span className={styles.pill}>
-                <i className="fa-solid fa-bolt" />
-                Usage
-              </span>
+            <div className={styles.chartHeader}>
+              <div className={styles.chartTitle}>AI Tools Usage</div>
             </div>
 
-            <div className={styles.filters}>
-              <div className={styles.control}>
-                <div className={styles.label}>Timeline</div>
-                <select
-                  className={styles.select}
-                  value={timeline}
-                  onChange={(e) => onTimelineChange(e.target.value)}
-                >
-                  {TIMELINES.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
+            {loading ? (
+              <div className={styles.muted}>Loading...</div>
+            ) : error ? (
+              <div className={styles.muted}>{error}</div>
+            ) : hasToolUsage ? (
+              <div className={styles.columnChart}>
+                <div className={styles.yAxis} aria-hidden="true">
+                  {chartTicks.map((t) => (
+                    <div key={t} className={styles.yTick}>
+                      {t}
+                    </div>
                   ))}
-                </select>
-              </div>
+                </div>
 
-              <div className={styles.control}>
-                <div className={styles.label}>Start date</div>
-                <input
-                  className={styles.input}
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </div>
+                <div className={styles.plotArea}>
+                  <div className={styles.plotCanvas}>
+                    <div className={styles.axisLines} aria-hidden="true">
+                      <div className={styles.yAxisLine} />
+                      <div className={styles.xAxisLine} />
+                    </div>
 
-              <div className={styles.control}>
-                <div className={styles.label}>End date</div>
-                <input
-                  className={styles.input}
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
+                    <div className={styles.gridLines} aria-hidden="true">
+                      {chartTicks.slice(0, 4).map((t) => (
+                        <div key={t} className={styles.gridLine} />
+                      ))}
+                    </div>
 
-              <div className={styles.control}>
-                <div className={styles.label}>Credit value</div>
-                <input
-                  className={styles.input}
-                  readOnly
-                  value={loading ? "..." : String(creditsUsed)}
-                />
-              </div>
-            </div>
+                    <div className={styles.bars}>
+                      {toolCounts.map((t) => {
+                        const count = toNumberSafe(t.count);
+                        const clamped = Math.max(0, count);
+                        const rawPct = chartMax ? (clamped / chartMax) * 100 : 0;
+                        const heightPct =
+                          clamped > 0 ? Math.min(100, Math.max(2, Math.round(rawPct))) : 0;
+                        return (
+                          <div className={styles.barColPlot} key={t.label}>
+                            <div className={styles.barValue}>{t.count}</div>
+                            <div className={styles.barTrack} aria-hidden="true">
+                              <div className={styles.barFill} style={{ height: `${heightPct}%` }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
 
-            <div style={{ height: 12 }} />
-
-            <div className={styles.statsRow}>
-              <div>
-                <div className={styles.muted}>Total credits used</div>
-                <div className={styles.bigNumber}>{loading ? "..." : creditsUsed}</div>
+                  <div className={styles.xLabels}>
+                    {toolCounts.map((t) => (
+                      <div className={styles.barLabel} key={`${t.label}-label`} title={t.label}>
+                        {t.displayLines && t.displayLines.length
+                          ? t.displayLines.map((line, idx) => (
+                              <span key={`${t.label}-line-${idx}`}>
+                                {line}
+                                {idx < t.displayLines.length - 1 ? <br /> : null}
+                              </span>
+                            ))
+                          : t.label}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-              <div className={styles.muted}>
-                {loading ? "Loading..." : `${startDate} to ${endDate}`}
-              </div>
-            </div>
-
-            {error ? <div className={styles.muted} style={{ marginTop: 10 }}>{error}</div> : null}
-            {!loading && !error ? (
-              <div className={styles.muted} style={{ marginTop: 10 }}>
-                Credits remaining: {creditsRemaining}
-              </div>
-            ) : null}
+            ) : (
+              <div className={styles.muted}>No tool usage in this range.</div>
+            )}
           </div>
+        </div>
 
+        <div className={styles.rightCol}>
           <div className={styles.card}>
             <div className={styles.cardTitleRow}>
               <div>
@@ -345,29 +536,6 @@ const DashboardOverviewPage = () => {
                 <div className={styles.muted}>No recent activity in this range.</div>
               )}
             </div>
-          </div>
-        </div>
-
-        <div className={styles.rightCol}>
-          <div className={styles.card}>
-            <div className={styles.cardTitleRow}>
-              <div>
-                <div className={styles.cardTitle}>{mostUsedToolLabel}</div>
-                <div className={styles.muted}>Top tool for selected period</div>
-              </div>
-              <span className={styles.pill}>
-                <i className="fa-solid fa-chart-simple" />
-                Top
-              </span>
-            </div>
-
-            <div className={styles.muted}>Tool name</div>
-            <div className={styles.toolName}>{loading ? "..." : mostUsedToolName}</div>
-            {!loading ? (
-              <div className={styles.muted} style={{ marginTop: 8 }}>
-                Generations: {mostUsedToolCount}
-              </div>
-            ) : null}
           </div>
         </div>
       </div>

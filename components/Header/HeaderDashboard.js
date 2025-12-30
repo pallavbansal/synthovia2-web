@@ -23,11 +23,23 @@ const HeaderDashboard = ({ display }) => {
     isLightTheme,
   } = useAppContext();
 
-  const [userEmail, setUserEmail] = useState("-");
+  const [userTitle, setUserTitle] = useState("-");
+  const [userSub, setUserSub] = useState("-");
 
   useEffect(() => {
     const user = getUser();
-    setUserEmail(user?.email || "-");
+    const first = user?.first_name || user?.firstName;
+    const last = user?.last_name || user?.lastName;
+    const fullFromParts = [first, last].filter(Boolean).join(" ").trim();
+    const full =
+      fullFromParts ||
+      user?.name ||
+      user?.full_name ||
+      user?.fullName ||
+      "User";
+
+    setUserTitle(full);
+    setUserSub(user?.email || "-");
   }, []);
   return (
     <>
@@ -99,8 +111,8 @@ const HeaderDashboard = ({ display }) => {
                           <Image src={avatar} alt="Admin" />
                         </div>
                         <div className="content">
-                          <span className="title ">RainbowIT</span>
-                          <p>{userEmail}</p>
+                          <span className="title ">{userTitle}</span>
+                          <p>{userSub}</p>
                         </div>
                       </div>
                       <div className="icon">

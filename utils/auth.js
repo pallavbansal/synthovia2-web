@@ -33,7 +33,28 @@ export const getUser = () => {
 export const setUser = (user) => {
   if (typeof window === "undefined") return;
   if (!user) return;
-  localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
+
+  const next = { ...user };
+
+  const first = next.first_name || next.firstName;
+  const last = next.last_name || next.lastName;
+  if (!first && !last) {
+    const rawName = next.name || next.full_name || next.fullName;
+    if (rawName && typeof rawName === "string") {
+      const parts = rawName.trim().split(/\s+/).filter(Boolean);
+      if (parts.length === 1) {
+        next.first_name = parts[0];
+      } else if (parts.length > 1) {
+        next.first_name = parts[0];
+        next.last_name = parts.slice(1).join(" ");
+      }
+    }
+  }
+
+  if (next.firstName && !next.first_name) next.first_name = next.firstName;
+  if (next.lastName && !next.last_name) next.last_name = next.lastName;
+
+  localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(next));
 };
 
 export const clearUser = () => {
