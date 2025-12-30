@@ -168,6 +168,9 @@ const DashboardOverviewPage = () => {
 
   const creditsUsed = stats?.credits_usage?.credits_used ?? 0;
   const creditsRemaining = stats?.credits_usage?.credits_remaining ?? 0;
+  const creditsTotal = creditsUsed + creditsRemaining;
+  const creditsUsedPct = creditsTotal ? Math.round((creditsUsed / creditsTotal) * 100) : 0;
+  const creditsRemainingPct = creditsTotal ? 100 - creditsUsedPct : 0;
   const mostUsedToolLabel = stats?.most_used_tool?.label || "Most Used Tool";
   const mostUsedToolName = stats?.most_used_tool?.tool_name || "—";
   const mostUsedToolCount = stats?.most_used_tool?.generation_count ?? 0;
@@ -191,6 +194,44 @@ const DashboardOverviewPage = () => {
           <div className={styles.greetingTitle}>Hello, {name}!</div>
           <div className={styles.greetingSub}>
             Here’s your credits usage and recent generation activity.
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.creditCards}>
+        <div className={`${styles.creditCard} ${styles.creditCardUsed}`}>
+          <div className={styles.creditCardHeader}>
+            <div className={styles.creditIcon} aria-hidden="true">
+              <i className="fa-solid fa-bolt" />
+            </div>
+            <div>
+              <div className={styles.creditLabel}>Credit Used</div>
+              <div className={styles.creditSub}>
+                {loading ? "Loading..." : creditsTotal ? `${creditsUsedPct}% used` : "—"}
+              </div>
+            </div>
+          </div>
+          <div className={styles.creditValue}>{loading ? "..." : creditsUsed}</div>
+          <div className={styles.progressTrack} aria-hidden="true">
+            <div className={styles.progressFill} style={{ width: `${creditsUsedPct}%` }} />
+          </div>
+        </div>
+
+        <div className={`${styles.creditCard} ${styles.creditCardRemaining}`}>
+          <div className={styles.creditCardHeader}>
+            <div className={styles.creditIcon} aria-hidden="true">
+              <i className="fa-solid fa-battery-three-quarters" />
+            </div>
+            <div>
+              <div className={styles.creditLabel}>Credit Remaining</div>
+              <div className={styles.creditSub}>
+                {loading ? "Loading..." : creditsTotal ? `${creditsRemainingPct}% remaining` : "—"}
+              </div>
+            </div>
+          </div>
+          <div className={styles.creditValue}>{loading ? "..." : creditsRemaining}</div>
+          <div className={styles.progressTrack} aria-hidden="true">
+            <div className={styles.progressFill} style={{ width: `${creditsRemainingPct}%` }} />
           </div>
         </div>
       </div>

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./DashboardLayout.module.css";
-import { getUser } from "@/utils/auth";
+import { getUser, logout } from "@/utils/auth";
 
 const NAV_ITEMS = [
   { href: "/dashboard-overview", label: "Dashboard", iconClass: "fa-solid fa-gauge" },
@@ -48,6 +48,8 @@ const isActivePath = (pathname, href) => {
 
 const DashboardLayout = ({ children, title }) => {
   const router = useRouter();
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
 
   const userName = useMemo(() => {
     const user = getUser();
@@ -78,6 +80,35 @@ const DashboardLayout = ({ children, title }) => {
       day: "numeric",
     });
   }, []);
+
+  useEffect(() => {
+    const handleDocumentMouseDown = (event) => {
+      if (!userMenuRef.current) return;
+      if (!userMenuRef.current.contains(event.target)) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleDocumentMouseDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleDocumentMouseDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    setUserMenuOpen(false);
+    logout();
+    router.replace("/signin");
+  };
 
   return (
     <div className={styles.layout}>
@@ -128,8 +159,30 @@ const DashboardLayout = ({ children, title }) => {
             <button className={styles.iconBtn} type="button" aria-label="Help">
               <i className="fa-regular fa-circle-question" />
             </button>
-            <div className={styles.avatar} title={userName}>
-              {avatarText}
+            <div className={styles.userMenu} ref={userMenuRef}>
+              <button
+                className={styles.avatarBtn}
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={userMenuOpen}
+                onClick={() => setUserMenuOpen((v) => !v)}
+                title={userName}
+              >
+                <div className={styles.avatar}>{avatarText}</div>
+              </button>
+              {userMenuOpen ? (
+                <div className={styles.userDropdown} role="menu" aria-label="User menu">
+                  <button
+                    type="button"
+                    className={styles.userDropdownItem}
+                    role="menuitem"
+                    onClick={handleLogout}
+                  >
+                    <i className="fa-sharp fa-solid fa-right-to-bracket" />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         </header>
