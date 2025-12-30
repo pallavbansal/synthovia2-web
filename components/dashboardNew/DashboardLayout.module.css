@@ -1,0 +1,241 @@
+.layout {
+  min-height: 100vh;
+  background: radial-gradient(1200px 800px at 30% 0%, rgba(120, 132, 255, 0.08), transparent 60%),
+    radial-gradient(900px 600px at 80% 20%, rgba(0, 209, 255, 0.08), transparent 55%),
+    #0b0c10;
+  color: rgba(255, 255, 255, 0.92);
+  display: flex;
+  padding: 16px;
+}
+
+.sidebar {
+  width: 264px;
+  flex: 0 0 264px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  backdrop-filter: blur(10px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 6px 2px;
+}
+
+.brandLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brandMark {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(120, 132, 255, 0.9), rgba(0, 209, 255, 0.8));
+  display: grid;
+  place-items: center;
+  color: #0b0c10;
+  font-weight: 800;
+}
+
+.brandTitle {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.brandSub {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.navSectionTitle {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  padding: 10px 8px 4px;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  color: rgba(255, 255, 255, 0.72);
+  border: 1px solid transparent;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.navLink:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.navLinkActive {
+  background: linear-gradient(135deg, rgba(120, 132, 255, 0.18), rgba(0, 209, 255, 0.12));
+  border-color: rgba(120, 132, 255, 0.25);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.navIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+}
+
+.navLabel {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.navSpacer {
+  flex: 1;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-left: 16px;
+}
+
+.topbar {
+  height: 60px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  gap: 14px;
+  backdrop-filter: blur(10px);
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  max-width: 520px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.searchIcon {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 14px;
+}
+
+.searchInput {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+}
+
+.searchInput::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.topbarRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.datePill {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.62);
+  padding: 8px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.iconBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.85);
+  display: grid;
+  place-items: center;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(120, 132, 255, 0.25), rgba(0, 209, 255, 0.2));
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 1024px) {
+  .layout {
+    padding: 12px;
+  }
+
+  .sidebar {
+    width: 220px;
+    flex-basis: 220px;
+  }
+}
+
+@media (max-width: 860px) {
+  .layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-basis: auto;
+  }
+
+  .main {
+    margin-left: 0;
+  }
+
+  .search {
+    max-width: none;
+  }
+}

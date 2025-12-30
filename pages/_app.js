@@ -48,6 +48,7 @@ export default function App({ Component, pageProps }) {
 
     const protectedPrefixes = [
       "/dashboard",
+      "/dashboard-overview",
       "/application",
       "/ad-copy-generator",
       "/caption-and-hastag-generator",
@@ -66,6 +67,7 @@ export default function App({ Component, pageProps }) {
       "/plans-billing",
       "/profile-details",
       "/sessions",
+      "/settings",
       "/utilize",
     ];
 
@@ -79,7 +81,7 @@ export default function App({ Component, pageProps }) {
     }
 
     if (isAuthed && router.pathname === "/signin") {
-      router.replace("/dashboard");
+      router.replace("/dashboard-overview");
     }
   }, [router.isReady, router.pathname]);
 

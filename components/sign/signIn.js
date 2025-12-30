@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -18,7 +18,19 @@ const SignIn = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [googleBtnReady, setGoogleBtnReady] = useState(false);
-  const googleButtonRef = React.useRef(null);
+  const [googleSdkLoaded, setGoogleSdkLoaded] = useState(false);
+  const googleButtonRef = useRef(null);
+
+  useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      window.google &&
+      window.google.accounts &&
+      window.google.accounts.id
+    ) {
+      setGoogleSdkLoaded(true);
+    }
+  }, []);
 
   const initGoogle = () => {
     if (googleBtnReady) return;
@@ -40,6 +52,13 @@ const SignIn = () => {
     }
 
     if (!googleButtonRef.current) return;
+
+    googleButtonRef.current.innerHTML = "";
+
+    const buttonWidth =
+      googleButtonRef.current.offsetWidth ||
+      googleButtonRef.current.parentElement?.offsetWidth ||
+      320;
 
     window.google.accounts.id.initialize({
       client_id: googleClientId,
@@ -67,11 +86,16 @@ const SignIn = () => {
       size: "large",
       text: "signin_with",
       shape: "rectangular",
-      width: 320,
+      width: buttonWidth,
     });
 
     setGoogleBtnReady(true);
   };
+
+  useEffect(() => {
+    if (!googleSdkLoaded || googleBtnReady) return;
+    initGoogle();
+  }, [googleSdkLoaded, googleBtnReady]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -92,7 +116,9 @@ const SignIn = () => {
         src="https://accounts.google.com/gsi/client"
         async
         defer
-        onLoad={initGoogle}
+        onLoad={() => setGoogleSdkLoaded(true)}
+        onReady={() => setGoogleSdkLoaded(true)}
+        onError={() => setError("Google SDK failed to load")}
       />
       <DarkSwitch isLight={isLightTheme} switchTheme={toggleTheme} />
       <main className="page-wrapper">
@@ -114,13 +140,13 @@ const SignIn = () => {
                   <div className="signup-box-bottom">
                     <div className="signup-box-content">
                       <div className="social-btn-grp">
-                        <div ref={googleButtonRef} />
+                        <div ref={googleButtonRef} style={{ width: "100%" }} />
                       </div>
                       <div className="text-social-area">
                         <hr />
                         <span>Or continue with</span>
                         <hr />
-                      </div> 
+                      </div>
                       <form onSubmit={handleSubmit}>
                         <div className="input-section mail-section">
                           <div className="icon">

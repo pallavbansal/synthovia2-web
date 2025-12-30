@@ -51,6 +51,19 @@ export const getAuthHeader = () => {
 export const logout = () => {
   clearToken();
   clearUser();
+
+  if (typeof window !== "undefined") {
+    try {
+      if (window.google?.accounts?.id?.disableAutoSelect) {
+        window.google.accounts.id.disableAutoSelect();
+      }
+      if (window.google?.accounts?.id?.cancel) {
+        window.google.accounts.id.cancel();
+      }
+    } catch {
+      // ignore
+    }
+  }
 };
 
 export const login = async ({ email, password }) => {
