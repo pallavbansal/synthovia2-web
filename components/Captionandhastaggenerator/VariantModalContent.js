@@ -1,41 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-// Assuming SurfingLoading is imported correctly and accessible
-import SurfingLoading from './SurfingLoading'; 
+import React, { useState } from 'react';
 
-// --- TypingEffect Component (Retained) ---
-const TypingEffect = ({ text, onComplete }) => {
-    const [displayedText, setDisplayedText] = useState('');
-    const indexRef = useRef(0);
-    const delay = 10; // Typing speed in ms
-
-    useEffect(() => {
-        setDisplayedText('');
-        indexRef.current = 0;
-    }, [text]);
-
-    useEffect(() => {
-        if (indexRef.current < text.length) {
-            const timeoutId = setTimeout(() => {
-                setDisplayedText((prev) => prev + text[indexRef.current]);
-                indexRef.current += 1;
-            }, delay);
-            return () => clearTimeout(timeoutId);
-        } else if (text.length > 0) {
-            onComplete();
-        }
-    }, [text, onComplete, displayedText]);
-
+const TypingEffect = ({ text }) => {
     return (
-        <p style={{ margin: 0, fontFamily: 'monospace', whiteSpace: 'pre-wrap', color: '#1f2937' }}>
-            {displayedText}
-            {indexRef.current < text.length && (
-                <span className="cursor" style={{ 
-                    animation: 'blink 1s step-end infinite', 
-                    marginLeft: '2px', 
-                    fontWeight: 'bold' 
-                }}>|</span>
-            )}
-        </p>
+        <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{text}</p>
     );
 };
 
@@ -95,22 +62,6 @@ const VariantModalContent = ({
     
     const [expandedIndex, setExpandedIndex] = useState(0); 
     const [regeneratingId, setRegeneratingId] = useState(null);
-    const [typingRegeneratedId, setTypingRegeneratedId] = useState(null); 
-    
-    const initialTypingState = isHistoryView || variants.length === 0;
-    const [isTypingCompleted, setIsTypingCompleted] = useState(initialTypingState); 
-
-    useEffect(() => {
-        if (isHistoryView || variants.length === 0) {
-             setIsTypingCompleted(true);
-        } else {
-             setIsTypingCompleted(false);
-        }
-        if (variants.length > 0) {
-            setExpandedIndex(0);
-        }
-        setTypingRegeneratedId(null); 
-    }, [variants.length, isHistoryView]);
 
 
     const toggleExpand = (index) => {
@@ -167,7 +118,6 @@ const VariantModalContent = ({
         }
         try {
             await onRequestRegenerate(variantId);
-            setTypingRegeneratedId(variantId); 
         } finally {
             setRegeneratingId(null);
         }
@@ -217,25 +167,14 @@ const VariantModalContent = ({
         }
     };
     
-    if (isLoading) {
-        return (
-            <div style={modalStyles.overlay}>
-                <div style={{ 
-                    ...modalStyles.modal, 
-                    maxWidth: '500px', maxHeight: '400px', padding: 0,
-                    overflow: 'hidden', height: 'auto', flexShrink: 1,
-                }}>
-                    <SurfingLoading mode={isHistoryView ? 'history' : 'generate'} /> 
-                </div>
-            </div>
-        );
-    }
+    if (isLoading) return null;
+
     
     if (!variants || variants.length === 0) return null;
 
-    const isInitialTypingActive = variants.length > 0 && !isTypingCompleted && !isHistoryView;
-    const isTypingActiveGlobally = isInitialTypingActive || (typingRegeneratedId !== null);
-    const isUILocked = isTypingActiveGlobally || (regeneratingId !== null);
+    const isAnyStreaming = (variants || []).some(v => v && v.is_streaming);
+    const isUILocked = (regeneratingId !== null) || isAnyStreaming;
+
     
     return (
         <div style={modalStyles.overlay}>
@@ -274,11 +213,7 @@ const VariantModalContent = ({
                     {variants.filter(v => v.show_variant).map((variant, index) => {
                         const isExpanded = index === expandedIndex;
                         const isRegenerating = regeneratingId === variant.id;
-                        const isFirstVariant = index === 0;
-                        const isInitialTyping = isFirstVariant && isInitialTypingActive;
-                        const isRegenTyping = typingRegeneratedId === variant.id && !isRegenerating;
-                        const showTypingEffect = isInitialTyping || isRegenTyping;
-                        const isInteractionDisabled = isUILocked; 
+                        const isInteractionDisabled = isUILocked || !variant?.id || variant?.is_streaming;
 
                         return (
                             <div key={variant.id || index} style={{
@@ -323,7 +258,7 @@ const VariantModalContent = ({
                                             onClick={() => handleRegenerate(variant.id)}
                                             disabled={isInteractionDisabled} 
                                         >
-                                            {isRegenerating ? 'Regenerating...' : 'Regenerate'}
+                                            {isRegenerating ? 'Regenerating...' : (variant?.is_streaming ? 'Generating...' : 'Regenerate')}
                                         </button>
                                         
                                         <button
@@ -348,18 +283,7 @@ const VariantModalContent = ({
                                         <div style={{ margin: 0, fontFamily: 'inherit' }}>
                                             <p style={{ fontWeight: 'bold', margin: '0 0 8px 0' }}>Variant Content:</p>
                                             
-                                            {showTypingEffect ? (
-                                                <TypingEffect 
-                                                    text={variant.content} 
-                                                    onComplete={() => {
-                                                        if (isInitialTyping) setIsTypingCompleted(true);
-                                                        if (isRegenTyping) setTypingRegeneratedId(null);
-                                                    }} 
-                                                />
-                                            ) : (
-                                                /* MODIFIED: Using HashtagGridSystem for final rendered state */
-                                                <HashtagGridSystem text={variant.content} />
-                                            )}
+                                            <HashtagGridSystem text={variant.content} />
                                         </div>
                                     </div>
                                 )}

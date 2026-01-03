@@ -1,46 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 // Assuming SurfingLoading is imported correctly and accessible
 import SurfingLoading from './SurfingLoading'; 
-
-// --- TypingEffect Component (Retained) ---
-const TypingEffect = ({ text, onComplete }) => {
-    const [displayedText, setDisplayedText] = useState('');
-    const indexRef = useRef(0);
-    const delay = 10; // Typing speed in ms
-
-    useEffect(() => {
-        // Reset displayed text when 'text' prop changes (e.g., regeneration starts)
-        setDisplayedText('');
-        indexRef.current = 0;
-    }, [text]);
-
-    useEffect(() => {
-        if (indexRef.current < text.length) {
-            const timeoutId = setTimeout(() => {
-                setDisplayedText((prev) => prev + text[indexRef.current]);
-                indexRef.current += 1;
-            }, delay);
-            return () => clearTimeout(timeoutId);
-        } else if (text.length > 0) {
-            onComplete();
-        }
-    }, [text, onComplete, displayedText]);
-
-    return (
-        <p style={{ margin: 0, fontFamily: 'monospace', whiteSpace: 'pre-wrap', color: '#1f2937' }}>
-            {displayedText}
-            {indexRef.current < text.length && (
-                <span className="cursor" style={{ 
-                    animation: 'blink 1s step-end infinite', 
-                    marginLeft: '2px', 
-                    fontWeight: 'bold' 
-                }}>|</span>
-            )}
-        </p>
-    );
-};
-// -----------------------------------------------------------
 
 const VariantModalContent = ({ 
     variants, 
@@ -54,22 +15,11 @@ const VariantModalContent = ({
     console.log("check copy response:",variants);
     const [expandedIndex, setExpandedIndex] = useState(0); 
     const [regeneratingId, setRegeneratingId] = useState(null);
-    const [typingRegeneratedId, setTypingRegeneratedId] = useState(null); 
     
-    // Define the global typing state outside of the map function scope
-    const initialTypingState = isHistoryView || variants.length === 0;
-    const [isTypingCompleted, setIsTypingCompleted] = useState(initialTypingState); 
-
     useEffect(() => {
-        if (isHistoryView || variants.length === 0) {
-             setIsTypingCompleted(true);
-        } else {
-             setIsTypingCompleted(false);
-        }
         if (variants.length > 0) {
             setExpandedIndex(0);
         }
-        setTypingRegeneratedId(null); 
     }, [variants.length, isHistoryView]);
 
 
@@ -135,8 +85,6 @@ const VariantModalContent = ({
         
         try {
             await onRequestRegenerate(variantId);
-            setTypingRegeneratedId(variantId); 
-            
         } finally {
             setRegeneratingId(null);
         }
@@ -213,15 +161,8 @@ const VariantModalContent = ({
     if (!variants || variants.length === 0) return null;
 
     // **FIXED LOGIC:** Calculate Global Lock States OUTSIDE the map
-    
-    // 1. Is initial generation typing running? (Only for first variant, not history, not complete)
-    const isInitialTypingActive = variants.length > 0 && !isTypingCompleted && !isHistoryView;
-
-    // 2. Is any typing (initial or regeneration) currently active?
-    const isTypingActiveGlobally = isInitialTypingActive || (typingRegeneratedId !== null);
-    
-    // 3. Is the UI locked (Typing running OR API call running)?
-    const isUILocked = isTypingActiveGlobally || (regeneratingId !== null);
+    const isAnyStreaming = (variants || []).some((v) => !!v?.is_streaming);
+    const isUILocked = isAnyStreaming || (regeneratingId !== null);
     
     return (
         <div style={modalStyles.overlay}>
@@ -263,14 +204,8 @@ const VariantModalContent = ({
                     {variants.filter(v => v.show_variant).map((variant, index) => {
                         const isExpanded = index === expandedIndex;
                         const isRegenerating = regeneratingId === variant.id;
-                        const isFirstVariant = index === 0;
                         
-                        const isInitialTyping = isFirstVariant && isInitialTypingActive;
-                        const isRegenTyping = typingRegeneratedId === variant.id && !isRegenerating;
-
-                        const showTypingEffect = isInitialTyping || isRegenTyping;
-                        
-                        const isInteractionDisabled = isUILocked; 
+                        const isInteractionDisabled = isUILocked || !variant?.id || !!variant?.is_streaming;
 
                         let contentToRender = processContent(variant.content);
 
@@ -358,23 +293,9 @@ const VariantModalContent = ({
                                         <div style={{ margin: 0, fontFamily: 'inherit', whiteSpace: 'pre-wrap' }}>
                                             <p style={{ fontWeight: 'bold', margin: '0 0 8px 0' }}>Variant Content:</p>
                                             
-                                            {showTypingEffect ? (
-                                                <TypingEffect 
-                                                    text={contentToRender} 
-                                                    onComplete={() => {
-                                                        if (isInitialTyping) {
-                                                            setIsTypingCompleted(true);
-                                                        }
-                                                        if (isRegenTyping) {
-                                                            setTypingRegeneratedId(null); // Clear ID after typing is complete
-                                                        }
-                                                    }} 
-                                                />
-                                            ) : (
-                                                <div style={{ margin: 0, fontFamily: 'inherit', whiteSpace: 'pre-wrap', color: '#1f2937'}}>
-                                                    <ReactMarkdown>{contentToRender}</ReactMarkdown>
-                                                </div>
-                                            )}
+                                            <div style={{ margin: 0, fontFamily: 'inherit', whiteSpace: 'pre-wrap', color: '#1f2937'}}>
+                                                <ReactMarkdown>{contentToRender}</ReactMarkdown>
+                                            </div>
                                         </div>
                                     </div>
                                 )}

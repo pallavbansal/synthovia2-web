@@ -27,8 +27,9 @@ const HISTORY_MESSAGES = [
 /**
  * @param {object} props
  * @param {'generate' | 'history'} [props.mode='generate'] - Determines the messages to display.
+ * @param {boolean} [props.embedded=false] - Determines the rendering mode.
  */
-const SurfingLoading = ({ mode = 'generate' }) => {
+const SurfingLoading = ({ mode = 'generate', embedded = false }) => {
     
     // Determine the active message set based on the mode prop
     const activeMessages = mode === 'history' ? HISTORY_MESSAGES : GENERATION_MESSAGES;
@@ -52,7 +53,13 @@ const SurfingLoading = ({ mode = 'generate' }) => {
     }, [activeMessages]); // Restart interval if message set changes
 
     return (
-        <div style={{ 
+        <div style={embedded ? {
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+        } : { 
             position: 'fixed',
             top: 0,
             left: 0,
@@ -70,9 +77,9 @@ const SurfingLoading = ({ mode = 'generate' }) => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                height: '300px',
-                width: '400px',
-                padding: '40px',
+                height: embedded ? '220px' : '300px',
+                width: embedded ? '360px' : '400px',
+                padding: embedded ? '24px' : '40px',
                 backgroundColor: '#f8fafc',
                 borderRadius: '12px',
                 boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 import SummaryReviewModal from './SummaryReviewModal';
@@ -10,12 +10,13 @@ import RemoveTagButton from '../Form/RemoveTagButton';
 import { getAuthHeader } from "@/utils/auth";
 
 // --- API Constants (Provided by User) ---
-const BASE_URL = 'https://olive-gull-905765.hostingersite.com/public/api/v1';
+const BASE_URL = 'https://mediumorchid-otter-182176.hostingersite.com/public/api/v1';
 
 const API = {
     // Fetch dropdown & predefined field options for Copy Writing Assistant
     GET_COPYWRITING_OPTIONS: `${BASE_URL}/copy-writing/options?field_type=all`,
     GENERATE_COPYWRITING: `${BASE_URL}/copy-writing/generate`,
+    GENERATE_COPYWRITING_STREAM: `${BASE_URL}/copy-writing/generate-claude-stream`,
     REGENERATE_COPYWRITING_VARIANT: (variantId) =>
         `${BASE_URL}/copy-writing/variants/${variantId}/regenerate`,
     GET_VARIANTS_LOG: (requestId) => `${BASE_URL}/copy-writing/${requestId}/variants`,
@@ -114,10 +115,29 @@ const CopywritingAssistantForm = () => {
     const [keyPointsInput, setKeyPointsInput] = useState('');
     const [showKeyPointsSuggestions, setShowKeyPointsSuggestions] = useState(false);
 
+    const streamControllersRef = useRef([]);
+
+    const abortAllStreams = useCallback(() => {
+        const controllers = streamControllersRef.current;
+        streamControllersRef.current = [];
+        controllers.forEach((c) => {
+            try {
+                c.abort();
+            } catch (e) {
+            }
+        });
+    }, []);
+
     const showNotification = (message, type) => {
         setNotification({ show: true, message, type });
         setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
     };
+
+    useEffect(() => {
+        return () => {
+            abortAllStreams();
+        };
+    }, [abortAllStreams]);
 
     // Helper to safely access API options by key
     const getOptions = (key) => apiOptions?.[key] || [];
@@ -644,48 +664,193 @@ const CopywritingAssistantForm = () => {
             grammar_strictness: grammarStrictnessObj, // UPDATED
         };
 
+        abortAllStreams();
         setIsGenerating(true);
         setModalTitle("Generated Variants");
         setIsHistoryView(false);
         setIsApiLoading(true);
 
         try {
-            const response = await fetch(API.GENERATE_COPYWRITING, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    Authorization: getAuthHeader(),
-                },
-                body: JSON.stringify(payload),
+            showNotification('Generating copywriting, please wait...', 'info');
+
+            const variantCount = Math.max(1, parseInt(payload?.number_of_variants || 1, 10));
+            const clientRequestKey = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+            setRequestId(null);
+            setIsApiLoading(false);
+            setGeneratedVariantsData({
+                variants: Array.from({ length: variantCount }).map((_, index) => ({
+                    client_id: `${clientRequestKey}-${index}`,
+                    id: null,
+                    content: '',
+                    show_variant: true,
+                    is_streaming: true,
+                })),
+                inputs: payload,
+                requestId: null,
             });
+            setShowVariantsModal(true);
+            setShowSummary(false);
 
-            const result = await response.json();
+            const streamSingleVariant = async (variantIndex) => {
+                const controller = new AbortController();
+                streamControllersRef.current = [...streamControllersRef.current, controller];
 
-            if (result.request_id) {
-                setRequestId(result.request_id);
+                const payloadForStream = {
+                    ...payload,
+                    number_of_variants: 1,
+                };
+
+                const response = await fetch(API.GENERATE_COPYWRITING_STREAM, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': getAuthHeader(),
+                    },
+                    body: JSON.stringify(payloadForStream),
+                    signal: controller.signal,
+                });
+
+                if (!response.ok) {
+                    let errorData = {};
+                    try {
+                        errorData = await response.json();
+                    } catch (e) {
+                    }
+                    throw new Error(errorData.message || `API call failed with status: ${response.status}`);
+                }
+
+                if (!response.body) {
+                    throw new Error('Streaming is not supported in this browser/environment');
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                let buffer = '';
+
+                const processLine = (rawLine) => {
+                    if (!rawLine) return;
+                    let line = rawLine.trim();
+                    if (!line) return;
+                    if (line.startsWith('data:')) {
+                        line = line.slice('data:'.length).trim();
+                    }
+                    if (!line) return;
+
+                    if (line.startsWith(',')) line = line.slice(1).trim();
+                    if (line.endsWith(',')) line = line.slice(0, -1).trim();
+                    if (!line) return;
+
+                    let msg;
+                    try {
+                        msg = JSON.parse(line);
+                    } catch (e) {
+                        buffer = `${line}\n${buffer}`;
+                        return;
+                    }
+
+                    if (!msg || typeof msg !== 'object') return;
+
+                    if (msg.type === 'meta') {
+                        if (msg.request_id) {
+                            setRequestId((prev) => prev || msg.request_id);
+                        }
+                        if (msg.variant_id) {
+                            setGeneratedVariantsData((prev) => {
+                                const next = [...(prev.variants || [])];
+                                if (next[variantIndex]) {
+                                    next[variantIndex] = { ...next[variantIndex], id: msg.variant_id };
+                                }
+                                return { ...prev, variants: next };
+                            });
+                        }
+                        return;
+                    }
+
+                    if (msg.type === 'delta') {
+                        const deltaText = msg.content || '';
+                        if (!deltaText) return;
+                        setGeneratedVariantsData((prev) => {
+                            const next = [...(prev.variants || [])];
+                            if (next[variantIndex]) {
+                                next[variantIndex] = {
+                                    ...next[variantIndex],
+                                    content: `${next[variantIndex].content || ''}${deltaText}`,
+                                };
+                            }
+                            return { ...prev, variants: next };
+                        });
+                        return;
+                    }
+
+                    if (msg.type === 'done') {
+                        if (msg.request_id) {
+                            setRequestId((prev) => prev || msg.request_id);
+                        }
+                        setGeneratedVariantsData((prev) => {
+                            const next = [...(prev.variants || [])];
+                            if (next[variantIndex]) {
+                                next[variantIndex] = {
+                                    ...next[variantIndex],
+                                    id: next[variantIndex].id || msg.variant_id || null,
+                                    content: msg.content || next[variantIndex].content || '',
+                                    is_streaming: false,
+                                };
+                            }
+                            return { ...prev, variants: next };
+                        });
+                    }
+                };
+
+                try {
+                    for (;;) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+
+                        buffer += decoder.decode(value, { stream: true });
+                        const parts = buffer.split(/\r?\n/);
+                        buffer = parts.pop() || '';
+                        parts.forEach(processLine);
+                    }
+
+                    const final = buffer.trim();
+                    if (final) {
+                        processLine(final);
+                    }
+                } finally {
+                    try {
+                        reader.releaseLock();
+                    } catch (e) {
+                    }
+                }
+            };
+
+            const results = await Promise.allSettled(
+                Array.from({ length: variantCount }).map((_, index) => streamSingleVariant(index))
+            );
+
+            const hasError = results.some(r => r.status === 'rejected');
+            if (hasError) {
+                setGeneratedVariantsData((prev) => {
+                    const next = (prev.variants || []).map((v, i) => {
+                        const r = results[i];
+                        if (r && r.status === 'rejected') {
+                            return {
+                                ...v,
+                                is_streaming: false,
+                                content: (v.content || '') || (r.reason?.message ? `Error: ${r.reason.message}` : 'Error: Failed to generate'),
+                            };
+                        }
+                        return v;
+                    });
+                    return { ...prev, variants: next };
+                });
             }
 
-            if (result.variants && Array.isArray(result.variants) && result.variants.length > 0) {
-                setRequestId(result.request_id);
-
-                const structuredVariants = result.variants.map((content, index) => ({
-                    id: content.id || `temp-${Date.now()}-${index}`,
-                    content: content.content || content,
-                    show_variant: content.show_variant || true,
-                }));
-
-                setGeneratedVariantsData({ variants: structuredVariants, inputs: result.inputs, requestId: result.request_id });
-                setShowVariantsModal(true);
-                setShowSummary(false); // Hide summary before showing results
-                showNotification('Captions and hashtags generated successfully!', 'success');
-            } else {
-                console.error('Copywriting generation returned no variants:', result);
-                alert('Generation failed or returned no content. Check console for details.');
-            }
         } catch (err) {
             console.error('Error generating copywriting variants:', err);
-            alert('An error occurred during content generation.');
+            showNotification(`Error: ${err.message || 'Failed to generate'}`, 'error');
         } finally {
             setIsApiLoading(false);
             setIsGenerating(false);
@@ -695,13 +860,34 @@ const CopywritingAssistantForm = () => {
     const handleRegenerateVariant = async (variantId) => {
         if (!variantId) return;
 
+        const variantIndex = (generatedVariantsData.variants || []).findIndex((v) => v.id === variantId);
+        if (variantIndex === -1) return;
+
+        showNotification(`Regenerating Variant ${variantIndex + 1}...`, 'info');
+
+        const controller = new AbortController();
+        streamControllersRef.current = [...streamControllersRef.current, controller];
+
+        setGeneratedVariantsData((prev) => {
+            const next = [...(prev.variants || [])];
+            if (next[variantIndex]) {
+                next[variantIndex] = {
+                    ...next[variantIndex],
+                    content: '',
+                    is_streaming: true,
+                };
+            }
+            return { ...prev, variants: next };
+        });
+
         try {
             const response = await fetch(API.REGENERATE_COPYWRITING_VARIANT(variantId), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: getAuthHeader(),
+                    'Authorization': getAuthHeader(),
                 },
+                signal: controller.signal,
             });
 
             if (!response.ok) {
@@ -709,30 +895,222 @@ const CopywritingAssistantForm = () => {
                 try {
                     errorData = await response.json();
                 } catch (e) {
-                    // ignore parse error
                 }
-                console.error('Regenerate failed:', errorData || response.statusText);
+                throw new Error(errorData.message || `Regeneration failed with status: ${response.status}`);
+            }
+
+            if (!response.body) {
+                const result = await response.json();
+                setGeneratedVariantsData((prev) => {
+                    const next = [...(prev.variants || [])];
+                    if (next[variantIndex]) {
+                        next[variantIndex] = {
+                            ...next[variantIndex],
+                            content: result?.new_content || result?.content || '',
+                            is_streaming: false,
+                        };
+                    }
+                    return { ...prev, variants: next };
+                });
+                showNotification(`Variant ${variantIndex + 1} successfully regenerated!`, 'success');
                 return;
             }
 
-            const result = await response.json();
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let buffer = '';
+            let sawAnyDelta = false;
+            let sawDone = false;
 
-            // Update the generatedVariantsData state correctly
+            const processMessage = (msg) => {
+                if (!msg || typeof msg !== 'object') return;
+
+                if (msg.type === 'meta') {
+                    if (msg.request_id) {
+                        setRequestId((prev) => prev || msg.request_id);
+                    }
+                    if (msg.variant_id) {
+                        setGeneratedVariantsData((prev) => {
+                            const next = [...(prev.variants || [])];
+                            if (next[variantIndex]) {
+                                next[variantIndex] = { ...next[variantIndex], id: msg.variant_id };
+                            }
+                            return { ...prev, variants: next };
+                        });
+                    }
+                    return;
+                }
+
+                if (msg.type === 'delta') {
+                    const deltaText = msg.content || '';
+                    if (!deltaText) return;
+                    sawAnyDelta = true;
+                    setGeneratedVariantsData((prev) => {
+                        const next = [...(prev.variants || [])];
+                        if (next[variantIndex]) {
+                            next[variantIndex] = {
+                                ...next[variantIndex],
+                                content: `${next[variantIndex].content || ''}${deltaText}`,
+                            };
+                        }
+                        return { ...prev, variants: next };
+                    });
+                    return;
+                }
+
+                if (msg.type === 'done') {
+                    sawDone = true;
+                    if (msg.request_id) {
+                        setRequestId((prev) => prev || msg.request_id);
+                    }
+                    setGeneratedVariantsData((prev) => {
+                        const next = [...(prev.variants || [])];
+                        if (next[variantIndex]) {
+                            next[variantIndex] = {
+                                ...next[variantIndex],
+                                id: next[variantIndex].id || msg.variant_id || null,
+                                content: msg.content || next[variantIndex].content || '',
+                                is_streaming: false,
+                            };
+                        }
+                        return { ...prev, variants: next };
+                    });
+                    return;
+                }
+
+                if (typeof msg.new_content === 'string' || typeof msg.content === 'string') {
+                    setGeneratedVariantsData((prev) => {
+                        const next = [...(prev.variants || [])];
+                        if (next[variantIndex]) {
+                            next[variantIndex] = {
+                                ...next[variantIndex],
+                                content: msg.new_content || msg.content || '',
+                                is_streaming: false,
+                            };
+                        }
+                        return { ...prev, variants: next };
+                    });
+                }
+            };
+
+            const stripSsePrefixes = (text) => text.replace(/^data:\s*/gm, '');
+
+            const extractNextJsonObject = () => {
+                let i = 0;
+                while (i < buffer.length && /[\s,]/.test(buffer[i])) i++;
+                if (i > 0) buffer = buffer.slice(i);
+                if (!buffer) return null;
+
+                if (buffer[0] !== '{') {
+                    const nextObj = buffer.indexOf('{');
+                    if (nextObj === -1) {
+                        buffer = '';
+                        return null;
+                    }
+                    buffer = buffer.slice(nextObj);
+                }
+
+                let depth = 0;
+                let inString = false;
+                let escape = false;
+                for (let idx = 0; idx < buffer.length; idx++) {
+                    const ch = buffer[idx];
+
+                    if (inString) {
+                        if (escape) {
+                            escape = false;
+                        } else if (ch === '\\') {
+                            escape = true;
+                        } else if (ch === '"') {
+                            inString = false;
+                        }
+                        continue;
+                    }
+
+                    if (ch === '"') {
+                        inString = true;
+                        continue;
+                    }
+
+                    if (ch === '{') {
+                        depth += 1;
+                        continue;
+                    }
+
+                    if (ch === '}') {
+                        depth -= 1;
+                        if (depth === 0) {
+                            const jsonText = buffer.slice(0, idx + 1);
+                            buffer = buffer.slice(idx + 1);
+                            return jsonText;
+                        }
+                    }
+                }
+
+                return null;
+            };
+
+            const drainBuffer = () => {
+                for (;;) {
+                    const jsonText = extractNextJsonObject();
+                    if (!jsonText) break;
+                    try {
+                        const msg = JSON.parse(jsonText);
+                        processMessage(msg);
+                    } catch (e) {
+                        buffer = `${jsonText}${buffer}`;
+                        break;
+                    }
+                }
+            };
+
+            try {
+                for (;;) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    buffer = stripSsePrefixes(buffer + decoder.decode(value, { stream: true }));
+                    drainBuffer();
+                }
+                drainBuffer();
+            } finally {
+                try {
+                    reader.releaseLock();
+                } catch (e) {
+                }
+            }
+
             setGeneratedVariantsData((prev) => {
-                const nextVariants = [...prev.variants];
-                const idx = nextVariants.findIndex((v) => v.id === variantId || v.id === result.variant_id);
-                if (idx !== -1) {
-                    nextVariants[idx] = {
-                        ...nextVariants[idx],
-                        content: result.new_content || result.content || nextVariants[idx].content,
-                        isLog: false,
+                const next = [...(prev.variants || [])];
+                if (next[variantIndex]) {
+                    next[variantIndex] = {
+                        ...next[variantIndex],
+                        is_streaming: false,
                     };
                 }
-                return { ...prev, variants: nextVariants };
+                return { ...prev, variants: next };
             });
 
-        } catch (err) {
-            console.error('Error regenerating copywriting variant:', err);
+            if (sawDone || sawAnyDelta) {
+                showNotification(`Variant ${variantIndex + 1} successfully regenerated!`, 'success');
+            }
+
+        } catch (error) {
+            console.error('Regeneration Error:', error);
+            if (error?.name !== 'AbortError') {
+                showNotification(`Regeneration Error: ${error.message}`, 'error');
+            }
+            setGeneratedVariantsData((prev) => {
+                const next = [...(prev.variants || [])];
+                if (next[variantIndex]) {
+                    next[variantIndex] = {
+                        ...next[variantIndex],
+                        is_streaming: false,
+                    };
+                }
+                return { ...prev, variants: next };
+            });
+        } finally {
+            streamControllersRef.current = (streamControllersRef.current || []).filter((c) => c !== controller);
         }
     };
 
@@ -951,12 +1329,10 @@ const CopywritingAssistantForm = () => {
     return (
         <div style={styles.container}>
             <div style={styles.header}>
-                    <h1 style={styles.title}>Copywriting Assistant Tool</h1>
-                    <p style={styles.subtitle}>Generate high-quality copy for your needs</p>
-                </div>
+                <h1 style={styles.title}>Copywriting Assistant Tool</h1>
+                <p style={styles.subtitle}>Generate high-quality copy for your needs</p>
+            </div>
             <div style={styles.card}>
-                
-
                 <div style={{ padding: '24px' }}>
                     <form onSubmit={handleSubmit}>
                         <div className="row g-4">
@@ -1396,7 +1772,7 @@ const CopywritingAssistantForm = () => {
                                                 {formData.keyPoints.map((chip, index) => (
                                                     <span
                                                         key={index}
-                                                       style={{
+                                                        style={{
                                                             ...styles.badge,
                                                             ...styles.badgePrimary,
                                                             display: 'flex',
@@ -2187,6 +2563,7 @@ const CopywritingAssistantForm = () => {
                     variants={generatedVariantsData.variants}
                     inputs={generatedVariantsData.inputs}
                     onClose={() => {
+                        abortAllStreams();
                         setShowVariantsModal(false);
                         setIsHistoryView(false);
                         setShowSummary(true); // Always return to summary

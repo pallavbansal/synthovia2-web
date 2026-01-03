@@ -10,10 +10,11 @@ import RemoveTagButton from '../Form/RemoveTagButton';
 import { getAuthHeader } from "@/utils/auth";
 
 // --- API Configuration (Defined internally to prevent build issues) ---
-const BASE_URL = 'https://olive-gull-905765.hostingersite.com/public/api/v1';
+const BASE_URL = 'https://mediumorchid-otter-182176.hostingersite.com/public/api/v1';
 const API = {
     GET_FIELD_OPTIONS: `${BASE_URL}/ad-copy/options?field_type=all`,
     GENERATE_AD_COPY: `${BASE_URL}/ad-copy/generate`,
+    GENERATE_AD_COPY_CLAUDE_STREAM: `${BASE_URL}/ad-copy/generate-claude-stream`,
     // New endpoint for fetching old variants using request_id
     GET_VARIANTS_LOG: (requestId) => `${BASE_URL}/ad-copy/${requestId}/variants`,
     // New endpoint for regenerating a single variant using variant_id
@@ -150,6 +151,9 @@ const AdCopyGeneratorForm = () => {
     const [isGenerating, setIsGenerating] = useState(false); // Controls button text on form
     const [isApiLoading, setIsApiLoading] = useState(false); // NEW: Controls the modal loading state (step 1 & 2)
     const [isHistoryView, setIsHistoryView] = useState(false);
+    const [isStreamingGeneration, setIsStreamingGeneration] = useState(false);
+
+    const streamControllersRef = useRef([]);
 
     const [requestId, setRequestId] = useState(null);
     const [showVariantsModal, setShowVariantsModal] = useState(false);
@@ -157,6 +161,23 @@ const AdCopyGeneratorForm = () => {
         variants: [],
         inputs: {},
     });
+
+    const abortAllStreams = useCallback(() => {
+        const controllers = streamControllersRef.current;
+        streamControllersRef.current = [];
+        controllers.forEach((c) => {
+            try {
+                c.abort();
+            } catch (e) {
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            abortAllStreams();
+        };
+    }, [abortAllStreams]);
 
     const showNotification = useCallback((message, type) => {
         setNotification({ show: true, message, type });
@@ -265,7 +286,6 @@ const AdCopyGeneratorForm = () => {
         // It explicitly passes the current, updated options list to updatePlacements.
         updatePlacements(formData.platform, fieldOptions.placement);
     }, [formData.platform, fieldOptions.placement, updatePlacements]);
-
 
     const handlePlatformChange = (e) => {
         const selectedKey = e.target.value;
@@ -479,7 +499,7 @@ const AdCopyGeneratorForm = () => {
                 // API SUCCESS: Stop the surfing loading
                 setIsApiLoading(false); // STOP API LOADING - HIDES SURFING, SHOWS VARIANT LIST
 
-                setRequestId(result.request_id);
+                setRequestId((prev) => prev || result.request_id);
 
                 const structuredVariants = result.variants.map((content, index) => ({
                     id: content.id || `temp-${Date.now()}-${index}`,
@@ -514,54 +534,191 @@ const AdCopyGeneratorForm = () => {
     // but the summary step is kept for flow: Form -> Summary (Review) -> Generate (API Call)
     const handleGenerateFromSummary = async () => {
         try {
+            abortAllStreams();
             setIsGenerating(true); // START GENERATING - SHOWS LOADING SCREEN
-            setIsApiLoading(true);
             setIsHistoryView(false);
             // Reuse the formatPayload function to get the current form data
             const payload = formatPayload();
             console.log("payload:payload", payload);
 
-
             // ... (validation remains the same) ...
 
             showNotification('Generating ad copy, please wait...', 'info');
 
-            // Make the API call
-            const response = await fetch(API.GENERATE_AD_COPY, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'Authorization': getAuthHeader(),
-                },
-                body: JSON.stringify(payload)
+            const variantCount = Math.max(1, parseInt(payload?.number_of_variants || 1, 10));
+            const clientRequestKey = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+            setRequestId(null);
+            setIsApiLoading(false);
+            setIsStreamingGeneration(true);
+            setGeneratedVariantsData({
+                variants: Array.from({ length: variantCount }).map((_, index) => ({
+                    client_id: `${clientRequestKey}-${index}`,
+                    id: null,
+                    content: '',
+                    show_variant: true,
+                    is_streaming: true,
+                })),
+                inputs: payload,
             });
+            setShowVariantsModal(true);
+            setShowSummary(false);
 
-            // ... (error handling remains the same) ...
+            const streamSingleVariant = async (variantIndex) => {
+                const controller = new AbortController();
+                streamControllersRef.current = [...streamControllersRef.current, controller];
 
-            const result = await response.json();
+                const payloadForStream = {
+                    ...payload,
+                    number_of_variants: 1,
+                };
 
-            // Process the response
-            if (result.variants?.length > 0) {
-                setRequestId(result.request_id);
-                setIsApiLoading(false);
-                const structuredVariants = result.variants.map((content, index) => ({
-                    id: content.id || `temp-${Date.now()}-${index}`,
-                    content: content.content || content,
-                    show_variant: true
-                }));
-
-                setGeneratedVariantsData({
-                    variants: structuredVariants,
-                    inputs: result.inputs || payload
+                const response = await fetch(API.GENERATE_AD_COPY_CLAUDE_STREAM, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': getAuthHeader(),
+                    },
+                    body: JSON.stringify(payloadForStream),
+                    signal: controller.signal,
                 });
 
-                setShowVariantsModal(true);
-                setShowSummary(false);
+                if (!response.ok) {
+                    let errorData = {};
+                    try {
+                        errorData = await response.json();
+                    } catch (e) {
+                    }
+                    throw new Error(errorData.message || `API call failed with status: ${response.status}`);
+                }
 
-                // DO NOT show success notification here, as the typing effect should start now.
-            } else {
-                throw new Error("No variants were returned from the server");
+                if (!response.body) {
+                    throw new Error('Streaming is not supported in this browser/environment');
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                let buffer = '';
+
+                const processLine = (rawLine) => {
+                    if (!rawLine) return;
+                    let line = rawLine.trim();
+                    if (!line) return;
+                    if (line.startsWith('data:')) {
+                        line = line.slice('data:'.length).trim();
+                    }
+                    if (!line) return;
+
+                    if (line.startsWith(',')) line = line.slice(1).trim();
+                    if (line.endsWith(',')) line = line.slice(0, -1).trim();
+                    if (!line) return;
+
+                    let msg;
+                    try {
+                        msg = JSON.parse(line);
+                    } catch (e) {
+                        buffer = `${line}\n${buffer}`;
+                        return;
+                    }
+
+                    if (!msg || typeof msg !== 'object') return;
+
+                    if (msg.type === 'meta') {
+                        if (msg.request_id) {
+                            setRequestId((prev) => prev || msg.request_id);
+                        }
+                        if (msg.variant_id) {
+                            setGeneratedVariantsData((prev) => {
+                                const next = [...(prev.variants || [])];
+                                if (next[variantIndex]) {
+                                    next[variantIndex] = { ...next[variantIndex], id: msg.variant_id };
+                                }
+                                return { ...prev, variants: next };
+                            });
+                        }
+                        return;
+                    }
+
+                    if (msg.type === 'delta') {
+                        const deltaText = msg.content || '';
+                        if (!deltaText) return;
+                        setGeneratedVariantsData((prev) => {
+                            const next = [...(prev.variants || [])];
+                            if (next[variantIndex]) {
+                                next[variantIndex] = {
+                                    ...next[variantIndex],
+                                    content: `${next[variantIndex].content || ''}${deltaText}`,
+                                };
+                            }
+                            return { ...prev, variants: next };
+                        });
+                        return;
+                    }
+
+                    if (msg.type === 'done') {
+                        if (msg.request_id) {
+                            setRequestId((prev) => prev || msg.request_id);
+                        }
+                        setGeneratedVariantsData((prev) => {
+                            const next = [...(prev.variants || [])];
+                            if (next[variantIndex]) {
+                                next[variantIndex] = {
+                                    ...next[variantIndex],
+                                    id: next[variantIndex].id || msg.variant_id || null,
+                                    content: msg.content || next[variantIndex].content || '',
+                                    is_streaming: false,
+                                };
+                            }
+                            return { ...prev, variants: next };
+                        });
+                    }
+                };
+
+                try {
+                    for (;;) {
+                        const { value, done } = await reader.read();
+
+                        if (done) break;
+
+                        buffer += decoder.decode(value, { stream: true });
+                        const parts = buffer.split(/\r?\n/);
+                        buffer = parts.pop() || '';
+                        parts.forEach(processLine);
+                    }
+
+                    const final = buffer.trim();
+                    if (final) {
+                        processLine(final);
+                    }
+                } finally {
+                    try {
+                        reader.releaseLock();
+                    } catch (e) {
+                    }
+                }
+            };
+
+            const results = await Promise.allSettled(
+                Array.from({ length: variantCount }).map((_, index) => streamSingleVariant(index))
+            );
+
+            const hasError = results.some(r => r.status === 'rejected');
+            if (hasError) {
+                setGeneratedVariantsData((prev) => {
+                    const next = (prev.variants || []).map((v, i) => {
+                        const r = results[i];
+                        if (r && r.status === 'rejected') {
+                            return {
+                                ...v,
+                                is_streaming: false,
+                                content: (v.content || '') || (r.reason?.message ? `Error: ${r.reason.message}` : 'Error: Failed to generate'),
+                            };
+                        }
+                        return v;
+                    });
+                    return { ...prev, variants: next };
+                });
             }
 
         } catch (error) {
@@ -570,9 +727,9 @@ const AdCopyGeneratorForm = () => {
         } finally {
             setIsGenerating(false); // STOP GENERATING - TRIGGERS TYPING EFFECT
             setIsApiLoading(false);
+            setIsStreamingGeneration(false);
         }
     };
-
 
     const handleEditFromSummary = () => {
         setShowSummary(false);
@@ -708,6 +865,21 @@ const AdCopyGeneratorForm = () => {
 
         showNotification(`Regenerating Variant ${variantIndex + 1}...`, 'info');
 
+        const controller = new AbortController();
+        streamControllersRef.current = [...(streamControllersRef.current || []), controller];
+
+        setGeneratedVariantsData((prev) => {
+            const next = [...(prev.variants || [])];
+            if (next[variantIndex]) {
+                next[variantIndex] = {
+                    ...next[variantIndex],
+                    content: '',
+                    is_streaming: true,
+                };
+            }
+            return { ...prev, variants: next };
+        });
+
         try {
             const response = await fetch(API.REGENERATE_VARIANT(variantId), {
                 method: 'POST',
@@ -715,42 +887,218 @@ const AdCopyGeneratorForm = () => {
                     'Content-Type': 'application/json',
                     'Authorization': getAuthHeader(),
                 },
+                signal: controller.signal,
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
+                let errorData = {};
+                try {
+                    errorData = await response.json();
+                } catch (e) {
+                }
                 throw new Error(errorData.message || `Regeneration failed with status: ${response.status}`);
             }
 
-            const result = await response.json();
+            const contentType = response.headers.get('content-type') || '';
+            const looksLikeJson = contentType.includes('application/json') && !contentType.includes('text/event-stream');
 
-            // Update the specific variant content in the state
-            setGeneratedVariantsData(prev => {
-                const newVariants = [...prev.variants];
-                const updatedVariantIndex = newVariants.findIndex(v => v.id === result.variant_id);
+            if (looksLikeJson || !response.body) {
+                const result = await response.json();
+                setGeneratedVariantsData((prev) => {
+                    const next = [...(prev.variants || [])];
+                    if (next[variantIndex]) {
+                        next[variantIndex] = {
+                            ...next[variantIndex],
+                            content: result?.new_content || '',
+                            is_streaming: false,
+                        };
+                    }
+                    return { ...prev, variants: next };
+                });
+                showNotification(`Variant ${variantIndex + 1} successfully regenerated!`, 'success');
+                return;
+            }
 
-                if (updatedVariantIndex !== -1) {
-                    newVariants[updatedVariantIndex] = {
-                        ...newVariants[updatedVariantIndex],
-                        content: result.new_content,
-                    };
-                } else {
-                    // Fallback: If regeneration API returned a new ID, add it (unlikely for regeneration)
-                    newVariants.push({
-                        id: result.variant_id,
-                        content: result.new_content,
-                        show_variant: true,
-                    });
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let buffer = '';
+            let sawAnyDelta = false;
+            let sawDone = false;
+
+            const processMessage = (msg) => {
+                if (!msg || typeof msg !== 'object') return;
+
+                if (msg.type === 'meta') {
+                    if (msg.request_id) {
+                        setRequestId((prev) => prev || msg.request_id);
+                    }
+                    if (msg.variant_id) {
+                        setGeneratedVariantsData((prev) => {
+                            const next = [...(prev.variants || [])];
+                            if (next[variantIndex]) {
+                                next[variantIndex] = { ...next[variantIndex], id: msg.variant_id };
+                            }
+                            return { ...prev, variants: next };
+                        });
+                    }
+                    return;
                 }
 
-                return { ...prev, variants: newVariants };
+                if (msg.type === 'delta') {
+                    const deltaText = msg.content || '';
+                    if (!deltaText) return;
+                    sawAnyDelta = true;
+                    setGeneratedVariantsData((prev) => {
+                        const next = [...(prev.variants || [])];
+                        if (next[variantIndex]) {
+                            next[variantIndex] = {
+                                ...next[variantIndex],
+                                content: `${next[variantIndex].content || ''}${deltaText}`,
+                            };
+                        }
+                        return { ...prev, variants: next };
+                    });
+                    return;
+                }
+
+                if (msg.type === 'done') {
+                    sawDone = true;
+                    if (msg.request_id) {
+                        setRequestId((prev) => prev || msg.request_id);
+                    }
+                    setGeneratedVariantsData((prev) => {
+                        const next = [...(prev.variants || [])];
+                        if (next[variantIndex]) {
+                            next[variantIndex] = {
+                                ...next[variantIndex],
+                                id: next[variantIndex].id || msg.variant_id || null,
+                                content: msg.content || next[variantIndex].content || '',
+                                is_streaming: false,
+                            };
+                        }
+                        return { ...prev, variants: next };
+                    });
+                }
+            };
+
+            const stripSsePrefixes = (text) => text.replace(/^data:\s*/gm, '');
+
+            const extractNextJsonObject = () => {
+                let i = 0;
+                while (i < buffer.length && /[\s,]/.test(buffer[i])) i++;
+                if (i > 0) buffer = buffer.slice(i);
+                if (!buffer) return null;
+
+                if (buffer[0] !== '{') {
+                    const nextObj = buffer.indexOf('{');
+                    if (nextObj === -1) {
+                        buffer = '';
+                        return null;
+                    }
+                    buffer = buffer.slice(nextObj);
+                }
+
+                let depth = 0;
+                let inString = false;
+                let escape = false;
+                for (let idx = 0; idx < buffer.length; idx++) {
+                    const ch = buffer[idx];
+
+                    if (inString) {
+                        if (escape) {
+                            escape = false;
+                        } else if (ch === '\\') {
+                            escape = true;
+                        } else if (ch === '"') {
+                            inString = false;
+                        }
+                        continue;
+                    }
+
+                    if (ch === '"') {
+                        inString = true;
+                        continue;
+                    }
+
+                    if (ch === '{') {
+                        depth += 1;
+                        continue;
+                    }
+
+                    if (ch === '}') {
+                        depth -= 1;
+                        if (depth === 0) {
+                            const jsonText = buffer.slice(0, idx + 1);
+                            buffer = buffer.slice(idx + 1);
+                            return jsonText;
+                        }
+                    }
+                }
+
+                return null;
+            };
+
+            const drainBuffer = () => {
+                for (;;) {
+                    const jsonText = extractNextJsonObject();
+                    if (!jsonText) break;
+                    try {
+                        const msg = JSON.parse(jsonText);
+                        processMessage(msg);
+                    } catch (e) {
+                        buffer = `${jsonText}${buffer}`;
+                        break;
+                    }
+                }
+            };
+
+            try {
+                for (;;) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    buffer = stripSsePrefixes(buffer + decoder.decode(value, { stream: true }));
+                    drainBuffer();
+                }
+                drainBuffer();
+            } finally {
+                try {
+                    reader.releaseLock();
+                } catch (e) {
+                }
+            }
+
+            setGeneratedVariantsData((prev) => {
+                const next = [...(prev.variants || [])];
+                if (next[variantIndex]) {
+                    next[variantIndex] = {
+                        ...next[variantIndex],
+                        is_streaming: false,
+                    };
+                }
+                return { ...prev, variants: next };
             });
 
-            showNotification(`Variant ${variantIndex + 1} successfully regenerated!`, 'success');
+            if (sawDone || sawAnyDelta) {
+                showNotification(`Variant ${variantIndex + 1} successfully regenerated!`, 'success');
+            }
 
         } catch (error) {
             console.error('Regeneration Error:', error);
-            showNotification(`Regeneration Error: ${error.message}`, 'error');
+            if (error?.name !== 'AbortError') {
+                showNotification(`Regeneration Error: ${error.message}`, 'error');
+            }
+            setGeneratedVariantsData((prev) => {
+                const next = [...(prev.variants || [])];
+                if (next[variantIndex]) {
+                    next[variantIndex] = {
+                        ...next[variantIndex],
+                        is_streaming: false,
+                    };
+                }
+                return { ...prev, variants: next };
+            });
+        } finally {
+            streamControllersRef.current = (streamControllersRef.current || []).filter((c) => c !== controller);
         }
     };
 
@@ -2504,14 +2852,17 @@ const AdCopyGeneratorForm = () => {
                     variants={generatedVariantsData.variants}
                     inputs={generatedVariantsData.inputs}
                     onClose={() => {
+                        abortAllStreams();
                         setShowVariantsModal(false);
                         setIsHistoryView(false); // *** NEW: Reset flag on close ***
+                        setIsStreamingGeneration(false);
                         setShowSummary(true);
                     }}
                     onRequestRegenerate={handleRegenerateVariant}
                     showNotification={showNotification}
                     isLoading={isApiLoading}
                     isHistoryView={isHistoryView} // *** NEW PROP PASSED DOWN ***
+                    isStreaming={isStreamingGeneration && !isHistoryView}
                 />
             )}
 

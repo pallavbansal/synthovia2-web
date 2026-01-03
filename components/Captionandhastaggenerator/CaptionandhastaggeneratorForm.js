@@ -1,21 +1,22 @@
 // components/Captionandhastaggenerator/Captionandhastaggeneratorform.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
 import VariantModalContent from './VariantModalContent';
 // --- CHANGED IMPORT TO NEW MODAL COMPONENT ---
 import SummaryReviewModal from './SummaryReviewModal';
-import SurfingLoading from './SurfingLoading';
+
 import ToggleButton from '../Form/ToggleButton';
 import RemoveTagButton from '../Form/RemoveTagButton';
 
 import { getAuthHeader } from "@/utils/auth";
 
 // --- API Constants (Provided by User) ---
-const BASE_URL = 'https://olive-gull-905765.hostingersite.com/public/api/v1';
+const BASE_URL = 'https://mediumorchid-otter-182176.hostingersite.com/public/api/v1';
 const API = {
     GET_FIELD_OPTIONS: `${BASE_URL}/caption-hashtag/options?field_type=all`,
     GENERATE_CAPTION_HASHTAG: `${BASE_URL}/caption-hashtag/generate`, // Corrected typo in variable name
+    GENERATE_CAPTION_HASHTAG_STREAM: `${BASE_URL}/caption-hashtag/generate-hashtag-claude-stream`,
     GET_VARIANTS_LOG: (requestId) => `${BASE_URL}/caption-hashtag/${requestId}/variants`,
     REGENERATE_VARIANT: (variantId) => `${BASE_URL}/caption-hashtag/variants/${variantId}/regenerate`,
 };
@@ -95,8 +96,20 @@ const Captionandhastaggeneratorform = () => {
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     const [audienceInput, setAudienceInput] = useState('');
     const [showAudienceSuggestions, setShowAudienceSuggestions] = useState(false);
-    const [isApiLoading, setIsApiLoading] = useState(false);
     const [isHistoryView, setIsHistoryView] = useState(false);
+
+    const streamControllersRef = useRef([]);
+
+    const abortAllStreams = useCallback(() => {
+        const controllers = streamControllersRef.current;
+        streamControllersRef.current = [];
+        controllers.forEach((c) => {
+            try {
+                c.abort();
+            } catch (e) {
+            }
+        });
+    }, []);
 
     // --- Shared Utility Function ---
     const showNotification = (message, type) => {
@@ -348,114 +361,261 @@ const Captionandhastaggeneratorform = () => {
         if (el) el.scrollIntoView({ behavior: 'smooth' });
     };
 
-
     const handleGenerate = async () => {
-        setIsGenerating(true);
-        setIsHistoryView(false);
-        setIsApiLoading(true);
-        showNotification('Generating captions and hashtags...', 'info');
-
-        // 1. Construct the API Payload
-        const platformPayload = getOptionDetails('caption_platform', formData.platform, formData.customPlatform, formData.platformType);
-        const tonePayload = getOptionDetails('caption_tone_of_voice', formData.toneOfVoice, formData.customTone, formData.toneSelection);
-        const ctaPayload = getOptionDetails('caption_cta_type', formData.includeCtaType, formData.customCta, formData.ctaSelection);
-        const languagePayload = getOptionDetails('caption_language_locale', formData.language, formData.customLanguage, formData.languageSelection);
-        const emotionalIntentPayload = getOptionDetails('caption_emotional_intent', formData.emotionalIntent, formData.customEmotionalIntent, formData.emotionalIntentSelection);
-        const postLengthPayload = getOptionDetails('caption_post_length', formData.postLength, null, 'predefined'); // Includes 'auto-detect' logic
-        const captionStylePayload = getOptionDetails('caption_style', formData.captionStyle, formData.customCaptionStyle, formData.captionStyleSelection);
-        const hashtagStylePayload = getOptionDetails('caption_hashtag_style', formData.hashtagStyle, formData.customHashtagStyle, formData.hashtagStyleSelection);
-
-        const hashtagLimitDetails = getOptionDetails('caption_hashtag_limit', formData.hashtagLimit, null, 'predefined');
-
-        const formattedOptions = formData.formattingOptions.map(key => {
-            const detail = formattingOptionsList.find(opt => opt.value === key);
-            return detail ? detail.apiValue : key;
-        });
-
-        // 2. Build the final payload
-        const payload = {
-            platform: platformPayload,
-            post_topic: formData.postTheme,
-            primary_goal: formData.primaryGoal,
-            tone_of_voice: tonePayload,
-            target_audience: formData.targetAudience,
-            number_of_variants: parseInt(formData.variants),
-            required_keywords: formData.requiredKeywords,
-            language_locale: languagePayload,
-            emotional_intent: emotionalIntentPayload,
-            // FIX: Use the special payload object directly if it's auto-detect, otherwise reconstruct the predefined object 
-            post_length: postLengthPayload.isAuto // Check for our internal flag (though postLengthPayload.type === null also works)
-                ? { type: null, id: postLengthPayload.id, value: postLengthPayload.value } // Specific API structure for auto-detect
-                : { type: 'predefined', id: postLengthPayload.id, value: postLengthPayload.value }, // Standard predefined structure
-            caption_style: captionStylePayload,
-            cta_type: ctaPayload,
-            custom_cta_text: ctaPayload.type === 'custom' ? formData.customCta : null,
-            number_of_ctas: formData.includeCtaType !== ctaTypeOptions.find(o => o.label === 'No CTA')?.key ? parseInt(formData.numberOfCta) : 0,
-            formatting_options: formattedOptions,
-            mentions: formData.formattingOptions.includes('mentions') ? (formData.mentionHandles || []) : [],
-            hashtag_style: hashtagStylePayload,
-            // FIX: Send the predefined object structure for hashtag_limit
-            hashtag_limit: {
-                type: 'predefined',
-                id: hashtagLimitDetails.id // Use the ID retrieved by getOptionDetails
-            },
-            exclude_words: formData.excludeWords,
-            creativity_level: parseInt(formData.creativityLevel),
-            proofread_optimize: formData.proofread,
-            compliance_notes: formData.complianceNotes
-        };
-
-        console.log('Submitting Payload:', payload);
-
         try {
-            if (!API.GENERATE_CAPTION_HASHTAG) {
-                throw new Error('API endpoint for generation is not defined.');
-            }
+            abortAllStreams();
             setIsGenerating(true);
-            const response = await fetch(API.GENERATE_CAPTION_HASHTAG, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'Authorization': getAuthHeader(),
-                },
-                body: JSON.stringify(payload),
+            setIsHistoryView(false);
+            showNotification('Generating captions and hashtags...', 'info');
+
+            // 1. Construct the API Payload
+            const platformPayload = getOptionDetails('caption_platform', formData.platform, formData.customPlatform, formData.platformType);
+            const tonePayload = getOptionDetails('caption_tone_of_voice', formData.toneOfVoice, formData.customTone, formData.toneSelection);
+            const ctaPayload = getOptionDetails('caption_cta_type', formData.includeCtaType, formData.customCta, formData.ctaSelection);
+            const languagePayload = getOptionDetails('caption_language_locale', formData.language, formData.customLanguage, formData.languageSelection);
+            const emotionalIntentPayload = getOptionDetails('caption_emotional_intent', formData.emotionalIntent, formData.customEmotionalIntent, formData.emotionalIntentSelection);
+            const postLengthPayload = getOptionDetails('caption_post_length', formData.postLength, null, 'predefined');
+            const captionStylePayload = getOptionDetails('caption_style', formData.captionStyle, formData.customCaptionStyle, formData.captionStyleSelection);
+            const hashtagStylePayload = getOptionDetails('caption_hashtag_style', formData.hashtagStyle, formData.customHashtagStyle, formData.hashtagStyleSelection);
+            const hashtagLimitDetails = getOptionDetails('caption_hashtag_limit', formData.hashtagLimit, null, 'predefined');
+
+            const formattedOptions = formData.formattingOptions.map(key => {
+                const detail = formattingOptionsList.find(opt => opt.value === key);
+                return detail ? detail.apiValue : key;
             });
 
-            const result = await response.json();
+            // 2. Build the final payload
+            const payload = {
+                platform: platformPayload,
+                post_topic: formData.postTheme,
+                primary_goal: formData.primaryGoal,
+                tone_of_voice: tonePayload,
+                target_audience: formData.targetAudience,
+                number_of_variants: parseInt(formData.variants, 10),
+                required_keywords: formData.requiredKeywords,
+                language_locale: languagePayload,
+                emotional_intent: emotionalIntentPayload,
+                post_length: postLengthPayload.isAuto
+                    ? { type: null, id: postLengthPayload.id, value: postLengthPayload.value }
+                    : { type: 'predefined', id: postLengthPayload.id, value: postLengthPayload.value },
+                caption_style: captionStylePayload,
+                cta_type: ctaPayload,
+                custom_cta_text: ctaPayload.type === 'custom' ? formData.customCta : null,
+                number_of_ctas: formData.includeCtaType !== ctaTypeOptions.find(o => o.label === 'No CTA')?.key ? parseInt(formData.numberOfCta, 10) : 0,
+                formatting_options: formattedOptions,
+                mentions: formData.formattingOptions.includes('mentions') ? (formData.mentionHandles || []) : [],
+                hashtag_style: hashtagStylePayload,
+                hashtag_limit: { type: 'predefined', id: hashtagLimitDetails.id },
+                exclude_words: formData.excludeWords,
+                creativity_level: parseInt(formData.creativityLevel, 10),
+                proofread_optimize: formData.proofread,
+                compliance_notes: formData.complianceNotes,
+            };
 
-            if (result.variants && Array.isArray(result.variants) && result.variants.length > 0) {
-                setRequestId(result.request_id);
+            const variantCount = Math.max(1, parseInt(payload?.number_of_variants || 1, 10));
+            const clientRequestKey = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-                const structuredVariants = result.variants.map((content, index) => ({
-                    id: content.id || `temp-${Date.now()}-${index}`,
-                    content: content.content || content,
-                    show_variant: content.show_variant || true,
-                }));
+            setRequestId(null);
+            setGeneratedVariantsData({
+                variants: Array.from({ length: variantCount }).map((_, index) => ({
+                    client_id: `${clientRequestKey}-${index}`,
+                    id: null,
+                    content: '',
+                    show_variant: true,
+                    is_streaming: true,
+                })),
+                inputs: payload,
+                requestId: null,
+            });
+            setShowVariantsModal(true);
+            setShowSummary(false);
 
-                setGeneratedVariantsData({ variants: structuredVariants, inputs: result.inputs, requestId: result.request_id });
-                setShowVariantsModal(true);
-                setShowSummary(false); // Hide summary before showing results
-                showNotification('Captions and hashtags generated successfully!', 'success');
+            const streamSingleVariant = async (variantIndex) => {
+                const controller = new AbortController();
+                streamControllersRef.current = [...(streamControllersRef.current || []), controller];
+
+                try {
+                    const payloadForStream = { ...payload, number_of_variants: 1 };
+
+                    const response = await fetch(API.GENERATE_CAPTION_HASHTAG_STREAM, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'Authorization': getAuthHeader(),
+                        },
+                        body: JSON.stringify(payloadForStream),
+                        signal: controller.signal,
+                    });
+
+                    if (!response.ok) {
+                        let errorData = {};
+                        try {
+                            errorData = await response.json();
+                        } catch (e) {
+                        }
+                        throw new Error(errorData.message || `API call failed with status: ${response.status}`);
+                    }
+
+                    if (!response.body) {
+                        throw new Error('Streaming is not supported in this browser/environment');
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder('utf-8');
+                    let buffer = '';
+
+                    const processLine = (rawLine) => {
+                        if (!rawLine) return;
+                        let line = rawLine.trim();
+                        if (!line) return;
+                        if (line.startsWith('data:')) {
+                            line = line.slice('data:'.length).trim();
+                        }
+                        if (!line) return;
+
+                        let msg;
+                        try {
+                            msg = JSON.parse(line);
+                        } catch (e) {
+                            buffer = `${line}\n${buffer}`;
+                            return;
+                        }
+
+                        if (!msg || typeof msg !== 'object') return;
+
+                        if (msg.type === 'meta') {
+                            if (msg.request_id) {
+                                setRequestId((prev) => prev || msg.request_id);
+                                setGeneratedVariantsData((prev) => ({ ...prev, requestId: prev.requestId || msg.request_id }));
+                            }
+                            if (msg.variant_id) {
+                                setGeneratedVariantsData((prev) => {
+                                    const next = [...(prev.variants || [])];
+                                    if (next[variantIndex]) {
+                                        next[variantIndex] = { ...next[variantIndex], id: msg.variant_id };
+                                    }
+                                    return { ...prev, variants: next };
+                                });
+                            }
+                            return;
+                        }
+
+                        if (msg.type === 'delta') {
+                            const deltaText = msg.content || '';
+                            if (!deltaText) return;
+                            setGeneratedVariantsData((prev) => {
+                                const next = [...(prev.variants || [])];
+                                if (next[variantIndex]) {
+                                    next[variantIndex] = {
+                                        ...next[variantIndex],
+                                        content: `${next[variantIndex].content || ''}${deltaText}`,
+                                    };
+                                }
+                                return { ...prev, variants: next };
+                            });
+                            return;
+                        }
+
+                        if (msg.type === 'done') {
+                            if (msg.request_id) {
+                                setRequestId((prev) => prev || msg.request_id);
+                                setGeneratedVariantsData((prev) => ({ ...prev, requestId: prev.requestId || msg.request_id }));
+                            }
+                            setGeneratedVariantsData((prev) => {
+                                const next = [...(prev.variants || [])];
+                                if (next[variantIndex]) {
+                                    next[variantIndex] = {
+                                        ...next[variantIndex],
+                                        id: next[variantIndex].id || msg.variant_id || null,
+                                        content: msg.content || next[variantIndex].content || '',
+                                        is_streaming: false,
+                                    };
+                                }
+                                return { ...prev, variants: next };
+                            });
+                        }
+                    };
+
+                    try {
+                        for (;;) {
+                            const { value, done } = await reader.read();
+                            if (done) break;
+
+                            buffer += decoder.decode(value, { stream: true });
+                            const parts = buffer.split(/\r?\n/);
+                            buffer = parts.pop() || '';
+                            parts.forEach(processLine);
+                        }
+
+                        const final = buffer.trim();
+                        if (final) {
+                            processLine(final);
+                        }
+                    } finally {
+                        try {
+                            reader.releaseLock();
+                        } catch (e) {
+                        }
+                    }
+                } finally {
+                    streamControllersRef.current = (streamControllersRef.current || []).filter((c) => c !== controller);
+                }
+            };
+
+            const results = await Promise.allSettled(
+                Array.from({ length: variantCount }).map((_, index) => streamSingleVariant(index))
+            );
+
+            const hasError = results.some(r => r.status === 'rejected');
+            if (hasError) {
+                setGeneratedVariantsData((prev) => {
+                    const next = (prev.variants || []).map((v, i) => {
+                        const r = results[i];
+                        if (r && r.status === 'rejected') {
+                            return {
+                                ...v,
+                                is_streaming: false,
+                                content: (v.content || '') || (r.reason?.message ? `Error: ${r.reason.message}` : 'Error: Failed to generate'),
+                            };
+                        }
+                        return v;
+                    });
+                    return { ...prev, variants: next };
+                });
             } else {
-                throw new Error('Generation successful, but no variants were returned. Response status: ' + (result.status_code || 'N/A'));
+                showNotification('Captions and hashtags generated successfully!', 'success');
             }
+
         } catch (submitError) {
             console.error('Submission Error:', submitError);
             showNotification(`Error: ${submitError.message || submitError.toString()}`, 'error');
         } finally {
             setIsGenerating(false);
-            setIsApiLoading(false);
             setIsSubmitting(false);
         }
     };
 
     const handleRegenerateVariant = async (variantId) => {
-        // [ ... existing regenerate logic ... ]
         const variantIndex = generatedVariantsData.variants.findIndex(v => v.id === variantId);
         if (variantIndex === -1) return;
 
         showNotification(`Regenerating Variant ${variantIndex + 1}...`, 'info');
+
+        const controller = new AbortController();
+        streamControllersRef.current = [...(streamControllersRef.current || []), controller];
+
+        setGeneratedVariantsData((prev) => {
+            const next = [...(prev.variants || [])];
+            if (next[variantIndex]) {
+                next[variantIndex] = {
+                    ...next[variantIndex],
+                    content: '',
+                    is_streaming: true,
+                };
+            }
+            return { ...prev, variants: next };
+        });
 
         try {
             const response = await fetch(API.REGENERATE_VARIANT(variantId), {
@@ -464,42 +624,170 @@ const Captionandhastaggeneratorform = () => {
                     'Content-Type': 'application/json',
                     'Authorization': getAuthHeader(),
                 },
+                signal: controller.signal,
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
+                let errorData = {};
+                try {
+                    errorData = await response.json();
+                } catch (e) {
+                }
                 throw new Error(errorData.message || `Regeneration failed with status: ${response.status}`);
             }
 
-            const result = await response.json();
+            if (!response.body) {
+                const result = await response.json();
+                setGeneratedVariantsData((prev) => {
+                    const next = [...(prev.variants || [])];
+                    if (next[variantIndex]) {
+                        next[variantIndex] = {
+                            ...next[variantIndex],
+                            content: result?.new_content || '',
+                            is_streaming: false,
+                        };
+                    }
+                    return { ...prev, variants: next };
+                });
+                showNotification(`Variant ${variantIndex + 1} successfully regenerated!`, 'success');
+                return;
+            }
 
-            // Update the specific variant content in the state
-            setGeneratedVariantsData(prev => {
-                const newVariants = [...prev.variants];
-                const updatedVariantIndex = newVariants.findIndex(v => v.id === result.variant_id);
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let buffer = '';
+            let sawAnyDelta = false;
+            let sawDone = false;
 
-                if (updatedVariantIndex !== -1) {
-                    newVariants[updatedVariantIndex] = {
-                        ...newVariants[updatedVariantIndex],
-                        content: result.new_content,
-                    };
-                } else {
-                    // Fallback: If regeneration API returned a new ID, add it (unlikely for regeneration)
-                    newVariants.push({
-                        id: result.variant_id,
-                        content: result.new_content,
-                        show_variant: true,
-                    });
+            const processLine = (rawLine) => {
+                if (!rawLine) return;
+                let line = rawLine.trim();
+                if (!line) return;
+                if (line.startsWith('data:')) {
+                    line = line.slice('data:'.length).trim();
+                }
+                if (!line) return;
+
+                let msg;
+                try {
+                    msg = JSON.parse(line);
+                } catch (e) {
+                    buffer = `${line}\n${buffer}`;
+                    return;
                 }
 
-                return { ...prev, variants: newVariants };
+                if (!msg || typeof msg !== 'object') return;
+
+                if (msg.type === 'meta') {
+                    if (msg.request_id) {
+                        setRequestId((prev) => prev || msg.request_id);
+                        setGeneratedVariantsData((prev) => ({ ...prev, requestId: prev.requestId || msg.request_id }));
+                    }
+                    if (msg.variant_id) {
+                        setGeneratedVariantsData((prev) => {
+                            const next = [...(prev.variants || [])];
+                            if (next[variantIndex]) {
+                                next[variantIndex] = { ...next[variantIndex], id: msg.variant_id };
+                            }
+                            return { ...prev, variants: next };
+                        });
+                    }
+                    return;
+                }
+
+                if (msg.type === 'delta') {
+                    const deltaText = msg.content || '';
+                    if (!deltaText) return;
+                    sawAnyDelta = true;
+                    setGeneratedVariantsData((prev) => {
+                        const next = [...(prev.variants || [])];
+                        if (next[variantIndex]) {
+                            next[variantIndex] = {
+                                ...next[variantIndex],
+                                content: `${next[variantIndex].content || ''}${deltaText}`,
+                                is_streaming: true,
+                            };
+                        }
+                        return { ...prev, variants: next };
+                    });
+                    return;
+                }
+
+                if (msg.type === 'done') {
+                    sawDone = true;
+                    if (msg.request_id) {
+                        setRequestId((prev) => prev || msg.request_id);
+                        setGeneratedVariantsData((prev) => ({ ...prev, requestId: prev.requestId || msg.request_id }));
+                    }
+                    setGeneratedVariantsData((prev) => {
+                        const next = [...(prev.variants || [])];
+                        if (next[variantIndex]) {
+                            next[variantIndex] = {
+                                ...next[variantIndex],
+                                id: next[variantIndex].id || msg.variant_id || null,
+                                content: msg.content || next[variantIndex].content || '',
+                                is_streaming: false,
+                            };
+                        }
+                        return { ...prev, variants: next };
+                    });
+                }
+            };
+
+            try {
+                for (;;) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const parts = buffer.split(/\r?\n/);
+                    buffer = parts.pop() || '';
+                    parts.forEach(processLine);
+                }
+
+                const final = buffer.trim();
+                if (final) {
+                    processLine(final);
+                }
+            } finally {
+                try {
+                    reader.releaseLock();
+                } catch (e) {
+                }
+            }
+
+            setGeneratedVariantsData((prev) => {
+                const next = [...(prev.variants || [])];
+                if (next[variantIndex]) {
+                    next[variantIndex] = {
+                        ...next[variantIndex],
+                        is_streaming: false,
+                    };
+                }
+                return { ...prev, variants: next };
             });
 
-            showNotification(`Variant ${variantIndex + 1} successfully regenerated!`, 'success');
+            if (sawDone || sawAnyDelta) {
+                showNotification(`Variant ${variantIndex + 1} successfully regenerated!`, 'success');
+            }
 
         } catch (error) {
             console.error('Regeneration Error:', error);
-            showNotification(`Regeneration Error: ${error.message}`, 'error');
+            if (error?.name !== 'AbortError') {
+                showNotification(`Regeneration Error: ${error.message}`, 'error');
+            }
+            setGeneratedVariantsData((prev) => {
+                const next = [...(prev.variants || [])];
+                if (next[variantIndex]) {
+                    next[variantIndex] = {
+                        ...next[variantIndex],
+                        is_streaming: false,
+                    };
+                }
+                return { ...prev, variants: next };
+            });
+        } finally {
+            streamControllersRef.current = (streamControllersRef.current || []).filter((c) => c !== controller);
         }
     };
 
@@ -511,11 +799,9 @@ const Captionandhastaggeneratorform = () => {
             return;
         }
 
-        setIsFetchingLog(true);       // so VariantsModal can show loading state if needed
         setIsGenerating(true);         // reuse existing generating flag for buttons
         setModalTitle('Variants Log'); // set title for log view
         setIsHistoryView(true);
-        setIsApiLoading(true);
 
         try {
             const response = await fetch(API.GET_VARIANTS_LOG(requestId), {
@@ -578,16 +864,14 @@ const Captionandhastaggeneratorform = () => {
             });
             setShowVariantsModal(true);
         } finally {
-            setIsFetchingLog(false);
             setIsGenerating(false);
-            setIsApiLoading(false);
-            setShowSummary(false);
+            setIsHistoryView(false);
         }
     };
     // --- END FIXED handleViewLog Function ---
 
     const handleReset = () => {
-        // [ ... existing reset logic ...]
+        abortAllStreams();
         const defaultPlatform = platformOptions[0]?.key || '';
         const defaultTone = toneOptions[0]?.key || '';
         const defaultLanguage = languageOptions.find(o => o.key === 'en_global')?.key || languageOptions[0]?.key || 'en_global';
@@ -1321,25 +1605,11 @@ const Captionandhastaggeneratorform = () => {
                                                 <label style={styles.label}>CTA Type</label>
                                                 <div style={styles.radioGroup}>
                                                     <label style={styles.radioItem}>
-                                                        <input
-                                                            type="radio"
-                                                            name="ctaSelection"
-                                                            value="predefined"
-                                                            checked={formData.ctaSelection === 'predefined'}
-                                                            onChange={handleChange}
-                                                            style={{ marginRight: '8px' }}
-                                                        />
+                                                        <input type="radio" name="ctaSelection" value="predefined" checked={formData.ctaSelection === 'predefined'} onChange={handleChange} style={{ marginRight: '8px' }} />
                                                         Predefined
                                                     </label>
                                                     <label style={styles.radioItem}>
-                                                        <input
-                                                            type="radio"
-                                                            name="ctaSelection"
-                                                            value="custom"
-                                                            checked={formData.ctaSelection === 'custom'}
-                                                            onChange={handleChange}
-                                                            style={{ marginRight: '8px' }}
-                                                        />
+                                                        <input type="radio" name="ctaSelection" value="custom" checked={formData.ctaSelection === 'custom'} onChange={handleChange} style={{ marginRight: '8px' }} />
                                                         Custom
                                                     </label>
                                                 </div>
@@ -1812,14 +2082,10 @@ const Captionandhastaggeneratorform = () => {
                     }}
                     onRequestRegenerate={handleRegenerateVariant}
                     showNotification={showNotification}
-                    isLoading={isApiLoading}
+                    isLoading={false}
                     isHistoryView={isHistoryView}
                     modalTitle={modalTitle}
                 />
-            )}
-
-            {isApiLoading && (
-                <SurfingLoading mode={isHistoryView ? "history" : "generate"} />
             )}
         </div>
     );

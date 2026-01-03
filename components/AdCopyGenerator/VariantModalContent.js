@@ -1,45 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 // Assuming SurfingLoading is imported correctly and accessible
 import SurfingLoading from './SurfingLoading'; 
-
-// --- TypingEffect Component (Retained) ---
-const TypingEffect = ({ text, onComplete }) => {
-    const [displayedText, setDisplayedText] = useState('');
-    const indexRef = useRef(0);
-    const delay = 10; // Typing speed in ms
-
-    useEffect(() => {
-        // Reset displayed text when 'text' prop changes (e.g., regeneration starts)
-        setDisplayedText('');
-        indexRef.current = 0;
-    }, [text]);
-
-    useEffect(() => {
-        if (indexRef.current < text.length) {
-            const timeoutId = setTimeout(() => {
-                setDisplayedText((prev) => prev + text[indexRef.current]);
-                indexRef.current += 1;
-            }, delay);
-            return () => clearTimeout(timeoutId);
-        } else if (text.length > 0) {
-            onComplete();
-        }
-    }, [text, onComplete, displayedText]);
-
-    return (
-        <p style={{ margin: 0, fontFamily: 'monospace', whiteSpace: 'pre-wrap', color: '#1f2937' }}>
-            {displayedText}
-            {indexRef.current < text.length && (
-                <span className="cursor" style={{ 
-                    animation: 'blink 1s step-end infinite', 
-                    marginLeft: '2px', 
-                    fontWeight: 'bold' 
-                }}>|</span>
-            )}
-        </p>
-    );
-};
-// -----------------------------------------------------------
 
 
 const VariantModalContent = ({ 
@@ -50,28 +11,17 @@ const VariantModalContent = ({
     showNotification,
     isLoading, 
     isHistoryView = false,
+    isStreaming = false,
 }) => {
     
     const [expandedIndex, setExpandedIndex] = useState(0); 
     const [regeneratingId, setRegeneratingId] = useState(null);
-    const [typingRegeneratedId, setTypingRegeneratedId] = useState(null); 
-    
-    const initialTypingState = isHistoryView || variants.length === 0;
-    const [isTypingCompleted, setIsTypingCompleted] = useState(initialTypingState); 
 
     useEffect(() => {
-        // Global Typing Logic (Only for initial, non-history load)
-        if (isHistoryView || variants.length === 0) {
-             setIsTypingCompleted(true);
-        } else {
-             setIsTypingCompleted(false);
-        }
         if (variants.length > 0) {
             setExpandedIndex(0);
         }
-        // Clear regeneration typing state if the whole variant set changes
-        setTypingRegeneratedId(null); 
-    }, [variants.length, isHistoryView]);
+    }, [variants.length]);
 
 
     const toggleExpand = (index) => {
@@ -137,8 +87,6 @@ const VariantModalContent = ({
         
         try {
             await onRequestRegenerate(variantId);
-            setTypingRegeneratedId(variantId); 
-            
         } finally {
             setRegeneratingId(null);
         }
@@ -208,14 +156,7 @@ const VariantModalContent = ({
 
     // **FIXED LOGIC:** Calculate Global Lock States OUTSIDE the map
     
-    // 1. Is initial generation typing running? (Only for first variant, not history, not complete)
-    const isInitialTypingActive = variants.length > 0 && !isTypingCompleted && !isHistoryView;
-
-    // 2. Is any typing (initial or regeneration) currently active?
-    const isTypingActiveGlobally = isInitialTypingActive || (typingRegeneratedId !== null);
-    
-    // 3. Is the UI locked (Typing running OR API call running)?
-    const isUILocked = isTypingActiveGlobally || (regeneratingId !== null);
+    const isUILocked = regeneratingId !== null;
     
     return (
         <div style={modalStyles.overlay}>
@@ -225,6 +166,11 @@ const VariantModalContent = ({
                         {isHistoryView && (
                             <span style={{ marginLeft: '10px', fontSize: '14px', color: '#94a3b8', fontWeight: '400' }}>
                                 (History Log)
+                            </span>
+                        )}
+                        {isStreaming && !isHistoryView && (
+                            <span style={{ marginLeft: '10px', fontSize: '14px', color: '#94a3b8', fontWeight: '400' }}>
+                                (Streaming)
                             </span>
                         )}
                     </h2>
@@ -256,22 +202,15 @@ const VariantModalContent = ({
                     {variants.filter(v => v.show_variant).map((variant, index) => {
                         const isExpanded = index === expandedIndex;
                         const isRegenerating = regeneratingId === variant.id;
-                        const isFirstVariant = index === 0;
-                        
-                        // Typing condition specific to this variant
-                        // NOTE: isInitialTypingActive is already calculated globally
-                        const isInitialTyping = isFirstVariant && isInitialTypingActive;
-                        const isRegenTyping = typingRegeneratedId === variant.id && !isRegenerating;
 
-                        const showTypingEffect = isInitialTyping || isRegenTyping;
-                        
                         // The lock condition for elements in this map is the global lock state
-                        const isInteractionDisabled = isUILocked; 
+                        const isInteractionDisabled = isUILocked;
+                        const isVariantStreaming = !!variant?.is_streaming;
 
-                        let contentToRender = variant.content;
+                        const contentToRender = variant?.content || '';
 
                         return (
-                            <div key={variant.id || index} style={{
+                            <div key={variant?.client_id || variant?.id || index} style={{
                                 ...modalStyles.card,
                                 border: isExpanded ? '1px solid #3b82f6' : '1px solid #e5e7eb',
                                 boxShadow: isExpanded ? '0 4px 8px -2px rgba(59, 130, 246, 0.2)' : '0 1px 3px rgba(0,0,0,0.05)',
@@ -283,25 +222,30 @@ const VariantModalContent = ({
                                         backgroundColor: isExpanded ? '#e0f2fe' : '#ffffff',
                                         borderBottom: isExpanded ? '1px solid #93c5fd' : '1px solid transparent',
                                         color: isExpanded ? '#0369a1' : '#1f2937',
-                                        
+
                                         // ENFORCE GLOBAL LOCK: Variant Header (Collapsing/Expanding)
                                         cursor: isInteractionDisabled ? 'wait' : 'pointer',
-                                        pointerEvents: isInteractionDisabled ? 'none' : 'auto', 
+                                        pointerEvents: isInteractionDisabled ? 'none' : 'auto',
                                     }}
                                     onClick={() => toggleExpand(index)}
                                 >
                                     <span style={{flexGrow: 1}}>Variant {index + 1}: {inputs.platform?.value} ({inputs.placement?.value})</span>
-                                    
+
+                                    {isVariantStreaming && (!contentToRender || contentToRender.trim().length === 0) && (
+                                        <span style={{ fontSize: '12px', color: '#64748b' }}>
+                                            Generating...
+                                        </span>
+                                    )}
+
                                     <div onClick={(e) => e.stopPropagation()} style={{display: 'flex', alignItems: 'center'}}>
-                                        
                                         <button 
                                             style={{
                                                 ...modalStyles.actionButton,
                                                 backgroundColor: '#10b981', color: 'white', border: 'none',
                                             }}
-                                            onClick={() => handleCopy(variant.content, index + 1)}
+                                            onClick={() => handleCopy(contentToRender, index + 1)}
                                             // ENFORCE GLOBAL LOCK: Copy Button
-                                            disabled={isInteractionDisabled} 
+                                            disabled={isInteractionDisabled || isVariantStreaming}
                                         >
                                             Copy
                                         </button>
@@ -309,19 +253,19 @@ const VariantModalContent = ({
                                         <button 
                                             style={{
                                                 ...modalStyles.actionButton,
-                                                backgroundColor: isInteractionDisabled ? '#9ca3af' : '#f97316', 
-                                                color: 'white', 
+                                                backgroundColor: isInteractionDisabled ? '#9ca3af' : '#f97316',
+                                                color: 'white',
                                                 border: 'none',
                                                 // Disable if currently regenerating (API call) OR if any typing is active
                                                 cursor: isInteractionDisabled ? 'wait' : 'pointer'
                                             }}
                                             onClick={() => handleRegenerate(variant.id)}
                                             // ENFORCE GLOBAL LOCK: Regenerate Button
-                                            disabled={isInteractionDisabled} 
+                                            disabled={isInteractionDisabled || isVariantStreaming || !variant?.id}
                                         >
                                             {isRegenerating ? 'Regenerating...' : 'Regenerate'}
                                         </button>
-                                        
+
                                         <button
                                             style={{
                                                 ...modalStyles.actionButton,
@@ -330,34 +274,24 @@ const VariantModalContent = ({
                                                 border: 'none',
                                                 cursor: isInteractionDisabled ? 'default' : 'pointer'
                                             }}
-                                            onClick={() => handleDownload(variant, index)}
+                                            onClick={() => handleDownload({ ...variant, content: contentToRender }, index)}
                                             // ENFORCE GLOBAL LOCK: Download Button
-                                            disabled={isInteractionDisabled}
+                                            disabled={isInteractionDisabled || isVariantStreaming}
                                         >
                                             Download
                                         </button>
                                     </div>
-                                    
+
                                     <span style={{ opacity: isInteractionDisabled ? 0.3 : 1 }}>{isExpanded ? '▲' : '▼'}</span>
                                 </div>
-                                
+
                                 {isExpanded && (
                                     <div style={modalStyles.cardContent}>
                                         <div style={{ margin: 0, fontFamily: 'inherit', whiteSpace: 'pre-wrap' }}>
                                             <p style={{ fontWeight: 'bold', margin: '0 0 8px 0' }}>Variant Content:</p>
-                                            
-                                            {showTypingEffect ? (
-                                                <TypingEffect 
-                                                    text={contentToRender} 
-                                                    onComplete={() => {
-                                                        if (isInitialTyping) {
-                                                            setIsTypingCompleted(true);
-                                                        }
-                                                        if (isRegenTyping) {
-                                                            setTypingRegeneratedId(null); // Clear ID after typing is complete
-                                                        }
-                                                    }} 
-                                                />
+
+                                            {isVariantStreaming && (!contentToRender || contentToRender.trim().length === 0) ? (
+                                                <SurfingLoading mode="generate" embedded={true} />
                                             ) : (
                                                 <p style={{ margin: 0, fontFamily: 'inherit', whiteSpace: 'pre-wrap', color: '#1f2937' }}>
                                                     {contentToRender}
