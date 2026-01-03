@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import SurfingLoading from './SurfingLoading';
 
 const TypingEffect = ({ text }) => {
     return (
@@ -167,7 +168,23 @@ const VariantModalContent = ({
         }
     };
     
-    if (isLoading) return null;
+    if (isLoading) {
+        return (
+            <div style={modalStyles.overlay}>
+                <div style={{
+                    ...modalStyles.modal,
+                    maxWidth: '500px',
+                    maxHeight: '400px',
+                    padding: 0,
+                    overflow: 'hidden',
+                    height: 'auto',
+                    flexShrink: 1,
+                }}>
+                    <SurfingLoading mode={isHistoryView ? 'history' : 'generate'} />
+                </div>
+            </div>
+        );
+    }
 
     
     if (!variants || variants.length === 0) return null;
@@ -282,8 +299,14 @@ const VariantModalContent = ({
                                     <div style={modalStyles.cardContent}>
                                         <div style={{ margin: 0, fontFamily: 'inherit' }}>
                                             <p style={{ fontWeight: 'bold', margin: '0 0 8px 0' }}>Variant Content:</p>
-                                            
-                                            <HashtagGridSystem text={variant.content} />
+
+                                            {variant?.is_streaming && !(variant?.content || '').trim() ? (
+                                                <div style={{ padding: '8px 0' }}>
+                                                    <SurfingLoading mode={isHistoryView ? 'history' : 'generate'} />
+                                                </div>
+                                            ) : (
+                                                <HashtagGridSystem text={variant.content} />
+                                            )}
                                         </div>
                                     </div>
                                 )}

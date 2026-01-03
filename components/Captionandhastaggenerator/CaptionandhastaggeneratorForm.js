@@ -16,7 +16,7 @@ const BASE_URL = 'https://mediumorchid-otter-182176.hostingersite.com/public/api
 const API = {
     GET_FIELD_OPTIONS: `${BASE_URL}/caption-hashtag/options?field_type=all`,
     GENERATE_CAPTION_HASHTAG: `${BASE_URL}/caption-hashtag/generate`, // Corrected typo in variable name
-    GENERATE_CAPTION_HASHTAG_STREAM: `${BASE_URL}/caption-hashtag/generate-hashtag-claude-stream`,
+    GENERATE_CAPTION_HASHTAG_STREAM: `${BASE_URL}/caption-hashtag/generate-caption-claude-stream`,
     GET_VARIANTS_LOG: (requestId) => `${BASE_URL}/caption-hashtag/${requestId}/variants`,
     REGENERATE_VARIANT: (variantId) => `${BASE_URL}/caption-hashtag/variants/${variantId}/regenerate`,
 };
@@ -2082,7 +2082,12 @@ const Captionandhastaggeneratorform = () => {
                     }}
                     onRequestRegenerate={handleRegenerateVariant}
                     showNotification={showNotification}
-                    isLoading={false}
+                    isLoading={
+                        isGenerating &&
+                        (generatedVariantsData.variants || []).some(
+                            (v) => v && v.is_streaming && !(v.content || '').trim()
+                        )
+                    }
                     isHistoryView={isHistoryView}
                     modalTitle={modalTitle}
                 />
