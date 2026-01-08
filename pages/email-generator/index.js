@@ -10,7 +10,7 @@ import HeaderDashboard from "@/components/Header/HeaderDashboard";
 import RightDashboardSidebar from "@/components/Header/RightDashboardSidebar";
 import Modal from "@/components/Common/Modal";
 import StaticbarDashboard from "@/components/Common/StaticBarDashboard";
-import EmailGenerator from "@/components/EmailGenerator/EmailGeneratorForm";
+import EmailGenerator from "@/components/EmailGenerator/EmailNewsletterGenerator";
 
 const EmailGeneratorPage = () => {
   return (

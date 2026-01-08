@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ToggleButton from '../Form/ToggleButton';
+import SummaryReviewModal from './SummaryReviewModal';
+import VariantModalContent from './VariantModalContent';
+import { getAuthHeader } from '@/utils/auth';
 
-// API Configuration
-const BASE_URL = 'https://olive-gull-905765.hostingersite.com/public/api/v1';
+const BASE_URL = 'https://mediumorchid-otter-182176.hostingersite.com/public/api/v1';
 const API = {
     GENERATE_EMAIL: `${BASE_URL}/email/generate`,
-    AUTH_TOKEN: '3|WwYYaSEAfSr1guYBFdPQlPtGg0dKphy1sVMDLBmX647db358',
+    GENERATE_EMAIL_STREAM: `${BASE_URL}/email-newsletter/generate-stream`,
+    OPTIONS: `${BASE_URL}/email-newsletter/options?field_type=all`,
 };
 
-const AUTH_HEADER = `Bearer ${API.AUTH_TOKEN}`;
-
-// Default field options
 const defaultFieldOptions = {
     emailTypes: [
         { id: 1, key: 'newsletter', label: 'Newsletter' },
@@ -66,7 +66,9 @@ const defaultFieldOptions = {
     ],
 };
 
-const EmailGeneratorForm = () => {
+const EmailNewsletterGenerator = () => {
+    const streamControllersRef = useRef([]);
+    const [fieldOptions, setFieldOptions] = useState(defaultFieldOptions);
     const [formData, setFormData] = useState({
         emailType: '',
         emailTypeMode: 'predefined',
@@ -83,12 +85,13 @@ const EmailGeneratorForm = () => {
         toneStyle: '',
         toneStyleMode: 'predefined',
         toneStyleCustom: '',
-        lengthPreference: '',
+        lengthPreference: 'auto',
         lengthPreferenceMode: 'predefined',
         lengthPreferenceCustom: '',
         ctaType: '',
         ctaTypeMode: 'predefined',
         customCta: '',
+        variantsCount: 1,
         personalizationTags: [],
         keyHighlights: [],
         socialProof: '',
@@ -102,195 +105,283 @@ const EmailGeneratorForm = () => {
     const [audienceInput, setAudienceInput] = useState('');
     const [personalizationInput, setPersonalizationInput] = useState('');
     const [highlightInput, setHighlightInput] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     const [mounted, setMounted] = useState(false);
 
-    React.useEffect(() => {
+    const [showSummary, setShowSummary] = useState(false);
+    const [showVariantsModal, setShowVariantsModal] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [isApiLoading, setIsApiLoading] = useState(false);
+
+    const [generatedVariantsData, setGeneratedVariantsData] = useState({ variants: [], inputs: {} });
+
+    useEffect(() => {
         setMounted(true);
     }, []);
 
+    useEffect(() => {
+        return () => {
+            streamControllersRef.current.forEach((c) => {
+                try {
+                    c?.abort?.();
+                } catch {
+                }
+            });
+            streamControllersRef.current = [];
+        };
+    }, []);
+
+    useEffect(() => {
+        let isActive = true;
+
+        const normalize = (arr) => {
+            const list = Array.isArray(arr) ? arr : [];
+            return list
+                .slice()
+                .sort((a, b) => (a?.sort_order ?? 0) - (b?.sort_order ?? 0))
+                .map((opt) => ({
+                    id: opt?.id ?? opt?.key,
+                    key: opt?.key,
+                    label: opt?.label,
+                }))
+                .filter((opt) => opt.key && opt.label);
+        };
+
+        const fetchOptions = async () => {
+            try {
+                const res = await fetch(API.OPTIONS, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': getAuthHeader(),
+                    },
+                });
+
+                if (!res.ok) {
+                    throw new Error(`Options API failed with status: ${res.status}`);
+                }
+
+                const json = await res.json();
+                const data = json?.data || {};
+
+                const next = {
+                    emailTypes: normalize(data.email_type),
+                    subjectLineFocus: normalize(data.email_subject_focus),
+                    emailGoals: normalize(data.goal_or_purpose),
+                    toneStyles: normalize(data.tone_style),
+                    lengthPreferences: normalize(data.text_length),
+                    ctaTypes: normalize(data.call_to_action),
+                    sendFrequencies: normalize(data.send_frequency_cadence),
+                };
+
+                const hasAny = Object.values(next).some((v) => Array.isArray(v) && v.length > 0);
+                if (isActive && hasAny) {
+                    setFieldOptions((prev) => ({
+                        ...prev,
+                        ...next,
+                    }));
+                }
+            } catch (e) {
+                if (isActive) {
+                    showNotification('Failed to load dropdown options. Using defaults.', 'error');
+                }
+            }
+        };
+
+        fetchOptions();
+
+        return () => {
+            isActive = false;
+        };
+    }, []);
+
     const styles = {
-        container: { 
-            maxWidth: '1100px', 
-            margin: '0 auto', 
-            padding: '24px', 
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', 
-            backgroundColor: '#0a0e1a', 
-            minHeight: '100vh' 
+        container: {
+            maxWidth: '1100px',
+            margin: '0 auto',
+            padding: '24px',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+            backgroundColor: '#0a0e1a',
+            minHeight: '100vh',
         },
-        card: { 
-            backgroundColor: '#141b2d', 
-            borderRadius: '12px', 
-            boxShadow: '0 4px 6px rgba(0,0,0,0.3)', 
-            overflow: 'hidden', 
-            border: '1px solid #1e293b' 
+        card: {
+            backgroundColor: '#141b2d',
+            borderRadius: '12px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+            overflow: 'hidden',
+            border: '1px solid #1e293b',
         },
-        header: { 
-            padding: '24px 32px', 
-            borderBottom: '1px solid #1e293b', 
+        header: {
+            padding: '24px 32px',
+            borderBottom: '1px solid #1e293b',
         },
-        title: { 
-            margin: 0, 
-            fontSize: '24px', 
-            fontWeight: '600', 
-            color: '#f8fafc' 
+        title: {
+            margin: 0,
+            fontSize: '24px',
+            fontWeight: '600',
+            color: '#f8fafc',
         },
-        subtitle: { 
-            margin: '6px 0 0', 
-            fontSize: '14px', 
-            color: '#94a3b8' 
+        subtitle: {
+            margin: '6px 0 0',
+            fontSize: '14px',
+            color: '#94a3b8',
         },
-        formGroup: { 
-            marginBottom: '20px' 
+        formGroup: {
+            marginBottom: '20px',
         },
-        label: { 
-            display: 'block', 
-            marginBottom: '6px', 
-            fontSize: '16px', 
-            fontWeight: '500', 
-            color: '#e2e8f0' 
+        label: {
+            display: 'block',
+            marginBottom: '6px',
+            fontSize: '16px',
+            fontWeight: '500',
+            color: '#e2e8f0',
         },
-        input: { 
-            width: '100%', 
-            padding: '10px 14px', 
-            fontSize: '14px', 
-            lineHeight: '1.5', 
-            color: '#e2e8f0', 
-            backgroundColor: '#1e293b', 
-            border: '1px solid #334155', 
-            borderRadius: '6px', 
-            transition: 'all 0.15s ease-in-out', 
-            boxSizing: 'border-box' 
+        input: {
+            width: '100%',
+            padding: '10px 14px',
+            fontSize: '14px',
+            lineHeight: '1.5',
+            color: '#e2e8f0',
+            backgroundColor: '#1e293b',
+            border: '1px solid #334155',
+            borderRadius: '6px',
+            transition: 'all 0.15s ease-in-out',
+            boxSizing: 'border-box',
         },
-        select: { 
-            width: '100%', 
-            height: '42px', 
-            padding: '10px 14px', 
-            fontSize: '14px', 
-            lineHeight: '1.5', 
-            color: '#e2e8f0', 
-            backgroundColor: '#1e293b', 
-            border: '1px solid #334155', 
-            borderRadius: '6px', 
-            transition: 'all 0.15s ease-in-out', 
-            boxSizing: 'border-box', 
-            appearance: 'none', 
-            backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', 
-            backgroundRepeat: 'no-repeat', 
-            backgroundPosition: 'right 10px center', 
-            backgroundSize: '20px', 
-            paddingRight: '40px', 
-            cursor: 'pointer' 
+        select: {
+            width: '100%',
+            height: '42px',
+            padding: '10px 14px',
+            fontSize: '14px',
+            lineHeight: '1.5',
+            color: '#e2e8f0',
+            backgroundColor: '#1e293b',
+            border: '1px solid #334155',
+            borderRadius: '6px',
+            transition: 'all 0.15s ease-in-out',
+            boxSizing: 'border-box',
+            appearance: 'none',
+            backgroundImage:
+                'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 10px center',
+            backgroundSize: '20px',
+            paddingRight: '40px',
+            cursor: 'pointer',
         },
-        textarea: { 
-            width: '100%', 
-            padding: '10px 14px', 
-            fontSize: '14px', 
-            lineHeight: '1.5', 
-            color: '#e2e8f0', 
-            backgroundColor: '#1e293b', 
-            border: '1px solid #334155', 
-            borderRadius: '6px', 
-            transition: 'all 0.15s ease-in-out', 
-            boxSizing: 'border-box', 
-            resize: 'vertical', 
-            minHeight: '80px' 
+        rangeInput: {
+            width: '100%',
+            height: '6px',
+            borderRadius: '3px',
+            background: '#334155',
+            outline: 'none',
         },
-        badge: { 
-            display: 'inline-flex', 
-            alignItems: 'center', 
-            padding: '6px 12px', 
-            fontSize: '13px', 
-            fontWeight: '500', 
-            borderRadius: '6px', 
-            gap: '6px' 
+        textarea: {
+            width: '100%',
+            padding: '10px 14px',
+            fontSize: '14px',
+            lineHeight: '1.5',
+            color: '#e2e8f0',
+            backgroundColor: '#1e293b',
+            border: '1px solid #334155',
+            borderRadius: '6px',
+            transition: 'all 0.15s ease-in-out',
+            boxSizing: 'border-box',
+            resize: 'vertical',
+            minHeight: '80px',
         },
-        badgePrimary: { 
-            backgroundColor: '#3b82f6', 
-            color: 'white' 
+        badge: {
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: '6px 12px',
+            fontSize: '13px',
+            fontWeight: '500',
+            borderRadius: '6px',
+            gap: '6px',
         },
-        btn: { 
-            padding: '10px 20px', 
-            fontSize: '14px', 
-            fontWeight: '500', 
-            borderRadius: '6px', 
-            border: 'none', 
-            cursor: 'pointer', 
-            transition: 'all 0.15s ease-in-out', 
-            display: 'inline-flex', 
-            alignItems: 'center', 
-            gap: '8px' 
+        badgePrimary: {
+            backgroundColor: '#3b82f6',
+            color: 'white',
+        },
+        btn: {
+            padding: '10px 20px',
+            fontSize: '14px',
+            fontWeight: '500',
+            borderRadius: '6px',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease-in-out',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
         },
         btnPrimary: {
             backgroundColor: '#3b82f6',
             color: 'white',
         },
-        btnOutline: { 
-            backgroundColor: 'transparent', 
-            color: '#94a3b8', 
-            border: '1px solid #334155' 
+        btnOutline: {
+            backgroundColor: 'transparent',
+            color: '#94a3b8',
+            border: '1px solid #334155',
         },
-        infoIcon: { 
-            display: 'inline-block', 
-            width: '16px', 
-            height: '16px', 
-            borderRadius: '50%', 
-            backgroundColor: '#3b82f6', 
-            color: 'white', 
-            textAlign: 'center', 
-            lineHeight: '16px', 
-            fontSize: '11px', 
-            cursor: 'help', 
-            marginLeft: '6px' 
+        infoIcon: {
+            display: 'inline-block',
+            width: '16px',
+            height: '16px',
+            borderRadius: '50%',
+            backgroundColor: '#3b82f6',
+            color: 'white',
+            textAlign: 'center',
+            lineHeight: '16px',
+            fontSize: '11px',
+            cursor: 'help',
+            marginLeft: '6px',
         },
-        removeBtn: { 
-            background: 'rgba(255,255,255,0.2)', 
-            border: 'none', 
-            color: 'white', 
-            width: '18px', 
-            height: '18px', 
-            borderRadius: '50%', 
-            cursor: 'pointer', 
-            fontSize: '12px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            padding: 0 
+        removeBtn: {
+            background: 'rgba(255,255,255,0.2)',
+            border: 'none',
+            color: 'white',
+            width: '18px',
+            height: '18px',
+            borderRadius: '50%',
+            cursor: 'pointer',
+            fontSize: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
         },
-        toast: { 
-            position: 'fixed', 
-            top: '20px', 
-            right: '20px', 
-            padding: '16px 24px', 
-            color: 'white', 
-            borderRadius: '8px', 
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)', 
-            zIndex: 9999 
+        toast: {
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            padding: '16px 24px',
+            color: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            zIndex: 9999,
         },
-        toolTip: { 
-            width: '40%' 
-        },
-        radioGroup: { 
-            display: 'flex', 
-            gap: '16px', 
+        radioGroup: {
+            display: 'flex',
+            gap: '16px',
             marginTop: '8px',
-            marginBottom: '8px'
+            marginBottom: '8px',
         },
-        radioItem: { 
-            display: 'flex', 
-            alignItems: 'center', 
+        radioItem: {
+            display: 'flex',
+            alignItems: 'center',
             gap: '8px',
             color: '#e2e8f0',
-            fontSize: '14px'
+            fontSize: '14px',
         },
     };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [name]: value
+            [name]: value,
         }));
     };
 
@@ -298,15 +389,19 @@ const EmailGeneratorForm = () => {
         if (e.key === 'Enter' && e.target.value.trim()) {
             e.preventDefault();
             const newTag = e.target.value.trim();
-            const fieldName = type === 'audience' ? 'targetAudience' : 
-                            type === 'personalization' ? 'personalizationTags' : 'keyHighlights';
-            
+            const fieldName =
+                type === 'audience'
+                    ? 'targetAudience'
+                    : type === 'personalization'
+                        ? 'personalizationTags'
+                        : 'keyHighlights';
+
             if (!formData[fieldName].includes(newTag)) {
-                setFormData(prev => ({
+                setFormData((prev) => ({
                     ...prev,
-                    [fieldName]: [...prev[fieldName], newTag]
+                    [fieldName]: [...prev[fieldName], newTag],
                 }));
-                
+
                 if (type === 'audience') setAudienceInput('');
                 else if (type === 'personalization') setPersonalizationInput('');
                 else setHighlightInput('');
@@ -315,12 +410,16 @@ const EmailGeneratorForm = () => {
     };
 
     const removeTag = (tag, type) => {
-        const fieldName = type === 'audience' ? 'targetAudience' : 
-                        type === 'personalization' ? 'personalizationTags' : 'keyHighlights';
-        
-        setFormData(prev => ({
+        const fieldName =
+            type === 'audience'
+                ? 'targetAudience'
+                : type === 'personalization'
+                    ? 'personalizationTags'
+                    : 'keyHighlights';
+
+        setFormData((prev) => ({
             ...prev,
-            [fieldName]: prev[fieldName].filter(t => t !== tag)
+            [fieldName]: prev[fieldName].filter((t) => t !== tag),
         }));
     };
 
@@ -329,52 +428,507 @@ const EmailGeneratorForm = () => {
         setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-        
-        try {
-            const payload = {
-                email_type: formData.emailType,
-                target_audience: formData.targetAudience,
-                brand_context: formData.brandContext,
-                subject_line_focus: formData.subjectLineFocus,
-                email_goal: formData.emailGoal,
-                custom_goal: formData.customGoal || null,
-                key_message: formData.keyMessage,
-                tone_style: formData.toneStyle,
-                length_preference: formData.lengthPreference,
-                cta_type: formData.ctaType,
-                custom_cta: formData.customCta || null,
-                personalization_tags: formData.personalizationTags,
-                key_highlights: formData.keyHighlights,
-                social_proof: formData.socialProof,
-                compliance_notes: formData.complianceNotes,
-                send_frequency: formData.sendFrequency,
-                custom_frequency: formData.customFrequency || null,
-            };
+    const validateForm = () => {
+        const missing = [];
 
-            const response = await fetch(API.GENERATE_EMAIL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': AUTH_HEADER,
-                },
-                body: JSON.stringify(payload),
-            });
+        if (!String(formData.emailType || '').trim()) missing.push('Email Type');
+        if (!Array.isArray(formData.targetAudience) || formData.targetAudience.length < 1) missing.push('Target Audience');
+        if (!String(formData.brandContext || '').trim()) missing.push('Brand Context');
+        if (!String(formData.subjectLineFocus || '').trim()) missing.push('Subject Line Focus');
 
-            if (!response.ok) {
-                throw new Error('Failed to generate email');
+        if (!String(formData.emailGoal || '').trim()) missing.push('Email Goal');
+        if (formData.emailGoalMode === 'custom' && !String(formData.customGoal || '').trim()) missing.push('Custom Goal');
+
+        if (!String(formData.keyMessage || '').trim()) missing.push('Key Message');
+        if (!String(formData.toneStyle || '').trim()) missing.push('Tone');
+        if (formData.lengthPreferenceMode === 'custom') {
+            if (!String(formData.lengthPreferenceCustom || '').trim()) missing.push('Text Length');
+        } else {
+            const lp = String(formData.lengthPreference || '').trim();
+            if (!lp) missing.push('Text Length');
+        }
+
+        if (!String(formData.ctaType || '').trim()) missing.push('CTA');
+        if (formData.ctaTypeMode === 'custom' && !String(formData.customCta || '').trim()) missing.push('Custom CTA');
+
+        if (!Number.isFinite(Number(formData.variantsCount)) || Number(formData.variantsCount) < 1) missing.push('Number of Variants');
+
+        return missing;
+    };
+
+    const buildPayload = () => {
+        const buildSelectObject = ({ mode, key, customValue, list }) => {
+            if (mode === 'custom') {
+                const v = String(customValue || '').trim();
+                return { type: 'custom', id: null, value: v || null };
             }
 
-            const data = await response.json();
+            const k = String(key || '').trim();
+            if (!k) return null;
+            const opt = (Array.isArray(list) ? list : []).find((o) => String(o?.key) === String(k));
+            return {
+                type: 'predefined',
+                id: opt?.id ?? null,
+                value: opt?.label ?? k,
+            };
+        };
+
+        const textLengthObj = (() => {
+            if (formData.lengthPreferenceMode === 'custom') {
+                const value = String(formData.lengthPreferenceCustom || formData.lengthPreference || '').trim();
+                return { type: 'custom', id: null, value: value || null };
+            }
+
+            const selectedKey = String(formData.lengthPreference || '').trim();
+            if (!selectedKey || selectedKey === 'auto') {
+                return { type: 'auto-detect', id: null, value: null };
+            }
+
+            const opt = (fieldOptions.lengthPreferences || []).find((o) => String(o?.key) === String(selectedKey));
+            return {
+                type: 'predefined',
+                id: opt?.id ?? null,
+                value: opt?.label ?? selectedKey,
+            };
+        })();
+
+        const proofSocial = String(formData.socialProof || '')
+            .split(/\r?\n/)
+            .map((s) => s.trim())
+            .filter(Boolean);
+
+        return {
+            email_type: buildSelectObject({
+                mode: formData.emailTypeMode,
+                key: formData.emailTypeMode === 'predefined' ? formData.emailType : null,
+                customValue: formData.emailTypeCustom,
+                list: fieldOptions.emailTypes,
+            }),
+            target_audience: formData.targetAudience,
+            sender_brand_context: String(formData.brandContext || '').trim(),
+            email_subject_focus: buildSelectObject({
+                mode: formData.subjectLineFocusMode,
+                key: formData.subjectLineFocusMode === 'predefined' ? formData.subjectLineFocus : null,
+                customValue: formData.subjectLineFocusCustom,
+                list: fieldOptions.subjectLineFocus,
+            }),
+            goal_or_purpose:
+                formData.emailGoalMode === 'custom'
+                    ? { type: 'custom', id: null, value: String(formData.customGoal || '').trim() || null }
+                    : buildSelectObject({
+                        mode: 'predefined',
+                        key: formData.emailGoal,
+                        customValue: null,
+                        list: fieldOptions.emailGoals,
+                    }),
+            key_message_offer: String(formData.keyMessage || '').trim(),
+            tone_style: buildSelectObject({
+                mode: formData.toneStyleMode,
+                key: formData.toneStyleMode === 'predefined' ? formData.toneStyle : null,
+                customValue: formData.toneStyleCustom,
+                list: fieldOptions.toneStyles,
+            }),
+            text_length: textLengthObj,
+            call_to_action:
+                formData.ctaTypeMode === 'custom'
+                    ? { type: 'custom', id: null, value: String(formData.customCta || '').trim() || null }
+                    : buildSelectObject({
+                        mode: 'predefined',
+                        key: formData.ctaType,
+                        customValue: null,
+                        list: fieldOptions.ctaTypes,
+                    }),
+            personalization_tags: formData.personalizationTags,
+            key_highlights: formData.keyHighlights,
+            proof_social_validation: proofSocial,
+            compliance_restrictions: String(formData.complianceNotes || '').trim() || null,
+            send_frequency_cadence:
+                formData.sendFrequencyMode === 'custom'
+                    ? { type: 'custom', id: null, value: String(formData.customFrequency || '').trim() || null }
+                    : String(formData.sendFrequency || '').trim()
+                        ? buildSelectObject({
+                            mode: 'predefined',
+                            key: formData.sendFrequency,
+                            customValue: null,
+                            list: fieldOptions.sendFrequencies,
+                        })
+                        : null,
+            number_of_variants: Number(formData.variantsCount) || 1,
+        };
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        const missing = validateForm();
+        if (missing.length > 0) {
+            showNotification(`Please fill all required fields: ${missing.join(', ')}`, 'error');
+            return;
+        }
+
+        setShowSummary(true);
+    };
+
+    const appendVariantDelta = (variantIndex, delta) => {
+        setGeneratedVariantsData((prev) => {
+            const nextVariants = Array.isArray(prev?.variants) ? [...prev.variants] : [];
+            const existing = nextVariants[variantIndex];
+            if (!existing) return prev;
+            nextVariants[variantIndex] = {
+                ...existing,
+                content: `${existing?.content || ''}${delta || ''}`,
+            };
+            return { ...prev, variants: nextVariants };
+        });
+    };
+
+    const markVariantDone = (variantIndex, errorMessage) => {
+        setGeneratedVariantsData((prev) => {
+            const nextVariants = Array.isArray(prev?.variants) ? [...prev.variants] : [];
+            const existing = nextVariants[variantIndex];
+            if (!existing) return prev;
+            nextVariants[variantIndex] = {
+                ...existing,
+                isStreaming: false,
+                is_streaming: false,
+                error: errorMessage || null,
+            };
+            return { ...prev, variants: nextVariants };
+        });
+    };
+
+    const runStreamForVariant = async ({ payload, variantIndex, controller }) => {
+        const res = await fetch(API.GENERATE_EMAIL_STREAM, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'text/event-stream',
+                'Authorization': getAuthHeader(),
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal,
+        });
+
+        if (!res.ok) {
+            let errorData = {};
+            try {
+                errorData = await res.json();
+            } catch {
+            }
+            throw new Error(errorData?.message || `API call failed with status: ${res.status}`);
+        }
+
+        const contentType = res.headers.get('content-type') || '';
+        const looksLikeJson = contentType.includes('application/json') && !contentType.includes('text/event-stream');
+
+        if (looksLikeJson || !res.body) {
+            const json = await res.json().catch(() => null);
+            const content =
+                json?.content ||
+                json?.email ||
+                json?.email_content ||
+                json?.data?.content ||
+                json?.data?.email ||
+                json?.data?.email_content ||
+                (typeof json === 'string' ? json : '');
+            if (content) appendVariantDelta(variantIndex, content);
+            return;
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let sawDone = false;
+
+        const setVariantMeta = (meta) => {
+            if (!meta) return;
+            if (!meta.variant_id && !meta.request_id) return;
+            setGeneratedVariantsData((prev) => {
+                const next = [...(prev.variants || [])];
+                if (next[variantIndex]) {
+                    next[variantIndex] = {
+                        ...next[variantIndex],
+                        id: next[variantIndex].id || meta.variant_id || next[variantIndex].id,
+                        request_id: next[variantIndex].request_id || meta.request_id || next[variantIndex].request_id,
+                    };
+                }
+                return { ...prev, variants: next };
+            });
+        };
+
+        const setVariantFinal = (finalMsg) => {
+            setGeneratedVariantsData((prev) => {
+                const next = [...(prev.variants || [])];
+                if (next[variantIndex]) {
+                    next[variantIndex] = {
+                        ...next[variantIndex],
+                        id: next[variantIndex].id || finalMsg?.variant_id || null,
+                        request_id: next[variantIndex].request_id || finalMsg?.request_id || null,
+                        content: typeof finalMsg?.content === 'string' ? finalMsg.content : next[variantIndex].content || '',
+                        isStreaming: false,
+                        is_streaming: false,
+                    };
+                }
+                return { ...prev, variants: next };
+            });
+        };
+
+        const processJsonMessage = (msg) => {
+            if (!msg || typeof msg !== 'object') return;
+
+            if (msg.type === 'meta') {
+                setVariantMeta(msg);
+                return;
+            }
+
+            if (msg.type === 'delta') {
+                const deltaText = msg.content || msg.delta || '';
+                if (!deltaText) return;
+                appendVariantDelta(variantIndex, deltaText);
+                return;
+            }
+
+            if (msg.type === 'done') {
+                setVariantMeta(msg);
+                if (typeof msg.content === 'string' && msg.content.trim()) {
+                    // Backend sends full final content on done; set (do not append) to avoid duplication.
+                    setVariantFinal(msg);
+                }
+                sawDone = true;
+                return;
+            }
+
+            if (msg.type === 'error') {
+                throw new Error(msg.message || 'Stream error');
+            }
+
+            if (typeof msg.content === 'string' && msg.content) {
+                appendVariantDelta(variantIndex, msg.content);
+            }
+        };
+
+        const explodeConcatenatedJson = (maybeLine) => {
+            // Handles backend sending: {..}{..}{..} without newlines.
+            // This is a heuristic but works for the provided example.
+            if (!maybeLine.includes('}{')) return [maybeLine];
+            return maybeLine.replace(/}\s*{/g, '}\n{').split(/\r?\n/).filter(Boolean);
+        };
+
+        const processLine = (rawLine) => {
+            if (!rawLine) return;
+            let line = rawLine.trim();
+            if (!line) return;
+            if (line.startsWith('data:')) {
+                line = line.slice('data:'.length).trim();
+            }
+            if (!line) return;
+
+            if (line.startsWith(',')) line = line.slice(1).trim();
+            if (line.endsWith(',')) line = line.slice(0, -1).trim();
+            if (!line) return;
+
+            const pieces = explodeConcatenatedJson(line);
+            for (const piece of pieces) {
+                let msg;
+                try {
+                    msg = JSON.parse(piece);
+                } catch {
+                    buffer = `${piece}\n${buffer}`;
+                    continue;
+                }
+                processJsonMessage(msg);
+            }
+        };
+
+        const flushBuffer = () => {
+            if (!buffer) return;
+
+            // First, normalize concatenated objects into newline-separated chunks.
+            const normalized = buffer.includes('}{') ? buffer.replace(/}\s*{/g, '}\n{') : buffer;
+
+            // Prefer newline boundaries when present.
+            const parts = normalized.split(/\r?\n/);
+
+            // If there's only one part, we might still have complete JSON objects without newlines.
+            if (parts.length === 1) {
+                const single = parts[0].trim();
+                if (!single) {
+                    buffer = '';
+                    return;
+                }
+
+                const pieces = explodeConcatenatedJson(single);
+                if (pieces.length <= 1) {
+                    // Leave it in buffer until we get more data (or final flush).
+                    buffer = single;
+                    return;
+                }
+
+                // Process all but the last piece; keep the last in buffer (may be incomplete).
+                const tail = pieces.pop() || '';
+                pieces.forEach(processLine);
+                buffer = tail;
+                return;
+            }
+
+            // For multiline: process all complete lines, keep last as possible partial.
+            const tail = parts.pop() || '';
+            parts.forEach(processLine);
+            buffer = tail;
+        };
+
+        try {
+            for (;;) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                flushBuffer();
+
+                if (sawDone) return;
+            }
+
+            const final = buffer.trim();
+            if (final) {
+                buffer = final;
+                flushBuffer();
+                const leftover = buffer.trim();
+                if (leftover) {
+                    // last attempt: if it's a complete JSON object, process it
+                    try {
+                        const msg = JSON.parse(leftover);
+                        processJsonMessage(msg);
+                        buffer = '';
+                    } catch {
+                    }
+                }
+            }
+
+            if (sawDone) return;
+        } finally {
+            try {
+                reader.releaseLock();
+            } catch {
+            }
+        }
+    };
+
+    const handleGenerate = async () => {
+        const missing = validateForm();
+        if (missing.length > 0) {
+            showNotification(`Please fill all required fields: ${missing.join(', ')}`, 'error');
+            return;
+        }
+
+        setShowSummary(false);
+        setShowVariantsModal(true);
+        setIsApiLoading(true);
+        setIsGenerating(true);
+
+        streamControllersRef.current.forEach((c) => {
+            try {
+                c?.abort?.();
+            } catch {
+            }
+        });
+        streamControllersRef.current = [];
+
+        try {
+            const payload = buildPayload();
+            const count = Math.max(1, Math.min(5, Number(payload?.number_of_variants) || 1));
+
+            const placeholders = Array.from({ length: count }).map((_, i) => ({
+                id: `email-stream-${Date.now()}-${i}`,
+                content: '',
+                show_variant: true,
+                isStreaming: true,
+                is_streaming: true,
+            }));
+
+            setGeneratedVariantsData({ variants: placeholders, inputs: payload });
+            setIsApiLoading(false);
+
+            const streamPromises = Array.from({ length: count }).map((_, variantIndex) => {
+                const controller = new AbortController();
+                streamControllersRef.current[variantIndex] = controller;
+
+                return runStreamForVariant({ payload, variantIndex, controller })
+                    .then(() => {
+                        markVariantDone(variantIndex, null);
+                        return { ok: true };
+                    })
+                    .catch((err) => {
+                        markVariantDone(variantIndex, err?.message || 'Failed');
+                        return { ok: false, error: err };
+                    });
+            });
+
+            const results = await Promise.all(streamPromises);
+            const okCount = results.filter((r) => r?.ok).length;
+
+            if (okCount === 0) {
+                throw new Error('All variant streams failed');
+            }
+
             showNotification('Email generated successfully!', 'success');
-            
         } catch (error) {
             console.error('Error generating email:', error);
-            showNotification('Failed to generate email. Please try again.', 'error');
+            showNotification(`Error: ${error.message || 'Failed to generate email'}`, 'error');
+            setShowVariantsModal(false);
         } finally {
-            setIsLoading(false);
+            setIsApiLoading(false);
+            setIsGenerating(false);
+            setShowSummary(false);
+        }
+    };
+
+    const handleRequestRegenerate = async (variantId) => {
+        const payload = generatedVariantsData?.inputs ? { ...generatedVariantsData.inputs } : buildPayload();
+        const variants = Array.isArray(generatedVariantsData?.variants) ? generatedVariantsData.variants : [];
+
+        const variantIndex = variants.findIndex((v) => v?.id === variantId);
+        if (variantIndex < 0) {
+            showNotification('Unable to regenerate: variant not found.', 'error');
+            return;
+        }
+
+        const controller = new AbortController();
+        try {
+            const existing = streamControllersRef.current?.[variantIndex];
+            try {
+                existing?.abort?.();
+            } catch {
+            }
+            streamControllersRef.current[variantIndex] = controller;
+
+            setGeneratedVariantsData((prev) => {
+                const next = [...(prev?.variants || [])];
+                if (next[variantIndex]) {
+                    next[variantIndex] = {
+                        ...next[variantIndex],
+                        content: '',
+                        error: null,
+                        isStreaming: true,
+                        is_streaming: true,
+                        id: null,
+                        request_id: null,
+                    };
+                }
+                return { ...prev, variants: next };
+            });
+
+            await runStreamForVariant({
+                payload: { ...payload, number_of_variants: 1 },
+                variantIndex,
+                controller,
+            });
+
+            markVariantDone(variantIndex, null);
+            showNotification('Variant regenerated successfully!', 'success');
+        } catch (err) {
+            markVariantDone(variantIndex, err?.message || 'Failed');
+            showNotification(`Error: ${err?.message || 'Failed to regenerate variant'}`, 'error');
+            throw err;
         }
     };
 
@@ -395,12 +949,13 @@ const EmailGeneratorForm = () => {
             toneStyle: '',
             toneStyleMode: 'predefined',
             toneStyleCustom: '',
-            lengthPreference: '',
+            lengthPreference: 'auto',
             lengthPreferenceMode: 'predefined',
             lengthPreferenceCustom: '',
             ctaType: '',
             ctaTypeMode: 'predefined',
             customCta: '',
+            variantsCount: 1,
             personalizationTags: [],
             keyHighlights: [],
             socialProof: '',
@@ -413,14 +968,30 @@ const EmailGeneratorForm = () => {
         setAudienceInput('');
         setPersonalizationInput('');
         setHighlightInput('');
+        setShowSummary(false);
+        setShowVariantsModal(false);
+        setGeneratedVariantsData({ variants: [], inputs: {} });
         showNotification('Form has been reset', 'info');
     };
 
     const toggleAdvanced = () => {
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            showAdvanced: !prev.showAdvanced
+            showAdvanced: !prev.showAdvanced,
         }));
+    };
+
+    const handleCloseVariantsModal = () => {
+        streamControllersRef.current.forEach((c) => {
+            try {
+                c?.abort?.();
+            } catch {
+            }
+        });
+        streamControllersRef.current = [];
+        setShowVariantsModal(false);
+        setIsApiLoading(false);
+        setIsGenerating(false);
     };
 
     if (!mounted) return null;
@@ -428,16 +999,28 @@ const EmailGeneratorForm = () => {
     return (
         <div style={styles.container}>
             {notification.show && (
-                <div style={{
-                    ...styles.toast,
-                    backgroundColor: notification.type === 'error' ? '#fef2f2' : '#f0fdf4',
-                    borderColor: notification.type === 'error' ? '#fecaca' : '#bbf7d0',
-                    color: notification.type === 'error' ? '#b91c1c' : '#166534',
-                }}>
+                <div
+                    style={{
+                        ...styles.toast,
+                        backgroundColor: notification.type === 'error' ? '#fef2f2' : '#f0fdf4',
+                        borderColor: notification.type === 'error' ? '#fecaca' : '#bbf7d0',
+                        color: notification.type === 'error' ? '#b91c1c' : '#166534',
+                    }}
+                >
                     {notification.message}
-                    <button onClick={() => setNotification({ ...notification, show: false })} style={{
-                        background: 'none', border: 'none', color: 'inherit', marginLeft: '10px', cursor: 'pointer', fontSize: '18px'
-                    }}>&times;</button>
+                    <button
+                        onClick={() => setNotification({ ...notification, show: false })}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'inherit',
+                            marginLeft: '10px',
+                            cursor: 'pointer',
+                            fontSize: '18px',
+                        }}
+                    >
+                        &times;
+                    </button>
                 </div>
             )}
 
@@ -450,7 +1033,6 @@ const EmailGeneratorForm = () => {
                 <div style={{ padding: '24px' }}>
                     <form onSubmit={handleSubmit}>
                         <div className="row g-4">
-                            {/* Email Type & Brand Context */}
                             <div className="col-md-6">
                                 <div style={styles.formGroup}>
                                     <label htmlFor="emailType" style={styles.label}>
@@ -462,7 +1044,7 @@ const EmailGeneratorForm = () => {
                                             i
                                         </span>
                                     </label>
-                                    
+
                                     <div style={styles.radioGroup}>
                                         <label style={styles.radioItem}>
                                             <input
@@ -471,10 +1053,10 @@ const EmailGeneratorForm = () => {
                                                 value="predefined"
                                                 checked={formData.emailTypeMode === 'predefined'}
                                                 onChange={(e) => {
-                                                    setFormData(prev => ({
+                                                    setFormData((prev) => ({
                                                         ...prev,
                                                         emailTypeMode: e.target.value,
-                                                        emailType: prev.emailType || ''
+                                                        emailType: prev.emailType || '',
                                                     }));
                                                 }}
                                             />
@@ -487,10 +1069,10 @@ const EmailGeneratorForm = () => {
                                                 value="custom"
                                                 checked={formData.emailTypeMode === 'custom'}
                                                 onChange={(e) => {
-                                                    setFormData(prev => ({
+                                                    setFormData((prev) => ({
                                                         ...prev,
                                                         emailTypeMode: e.target.value,
-                                                        emailType: prev.emailTypeCustom || ''
+                                                        emailType: prev.emailTypeCustom || '',
                                                     }));
                                                 }}
                                             />
@@ -508,8 +1090,8 @@ const EmailGeneratorForm = () => {
                                             required
                                         >
                                             <option value="">Select email type</option>
-                                            {defaultFieldOptions.emailTypes.map(option => (
-                                                <option key={option.key} value={option.label}>
+                                            {fieldOptions.emailTypes.map((option) => (
+                                                <option key={option.key} value={option.key}>
                                                     {option.label}
                                                 </option>
                                             ))}
@@ -524,10 +1106,10 @@ const EmailGeneratorForm = () => {
                                             value={formData.emailTypeCustom}
                                             onChange={(e) => {
                                                 const val = e.target.value;
-                                                setFormData(prev => ({
+                                                setFormData((prev) => ({
                                                     ...prev,
                                                     emailTypeCustom: val,
-                                                    emailType: val
+                                                    emailType: val,
                                                 }));
                                             }}
                                             placeholder="Enter custom email type"
@@ -537,15 +1119,11 @@ const EmailGeneratorForm = () => {
                                 </div>
                             </div>
 
-                            {/* Subject Line Focus & Email Goal */}
                             <div className="col-md-6">
                                 <div style={styles.formGroup}>
                                     <label htmlFor="subjectLineFocus" style={styles.label}>
                                         Email Subject Line Focus <span style={{ color: '#ef4444' }}>*</span>
-                                        <span
-                                            style={styles.infoIcon}
-                                            title="Choose the approach for your email subject line"
-                                        >
+                                        <span style={styles.infoIcon} title="Choose the approach for your email subject line">
                                             i
                                         </span>
                                     </label>
@@ -558,9 +1136,9 @@ const EmailGeneratorForm = () => {
                                                 value="predefined"
                                                 checked={formData.subjectLineFocusMode === 'predefined'}
                                                 onChange={(e) => {
-                                                    setFormData(prev => ({
+                                                    setFormData((prev) => ({
                                                         ...prev,
-                                                        subjectLineFocusMode: e.target.value
+                                                        subjectLineFocusMode: e.target.value,
                                                     }));
                                                 }}
                                             />
@@ -573,10 +1151,10 @@ const EmailGeneratorForm = () => {
                                                 value="custom"
                                                 checked={formData.subjectLineFocusMode === 'custom'}
                                                 onChange={(e) => {
-                                                    setFormData(prev => ({
+                                                    setFormData((prev) => ({
                                                         ...prev,
                                                         subjectLineFocusMode: e.target.value,
-                                                        subjectLineFocus: prev.subjectLineFocusCustom || ''
+                                                        subjectLineFocus: prev.subjectLineFocusCustom || '',
                                                     }));
                                                 }}
                                             />
@@ -594,8 +1172,8 @@ const EmailGeneratorForm = () => {
                                             required
                                         >
                                             <option value="">Select subject line focus</option>
-                                            {defaultFieldOptions.subjectLineFocus.map(option => (
-                                                <option key={option.key} value={option.label}>
+                                            {fieldOptions.subjectLineFocus.map((option) => (
+                                                <option key={option.key} value={option.key}>
                                                     {option.label}
                                                 </option>
                                             ))}
@@ -610,10 +1188,10 @@ const EmailGeneratorForm = () => {
                                             value={formData.subjectLineFocusCustom}
                                             onChange={(e) => {
                                                 const val = e.target.value;
-                                                setFormData(prev => ({
+                                                setFormData((prev) => ({
                                                     ...prev,
                                                     subjectLineFocusCustom: val,
-                                                    subjectLineFocus: val
+                                                    subjectLineFocus: val,
                                                 }));
                                             }}
                                             placeholder="Enter custom subject line focus"
@@ -623,7 +1201,6 @@ const EmailGeneratorForm = () => {
                                 </div>
                             </div>
 
-                            {/* Target Audience */}
                             <div className="col-12">
                                 <div style={styles.formGroup}>
                                     <label style={styles.label}>
@@ -636,18 +1213,20 @@ const EmailGeneratorForm = () => {
                                         </span>
                                     </label>
 
-                                    <div style={{
-                                       display: 'flex',
-                                                        flexWrap: 'wrap',
-                                                        gap: '8px',
-                                                        marginBottom: '8px',
-                                                        minHeight: '40px',
-                                                        alignItems: 'center',
-                                                        padding: '4px',
-                                                        border: '1px solid #d1d5db',
-                                                        borderRadius: '6px',
-                                                        backgroundColor: formData.targetAudience.length > 0 ? '#f9fafb' : 'white'
-                                        }}>
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            flexWrap: 'wrap',
+                                            gap: '8px',
+                                            marginBottom: '8px',
+                                            minHeight: '40px',
+                                            alignItems: 'center',
+                                            padding: '4px',
+                                            border: '1px solid #334155',
+                                            borderRadius: '6px',
+                                            backgroundColor: '#1e293b',
+                                        }}
+                                    >
                                         {formData.targetAudience.length === 0 && (
                                             <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
                                                 Type and press Enter to add audience segments
@@ -662,7 +1241,7 @@ const EmailGeneratorForm = () => {
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     gap: '6px',
-                                                    padding: '4px 10px'
+                                                    padding: '4px 10px',
                                                 }}
                                             >
                                                 {chip}
@@ -694,10 +1273,7 @@ const EmailGeneratorForm = () => {
                                 <div style={styles.formGroup}>
                                     <label htmlFor="brandContext" style={styles.label}>
                                         Sender / Brand Context <span style={{ color: '#ef4444' }}>*</span>
-                                        <span
-                                            style={styles.infoIcon}
-                                            title="Your company or brand name and brief context"
-                                        >
+                                        <span style={styles.infoIcon} title="Your company or brand name and brief context">
                                             i
                                         </span>
                                     </label>
@@ -718,10 +1294,7 @@ const EmailGeneratorForm = () => {
                                 <div style={styles.formGroup}>
                                     <label htmlFor="emailGoal" style={styles.label}>
                                         Goal or Purpose of Email <span style={{ color: '#ef4444' }}>*</span>
-                                        <span
-                                            style={styles.infoIcon}
-                                            title="What do you want to achieve with this email?"
-                                        >
+                                        <span style={styles.infoIcon} title="What do you want to achieve with this email?">
                                             i
                                         </span>
                                     </label>
@@ -734,9 +1307,9 @@ const EmailGeneratorForm = () => {
                                                 value="predefined"
                                                 checked={formData.emailGoalMode === 'predefined'}
                                                 onChange={(e) => {
-                                                    setFormData(prev => ({
+                                                    setFormData((prev) => ({
                                                         ...prev,
-                                                        emailGoalMode: e.target.value
+                                                        emailGoalMode: e.target.value,
                                                     }));
                                                 }}
                                             />
@@ -749,10 +1322,10 @@ const EmailGeneratorForm = () => {
                                                 value="custom"
                                                 checked={formData.emailGoalMode === 'custom'}
                                                 onChange={(e) => {
-                                                    setFormData(prev => ({
+                                                    setFormData((prev) => ({
                                                         ...prev,
                                                         emailGoalMode: e.target.value,
-                                                        emailGoal: 'Custom Goal'
+                                                        emailGoal: 'Custom Goal',
                                                     }));
                                                 }}
                                             />
@@ -770,8 +1343,8 @@ const EmailGeneratorForm = () => {
                                             required
                                         >
                                             <option value="">Select email goal</option>
-                                            {defaultFieldOptions.emailGoals.map(option => (
-                                                <option key={option.key} value={option.label}>
+                                            {fieldOptions.emailGoals.map((option) => (
+                                                <option key={option.key} value={option.key}>
                                                     {option.label}
                                                 </option>
                                             ))}
@@ -791,15 +1364,12 @@ const EmailGeneratorForm = () => {
                                     )}
                                 </div>
                             </div>
-                            {/* Tone & Length */}
+
                             <div className="col-md-6">
                                 <div style={styles.formGroup}>
                                     <label htmlFor="toneStyle" style={styles.label}>
                                         Tone or Style <span style={{ color: '#ef4444' }}>*</span>
-                                        <span
-                                            style={styles.infoIcon}
-                                            title="Select the tone or style for your email content"
-                                        >
+                                        <span style={styles.infoIcon} title="Select the tone or style for your email content">
                                             i
                                         </span>
                                     </label>
@@ -812,9 +1382,9 @@ const EmailGeneratorForm = () => {
                                                 value="predefined"
                                                 checked={formData.toneStyleMode === 'predefined'}
                                                 onChange={(e) => {
-                                                    setFormData(prev => ({
+                                                    setFormData((prev) => ({
                                                         ...prev,
-                                                        toneStyleMode: e.target.value
+                                                        toneStyleMode: e.target.value,
                                                     }));
                                                 }}
                                             />
@@ -827,10 +1397,10 @@ const EmailGeneratorForm = () => {
                                                 value="custom"
                                                 checked={formData.toneStyleMode === 'custom'}
                                                 onChange={(e) => {
-                                                    setFormData(prev => ({
+                                                    setFormData((prev) => ({
                                                         ...prev,
                                                         toneStyleMode: e.target.value,
-                                                        toneStyle: prev.toneStyleCustom || ''
+                                                        toneStyle: prev.toneStyleCustom || '',
                                                     }));
                                                 }}
                                             />
@@ -848,8 +1418,8 @@ const EmailGeneratorForm = () => {
                                             required
                                         >
                                             <option value="">Select tone or style</option>
-                                            {defaultFieldOptions.toneStyles.map(option => (
-                                                <option key={option.key} value={option.label}>
+                                            {fieldOptions.toneStyles.map((option) => (
+                                                <option key={option.key} value={option.key}>
                                                     {option.label}
                                                 </option>
                                             ))}
@@ -864,10 +1434,10 @@ const EmailGeneratorForm = () => {
                                             value={formData.toneStyleCustom}
                                             onChange={(e) => {
                                                 const val = e.target.value;
-                                                setFormData(prev => ({
+                                                setFormData((prev) => ({
                                                     ...prev,
                                                     toneStyleCustom: val,
-                                                    toneStyle: val
+                                                    toneStyle: val,
                                                 }));
                                             }}
                                             placeholder="Enter custom tone or style"
@@ -877,15 +1447,11 @@ const EmailGeneratorForm = () => {
                                 </div>
                             </div>
 
-                            {/* Key Message */}
                             <div className="col-12">
                                 <div style={styles.formGroup}>
                                     <label htmlFor="keyMessage" style={styles.label}>
                                         Key Message / Offer <span style={{ color: '#ef4444' }}>*</span>
-                                        <span
-                                            style={styles.infoIcon}
-                                            title="The main message or offer you want to communicate in your email"
-                                        >
+                                        <span style={styles.infoIcon} title="The main message or offer you want to communicate in your email">
                                             i
                                         </span>
                                     </label>
@@ -905,10 +1471,7 @@ const EmailGeneratorForm = () => {
                                 <div style={styles.formGroup}>
                                     <label htmlFor="lengthPreference" style={styles.label}>
                                         Length Preference <span style={{ color: '#ef4444' }}>*</span>
-                                        <span
-                                            style={styles.infoIcon}
-                                            title="Choose the desired length for your email content"
-                                        >
+                                        <span style={styles.infoIcon} title="Choose the desired length for your email content">
                                             i
                                         </span>
                                     </label>
@@ -921,9 +1484,9 @@ const EmailGeneratorForm = () => {
                                                 value="predefined"
                                                 checked={formData.lengthPreferenceMode === 'predefined'}
                                                 onChange={(e) => {
-                                                    setFormData(prev => ({
+                                                    setFormData((prev) => ({
                                                         ...prev,
-                                                        lengthPreferenceMode: e.target.value
+                                                        lengthPreferenceMode: e.target.value,
                                                     }));
                                                 }}
                                             />
@@ -936,10 +1499,10 @@ const EmailGeneratorForm = () => {
                                                 value="custom"
                                                 checked={formData.lengthPreferenceMode === 'custom'}
                                                 onChange={(e) => {
-                                                    setFormData(prev => ({
+                                                    setFormData((prev) => ({
                                                         ...prev,
                                                         lengthPreferenceMode: e.target.value,
-                                                        lengthPreference: prev.lengthPreferenceCustom || ''
+                                                        lengthPreference: prev.lengthPreferenceCustom || '',
                                                     }));
                                                 }}
                                             />
@@ -956,9 +1519,9 @@ const EmailGeneratorForm = () => {
                                             onChange={handleInputChange}
                                             required
                                         >
-                                            <option value="">Select length preference</option>
-                                            {defaultFieldOptions.lengthPreferences.map(option => (
-                                                <option key={option.key} value={option.label}>
+                                            <option value="auto">Auto-detect</option>
+                                            {fieldOptions.lengthPreferences.map((option) => (
+                                                <option key={option.key} value={option.key}>
                                                     {option.label}
                                                 </option>
                                             ))}
@@ -973,10 +1536,10 @@ const EmailGeneratorForm = () => {
                                             value={formData.lengthPreferenceCustom}
                                             onChange={(e) => {
                                                 const val = e.target.value;
-                                                setFormData(prev => ({
+                                                setFormData((prev) => ({
                                                     ...prev,
                                                     lengthPreferenceCustom: val,
-                                                    lengthPreference: val
+                                                    lengthPreference: val,
                                                 }));
                                             }}
                                             placeholder="Enter custom length preference"
@@ -986,15 +1549,11 @@ const EmailGeneratorForm = () => {
                                 </div>
                             </div>
 
-                            {/* Call to Action */}
                             <div className="col-md-6">
                                 <div style={styles.formGroup}>
                                     <label htmlFor="ctaType" style={styles.label}>
                                         Call to Action (CTA) <span style={{ color: '#ef4444' }}>*</span>
-                                        <span
-                                            style={styles.infoIcon}
-                                            title="Select or specify the call-to-action for your email"
-                                        >
+                                        <span style={styles.infoIcon} title="Select or specify the call-to-action for your email">
                                             i
                                         </span>
                                     </label>
@@ -1007,9 +1566,9 @@ const EmailGeneratorForm = () => {
                                                 value="predefined"
                                                 checked={formData.ctaTypeMode === 'predefined'}
                                                 onChange={(e) => {
-                                                    setFormData(prev => ({
+                                                    setFormData((prev) => ({
                                                         ...prev,
-                                                        ctaTypeMode: e.target.value
+                                                        ctaTypeMode: e.target.value,
                                                     }));
                                                 }}
                                             />
@@ -1022,10 +1581,10 @@ const EmailGeneratorForm = () => {
                                                 value="custom"
                                                 checked={formData.ctaTypeMode === 'custom'}
                                                 onChange={(e) => {
-                                                    setFormData(prev => ({
+                                                    setFormData((prev) => ({
                                                         ...prev,
                                                         ctaTypeMode: e.target.value,
-                                                        ctaType: 'Custom'
+                                                        ctaType: 'Custom',
                                                     }));
                                                 }}
                                             />
@@ -1043,8 +1602,8 @@ const EmailGeneratorForm = () => {
                                             required
                                         >
                                             <option value="">Select CTA type</option>
-                                            {defaultFieldOptions.ctaTypes.map(option => (
-                                                <option key={option.key} value={option.label}>
+                                            {fieldOptions.ctaTypes.map((option) => (
+                                                <option key={option.key} value={option.key}>
                                                     {option.label}
                                                 </option>
                                             ))}
@@ -1065,41 +1624,78 @@ const EmailGeneratorForm = () => {
                                 </div>
                             </div>
 
+                            <div className="col-md-6">
+                                <div style={styles.formGroup}>
+                                    <label htmlFor="variantsCount" style={styles.label}>
+                                        Number of Variants: {formData.variantsCount}
+                                        <span style={styles.infoIcon} title="How many different email variations would you like to generate?">
+                                            i
+                                        </span>
+                                    </label>
+                                    <input
+                                        type="range"
+                                        id="variantsCount"
+                                        name="variantsCount"
+                                        min="1"
+                                        max="5"
+                                        value={formData.variantsCount}
+                                        onChange={(e) => {
+                                            const raw = Number(e.target.value);
+                                            const clamped = Math.max(1, Math.min(5, Number.isFinite(raw) ? raw : 1));
+                                            setFormData((prev) => ({ ...prev, variantsCount: clamped }));
+                                        }}
+                                        style={styles.rangeInput}
+                                        disabled={isGenerating || isApiLoading}
+                                    />
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            fontSize: '12px',
+                                            color: '#94a3b8',
+                                            marginTop: '4px',
+                                        }}
+                                    >
+                                        <span>1</span>
+                                        <span>2</span>
+                                        <span>3</span>
+                                        <span>4</span>
+                                        <span>5</span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #1e293b', margin: '5px 0' }} />
 
-                            {/* Advanced Features Toggle */}
                             <div className="col-12" style={{ margin: '16px 0' }}>
                                 <ToggleButton showAdvanced={formData.showAdvanced} onToggle={toggleAdvanced} />
                             </div>
 
-                            {/* Advanced Options */}
                             {formData.showAdvanced && (
                                 <>
-                                    {/* Personalization Tags */}
                                     <div className="col-12">
                                         <div style={styles.formGroup}>
                                             <label style={styles.label}>
                                                 Personalization Tags (Optional)
-                                                <span
-                                                    style={styles.infoIcon}
-                                                    title="Add personalization tokens like {first_name}, {company}"
-                                                >
+                                                <span style={styles.infoIcon} title="Add personalization tokens like {first_name}, {company}">
                                                     i
                                                 </span>
                                             </label>
-                                            
-                                            <div style={{
-                                                display: 'flex',
-                                                flexWrap: 'wrap',
-                                                gap: '8px',
-                                                marginBottom: '8px',
-                                                minHeight: '40px',
-                                                alignItems: 'center',
-                                                padding: '4px',
-                                                border: '1px solid #334155',
-                                                borderRadius: '6px',
-                                                backgroundColor: '#1e293b'
-                                            }}>
+
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    flexWrap: 'wrap',
+                                                    gap: '8px',
+                                                    marginBottom: '8px',
+                                                    minHeight: '40px',
+                                                    alignItems: 'center',
+                                                    padding: '4px',
+                                                    border: '1px solid #334155',
+                                                    borderRadius: '6px',
+                                                    backgroundColor: '#1e293b',
+                                                }}
+                                            >
                                                 {formData.personalizationTags.length === 0 && (
                                                     <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
                                                         Type and press Enter to add personalization tags
@@ -1136,31 +1732,29 @@ const EmailGeneratorForm = () => {
                                         </div>
                                     </div>
 
-                                    {/* Key Highlights */}
                                     <div className="col-12">
                                         <div style={styles.formGroup}>
                                             <label style={styles.label}>
                                                 Key Highlights / Bullet Points (Optional)
-                                                <span
-                                                    style={styles.infoIcon}
-                                                    title="Add key points to highlight in your email"
-                                                >
+                                                <span style={styles.infoIcon} title="Add key points to highlight in your email">
                                                     i
                                                 </span>
                                             </label>
 
-                                            <div style={{
-                                                display: 'flex',
-                                                flexWrap: 'wrap',
-                                                gap: '8px',
-                                                marginBottom: '8px',
-                                                minHeight: '40px',
-                                                alignItems: 'center',
-                                                padding: '4px',
-                                                border: '1px solid #334155',
-                                                borderRadius: '6px',
-                                                backgroundColor: '#1e293b'
-                                            }}>
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    flexWrap: 'wrap',
+                                                    gap: '8px',
+                                                    marginBottom: '8px',
+                                                    minHeight: '40px',
+                                                    alignItems: 'center',
+                                                    padding: '4px',
+                                                    border: '1px solid #334155',
+                                                    borderRadius: '6px',
+                                                    backgroundColor: '#1e293b',
+                                                }}
+                                            >
                                                 {formData.keyHighlights.length === 0 && (
                                                     <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
                                                         Type and press Enter to add key highlights
@@ -1197,15 +1791,11 @@ const EmailGeneratorForm = () => {
                                         </div>
                                     </div>
 
-                                    {/* Social Proof */}
                                     <div className="col-12">
                                         <div style={styles.formGroup}>
                                             <label htmlFor="socialProof" style={styles.label}>
                                                 Social Proof / Testimonials (Optional)
-                                                <span
-                                                    style={styles.infoIcon}
-                                                    title="Add testimonials or social proof to include in your email"
-                                                >
+                                                <span style={styles.infoIcon} title="Add testimonials or social proof to include in your email">
                                                     i
                                                 </span>
                                             </label>
@@ -1220,15 +1810,11 @@ const EmailGeneratorForm = () => {
                                         </div>
                                     </div>
 
-                                    {/* Compliance Notes */}
                                     <div className="col-12">
                                         <div style={styles.formGroup}>
                                             <label htmlFor="complianceNotes" style={styles.label}>
                                                 Compliance / Restrictions (Optional)
-                                                <span
-                                                    style={styles.infoIcon}
-                                                    title="Any compliance requirements or restrictions to consider"
-                                                >
+                                                <span style={styles.infoIcon} title="Any compliance requirements or restrictions to consider">
                                                     i
                                                 </span>
                                             </label>
@@ -1243,15 +1829,11 @@ const EmailGeneratorForm = () => {
                                         </div>
                                     </div>
 
-                                    {/* Send Frequency */}
                                     <div className="col-12">
                                         <div style={styles.formGroup}>
                                             <label htmlFor="sendFrequency" style={styles.label}>
                                                 Send Frequency / Cadence (Optional)
-                                                <span
-                                                    style={styles.infoIcon}
-                                                    title="How often will this email be sent?"
-                                                >
+                                                <span style={styles.infoIcon} title="How often will this email be sent?">
                                                     i
                                                 </span>
                                             </label>
@@ -1264,9 +1846,9 @@ const EmailGeneratorForm = () => {
                                                         value="predefined"
                                                         checked={formData.sendFrequencyMode === 'predefined'}
                                                         onChange={(e) => {
-                                                            setFormData(prev => ({
+                                                            setFormData((prev) => ({
                                                                 ...prev,
-                                                                sendFrequencyMode: e.target.value
+                                                                sendFrequencyMode: e.target.value,
                                                             }));
                                                         }}
                                                     />
@@ -1279,10 +1861,10 @@ const EmailGeneratorForm = () => {
                                                         value="custom"
                                                         checked={formData.sendFrequencyMode === 'custom'}
                                                         onChange={(e) => {
-                                                            setFormData(prev => ({
+                                                            setFormData((prev) => ({
                                                                 ...prev,
                                                                 sendFrequencyMode: e.target.value,
-                                                                sendFrequency: 'Custom'
+                                                                sendFrequency: 'Custom',
                                                             }));
                                                         }}
                                                     />
@@ -1299,8 +1881,8 @@ const EmailGeneratorForm = () => {
                                                     onChange={handleInputChange}
                                                 >
                                                     <option value="">Select send frequency</option>
-                                                    {defaultFieldOptions.sendFrequencies.map(option => (
-                                                        <option key={option.key} value={option.label}>
+                                                    {fieldOptions.sendFrequencies.map((option) => (
+                                                        <option key={option.key} value={option.key}>
                                                             {option.label}
                                                         </option>
                                                     ))}
@@ -1322,37 +1904,22 @@ const EmailGeneratorForm = () => {
                                 </>
                             )}
 
-                            {/* Submit Buttons */}
                             <div className="col-12 mt-4">
                                 <div style={{ display: 'flex', gap: '12px' }}>
                                     <button
                                         type="button"
                                         style={{ ...styles.btn, ...styles.btnOutline }}
                                         onClick={handleReset}
-                                        disabled={isLoading}
+                                        disabled={isGenerating || isApiLoading}
                                     >
                                         Reset Form
                                     </button>
                                     <button
                                         type="submit"
                                         style={{ ...styles.btn, ...styles.btnPrimary }}
-                                        disabled={isLoading}
+                                        disabled={isGenerating || isApiLoading}
                                     >
-                                        {isLoading ? (
-                                            <>
-                                                <span>Generating...</span>
-                                                <div style={{
-                                                    width: '16px',
-                                                    height: '16px',
-                                                    border: '2px solid rgba(255,255,255,0.3)',
-                                                    borderTopColor: 'white',
-                                                    borderRadius: '50%',
-                                                    animation: 'spin 1s linear infinite',
-                                                    display: 'inline-block',
-                                                    marginLeft: '8px'
-                                                }} />
-                                            </>
-                                        ) : 'Generate Email'}
+                                        Review & Generate
                                     </button>
                                 </div>
                             </div>
@@ -1360,6 +1927,29 @@ const EmailGeneratorForm = () => {
                     </form>
                 </div>
             </div>
+
+            {showSummary && (
+                <SummaryReviewModal
+                    formData={formData}
+                    fieldOptions={fieldOptions}
+                    onGenerate={handleGenerate}
+                    onEdit={() => setShowSummary(false)}
+                    onClose={() => setShowSummary(false)}
+                    isGenerating={isGenerating}
+                />
+            )}
+
+            {showVariantsModal && (
+                <VariantModalContent
+                    variants={generatedVariantsData.variants}
+                    inputs={generatedVariantsData.inputs}
+                    onClose={handleCloseVariantsModal}
+                    onRequestRegenerate={handleRequestRegenerate}
+                    showNotification={showNotification}
+                    isLoading={isApiLoading}
+                    isHistoryView={false}
+                />
+            )}
 
             <style>{`
                 @keyframes spin {
@@ -1370,4 +1960,4 @@ const EmailGeneratorForm = () => {
     );
 };
 
-export default EmailGeneratorForm;
+export default EmailNewsletterGenerator;
