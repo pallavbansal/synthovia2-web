@@ -235,8 +235,9 @@ const VariantModalContent = ({
                     {variants.filter((v) => v?.show_variant !== false).map((variant, index) => {
                         const isExpanded = index === expandedIndex;
                         const isRegenerating = regeneratingId === variant.id;
-                        const isStreaming = Boolean(variant?.isStreaming || variant?.is_streaming);
-                        const isInteractionDisabled = isUILocked || isStreaming;
+                        const isVariantStreaming = Boolean(variant?.isStreaming || variant?.is_streaming);
+
+                        const isInteractionDisabled = isUILocked;
                         const contentToRender = variant?.content || '';
 
                         return (
@@ -264,12 +265,13 @@ const VariantModalContent = ({
                                 >
                                     <span style={{ flexGrow: 1 }}>
                                         Variant {index + 1}
-                                        {isStreaming && (
-                                            <span style={{ marginLeft: '10px', fontSize: '12px', color: '#0f766e' }}>
-                                                Streaming...
-                                            </span>
-                                        )}
                                     </span>
+
+                                    {isVariantStreaming && (!contentToRender || contentToRender.trim().length === 0) && (
+                                        <span style={{ fontSize: '12px', color: '#64748b' }}>
+                                            Generating...
+                                        </span>
+                                    )}
                                     
                                     <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center' }}>
                                         <button
@@ -280,24 +282,11 @@ const VariantModalContent = ({
                                                 border: 'none',
                                             }}
                                             onClick={() => handleCopy(contentToRender, index + 1)}
-                                            disabled={isInteractionDisabled}
+                                            disabled={isInteractionDisabled || isVariantStreaming}
                                         >
                                             Copy
                                         </button>
                                         
-                                        <button
-                                            style={{
-                                                ...modalStyles.actionButton,
-                                                backgroundColor: '#0ea5e9',
-                                                color: 'white',
-                                                border: 'none',
-                                            }}
-                                            onClick={() => handleDownload(variant, index)}
-                                            disabled={isInteractionDisabled}
-                                        >
-                                            Download
-                                        </button>
-
                                         {onRequestRegenerate && (
                                             <button
                                                 style={{
@@ -308,17 +297,33 @@ const VariantModalContent = ({
                                                     cursor: isInteractionDisabled ? 'wait' : 'pointer',
                                                 }}
                                                 onClick={() => handleRegenerate(variant.id)}
-                                                disabled={isInteractionDisabled}
+                                                disabled={isInteractionDisabled || isVariantStreaming || !variant?.id}
                                             >
                                                 {isRegenerating ? 'Regenerating...' : 'Regenerate'}
                                             </button>
                                         )}
+
+                                        <button
+                                            style={{
+                                                ...modalStyles.actionButton,
+                                                backgroundColor: '#3b82f6',
+                                                color: 'white',
+                                                border: 'none',
+                                                cursor: isInteractionDisabled ? 'default' : 'pointer',
+                                            }}
+                                            onClick={() => handleDownload({ ...variant, content: contentToRender }, index)}
+                                            disabled={isInteractionDisabled || isVariantStreaming}
+                                        >
+                                            Download
+                                        </button>
                                     </div>
+
+                                    <span style={{ opacity: isInteractionDisabled ? 0.3 : 1 }}>{isExpanded ? '▲' : '▼'}</span>
                                 </div>
                                 
                                 {isExpanded && (
                                     <div style={modalStyles.cardContent}>
-                                        {isStreaming && !contentToRender ? <SurfingLoading mode="generate" /> : contentToRender}
+                                        {isVariantStreaming && !contentToRender ? <SurfingLoading mode="generate" /> : contentToRender}
                                     </div>
                                 )}
                             </div>
