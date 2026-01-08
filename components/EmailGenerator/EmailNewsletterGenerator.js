@@ -602,7 +602,8 @@ const EmailNewsletterGenerator = () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'text/event-stream',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
                 'Authorization': getAuthHeader(),
             },
             body: JSON.stringify(payload),
