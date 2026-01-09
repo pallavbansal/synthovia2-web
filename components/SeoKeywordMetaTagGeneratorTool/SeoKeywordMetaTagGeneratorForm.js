@@ -29,7 +29,7 @@ const normalizeOptions = (list) => {
 
 const SeoKeywordMetaTagGeneratorForm = () => {
   const timersRef = useRef([]);
-  const streamAbortRef = useRef(null);
+  const streamAbortMapRef = useRef(new Map());
 
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
   const [showSummary, setShowSummary] = useState(false);
@@ -118,7 +118,14 @@ const SeoKeywordMetaTagGeneratorForm = () => {
   useEffect(() => {
     return () => {
       try {
-        streamAbortRef.current?.abort?.();
+        const controllers = Array.from(streamAbortMapRef.current.values());
+        controllers.forEach((c) => {
+          try {
+            c?.abort?.();
+          } catch {
+          }
+        });
+        streamAbortMapRef.current.clear();
       } catch {
       }
 
@@ -132,6 +139,17 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       timersRef.current = [];
     };
   }, []);
+
+  const abortAllStreams = () => {
+    const controllers = Array.from(streamAbortMapRef.current.values());
+    controllers.forEach((c) => {
+      try {
+        c?.abort?.();
+      } catch {
+      }
+    });
+    streamAbortMapRef.current.clear();
+  };
 
   const showToast = (message, type = "success") => {
     setNotification({ show: true, message, type });
@@ -273,56 +291,61 @@ const SeoKeywordMetaTagGeneratorForm = () => {
   };
 
   const runGenerateStream = async ({ payload, variantCount, targetVariantIndex = null }) => {
+    const key = targetVariantIndex === null ? "__all__" : String(targetVariantIndex);
+    let controller;
+
     try {
-      streamAbortRef.current?.abort?.();
-    } catch {
-    }
+      try {
+        const prev = streamAbortMapRef.current.get(key);
+        prev?.abort?.();
+      } catch {
+      }
 
-    const controller = new AbortController();
-    streamAbortRef.current = controller;
+      controller = new AbortController();
+      streamAbortMapRef.current.set(key, controller);
 
-    if (targetVariantIndex !== null) {
-      setGeneratedVariantsData((prev) => {
-        const next = [...(prev?.variants || [])];
-        if (!next[targetVariantIndex]) return prev;
-        next[targetVariantIndex] = { ...next[targetVariantIndex], content: "", is_streaming: true };
-        return { ...prev, variants: next };
+      if (targetVariantIndex !== null) {
+        setGeneratedVariantsData((prev) => {
+          const next = [...(prev?.variants || [])];
+          if (!next[targetVariantIndex]) return prev;
+          next[targetVariantIndex] = { ...next[targetVariantIndex], content: "", is_streaming: true };
+          return { ...prev, variants: next };
+        });
+      }
+
+      const res = await fetch(API.GENERATE_STREAM, {
+        method: "POST",
+        headers: {
+          Accept: "text/event-stream, application/json",
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          Authorization: getAuthHeader(),
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
       });
-    }
 
-    const res = await fetch(API.GENERATE_STREAM, {
-      method: "POST",
-      headers: {
-        Accept: "text/event-stream, application/json",
-        "Content-Type": "application/json",
-        "X-Requested-With": "XMLHttpRequest",
-        Authorization: getAuthHeader(),
-      },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
+      const contentType = String(res.headers.get("content-type") || "").toLowerCase();
+      const isSse = contentType.includes("text/event-stream");
 
-    const contentType = String(res.headers.get("content-type") || "").toLowerCase();
-    const isSse = contentType.includes("text/event-stream");
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => null);
+        throw new Error(errJson?.message || `Failed to generate (${res.status})`);
+      }
 
-    if (!res.ok) {
-      const errJson = await res.json().catch(() => null);
-      throw new Error(errJson?.message || `Failed to generate (${res.status})`);
-    }
+      if (!res.body) {
+        const text = await res.text().catch(() => "");
+        const idx = targetVariantIndex ?? 0;
+        setVariantContent(idx, text);
+        markVariantDone(idx);
+        return;
+      }
 
-    if (!res.body) {
-      const text = await res.text().catch(() => "");
-      const idx = targetVariantIndex ?? 0;
-      setVariantContent(idx, text);
-      markVariantDone(idx);
-      return;
-    }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
 
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-
-    let buffer = "";
-    let activeVariant = targetVariantIndex ?? 0;
+      let buffer = "";
+      let activeVariant = targetVariantIndex ?? 0;
 
     const parsePossiblyMultipleJsonObjects = (raw) => {
       const trimmed = String(raw || "").trim();
@@ -505,10 +528,20 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       }
     }
 
-    if (targetVariantIndex === null) {
-      for (let i = 0; i < variantCount; i++) markVariantDone(i);
-    } else {
-      markVariantDone(targetVariantIndex);
+      if (targetVariantIndex === null) {
+        for (let i = 0; i < variantCount; i++) markVariantDone(i);
+      } else {
+        markVariantDone(targetVariantIndex);
+      }
+    } catch (err) {
+      if (targetVariantIndex !== null) {
+        markVariantDone(targetVariantIndex);
+      }
+      throw err;
+    } finally {
+      if (controller && streamAbortMapRef.current.get(key) === controller) {
+        streamAbortMapRef.current.delete(key);
+      }
     }
   };
 
@@ -889,9 +922,23 @@ const SeoKeywordMetaTagGeneratorForm = () => {
 
       setGeneratedVariantsData({ variants: placeholders, inputs: inputsForReview });
 
-      for (let i = 0; i < count; i++) {
+      const tasks = Array.from({ length: count }).map((_, i) => {
         const payload = buildGeneratePayload(1);
-        await runGenerateStream({ payload, variantCount: 1, targetVariantIndex: i });
+        return runGenerateStream({ payload, variantCount: 1, targetVariantIndex: i });
+      });
+
+      const results = await Promise.allSettled(tasks);
+      const failed = results.filter((r) => r.status === "rejected" && String(r.reason?.name || "").toLowerCase() !== "aborterror");
+      const aborted = results.some((r) => r.status === "rejected" && String(r.reason?.name || "").toLowerCase() === "aborterror");
+
+      if (aborted) {
+        showToast("Generation cancelled.", "info");
+        return;
+      }
+
+      if (failed.length > 0) {
+        showToast("Some variants failed to generate.", "error");
+        return;
       }
 
       showToast("SEO variants generation completed.", "success");
@@ -935,10 +982,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
 
   const handleCloseVariantsModal = () => {
     clearTimers();
-    try {
-      streamAbortRef.current?.abort?.();
-    } catch {
-    }
+    abortAllStreams();
     setShowVariantsModal(false);
     setIsApiLoading(false);
     setIsGenerating(false);
@@ -947,10 +991,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
   const handleReset = () => {
     clearTimers();
 
-    try {
-      streamAbortRef.current?.abort?.();
-    } catch {
-    }
+    abortAllStreams();
 
     setAudienceInput("");
     setIncludeKeywordInput("");
