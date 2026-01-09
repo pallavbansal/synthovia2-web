@@ -125,7 +125,8 @@ const Captionandhastaggeneratorform = () => {
         if (!apiOptions) return { type: 'predefined', id: null, value: value || 'N/A' };
 
         // --- NEW LOGIC FOR AUTO-DETECT POST LENGTH ---
-        if (fieldKey === 'caption_post_length' && value === 'auto-detect') {
+        // IMPORTANT: auto-detect should only apply when Post Length is in predefined mode.
+        if (fieldKey === 'caption_post_length' && value === 'auto-detect' && !(formData.postLengthSelection === 'custom' || typeOverride === 'custom')) {
             return {
                 type: null,
                 id: 'auto-detect',
@@ -339,6 +340,14 @@ const Captionandhastaggeneratorform = () => {
             return;
         }
 
+        if (formData.postLengthSelection === 'custom') {
+            const customLen = parseInt(formData.customPostLength, 10);
+            if (!Number.isFinite(customLen)) {
+                showNotification('Please enter a valid Custom Post Length', 'error');
+                return;
+            }
+        }
+
         // Basic Validation check for required fields
         if (!formData.postTheme || !formData.primaryGoal || formData.targetAudience.length === 0 ||
             (formData.platformType === 'predefined' && !formData.platform) ||
@@ -368,13 +377,20 @@ const Captionandhastaggeneratorform = () => {
             setIsHistoryView(false);
             showNotification('Generating captions and hashtags...', 'info');
 
+            const customPostLengthInt = formData.postLengthSelection === 'custom' ? parseInt(formData.customPostLength, 10) : null;
+            if (formData.postLengthSelection === 'custom' && !Number.isFinite(customPostLengthInt)) {
+                showNotification('Please enter a valid Custom Post Length', 'error');
+                setIsGenerating(false);
+                return;
+            }
+
             // 1. Construct the API Payload
             const platformPayload = getOptionDetails('caption_platform', formData.platform, formData.customPlatform, formData.platformType);
             const tonePayload = getOptionDetails('caption_tone_of_voice', formData.toneOfVoice, formData.customTone, formData.toneSelection);
             const ctaPayload = getOptionDetails('caption_cta_type', formData.includeCtaType, formData.customCta, formData.ctaSelection);
             const languagePayload = getOptionDetails('caption_language_locale', formData.language, formData.customLanguage, formData.languageSelection);
             const emotionalIntentPayload = getOptionDetails('caption_emotional_intent', formData.emotionalIntent, formData.customEmotionalIntent, formData.emotionalIntentSelection);
-            const postLengthPayload = getOptionDetails('caption_post_length', formData.postLength, null, 'predefined');
+            const postLengthPayload = getOptionDetails('caption_post_length', formData.postLength, formData.customPostLength, formData.postLengthSelection);
             const captionStylePayload = getOptionDetails('caption_style', formData.captionStyle, formData.customCaptionStyle, formData.captionStyleSelection);
             const hashtagStylePayload = getOptionDetails('caption_hashtag_style', formData.hashtagStyle, formData.customHashtagStyle, formData.hashtagStyleSelection);
             const hashtagLimitDetails = getOptionDetails('caption_hashtag_limit', formData.hashtagLimit, null, 'predefined');
@@ -395,9 +411,11 @@ const Captionandhastaggeneratorform = () => {
                 required_keywords: formData.requiredKeywords,
                 language_locale: languagePayload,
                 emotional_intent: emotionalIntentPayload,
-                post_length: postLengthPayload.isAuto
-                    ? { type: null, id: postLengthPayload.id, value: postLengthPayload.value }
-                    : { type: 'predefined', id: postLengthPayload.id, value: postLengthPayload.value },
+                post_length: formData.postLengthSelection === 'custom'
+                    ? { type: 'custom', id: null, value: customPostLengthInt }
+                    : (postLengthPayload.isAuto
+                        ? { type: null, id: postLengthPayload.id, value: postLengthPayload.value }
+                        : { type: 'predefined', id: postLengthPayload.id, value: postLengthPayload.value }),
                 caption_style: captionStylePayload,
                 cta_type: ctaPayload,
                 custom_cta_text: ctaPayload.type === 'custom' ? formData.customCta : null,

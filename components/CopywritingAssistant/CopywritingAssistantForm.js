@@ -71,7 +71,7 @@ const CopywritingAssistantForm = () => {
         grammarStrictnessMode: 'predefined',
         grammarStrictness: 'medium',
         customGrammarStrictness: '',
-        formattingOptions: [],
+        formattingOptions: ['structured_layout'],
         includeWords: [],
         excludeWords: [],
         complianceNotes: '',
@@ -322,9 +322,7 @@ const CopywritingAssistantForm = () => {
     const formattingOptionsList = getOptions('formatting_options').length
         ? getOptions('formatting_options')
         : [
-            { key: 'bold_text', label: 'Bold Text' },
-            { key: 'line_breaks', label: 'Line Breaks' },
-            { key: 'minimal_emojis', label: 'Minimal Emojis' },
+           
             { key: 'structured_layout', label: 'Structured Layout' },
         ];
 
