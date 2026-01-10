@@ -10,16 +10,7 @@ import ToggleButton from '../Form/ToggleButton';
 import RemoveTagButton from '../Form/RemoveTagButton';
 
 import { getAuthHeader } from "@/utils/auth";
-
-// --- API Constants (Provided by User) ---
-const BASE_URL = 'https://mediumorchid-otter-182176.hostingersite.com/public/api/v1';
-const API = {
-    GET_FIELD_OPTIONS: `${BASE_URL}/caption-hashtag/options?field_type=all`,
-    GENERATE_CAPTION_HASHTAG: `${BASE_URL}/caption-hashtag/generate`, // Corrected typo in variable name
-    GENERATE_CAPTION_HASHTAG_STREAM: `${BASE_URL}/caption-hashtag/generate-caption-claude-stream`,
-    GET_VARIANTS_LOG: (requestId) => `${BASE_URL}/caption-hashtag/${requestId}/variants`,
-    REGENERATE_VARIANT: (variantId) => `${BASE_URL}/caption-hashtag/variants/${variantId}/regenerate`,
-};
+import API from "@/utils/api";
 
 // --- MANUAL CONSTANT FOR AUTO-DETECT POST LENGTH ---
 const AUTO_DETECT_POST_LENGTH = {
@@ -220,12 +211,11 @@ const Captionandhastaggeneratorform = () => {
         setMounted(true);
         const fetchOptions = async () => {
             try {
-                const response = await fetch(API.GET_FIELD_OPTIONS, {
+                const response = await fetch(API.CAPTION_HASHTAG_GET_FIELD_OPTIONS, {
                     headers: { Authorization: getAuthHeader(), 'Content-Type': 'application/json' },
                 });
                 if (!response.ok) {
-                    const errorBody = await response.json().catch(() => ({ message: 'Unknown error' }));
-                    throw new Error(`HTTP error! Status: ${response.status}. Message: ${errorBody.message || response.statusText}`);
+                    throw new Error('Failed to fetch options');
                 }
                 const result = await response.json();
 
@@ -455,7 +445,7 @@ const Captionandhastaggeneratorform = () => {
                 try {
                     const payloadForStream = { ...payload, number_of_variants: 1 };
 
-                    const response = await fetch(API.GENERATE_CAPTION_HASHTAG_STREAM, {
+                    const response = await fetch(API.CAPTION_HASHTAG_GENERATE_STREAM, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -636,7 +626,7 @@ const Captionandhastaggeneratorform = () => {
         });
 
         try {
-            const response = await fetch(API.REGENERATE_VARIANT(variantId), {
+            const response = await fetch(API.CAPTION_HASHTAG_REGENERATE_VARIANT(variantId), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -822,7 +812,7 @@ const Captionandhastaggeneratorform = () => {
         setIsHistoryView(true);
 
         try {
-            const response = await fetch(API.GET_VARIANTS_LOG(requestId), {
+            const response = await fetch(API.CAPTION_HASHTAG_GET_VARIANTS_LOG(requestId), {
                 headers: {
                     Authorization: getAuthHeader(),
                 },

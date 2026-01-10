@@ -4,12 +4,7 @@ import SummaryReviewModal from './SummaryReviewModal';
 import VariantModalContent from './VariantModalContent';
 import { getAuthHeader } from '@/utils/auth';
 
-const BASE_URL = 'https://mediumorchid-otter-182176.hostingersite.com/public/api/v1';
-const API = {
-    GENERATE_EMAIL: `${BASE_URL}/email/generate`,
-    GENERATE_EMAIL_STREAM: `${BASE_URL}/email-newsletter/generate-stream`,
-    OPTIONS: `${BASE_URL}/email-newsletter/options?field_type=all`,
-};
+import API from "@/utils/api";
 
 const defaultFieldOptions = {
     emailTypes: [
@@ -150,7 +145,7 @@ const EmailNewsletterGenerator = () => {
 
         const fetchOptions = async () => {
             try {
-                const res = await fetch(API.OPTIONS, {
+                const res = await fetch(API.EMAIL_NEWSLETTER_OPTIONS, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
@@ -598,7 +593,7 @@ const EmailNewsletterGenerator = () => {
     };
 
     const runStreamForVariant = async ({ payload, variantIndex, controller }) => {
-        const res = await fetch(API.GENERATE_EMAIL_STREAM, {
+        const res = await fetch(API.EMAIL_NEWSLETTER_GENERATE_STREAM, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

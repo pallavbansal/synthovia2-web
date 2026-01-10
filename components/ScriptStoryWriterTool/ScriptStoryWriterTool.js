@@ -6,13 +6,7 @@ import VariantModalContent from './VariantModalContent';
 
 import UserNav from "../Common/UserNav";
 
-const BASE_URL = 'https://mediumorchid-otter-182176.hostingersite.com/public/api/v1';
-
-const API = {
-    GET_SCRIPT_WRITER_OPTIONS: `${BASE_URL}/script-writer/options?field_type=all`,
-    GENERATE_SCRIPT: `${BASE_URL}/script-writer/generate`,
-    GENERATE_SCRIPT_CLAUDE_STREAM: `${BASE_URL}/script-writer/generate-claude-stream`,
-};
+import API from "@/utils/api";
 
 // Default field options
 const defaultFieldOptions = {
@@ -180,7 +174,7 @@ const ScriptStoryWriterTool = () => {
     useEffect(() => {
         const fetchOptions = async () => {
             try {
-                const response = await fetch(API.GET_SCRIPT_WRITER_OPTIONS, {
+                const response = await fetch(API.SCRIPT_WRITER_GET_OPTIONS, {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': getAuthHeader(),
@@ -821,7 +815,7 @@ const ScriptStoryWriterTool = () => {
                       variants_count: 1,
                   };
 
-                  const response = await fetch(API.GENERATE_SCRIPT_CLAUDE_STREAM, {
+                  const response = await fetch(API.SCRIPT_WRITER_GENERATE_STREAM, {
                       method: 'POST',
                       headers: {
                           'Content-Type': 'application/json',
@@ -1033,7 +1027,7 @@ const ScriptStoryWriterTool = () => {
                   variants_count: 1,
               };
 
-              const response = await fetch(API.GENERATE_SCRIPT_CLAUDE_STREAM, {
+              const response = await fetch(API.SCRIPT_WRITER_GENERATE_STREAM, {
                   method: 'POST',
                   headers: {
                       'Content-Type': 'application/json',

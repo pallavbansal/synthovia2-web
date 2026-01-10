@@ -49,6 +49,7 @@ const isActivePath = (pathname, href) => {
 const DashboardLayout = ({ children, title }) => {
   const router = useRouter();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const userMenuRef = useRef(null);
 
   const userName = useMemo(() => {
@@ -112,7 +113,7 @@ const DashboardLayout = ({ children, title }) => {
 
   return (
     <div className={styles.layout}>
-      <aside className={styles.sidebar}>
+      <aside className={`${styles.sidebar} ${sidebarOpen ? "" : styles.sidebarClosed}`.trim()} aria-hidden={!sidebarOpen}>
         <div className={styles.brand}>
           <div className={styles.brandLeft}>
             <div className={styles.brandMark}>S</div>
@@ -142,8 +143,19 @@ const DashboardLayout = ({ children, title }) => {
         <div className={styles.navSpacer} />
       </aside>
 
-      <section className={styles.main}>
+      <section className={`${styles.main} ${sidebarOpen ? "" : styles.mainExpanded}`.trim()}>
         <header className={styles.topbar}>
+          <div className={styles.topbarLeft}>
+            <button
+              type="button"
+              className={styles.iconBtn}
+              aria-label={sidebarOpen ? "Hide navigation" : "Show navigation"}
+              aria-expanded={sidebarOpen}
+              onClick={() => setSidebarOpen((v) => !v)}
+            >
+              <i className={sidebarOpen ? "fa-solid fa-bars" : "fa-solid fa-bars"} />
+            </button>
+          </div>
           <div className={styles.topbarRight}>
             <div className={styles.datePill}>{dateText}</div>
             <div className={styles.userMenu} ref={userMenuRef}>

@@ -6,11 +6,7 @@ import RemoveTagButton from "../Form/RemoveTagButton";
 import ToggleButton from "../Form/ToggleButton";
 import { getAuthHeader } from "@/utils/auth";
 
-const BASE_URL = "https://mediumorchid-otter-182176.hostingersite.com/public/api/v1";
-const API = {
-  OPTIONS: `${BASE_URL}/seo-keyword/options?field_type=all`,
-  GENERATE_STREAM: `${BASE_URL}/seo-keyword/generate-stream`,
-};
+import API from "@/utils/api";
 
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 
@@ -313,12 +309,11 @@ const SeoKeywordMetaTagGeneratorForm = () => {
         });
       }
 
-      const res = await fetch(API.GENERATE_STREAM, {
+      const res = await fetch(API.SEO_KEYWORD_GENERATE_STREAM, {
         method: "POST",
         headers: {
-          Accept: "text/event-stream, application/json",
           "Content-Type": "application/json",
-          "X-Requested-With": "XMLHttpRequest",
+          Accept: "application/json",
           Authorization: getAuthHeader(),
         },
         body: JSON.stringify(payload),
@@ -675,7 +670,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     const fetchOptions = async () => {
       setIsOptionsLoading(true);
       try {
-        const res = await fetch(API.OPTIONS, {
+        const res = await fetch(API.SEO_KEYWORD_OPTIONS, {
           method: "GET",
           headers: {
             Accept: "application/json",

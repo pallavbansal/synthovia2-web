@@ -8,19 +8,7 @@ import ToggleButton from '../Form/ToggleButton';
 import RemoveTagButton from '../Form/RemoveTagButton';
 
 import { getAuthHeader } from "@/utils/auth";
-
-// --- API Constants (Provided by User) ---
-const BASE_URL = 'https://mediumorchid-otter-182176.hostingersite.com/public/api/v1';
-
-const API = {
-    // Fetch dropdown & predefined field options for Copy Writing Assistant
-    GET_COPYWRITING_OPTIONS: `${BASE_URL}/copy-writing/options?field_type=all`,
-    GENERATE_COPYWRITING: `${BASE_URL}/copy-writing/generate`,
-    GENERATE_COPYWRITING_STREAM: `${BASE_URL}/copy-writing/generate-claude-stream`,
-    REGENERATE_COPYWRITING_VARIANT: (variantId) =>
-        `${BASE_URL}/copy-writing/variants/${variantId}/regenerate`,
-    GET_VARIANTS_LOG: (requestId) => `${BASE_URL}/copy-writing/${requestId}/variants`,
-};
+import API from "@/utils/api";
 
 const CopywritingAssistantForm = () => {
     // State for all form fields
@@ -322,8 +310,7 @@ const CopywritingAssistantForm = () => {
     const formattingOptionsList = getOptions('formatting_options').length
         ? getOptions('formatting_options')
         : [
-           
-            { key: 'structured_layout', label: 'Structured Layout' },
+            // { key: 'structured_layout', label: 'Structured Layout' },
         ];
 
     // Handler functions
@@ -1127,7 +1114,7 @@ const CopywritingAssistantForm = () => {
         setIsApiLoading(true);
 
         try {
-            const response = await fetch(API.GET_VARIANTS_LOG(requestId), {
+            const response = await fetch(API.COPYWRITING_GET_VARIANTS_LOG(requestId), {
                 headers: {
                     Authorization: getAuthHeader(),
                 },
@@ -1138,7 +1125,6 @@ const CopywritingAssistantForm = () => {
                 try {
                     errorData = await response.json();
                 } catch (e) {
-                    // ignore parse error
                 }
                 const errorMessage = errorData.message || response.statusText;
                 console.error('Failed to fetch variants log:', errorData || response.statusText);

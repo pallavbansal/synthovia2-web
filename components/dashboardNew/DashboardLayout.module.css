@@ -21,6 +21,12 @@
   backdrop-filter: blur(10px);
 }
 
+ .topbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+ }
+
 .brand {
   display: flex;
   align-items: center;
@@ -39,10 +45,11 @@
   width: 36px;
   height: 36px;
   border-radius: 12px;
-  background: linear-gradient(135deg, rgba(120, 132, 255, 0.9), rgba(0, 209, 255, 0.8));
+  background: linear-gradient(to right, var(--color-primary-gradient-start), var(--color-primary-gradient-end));
   display: grid;
   place-items: center;
   color: #0b0c10;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
   font-weight: 800;
 }
 
@@ -216,11 +223,18 @@
   width: 40px;
   height: 40px;
   border-radius: 14px;
+  background: linear-gradient(to right, var(--color-primary-gradient-start), var(--color-primary-gradient-end));
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(135deg, rgba(120, 132, 255, 0.25), rgba(0, 209, 255, 0.2));
+  
   display: grid;
   place-items: center;
   font-weight: 800;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  color: #0b0c10;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
  .userDropdown {
@@ -261,6 +275,14 @@
   flex: 1;
   min-height: 0;
 }
+
+ .sidebarClosed {
+  display: none;
+ }
+
+ .mainExpanded {
+  margin-left: 0;
+ }
 
 @media (max-width: 1024px) {
   .layout {
