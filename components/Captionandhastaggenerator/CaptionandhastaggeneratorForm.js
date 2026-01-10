@@ -1519,14 +1519,14 @@ const Captionandhastaggeneratorform = () => {
                                                                 }
                                                                 const num = parseInt(val, 10);
                                                                 if (isNaN(num)) return;
-                                                                const clamped = Math.max(1, Math.min(2000, num));
+                                                                const clamped = Math.max(1, Math.min(500, num));
                                                                 setFormData(prev => ({ ...prev, customPostLength: clamped.toString() }));
                                                             }}
                                                             min={1}
                                                             max={2000}
                                                             step={1}
                                                             style={styles.input}
-                                                            placeholder="Enter desired post length (1-2000 characters)"
+                                                            placeholder="Enter desired post length (1-500 characters)"
                                                         />
                                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
                                                                 <span style={{ color: '#9ca3af', fontSize: '14px' }}>
