@@ -12,10 +12,21 @@ const VariantModalContent = ({
 }) => {
     const [expandedIndex, setExpandedIndex] = useState(0);
     const [regeneratingId, setRegeneratingId] = useState(null);
+    const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
         if ((variants || []).length > 0) setExpandedIndex(0);
     }, [variants?.length]);
+
+    useEffect(() => {
+        const updateIsMobile = () => {
+            setIsMobile(window.innerWidth <= 480);
+        };
+
+        updateIsMobile();
+        window.addEventListener('resize', updateIsMobile);
+        return () => window.removeEventListener('resize', updateIsMobile);
+    }, []);
 
     const toggleExpand = (index) => {
         setExpandedIndex(index === expandedIndex ? null : index);
@@ -85,7 +96,7 @@ const VariantModalContent = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '20px',
+            padding: isMobile ? '12px' : '20px',
         },
         modal: {
             backgroundColor: 'white',
@@ -98,9 +109,17 @@ const VariantModalContent = ({
             display: 'flex',
             flexDirection: 'column',
             overflowY: 'hidden',
+            ...(isMobile
+                ? {
+                      width: '100%',
+                      maxWidth: '100%',
+                      maxHeight: '90vh',
+                      height: 'auto',
+                  }
+                : null),
         },
         header: {
-            padding: '20px 24px',
+            padding: isMobile ? '14px 16px' : '20px 24px',
             borderBottom: '1px solid #e0e7ff',
             backgroundColor: '#f1f5f9',
             color: '#1e293b',
@@ -116,7 +135,7 @@ const VariantModalContent = ({
             color: '#1e293b',
         },
         body: {
-            padding: '24px',
+            padding: isMobile ? '14px' : '24px',
             backgroundColor: 'white',
             flexGrow: 1,
             overflowY: 'auto',
@@ -136,6 +155,13 @@ const VariantModalContent = ({
             alignItems: 'center',
             borderBottom: '1px solid transparent',
             gap: '10px',
+            ...(isMobile
+                ? {
+                      flexWrap: 'wrap',
+                      alignItems: 'flex-start',
+                      padding: '12px 14px',
+                  }
+                : null),
         },
         cardContent: {
             padding: '20px',
@@ -152,7 +178,7 @@ const VariantModalContent = ({
             borderRadius: '4px',
             border: '1px solid #d1d5db',
             cursor: 'pointer',
-            marginLeft: '8px',
+            marginLeft: isMobile ? '0px' : '8px',
             transition: 'background-color 0.15s ease-in-out',
         },
     };
@@ -260,7 +286,16 @@ const VariantModalContent = ({
                                             <span style={{ fontSize: '12px', color: '#f97316' }}>Streaming...</span>
                                         )}
                                     </div>
-                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            flexWrap: isMobile ? 'wrap' : 'nowrap',
+                                            gap: isMobile ? '8px' : '0px',
+                                            width: isMobile ? '100%' : 'auto',
+                                            justifyContent: isMobile ? 'flex-start' : 'flex-end',
+                                        }}
+                                    >
                                         <button
                                             type="button"
                                             style={{
@@ -312,7 +347,7 @@ const VariantModalContent = ({
                                             {isRegenerating ? 'Regenerating...' : 'Regenerate'}
                                         </button>
 
-                                        <span style={{ marginLeft: '12px', color: '#64748b' }}>
+                                        <span style={{ marginLeft: isMobile ? '0px' : '12px', color: '#64748b' }}>
                                             {isExpanded ? '▲' : '▼'}
                                         </span>
                                     </div>

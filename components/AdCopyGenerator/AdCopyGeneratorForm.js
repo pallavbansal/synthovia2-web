@@ -8,19 +8,7 @@ import ToggleButton from '../Form/ToggleButton';
 import RemoveTagButton from '../Form/RemoveTagButton';
 
 import { getAuthHeader } from "@/utils/auth";
-
-// --- API Configuration (Defined internally to prevent build issues) ---
-const BASE_URL = 'https://mediumorchid-otter-182176.hostingersite.com/public/api/v1';
-const API = {
-    GET_FIELD_OPTIONS: `${BASE_URL}/ad-copy/options?field_type=all`,
-    GENERATE_AD_COPY: `${BASE_URL}/ad-copy/generate`,
-    GENERATE_AD_COPY_CLAUDE_STREAM: `${BASE_URL}/ad-copy/generate-claude-stream`,
-    // New endpoint for fetching old variants using request_id
-    GET_VARIANTS_LOG: (requestId) => `${BASE_URL}/ad-copy/${requestId}/variants`,
-    // New endpoint for regenerating a single variant using variant_id
-    REGENERATE_VARIANT: (variantId) => `${BASE_URL}/ad-copy/variants/${variantId}/regenerate`,
-};
-// --------------------------------------------------------------------
+import API from "@/utils/api";
 
 const defaultFieldOptions = {
     platform: [],

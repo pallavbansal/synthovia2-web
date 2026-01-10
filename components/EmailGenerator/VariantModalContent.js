@@ -12,6 +12,7 @@ const VariantModalContent = ({
 }) => {
     const [expandedIndex, setExpandedIndex] = useState(0);
     const [regeneratingId, setRegeneratingId] = useState(null);
+    const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
         if (variants?.length > 0) {
@@ -20,6 +21,15 @@ const VariantModalContent = ({
 
     }, [variants?.length]);
 
+    useEffect(() => {
+        const updateIsMobile = () => {
+            setIsMobile(window.innerWidth <= 480);
+        };
+
+        updateIsMobile();
+        window.addEventListener('resize', updateIsMobile);
+        return () => window.removeEventListener('resize', updateIsMobile);
+    }, []);
 
     const toggleExpand = (index) => {
         setExpandedIndex(index === expandedIndex ? null : index);
@@ -39,13 +49,11 @@ const VariantModalContent = ({
         }
     };
 
-
     const handleDownload = (variant, index) => {
         if (!variant || !variant.content) {
             showNotification?.('No content available to download for this variant.', 'error');
             return;
         }
-
 
         try {
             const blob = new Blob([variant.content], { type: 'text/plain;charset=utf-8' });
@@ -68,7 +76,6 @@ const VariantModalContent = ({
             link.href = url;
             link.download = `email_variant_${index + 1}_${emailType}_${goal}.txt`.replace(/\s+/g, '_');
 
-
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -77,7 +84,6 @@ const VariantModalContent = ({
             showNotification?.('Failed to download variant as a file.', 'error');
         }
     };
-
 
     const handleRegenerate = async (variantId) => {
         if (!onRequestRegenerate) return;
@@ -108,7 +114,7 @@ const VariantModalContent = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '20px',
+            padding: isMobile ? '12px' : '20px',
         },
         modal: {
             backgroundColor: 'white',
@@ -121,9 +127,17 @@ const VariantModalContent = ({
             display: 'flex',
             flexDirection: 'column',
             overflowY: 'hidden',
+            ...(isMobile
+                ? {
+                      width: '100%',
+                      maxWidth: '100%',
+                      maxHeight: '90vh',
+                      height: 'auto',
+                  }
+                : null),
         },
         header: {
-            padding: '20px 24px',
+            padding: isMobile ? '14px 16px' : '20px 24px',
             borderBottom: '1px solid #e0e7ff',
             backgroundColor: '#f1f5f9',
             color: '#1e293b',
@@ -134,7 +148,7 @@ const VariantModalContent = ({
             flexShrink: 0,
         },
         body: {
-            padding: '24px',
+            padding: isMobile ? '14px' : '24px',
             backgroundColor: 'white',
             flexGrow: 1,
             overflowY: 'auto',
@@ -154,6 +168,13 @@ const VariantModalContent = ({
             alignItems: 'center',
             borderBottom: '1px solid transparent',
             gap: '10px',
+            ...(isMobile
+                ? {
+                      flexWrap: 'wrap',
+                      alignItems: 'flex-start',
+                      padding: '12px 14px',
+                  }
+                : null),
         },
         cardContent: {
             padding: '20px',
@@ -175,11 +196,10 @@ const VariantModalContent = ({
             borderRadius: '4px',
             border: '1px solid #d1d5db',
             cursor: 'pointer',
-            marginLeft: '8px',
+            marginLeft: isMobile ? '0px' : '8px',
             transition: 'background-color 0.15s ease-in-out',
         },
     };
-
 
     if (isLoading) {
         return (
@@ -200,7 +220,6 @@ const VariantModalContent = ({
             </div>
         );
     }
-
 
     if (!variants || variants.length === 0) return null;
 
@@ -226,7 +245,7 @@ const VariantModalContent = ({
                         &times;
                     </button>
                 </div>
-                
+
                 <div style={modalStyles.body}>
                     <p style={{ marginBottom: '20px', color: '#475569', fontSize: '14px' }}>
                         Click on any variant card to expand and view the full email.
@@ -263,7 +282,7 @@ const VariantModalContent = ({
                                     }}
                                     onClick={() => toggleExpand(index)}
                                 >
-                                    <span style={{ flexGrow: 1 }}>
+                                    <span style={{ flexGrow: 1, minWidth: 0 }}>
                                         Variant {index + 1}
                                     </span>
 
@@ -272,8 +291,18 @@ const VariantModalContent = ({
                                             Generating...
                                         </span>
                                     )}
-                                    
-                                    <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center' }}>
+
+                                    <div
+                                        onClick={(e) => e.stopPropagation()}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            flexWrap: isMobile ? 'wrap' : 'nowrap',
+                                            gap: isMobile ? '8px' : '0px',
+                                            width: isMobile ? '100%' : 'auto',
+                                            justifyContent: isMobile ? 'flex-start' : 'flex-end',
+                                        }}
+                                    >
                                         <button
                                             style={{
                                                 ...modalStyles.actionButton,

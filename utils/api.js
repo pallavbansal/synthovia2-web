@@ -4,6 +4,32 @@ const BASE_URL = "https://mediumorchid-otter-182176.hostingersite.com/public/api
 export const API = {
   GET_FIELD_OPTIONS: `${BASE_URL}/ad-copy/options?field_type=all`,
   GENERATE_AD_COPY: `${BASE_URL}/ad-copy/generate`,
+  GENERATE_AD_COPY_CLAUDE_STREAM: `${BASE_URL}/ad-copy/generate-claude-stream`,
+  GET_VARIANTS_LOG: (requestId) => `${BASE_URL}/ad-copy/${requestId}/variants`,
+  REGENERATE_VARIANT: (variantId) => `${BASE_URL}/ad-copy/variants/${variantId}/regenerate`,
+
+  CAPTION_HASHTAG_GET_FIELD_OPTIONS: `${BASE_URL}/caption-hashtag/options?field_type=all`,
+  CAPTION_HASHTAG_GENERATE: `${BASE_URL}/caption-hashtag/generate`,
+  CAPTION_HASHTAG_GENERATE_STREAM: `${BASE_URL}/caption-hashtag/generate-caption-claude-stream`,
+  CAPTION_HASHTAG_GET_VARIANTS_LOG: (requestId) => `${BASE_URL}/caption-hashtag/${requestId}/variants`,
+  CAPTION_HASHTAG_REGENERATE_VARIANT: (variantId) => `${BASE_URL}/caption-hashtag/variants/${variantId}/regenerate`,
+
+  GET_COPYWRITING_OPTIONS: `${BASE_URL}/copy-writing/options?field_type=all`,
+  GENERATE_COPYWRITING: `${BASE_URL}/copy-writing/generate`,
+  GENERATE_COPYWRITING_STREAM: `${BASE_URL}/copy-writing/generate-claude-stream`,
+  REGENERATE_COPYWRITING_VARIANT: (variantId) => `${BASE_URL}/copy-writing/variants/${variantId}/regenerate`,
+  COPYWRITING_GET_VARIANTS_LOG: (requestId) => `${BASE_URL}/copy-writing/${requestId}/variants`,
+
+  SCRIPT_WRITER_GET_OPTIONS: `${BASE_URL}/script-writer/options?field_type=all`,
+  SCRIPT_WRITER_GENERATE: `${BASE_URL}/script-writer/generate`,
+  SCRIPT_WRITER_GENERATE_STREAM: `${BASE_URL}/script-writer/generate-claude-stream`,
+
+  EMAIL_GENERATE: `${BASE_URL}/email/generate`,
+  EMAIL_NEWSLETTER_GENERATE_STREAM: `${BASE_URL}/email-newsletter/generate-stream`,
+  EMAIL_NEWSLETTER_OPTIONS: `${BASE_URL}/email-newsletter/options?field_type=all`,
+
+  SEO_KEYWORD_OPTIONS: `${BASE_URL}/seo-keyword/options?field_type=all`,
+  SEO_KEYWORD_GENERATE_STREAM: `${BASE_URL}/seo-keyword/generate-stream`,
   AUTH_LOGIN: `${BASE_URL}/auth/login`,
   AUTH_GOOGLE: `${BASE_URL}/auth/google`,
   AUTH_REGISTER: `${BASE_URL}/auth/register`,

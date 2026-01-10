@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SurfingLoading from './SurfingLoading';
 
 const TypingEffect = ({ text }) => {
@@ -63,7 +63,17 @@ const VariantModalContent = ({
     
     const [expandedIndex, setExpandedIndex] = useState(0); 
     const [regeneratingId, setRegeneratingId] = useState(null);
+    const [isMobile, setIsMobile] = useState(false);
 
+    useEffect(() => {
+        const updateIsMobile = () => {
+            setIsMobile(window.innerWidth <= 480);
+        };
+
+        updateIsMobile();
+        window.addEventListener('resize', updateIsMobile);
+        return () => window.removeEventListener('resize', updateIsMobile);
+    }, []);
 
     const toggleExpand = (index) => {
         setExpandedIndex(index === expandedIndex ? null : index);
@@ -128,21 +138,29 @@ const VariantModalContent = ({
         overlay: {
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
             backgroundColor: 'rgba(30, 41, 59, 0.9)', zIndex: 1000,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '12px' : '20px'
         },
         modal: {
             backgroundColor: 'white', borderRadius: '12px',
             boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)', width: '95%', maxWidth: '900px',
             maxHeight: '95vh', height: '100%', display: 'flex', flexDirection: 'column',
             overflowY: 'hidden', 
+            ...(isMobile
+                ? {
+                      width: '100%',
+                      maxWidth: '100%',
+                      maxHeight: '90vh',
+                      height: 'auto',
+                  }
+                : null),
         },
         header: {
-            padding: '20px 24px', borderBottom: '1px solid #e0e7ff', 
+            padding: isMobile ? '14px 16px' : '20px 24px', borderBottom: '1px solid #e0e7ff', 
             backgroundColor: '#f1f5f9', color: '#1e293b', display: 'flex',
             justifyContent: 'space-between', alignItems: 'center', zIndex: 10, flexShrink: 0, 
         },
         body: {
-            padding: '24px', backgroundColor: 'white',
+            padding: isMobile ? '14px' : '24px', backgroundColor: 'white',
             flexGrow: 1, overflowY: 'auto', 
         },
         card: {
@@ -153,6 +171,13 @@ const VariantModalContent = ({
             padding: '16px 20px', fontWeight: '600', display: 'flex',
             justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid transparent',
             gap: '10px',
+            ...(isMobile
+                ? {
+                      flexWrap: 'wrap',
+                      alignItems: 'flex-start',
+                      padding: '12px 14px',
+                  }
+                : null),
         },
         cardContent: {
             padding: '20px', whiteSpace: 'pre-wrap', fontSize: '14px',
@@ -164,7 +189,7 @@ const VariantModalContent = ({
         actionButton: {
             padding: '6px 12px', fontSize: '13px', fontWeight: '500',
             borderRadius: '4px', border: '1px solid #d1d5db', cursor: 'pointer',
-            marginLeft: '8px', transition: 'background-color 0.15s ease-in-out',
+            marginLeft: isMobile ? '0px' : '8px', transition: 'background-color 0.15s ease-in-out',
         }
     };
     
@@ -250,9 +275,19 @@ const VariantModalContent = ({
                                     }}
                                     onClick={() => toggleExpand(index)}
                                 >
-                                    <span style={{flexGrow: 1}}>Variant {index + 1}: {inputs.platform?.value} ({inputs.placement?.value})</span>
+                                    <span style={{flexGrow: 1, minWidth: 0}}>Variant {index + 1}: {inputs.platform?.value} ({inputs.placement?.value})</span>
                                     
-                                    <div onClick={(e) => e.stopPropagation()} style={{display: 'flex', alignItems: 'center'}}>
+                                    <div 
+                                        onClick={(e) => e.stopPropagation()} 
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            flexWrap: isMobile ? 'wrap' : 'nowrap',
+                                            gap: isMobile ? '8px' : '0px',
+                                            width: isMobile ? '100%' : 'auto',
+                                            justifyContent: isMobile ? 'flex-start' : 'flex-end',
+                                        }}
+                                    >
                                         <button 
                                             style={{
                                                 ...modalStyles.actionButton,
