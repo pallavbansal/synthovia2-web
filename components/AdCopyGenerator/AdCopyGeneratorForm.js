@@ -10,6 +10,31 @@ import RemoveTagButton from '../Form/RemoveTagButton';
 import { getAuthHeader } from "@/utils/auth";
 import API from "@/utils/api";
 
+const createSessionRequestId = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+        const bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+        // Per RFC 4122 section 4.4
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+        const hex = Array.from(bytes)
+            .map((b) => b.toString(16).padStart(2, '0'))
+            .join('');
+        return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    }
+
+    // Last resort fallback (non-crypto)
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+};
+
 const defaultFieldOptions = {
     platform: [],
     placement: [],
@@ -142,6 +167,7 @@ const AdCopyGeneratorForm = () => {
     const [isStreamingGeneration, setIsStreamingGeneration] = useState(false);
 
     const streamControllersRef = useRef([]);
+    const sessionRequestIdRef = useRef(null);
 
     const [requestId, setRequestId] = useState(null);
     const [showVariantsModal, setShowVariantsModal] = useState(false);
@@ -457,9 +483,14 @@ const AdCopyGeneratorForm = () => {
         setIsHistoryView(false);
         setIsApiLoading(true); // START API LOADING - SHOWS SURFING ANIMATION IN MODAL
 
+        sessionRequestIdRef.current = createSessionRequestId();
+
         // 2. While backend API request is in progress: modal shows surfing animation
         try {
-            const payload = formatPayload();
+            const payload = {
+                ...formatPayload(),
+                session_request_id: sessionRequestIdRef.current,
+            };
 
             const response = await fetch(API.GENERATE_AD_COPY, {
                 method: 'POST',
@@ -526,7 +557,11 @@ const AdCopyGeneratorForm = () => {
             setIsGenerating(true); // START GENERATING - SHOWS LOADING SCREEN
             setIsHistoryView(false);
             // Reuse the formatPayload function to get the current form data
-            const payload = formatPayload();
+            sessionRequestIdRef.current = createSessionRequestId();
+            const payload = {
+                ...formatPayload(),
+                session_request_id: sessionRequestIdRef.current,
+            };
             console.log("payload:payload", payload);
 
             // ... (validation remains the same) ...

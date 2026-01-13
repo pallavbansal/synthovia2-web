@@ -6,6 +6,29 @@ import { getAuthHeader } from '@/utils/auth';
 
 import API from "@/utils/api";
 
+const createSessionRequestId = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+        const bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+        const hex = Array.from(bytes)
+            .map((b) => b.toString(16).padStart(2, '0'))
+            .join('');
+        return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    }
+
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+};
+
 const defaultFieldOptions = {
     emailTypes: [
         { id: 1, key: 'newsletter', label: 'Newsletter' },
@@ -63,6 +86,7 @@ const defaultFieldOptions = {
 
 const EmailNewsletterGenerator = () => {
     const streamControllersRef = useRef([]);
+    const sessionRequestIdRef = useRef(null);
     const [fieldOptions, setFieldOptions] = useState(defaultFieldOptions);
     const [formData, setFormData] = useState({
         emailType: '',
@@ -816,6 +840,8 @@ const EmailNewsletterGenerator = () => {
             return;
         }
 
+        sessionRequestIdRef.current = createSessionRequestId();
+
         setShowSummary(false);
         setShowVariantsModal(true);
         setIsApiLoading(true);
@@ -830,7 +856,10 @@ const EmailNewsletterGenerator = () => {
         streamControllersRef.current = [];
 
         try {
-            const payload = buildPayload();
+            const payload = {
+                ...buildPayload(),
+                session_request_id: sessionRequestIdRef.current,
+            };
             const count = Math.max(1, Math.min(5, Number(payload?.number_of_variants) || 1));
 
             const placeholders = Array.from({ length: count }).map((_, i) => ({
@@ -880,6 +909,10 @@ const EmailNewsletterGenerator = () => {
 
     const handleRequestRegenerate = async (variantId) => {
         const payload = generatedVariantsData?.inputs ? { ...generatedVariantsData.inputs } : buildPayload();
+        if (!payload.session_request_id) {
+            payload.session_request_id = sessionRequestIdRef.current || createSessionRequestId();
+        }
+        sessionRequestIdRef.current = payload.session_request_id;
         const variants = Array.isArray(generatedVariantsData?.variants) ? generatedVariantsData.variants : [];
 
         const variantIndex = variants.findIndex((v) => v?.id === variantId);
