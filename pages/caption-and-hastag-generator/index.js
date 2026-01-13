@@ -1,51 +1,48 @@
+import dynamic from "next/dynamic";
 import React from "react";
 import Context from "@/context/Context";
 import PageHead from "../Head";
-import PopupMobileMenu from "@/components/Header/PopUpMobileMenu";
 import BackToTop from "../backToTop";
-import LeftDashboardSidebar from "@/components/Header/LeftDashboardSidebar";
-import HeaderDashboard from "@/components/Header/HeaderDashboard";
-import RightDashboardSidebar from "@/components/Header/RightDashboardSidebar";
-import Modal from "@/components/Common/Modal";
-import StaticbarDashboard from "@/components/Common/StaticBarDashboard";
 import Captionandhastaggeneratorform from "@/components/Captionandhastaggenerator/CaptionandhastaggeneratorForm";
+import DashboardLayout from "@/components/dashboardNew/DashboardLayout";
 
 const CaptionandhastaggeneratorPage = () => {
   return (
     <>
       <PageHead title="Caption and hastag generator" />
-      <main className="page-wrapper rbt-dashboard-page">
-        <div className="rbt-panel-wrapper">
-          <Context>
-            {/* <LeftDashboardSidebar /> */}
-            <HeaderDashboard display="" />
-            {/* <RightDashboardSidebar />
-            <Modal />
-            <PopupMobileMenu /> */}
+      <DashboardLayout title="Caption and hastag generator">
+        <main className="page-wrapper rbt-dashboard-page">
+          <div className="rbt-panel-wrapper">
+            <Context>
+              {/* <LeftDashboardSidebar /> */}
+              {/* <RightDashboardSidebar />
+              <Modal />
+              <PopupMobileMenu /> */}
 
-            <div className="rbt-main-content">
-              <div className="rbt-daynamic-page-content">
-                <div className="rbt-dashboard-content">
-                  <div className="content-page">
-                    <div className="chat-box-section">
-                      <div className="rbt-card">
-                        <div className="rbt-card-body">
-                          <Captionandhastaggeneratorform />
+              <div className="rbt-main-content">
+                <div className="rbt-daynamic-page-content">
+                  <div className="rbt-dashboard-content">
+                    <div className="content-page">
+                      <div className="chat-box-section">
+                        <div className="rbt-card">
+                          <div className="rbt-card-body">
+                            <Captionandhastaggeneratorform />
+                          </div>
                         </div>
+                        {/* <StaticbarDashboard /> */}
                       </div>
-                      {/* <StaticbarDashboard /> */}
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <BackToTop />
-          </Context>
-        </div>
-      </main>
+              <BackToTop />
+            </Context>
+          </div>
+        </main>
+      </DashboardLayout>
     </>
   );
 };
 
-export default CaptionandhastaggeneratorPage;
+export default dynamic(() => Promise.resolve(CaptionandhastaggeneratorPage), { ssr: false });

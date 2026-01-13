@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Tooltip } from "react-tooltip";
 
 import SummaryReviewModal from "./SummaryReviewModal";
 import VariantModalContent from "./VariantModalContent";
@@ -1231,6 +1232,22 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     rangeInput: { width: "100%", height: "6px", borderRadius: "3px", background: "#334155", outline: "none" },
     radioGroup: { display: "flex", gap: "16px", marginTop: "8px" },
     radioItem: { display: "flex", alignItems: "center", gap: "8px", color: "#e2e8f0" },
+    infoIcon: {
+      display: "inline-block",
+      width: "16px",
+      height: "16px",
+      borderRadius: "50%",
+      backgroundColor: "#3b82f6",
+      color: "white",
+      textAlign: "center",
+      lineHeight: "16px",
+      fontSize: "11px",
+      cursor: "help",
+      marginLeft: "6px",
+    },
+    toolTip: {
+      width: "40%",
+    },
     toast: {
       position: "fixed",
       top: "20px",
@@ -1266,17 +1283,37 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     );
   };
 
-  const Labeled = ({ label, required, children, help }) => (
+  const makeTooltipId = (value) => {
+    const base = String(value || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "")
+      .slice(0, 80);
+    return `${base || "field"}-tooltip`;
+  };
+
+  const Labeled = ({ label, required, children, help, tooltipId, tooltipContent }) => {
+    const tooltipText = tooltipContent ?? help;
+    const resolvedTooltipId = tooltipId || makeTooltipId(label);
+
+    return (
     <div className="col-12 col-md-6">
       <div style={styles.formGroup}>
         <label style={styles.label}>
           {label} {required ? <span style={{ color: "#ef4444" }}>*</span> : null}
+          {tooltipText ? (
+            <span style={styles.infoIcon} data-tooltip-id={resolvedTooltipId} data-tooltip-content={tooltipText}>
+              i
+            </span>
+          ) : null}
         </label>
+        {tooltipText ? <Tooltip style={styles.toolTip} id={resolvedTooltipId} /> : null}
         {children}
         {help ? <div style={{ marginTop: "8px", fontSize: "12px", color: "#94a3b8" }}>{help}</div> : null}
       </div>
     </div>
-  );
+    );
+  };
 
   const PredefinedCustom = ({
     modeKey,
@@ -1365,7 +1402,14 @@ const SeoKeywordMetaTagGeneratorForm = () => {
         <div style={styles.formGroup}>
           <label style={styles.label}>
             {label} {required ? <span style={{ color: "#ef4444" }}>*</span> : null}
+            {help ? (
+              <span style={styles.infoIcon} data-tooltip-id={makeTooltipId(label)} data-tooltip-content={help}>
+                i
+              </span>
+            ) : null}
           </label>
+
+          {help ? <Tooltip style={styles.toolTip} id={makeTooltipId(label)} /> : null}
 
           <div
             style={{
@@ -1544,7 +1588,15 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                       <div style={styles.formGroup}>
                         <label style={styles.label}>
                           Page Topic / Content Summary <span style={{ color: "#ef4444" }}>*</span>
+                          <span
+                            style={styles.infoIcon}
+                            data-tooltip-id="pageTopicSummary-tooltip"
+                            data-tooltip-content="Brief semantic summary so AI can infer keyword themes."
+                          >
+                            i
+                          </span>
                         </label>
+                        <Tooltip style={styles.toolTip} id="pageTopicSummary-tooltip" />
                         <textarea
                           value={formData.pageTopicSummary}
                           onChange={(e) => setFormData((p) => ({ ...p, pageTopicSummary: e.target.value }))}
@@ -1691,7 +1743,15 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                       <div style={styles.formGroup}>
                         <label htmlFor="variants" style={styles.label}>
                           Number of Variants: {formData.variantsCount}
+                          <span
+                            style={styles.infoIcon}
+                            data-tooltip-id="variantsCount-tooltip"
+                            data-tooltip-content="How many variations you want the AI to generate."
+                          >
+                            i
+                          </span>
                         </label>
+                        <Tooltip style={styles.toolTip} id="variantsCount-tooltip" />
                         <input
                           type="range"
                           id="variants"

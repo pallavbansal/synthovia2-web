@@ -186,9 +186,15 @@ const DashboardLayout = ({ children, title }) => {
           </div>
         </header>
 
-        <div className={styles.content} aria-label={title || "Dashboard Content"}>
+        <div className={styles.content} aria-label={title || "Dashboard Content"} data-dashboard-layout="new">
           {children}
         </div>
+
+        <style jsx global>{`
+          [data-dashboard-layout='new'] .rbt-main-content {
+            margin-top: 0 !important;
+          }
+        `}</style>
       </section>
     </div>
   );

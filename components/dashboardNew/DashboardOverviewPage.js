@@ -371,9 +371,9 @@ const DashboardOverviewPage = () => {
             </>
           ) : null}
 
-          <div className={styles.filterHint}>
+          {/* <div className={styles.filterHint}>
             {loading ? "Loading..." : error ? error : `${startDate} to ${endDate}`}
-          </div>
+          </div> */}
         </div>
       </div>
 
