@@ -10,6 +10,29 @@ import RemoveTagButton from '../Form/RemoveTagButton';
 import { getAuthHeader } from "@/utils/auth";
 import API from "@/utils/api";
 
+const createSessionRequestId = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+        const bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+        const hex = Array.from(bytes)
+            .map((b) => b.toString(16).padStart(2, '0'))
+            .join('');
+        return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    }
+
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+};
+
 const CopywritingAssistantForm = () => {
     // State for all form fields
     const [formData, setFormData] = useState({
@@ -104,10 +127,12 @@ const CopywritingAssistantForm = () => {
     const [showKeyPointsSuggestions, setShowKeyPointsSuggestions] = useState(false);
 
     const streamControllersRef = useRef([]);
+    const sessionRequestIdRef = useRef(null);
 
     const abortAllStreams = useCallback(() => {
         const controllers = streamControllersRef.current;
         streamControllersRef.current = [];
+
         controllers.forEach((c) => {
             try {
                 c.abort();
@@ -504,6 +529,8 @@ const CopywritingAssistantForm = () => {
     const handleGenerate = async () => {
         if (isGenerating) return;
 
+        sessionRequestIdRef.current = createSessionRequestId();
+
         // --- Build Core Objects ---
         const useCaseType = formData.useCaseMode === 'custom' ? 'custom' : 'predefined';
         const useCaseValue = formData.useCaseMode === 'custom' ? formData.customUseCase : formData.useCase;
@@ -647,6 +674,7 @@ const CopywritingAssistantForm = () => {
             reference_url: formData.referenceUrl || null,
             proofreading_optimization: !!formData.proofreading,
             grammar_strictness: grammarStrictnessObj, // UPDATED
+            session_request_id: sessionRequestIdRef.current,
         };
 
         abortAllStreams();

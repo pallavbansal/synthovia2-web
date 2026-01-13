@@ -12,6 +12,29 @@ import RemoveTagButton from '../Form/RemoveTagButton';
 import { getAuthHeader } from "@/utils/auth";
 import API from "@/utils/api";
 
+const createSessionRequestId = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+        const bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+        const hex = Array.from(bytes)
+            .map((b) => b.toString(16).padStart(2, '0'))
+            .join('');
+        return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    }
+
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+};
+
 // --- MANUAL CONSTANT FOR AUTO-DETECT POST LENGTH ---
 const AUTO_DETECT_POST_LENGTH = {
     key: 'auto-detect',
@@ -90,6 +113,7 @@ const Captionandhastaggeneratorform = () => {
     const [isHistoryView, setIsHistoryView] = useState(false);
 
     const streamControllersRef = useRef([]);
+    const sessionRequestIdRef = useRef(null);
 
     const abortAllStreams = useCallback(() => {
         const controllers = streamControllersRef.current;
@@ -363,6 +387,7 @@ const Captionandhastaggeneratorform = () => {
     const handleGenerate = async () => {
         try {
             abortAllStreams();
+            sessionRequestIdRef.current = createSessionRequestId();
             setIsGenerating(true);
             setIsHistoryView(false);
             showNotification('Generating captions and hashtags...', 'info');
@@ -418,6 +443,7 @@ const Captionandhastaggeneratorform = () => {
                 creativity_level: parseInt(formData.creativityLevel, 10),
                 proofread_optimize: formData.proofread,
                 compliance_notes: formData.complianceNotes,
+                session_request_id: sessionRequestIdRef.current,
             };
 
             const variantCount = Math.max(1, parseInt(payload?.number_of_variants || 1, 10));

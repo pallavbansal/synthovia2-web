@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 // API Configuration
 const BASE_URL = 'https://olive-gull-905765.hostingersite.com/public/api/v1';
@@ -8,6 +8,29 @@ const API = {
 };
 
 const AUTH_HEADER = `Bearer ${API.AUTH_TOKEN}`;
+
+const createSessionRequestId = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+        const bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+        const hex = Array.from(bytes)
+            .map((b) => b.toString(16).padStart(2, '0'))
+            .join('');
+        return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    }
+
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+};
 
 // Default field options
 const defaultFieldOptions = {
@@ -91,6 +114,7 @@ const defaultFieldOptions = {
 };
 
 const ScriptWritingGeneratorForm = () => {
+    const sessionRequestIdRef = useRef(null);
     const [formData, setFormData] = useState({
         scriptTitle: '',
 
@@ -464,6 +488,7 @@ const ScriptWritingGeneratorForm = () => {
         setIsLoading(true);
         
         try {
+            sessionRequestIdRef.current = createSessionRequestId();
             const payload = {
                 script_title: formData.scriptTitle,
                 platform: formData.platformMode === 'custom' ? formData.platformCustom : formData.platform,
@@ -484,6 +509,7 @@ const ScriptWritingGeneratorForm = () => {
                 compliance_mode: formData.complianceMode,
                 language: formData.languageMode === 'custom' ? formData.languageCustom : formData.language,
                 custom_instructions: formData.customInstructions,
+                session_request_id: sessionRequestIdRef.current,
             };
 
             const response = await fetch(API.GENERATE_SCRIPT, {

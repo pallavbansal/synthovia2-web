@@ -1,6 +1,18 @@
 // const BASE_URL = "https://olive-gull-905765.hostingersite.com/public/api/v1";
 const BASE_URL = "https://mediumorchid-otter-182176.hostingersite.com/public/api/v1";
 
+const buildQueryUrl = (base, params) => {
+  const qs = new URLSearchParams();
+  Object.entries(params || {}).forEach(([k, v]) => {
+    if (v == null) return;
+    const s = String(v);
+    if (!s) return;
+    qs.set(k, s);
+  });
+  const query = qs.toString();
+  return `${base}${query ? `?${query}` : ""}`;
+};
+
 export const API = {
   GET_FIELD_OPTIONS: `${BASE_URL}/ad-copy/options?field_type=all`,
   GENERATE_AD_COPY: `${BASE_URL}/ad-copy/generate`,
@@ -30,6 +42,22 @@ export const API = {
 
   SEO_KEYWORD_OPTIONS: `${BASE_URL}/seo-keyword/options?field_type=all`,
   SEO_KEYWORD_GENERATE_STREAM: `${BASE_URL}/seo-keyword/generate-stream`,
+
+  PROFILE: `${BASE_URL}/profile`,
+  AD_COPY_HISTORY: ({ perPage = 100, page = 1, from, to } = {}) =>
+    buildQueryUrl(`${BASE_URL}/ad-copy/history`, { per_page: perPage, page, from, to }),
+
+  CAPTION_HASHTAG_HISTORY: ({ perPage = 100, page = 1, from, to } = {}) =>
+    buildQueryUrl(`${BASE_URL}/caption-hashtag/history`, { per_page: perPage, page, from, to }),
+  COPYWRITING_HISTORY: ({ perPage = 100, page = 1, from, to } = {}) =>
+    buildQueryUrl(`${BASE_URL}/copy-writing/history`, { per_page: perPage, page, from, to }),
+  SCRIPT_WRITER_HISTORY: ({ perPage = 100, page = 1, from, to } = {}) =>
+    buildQueryUrl(`${BASE_URL}/script-writer/history`, { per_page: perPage, page, from, to }),
+  EMAIL_NEWSLETTER_HISTORY: ({ perPage = 100, page = 1, from, to } = {}) =>
+    buildQueryUrl(`${BASE_URL}/email-newsletter/history`, { per_page: perPage, page, from, to }),
+  SEO_KEYWORD_HISTORY: ({ perPage = 100, page = 1, from, to } = {}) =>
+    buildQueryUrl(`${BASE_URL}/seo-keyword/history`, { per_page: perPage, page, from, to }),
+
   AUTH_LOGIN: `${BASE_URL}/auth/login`,
   AUTH_GOOGLE: `${BASE_URL}/auth/google`,
   AUTH_REGISTER: `${BASE_URL}/auth/register`,

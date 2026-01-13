@@ -10,6 +10,29 @@ import API from "@/utils/api";
 
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 
+const createSessionRequestId = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes)
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  }
+
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
 const normalizeOptions = (list) => {
   const arr = Array.isArray(list) ? list : [];
   return arr
@@ -26,6 +49,7 @@ const normalizeOptions = (list) => {
 const SeoKeywordMetaTagGeneratorForm = () => {
   const timersRef = useRef([]);
   const streamAbortMapRef = useRef(new Map());
+  const sessionRequestIdRef = useRef(null);
 
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" });
   const [showSummary, setShowSummary] = useState(false);
@@ -342,186 +366,186 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       let buffer = "";
       let activeVariant = targetVariantIndex ?? 0;
 
-    const parsePossiblyMultipleJsonObjects = (raw) => {
-      const trimmed = String(raw || "").trim();
-      if (!trimmed) return [];
+      const parsePossiblyMultipleJsonObjects = (raw) => {
+        const trimmed = String(raw || "").trim();
+        if (!trimmed) return [];
 
-      try {
-        return [JSON.parse(trimmed)];
-      } catch {
-      }
-
-      const parts = trimmed.split(/}\s*{/);
-      if (parts.length <= 1) return [];
-
-      const objs = [];
-      for (let i = 0; i < parts.length; i++) {
-        const chunk = i === 0 ? `${parts[i]}}` : i === parts.length - 1 ? `{${parts[i]}` : `{${parts[i]}}`;
         try {
-          objs.push(JSON.parse(chunk));
+          return [JSON.parse(trimmed)];
         } catch {
         }
-      }
-      return objs;
-    };
 
-    const handleParsedObject = (obj) => {
-      if (!obj || typeof obj !== "object") return;
+        const parts = trimmed.split(/}\s*{/);
+        if (parts.length <= 1) return [];
 
-      const idxRaw = obj.variant_index ?? obj.variantIndex ?? obj.variant_number ?? obj.variantNumber;
-      const idx = idxRaw !== undefined && idxRaw !== null ? Number(idxRaw) : activeVariant;
-      const safeIdx = Number.isFinite(idx) ? idx : activeVariant;
-
-      if (obj.type === "meta") {
-        return;
-      }
-
-      if (obj.type === "delta" && typeof obj.content === "string") {
-        appendVariantDelta(safeIdx, obj.content);
-        return;
-      }
-
-      if (obj.type === "done") {
-        if (typeof obj.content === "string") setVariantContent(safeIdx, obj.content);
-        markVariantDone(safeIdx);
-        return;
-      }
-
-      const delta =
-        obj.delta ??
-        obj.content_delta ??
-        obj.text_delta ??
-        obj.message_delta ??
-        obj?.choices?.[0]?.delta?.content ??
-        obj?.choices?.[0]?.delta?.text;
-
-      const full =
-        obj.content ??
-        obj.text ??
-        obj.message ??
-        obj?.choices?.[0]?.message?.content ??
-        obj?.choices?.[0]?.text;
-
-      if (typeof delta === "string") {
-        appendVariantDelta(safeIdx, delta);
-      } else if (typeof full === "string") {
-        setVariantContent(safeIdx, full);
-      }
-
-      if (obj.done === true || obj.is_done === true || obj.event === "done" || obj.event === "completed") {
-        markVariantDone(safeIdx);
-      }
-
-      if (obj.event === "variant_end" || obj.done_variant === true) {
-        markVariantDone(safeIdx);
-        if (targetVariantIndex === null) {
-          activeVariant = Math.min(variantCount - 1, safeIdx + 1);
+        const objs = [];
+        for (let i = 0; i < parts.length; i++) {
+          const chunk = i === 0 ? `${parts[i]}}` : i === parts.length - 1 ? `{${parts[i]}` : `{${parts[i]}}`;
+          try {
+            objs.push(JSON.parse(chunk));
+          } catch {
+          }
         }
-      }
-    };
+        return objs;
+      };
 
-    const handleTextDelta = (text) => {
-      const safe = String(text || "");
-      if (!safe) return;
-      appendVariantDelta(activeVariant, safe);
-    };
+      const handleParsedObject = (obj) => {
+        if (!obj || typeof obj !== "object") return;
 
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
+        const idxRaw = obj.variant_index ?? obj.variantIndex ?? obj.variant_number ?? obj.variantNumber;
+        const idx = idxRaw !== undefined && idxRaw !== null ? Number(idxRaw) : activeVariant;
+        const safeIdx = Number.isFinite(idx) ? idx : activeVariant;
 
-      buffer += decoder.decode(value, { stream: true });
+        if (obj.type === "meta") {
+          return;
+        }
 
-      if (isSse) {
-        const parts = buffer.split(/\n\n/);
-        buffer = parts.pop() || "";
+        if (obj.type === "delta" && typeof obj.content === "string") {
+          appendVariantDelta(safeIdx, obj.content);
+          return;
+        }
 
-        for (const part of parts) {
-          const lines = part.split(/\n/);
-          const dataLines = lines
-            .map((l) => l.trim())
-            .filter((l) => l.startsWith("data:"))
-            .map((l) => l.replace(/^data:\s?/, ""));
+        if (obj.type === "done") {
+          if (typeof obj.content === "string") setVariantContent(safeIdx, obj.content);
+          markVariantDone(safeIdx);
+          return;
+        }
 
-          if (dataLines.length === 0) continue;
-          const data = dataLines.join("\n");
-          if (data === "[DONE]" || data === "DONE") {
-            if (targetVariantIndex === null) {
-              for (let i = 0; i < variantCount; i++) markVariantDone(i);
+        const delta =
+          obj.delta ??
+          obj.content_delta ??
+          obj.text_delta ??
+          obj.message_delta ??
+          obj?.choices?.[0]?.delta?.content ??
+          obj?.choices?.[0]?.delta?.text;
+
+        const full =
+          obj.content ??
+          obj.text ??
+          obj.message ??
+          obj?.choices?.[0]?.message?.content ??
+          obj?.choices?.[0]?.text;
+
+        if (typeof delta === "string") {
+          appendVariantDelta(safeIdx, delta);
+        } else if (typeof full === "string") {
+          setVariantContent(safeIdx, full);
+        }
+
+        if (obj.done === true || obj.is_done === true || obj.event === "done" || obj.event === "completed") {
+          markVariantDone(safeIdx);
+        }
+
+        if (obj.event === "variant_end" || obj.done_variant === true) {
+          markVariantDone(safeIdx);
+          if (targetVariantIndex === null) {
+            activeVariant = Math.min(variantCount - 1, safeIdx + 1);
+          }
+        }
+      };
+
+      const handleTextDelta = (text) => {
+        const safe = String(text || "");
+        if (!safe) return;
+        appendVariantDelta(activeVariant, safe);
+      };
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        if (isSse) {
+          const parts = buffer.split(/\n\n/);
+          buffer = parts.pop() || "";
+
+          for (const part of parts) {
+            const lines = part.split(/\n/);
+            const dataLines = lines
+              .map((l) => l.trim())
+              .filter((l) => l.startsWith("data:"))
+              .map((l) => l.replace(/^data:\s?/, ""));
+
+            if (dataLines.length === 0) continue;
+            const data = dataLines.join("\n");
+            if (data === "[DONE]" || data === "DONE") {
+              if (targetVariantIndex === null) {
+                for (let i = 0; i < variantCount; i++) markVariantDone(i);
+              } else {
+                markVariantDone(targetVariantIndex);
+              }
+              return;
+            }
+
+            const asJson = (() => {
+              try {
+                return JSON.parse(data);
+              } catch {
+                return null;
+              }
+            })();
+
+            if (asJson) {
+              handleParsedObject(asJson);
+              continue;
+            }
+
+            const multi = parsePossiblyMultipleJsonObjects(data);
+            if (multi.length > 0) {
+              multi.forEach(handleParsedObject);
             } else {
-              markVariantDone(targetVariantIndex);
+              handleTextDelta(data);
             }
-            return;
           }
+        } else {
+          const lines = buffer.split(/\n/);
+          buffer = lines.pop() || "";
 
-          const asJson = (() => {
-            try {
-              return JSON.parse(data);
-            } catch {
-              return null;
+          for (const line of lines) {
+            const trimmed = String(line || "").trim();
+            if (!trimmed) continue;
+
+            const asJson = (() => {
+              try {
+                return JSON.parse(trimmed);
+              } catch {
+                return null;
+              }
+            })();
+
+            if (asJson) {
+              handleParsedObject(asJson);
+              continue;
             }
-          })();
 
-          if (asJson) {
-            handleParsedObject(asJson);
-            continue;
-          }
-
-          const multi = parsePossiblyMultipleJsonObjects(data);
-          if (multi.length > 0) {
-            multi.forEach(handleParsedObject);
-          } else {
-            handleTextDelta(data);
-          }
-        }
-      } else {
-        const lines = buffer.split(/\n/);
-        buffer = lines.pop() || "";
-
-        for (const line of lines) {
-          const trimmed = String(line || "").trim();
-          if (!trimmed) continue;
-
-          const asJson = (() => {
-            try {
-              return JSON.parse(trimmed);
-            } catch {
-              return null;
+            const multi = parsePossiblyMultipleJsonObjects(trimmed);
+            if (multi.length > 0) {
+              multi.forEach(handleParsedObject);
+            } else {
+              handleTextDelta(trimmed + "\n");
             }
-          })();
-
-          if (asJson) {
-            handleParsedObject(asJson);
-            continue;
-          }
-
-          const multi = parsePossiblyMultipleJsonObjects(trimmed);
-          if (multi.length > 0) {
-            multi.forEach(handleParsedObject);
-          } else {
-            handleTextDelta(trimmed + "\n");
           }
         }
       }
-    }
 
-    if (buffer.trim()) {
-      const asJson = (() => {
-        try {
-          return JSON.parse(buffer.trim());
-        } catch {
-          return null;
+      if (buffer.trim()) {
+        const asJson = (() => {
+          try {
+            return JSON.parse(buffer.trim());
+          } catch {
+            return null;
+          }
+        })();
+
+        if (asJson) {
+          handleParsedObject(asJson);
+        } else {
+          const multi = parsePossiblyMultipleJsonObjects(buffer);
+          if (multi.length > 0) multi.forEach(handleParsedObject);
+          else handleTextDelta(buffer);
         }
-      })();
-
-      if (asJson) {
-        handleParsedObject(asJson);
-      } else {
-        const multi = parsePossiblyMultipleJsonObjects(buffer);
-        if (multi.length > 0) multi.forEach(handleParsedObject);
-        else handleTextDelta(buffer);
       }
-    }
 
       if (targetVariantIndex === null) {
         for (let i = 0; i < variantCount; i++) markVariantDone(i);
@@ -898,6 +922,8 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       return;
     }
 
+    sessionRequestIdRef.current = createSessionRequestId();
+
     const count = clamp(Number(inputsForReview.variantsCount) || 1, 1, 5);
 
     setShowVariantsModal(true);
@@ -915,10 +941,19 @@ const SeoKeywordMetaTagGeneratorForm = () => {
         is_streaming: true,
       }));
 
-      setGeneratedVariantsData({ variants: placeholders, inputs: inputsForReview });
+      setGeneratedVariantsData({
+        variants: placeholders,
+        inputs: {
+          ...inputsForReview,
+          session_request_id: sessionRequestIdRef.current,
+        },
+      });
 
       const tasks = Array.from({ length: count }).map((_, i) => {
-        const payload = buildGeneratePayload(1);
+        const payload = {
+          ...buildGeneratePayload(1),
+          session_request_id: sessionRequestIdRef.current,
+        };
         return runGenerateStream({ payload, variantCount: 1, targetVariantIndex: i });
       });
 
@@ -959,7 +994,14 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       return;
     }
 
-    const payload = buildGeneratePayload(1);
+    if (!sessionRequestIdRef.current) {
+      sessionRequestIdRef.current = createSessionRequestId();
+    }
+
+    const payload = {
+      ...buildGeneratePayload(1),
+      session_request_id: sessionRequestIdRef.current,
+    };
 
     setIsApiLoading(false);
     setIsGenerating(true);
