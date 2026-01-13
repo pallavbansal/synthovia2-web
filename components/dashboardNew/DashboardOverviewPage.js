@@ -165,6 +165,9 @@ const DashboardOverviewPage = () => {
   const [startDate, setStartDate] = useState(toDateInputValue(initialRange.start));
   const [endDate, setEndDate] = useState(toDateInputValue(initialRange.end));
 
+  const RECENT_LOGS_PER_PAGE = 5;
+  const [recentLogsPage, setRecentLogsPage] = useState(1);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [stats, setStats] = useState(null);
@@ -184,6 +187,9 @@ const DashboardOverviewPage = () => {
         } else {
           url.searchParams.set("timeline", timeline);
         }
+
+        url.searchParams.set("per_page", String(RECENT_LOGS_PER_PAGE));
+        url.searchParams.set("page", String(recentLogsPage));
 
         const response = await fetch(url.toString(), {
           method: "GET",
@@ -235,7 +241,7 @@ const DashboardOverviewPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [timeline, timelineSelection, startDate, endDate]);
+  }, [timeline, timelineSelection, startDate, endDate, recentLogsPage]);
 
   const creditsUsed = stats?.credits_usage?.credits_used ?? 0;
   const creditsRemaining = stats?.credits_usage?.credits_remaining ?? 0;
@@ -304,10 +310,17 @@ const DashboardOverviewPage = () => {
 
   const recentLogs = useMemo(() => {
     const items = stats?.recent_logs?.items || [];
-    return items.slice(0, 6);
+    return items;
   }, [stats]);
 
+  const recentLogsPagination = stats?.recent_logs?.pagination || null;
+  const recentLogsCurrentPage = Number(recentLogsPagination?.current_page) || recentLogsPage;
+  const recentLogsLastPage = Number(recentLogsPagination?.last_page) || recentLogsCurrentPage;
+  const canGoPrev = Boolean(recentLogsPagination?.prev_page_url) || recentLogsCurrentPage > 1;
+  const canGoNext = Boolean(recentLogsPagination?.next_page_url) || recentLogsCurrentPage < recentLogsLastPage;
+
   const onTimelineChange = (value) => {
+    setRecentLogsPage(1);
     setTimelineSelection(value);
     if (value === "custom") {
       setTimeline("all");
@@ -355,7 +368,10 @@ const DashboardOverviewPage = () => {
                   className={styles.input}
                   type="date"
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={(e) => {
+                    setRecentLogsPage(1);
+                    setStartDate(e.target.value);
+                  }}
                 />
               </div>
 
@@ -365,15 +381,14 @@ const DashboardOverviewPage = () => {
                   className={styles.input}
                   type="date"
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  onChange={(e) => {
+                    setRecentLogsPage(1);
+                    setEndDate(e.target.value);
+                  }}
                 />
               </div>
             </>
           ) : null}
-
-          {/* <div className={styles.filterHint}>
-            {loading ? "Loading..." : error ? error : `${startDate} to ${endDate}`}
-          </div> */}
         </div>
       </div>
 
@@ -535,6 +550,28 @@ const DashboardOverviewPage = () => {
               ) : (
                 <div className={styles.muted}>No recent activity in this range.</div>
               )}
+            </div>
+
+            <div className={styles.paginationRow}>
+              <button
+                type="button"
+                className={styles.paginationBtn}
+                onClick={() => setRecentLogsPage((p) => Math.max(1, p - 1))}
+                disabled={loading || !canGoPrev}
+              >
+                Prev
+              </button>
+              <div className={styles.paginationInfo}>
+                Page {recentLogsCurrentPage} of {recentLogsLastPage}
+              </div>
+              <button
+                type="button"
+                className={styles.paginationBtn}
+                onClick={() => setRecentLogsPage((p) => p + 1)}
+                disabled={loading || !canGoNext}
+              >
+                Next
+              </button>
             </div>
           </div>
         </div>
