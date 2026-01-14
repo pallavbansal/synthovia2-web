@@ -53,6 +53,11 @@
   font-weight: 800;
 }
 
+.brandMarkNoBg {
+  background: transparent !important;
+  text-shadow: none !important;
+}
+
 .brandTitle {
   font-size: 14px;
   font-weight: 700;
@@ -237,6 +242,13 @@
   text-transform: uppercase;
   color: #0b0c10;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.avatarNoBg {
+  background: transparent !important;
+  border: none !important;
+  text-shadow: none !important;
+  color: inherit !important;
 }
 
  .userDropdown {

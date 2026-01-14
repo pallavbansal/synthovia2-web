@@ -47,6 +47,131 @@ const normalizeOptions = (list) => {
     .filter((opt) => String(opt.key || "").trim().length > 0);
 };
 
+const makeTooltipId = (value) => {
+  const base = String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 80);
+  return `${base || "field"}-tooltip`;
+};
+
+const Labeled = ({ label, required, children, help, tooltipId, tooltipContent, styles }) => {
+  const tooltipText = tooltipContent ?? help;
+  const resolvedTooltipId = tooltipId || makeTooltipId(label);
+
+  return (
+    <div className="col-12 col-md-6">
+      <div style={styles.formGroup}>
+        <label style={styles.label}>
+          {label} {required ? <span style={{ color: "#ef4444" }}>*</span> : null}
+          {tooltipText ? (
+            <span style={styles.infoIcon} data-tooltip-id={resolvedTooltipId} data-tooltip-content={tooltipText}>
+              i
+            </span>
+          ) : null}
+        </label>
+        {tooltipText ? <Tooltip style={styles.toolTip} id={resolvedTooltipId} /> : null}
+        {children}
+        {help ? <div style={{ marginTop: "8px", fontSize: "12px", color: "#94a3b8" }}>{help}</div> : null}
+      </div>
+    </div>
+  );
+};
+
+const PredefinedCustom = ({
+  modeKey,
+  valueKey,
+  customKey,
+  label,
+  required,
+  options,
+  placeholder,
+  help,
+  customInputProps,
+  formData,
+  setFormData,
+  styles,
+}) => {
+  const mode = formData[modeKey];
+
+  const handleCustomChange = (e) => {
+    let next = e.target.value;
+    if (customInputProps?.type === "number") {
+      if (next === "") {
+        setFormData((p) => ({ ...p, [customKey]: "" }));
+        return;
+      }
+
+      const parsed = Math.floor(Number(next));
+      if (Number.isNaN(parsed)) return;
+
+      let clamped = parsed;
+      if (typeof customInputProps.min === "number") clamped = Math.max(customInputProps.min, clamped);
+      if (typeof customInputProps.max === "number") clamped = Math.min(customInputProps.max, clamped);
+
+      next = String(clamped);
+    }
+
+    setFormData((p) => ({ ...p, [customKey]: next }));
+  };
+
+  return (
+    <Labeled label={label} required={required} help={help} styles={styles}>
+      <div style={styles.radioGroup}>
+        <label style={styles.radioItem}>
+          <input
+            type="radio"
+            name={modeKey}
+            value="predefined"
+            checked={mode === "predefined"}
+            onChange={() => setFormData((p) => ({ ...p, [modeKey]: "predefined" }))}
+          />
+          <span>Predefined</span>
+        </label>
+        <label style={styles.radioItem}>
+          <input
+            type="radio"
+            name={modeKey}
+            value="custom"
+            checked={mode === "custom"}
+            onChange={() => setFormData((p) => ({ ...p, [modeKey]: "custom" }))}
+          />
+          <span>Custom</span>
+        </label>
+      </div>
+
+      {mode === "predefined" ? (
+        <select
+          style={{ ...styles.select, marginTop: "8px" }}
+          value={formData[valueKey]}
+          onChange={(e) => setFormData((p) => ({ ...p, [valueKey]: e.target.value }))}
+          required={required}
+        >
+          {(Array.isArray(options) ? options : []).map((o) => {
+            const key = typeof o === "string" ? o : o?.key;
+            const label = typeof o === "string" ? o : o?.label;
+            return (
+              <option key={key} value={key}>
+                {label}
+              </option>
+            );
+          })}
+        </select>
+      ) : (
+        <input
+          style={{ ...styles.input, marginTop: "12px" }}
+          value={formData[customKey]}
+          onChange={handleCustomChange}
+          placeholder={placeholder}
+          required={required}
+          {...(customInputProps || {})}
+        />
+      )}
+    </Labeled>
+  );
+};
+
 const SeoKeywordMetaTagGeneratorForm = () => {
   const timersRef = useRef([]);
   const streamAbortMapRef = useRef(new Map());
@@ -1283,105 +1408,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     );
   };
 
-  const makeTooltipId = (value) => {
-    const base = String(value || "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "")
-      .slice(0, 80);
-    return `${base || "field"}-tooltip`;
-  };
-
-  const Labeled = ({ label, required, children, help, tooltipId, tooltipContent }) => {
-    const tooltipText = tooltipContent ?? help;
-    const resolvedTooltipId = tooltipId || makeTooltipId(label);
-
-    return (
-    <div className="col-12 col-md-6">
-      <div style={styles.formGroup}>
-        <label style={styles.label}>
-          {label} {required ? <span style={{ color: "#ef4444" }}>*</span> : null}
-          {tooltipText ? (
-            <span style={styles.infoIcon} data-tooltip-id={resolvedTooltipId} data-tooltip-content={tooltipText}>
-              i
-            </span>
-          ) : null}
-        </label>
-        {tooltipText ? <Tooltip style={styles.toolTip} id={resolvedTooltipId} /> : null}
-        {children}
-        {help ? <div style={{ marginTop: "8px", fontSize: "12px", color: "#94a3b8" }}>{help}</div> : null}
-      </div>
-    </div>
-    );
-  };
-
-  const PredefinedCustom = ({
-    modeKey,
-    valueKey,
-    customKey,
-    label,
-    required,
-    options,
-    placeholder,
-    help,
-  }) => {
-    const mode = formData[modeKey];
-
-    return (
-      <Labeled label={label} required={required} help={help}>
-        <div style={styles.radioGroup}>
-          <label style={styles.radioItem}>
-            <input
-              type="radio"
-              name={modeKey}
-              value="predefined"
-              checked={mode === "predefined"}
-              onChange={() => setFormData((p) => ({ ...p, [modeKey]: "predefined" }))}
-            />
-            <span>Predefined</span>
-          </label>
-          <label style={styles.radioItem}>
-            <input
-              type="radio"
-              name={modeKey}
-              value="custom"
-              checked={mode === "custom"}
-              onChange={() => setFormData((p) => ({ ...p, [modeKey]: "custom" }))}
-            />
-            <span>Custom</span>
-          </label>
-        </div>
-
-        {mode === "predefined" ? (
-          <select
-            style={{ ...styles.select, marginTop: "8px" }}
-            value={formData[valueKey]}
-            onChange={(e) => setFormData((p) => ({ ...p, [valueKey]: e.target.value }))}
-            required={required}
-          >
-            {(Array.isArray(options) ? options : []).map((o) => {
-              const key = typeof o === "string" ? o : o?.key;
-              const label = typeof o === "string" ? o : o?.label;
-              return (
-                <option key={key} value={key}>
-                  {label}
-                </option>
-              );
-            })}
-          </select>
-        ) : (
-          <input
-            style={{ ...styles.input, marginTop: "12px" }}
-            value={formData[customKey]}
-            onChange={(e) => setFormData((p) => ({ ...p, [customKey]: e.target.value }))}
-            placeholder={placeholder}
-            required={required}
-          />
-        )}
-      </Labeled>
-    );
-  };
-
   const renderTagInput = ({
     label,
     required,
@@ -1572,7 +1598,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     <>
       <Toast />
 
-      <div style={styles.container}>
+      <div style={styles.container} className="seo-keyword-meta-form">
          <div style={styles.header}>
             <h2 style={styles.title}>SEO Keyword & Meta Tag Generator</h2>
             <p style={styles.subtitle}>Generate keyword clusters, meta tags, and schema guidance for your page.</p>
@@ -1611,7 +1637,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                       </div>
                     </div>
 
-                    <Labeled label="Page Goal / Intent" required help="Defines objective of the page for SEO targeting.">
+                    <Labeled label="Page Goal / Intent" required help="Defines objective of the page for SEO targeting." styles={styles}>
                       <div style={styles.radioGroup}>
                         <label style={styles.radioItem}>
                           <input
@@ -1681,6 +1707,9 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                       options={fieldOptions?.tone || []}
                       placeholder="Enter custom tone"
                       help="Narration/writing style for meta & keyword strategy."
+                      formData={formData}
+                      setFormData={setFormData}
+                      styles={styles}
                     />
 
                     <PredefinedCustom
@@ -1692,12 +1721,16 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                       options={fieldOptions?.keyword_focus_type || []}
                       placeholder="Enter custom focus type"
                       help="Granularity & clustering strategy for keywords."
+                      formData={formData}
+                      setFormData={setFormData}
+                      styles={styles}
                     />
 
                     <Labeled
                       label="Keyword Difficulty Preference (0–100)"
                       required
                       help="Competitiveness of keyword suggestions (0–100)."
+                      styles={styles}
                     >
                       <input
                         type="range"
@@ -1714,7 +1747,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                       </div>
                     </Labeled>
 
-                    <Labeled label="Search Volume Priority" required help="Traffic potential bias for keyword mix.">
+                    <Labeled label="Search Volume Priority" required help="Traffic potential bias for keyword mix." styles={styles}>
                       <select
                         style={styles.select}
                         value={formData.searchVolumePriority}
@@ -1736,8 +1769,12 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                       valueKey="textLength"
                       customKey="textLengthCustom"
                       options={fieldOptions?.text_length || []}
-                      placeholder="Describe desired text length"
+                      placeholder="Enter text length (1-500)"
                       help="Text length preference."
+                      customInputProps={{ type: "number", min: 1, max: 500, step: 1 }}
+                      formData={formData}
+                      setFormData={setFormData}
+                      styles={styles}
                     />
 
                     <div className="col-12">
@@ -1783,9 +1820,12 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     options={fieldOptions?.meta_title_style || []}
                     placeholder="Enter custom meta title style"
                     help="Creative structure of meta titles within limits."
+                    formData={formData}
+                    setFormData={setFormData}
+                    styles={styles}
                   />
 
-                  <Labeled label="Brand / Website Name" required={false} help="Used for branded keywords and SERP trust signals.">
+                  <Labeled label="Brand / Website Name" required={false} help="Used for branded keywords and SERP trust signals." styles={styles}>
                     <input
                       style={styles.input}
                       value={formData.brandName}
@@ -1794,7 +1834,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     />
                   </Labeled>
 
-                  <Labeled label="Competitor URL / Reference Page" required={false} help="Reference for comparison keywords and meta angles.">
+                  <Labeled label="Competitor URL / Reference Page" required={false} help="Reference for comparison keywords and meta angles." styles={styles}>
                     <input
                       style={styles.input}
                       value={formData.competitorUrl}
@@ -1812,6 +1852,9 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     options={fieldOptions?.language || []}
                     placeholder="Enter custom language"
                     help="Language for generated SEO output."
+                    formData={formData}
+                    setFormData={setFormData}
+                    styles={styles}
                   />
 
                   <PredefinedCustom
@@ -1823,9 +1866,12 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     options={fieldOptions?.schema_rich_result_type || []}
                     placeholder="Enter custom schema type"
                     help="JSON-LD schema for rich results."
+                    formData={formData}
+                    setFormData={setFormData}
+                    styles={styles}
                   />
 
-                  <Labeled label="Output Depth" required={false} help="Defines verbosity of generated SEO assets.">
+                  <Labeled label="Output Depth" required={false} help="Defines verbosity of generated SEO assets." styles={styles}>
                     <select
                       style={styles.select}
                       value={formData.outputDepth}
@@ -1839,7 +1885,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     </select>
                   </Labeled>
 
-                  <Labeled label="Output Format" required={false} help="Defines how generated results are displayed or exported.">
+                  <Labeled label="Output Format" required={false} help="Defines how generated results are displayed or exported." styles={styles}>
                     <select
                       style={styles.select}
                       value={formData.outputFormat}
@@ -1886,6 +1932,9 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     options={fieldOptions?.compliance_guidelines || []}
                     placeholder="Enter custom compliance guidelines"
                     help="Regulatory/brand safety constraints preset."
+                    formData={formData}
+                    setFormData={setFormData}
+                    styles={styles}
                   />
                 </>
               )}
@@ -1936,6 +1985,16 @@ const SeoKeywordMetaTagGeneratorForm = () => {
           isHistoryView={false}
         />
       )}
+
+      <style jsx global>{`
+        .seo-keyword-meta-form input:focus,
+        .seo-keyword-meta-form textarea:focus,
+        .seo-keyword-meta-form select:focus {
+          outline: none !important;
+          border-color: var(--color-primary) !important;
+          box-shadow: none !important;
+        }
+      `}</style>
     </>
   );
 };

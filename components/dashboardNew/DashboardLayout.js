@@ -74,6 +74,23 @@ const DashboardLayout = ({ children, title }) => {
     return `${a}${b}`.toUpperCase();
   }, [userName]);
 
+  const [profilePicture, setProfilePicture] = useState("");
+  useEffect(() => {
+    const readProfile = () => {
+      const user = getUser();
+      const pic =
+        (user && (user.profile_picture || user.avatar || user.picture || user.image_url)) || "";
+      setProfilePicture(pic);
+    };
+    readProfile();
+    const onStorage = (e) => {
+      if (!e || !e.key) return;
+      if (e.key === "synthovia-auth-user") readProfile();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   const dateText = useMemo(() => {
     const d = new Date();
     return d.toLocaleDateString(undefined, {
@@ -117,7 +134,17 @@ const DashboardLayout = ({ children, title }) => {
       <aside className={`${styles.sidebar} ${sidebarOpen ? "" : styles.sidebarClosed}`.trim()} aria-hidden={!sidebarOpen}>
         <div className={styles.brand}>
           <div className={styles.brandLeft}>
-            <div className={styles.brandMark}>S</div>
+            <div className={`${styles.brandMark} ${profilePicture ? styles.brandMarkNoBg : ''}`.trim()}>
+              {profilePicture ? (
+                <img
+                  src={profilePicture}
+                  alt={userName}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                />
+              ) : (
+                'S'
+              )}
+            </div>
             <div>
               <div className={styles.brandTitle}>Synthovia</div>
               <div className={styles.brandSub}>Dashboard</div>
@@ -168,7 +195,17 @@ const DashboardLayout = ({ children, title }) => {
                 onClick={() => setUserMenuOpen((v) => !v)}
                 title={userName}
               >
-                <div className={styles.avatar}>{avatarText}</div>
+                <div className={`${styles.avatar} ${profilePicture ? styles.avatarNoBg : ''}`.trim()}>
+                  {profilePicture ? (
+                    <img
+                      src={profilePicture}
+                      alt={userName}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                    />
+                  ) : (
+                    avatarText
+                  )}
+                </div>
               </button>
               {userMenuOpen ? (
                 <div className={styles.userDropdown} role="menu" aria-label="User menu">

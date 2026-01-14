@@ -415,6 +415,17 @@ const ScriptStoryWriterTool = () => {
               color: '#e2e8f0',
               fontSize: '14px'
           },
+          checkboxRow: {
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              gap: '10px',
+              color: '#e2e8f0',
+              textAlign: 'left',
+          },
+          checkboxInput: {
+              margin: 0,
+          },
       };
 
       const renderModeToggle = (modeKey, onSetMode) => (
@@ -1389,6 +1400,24 @@ const ScriptStoryWriterTool = () => {
 
                             <div className="col-md-6">
                                 <div style={styles.formGroup}>
+                                    <label style={styles.label}>
+                                        Compliance Mode (Content & Claim Safety Controls)
+                                        <span style={styles.infoIcon} data-tooltip-id="complianceMode-tooltip" data-tooltip-content="Optional safety/compliance guidelines (e.g., avoid claims, sensitive topics).">i</span>
+                                    </label>
+                                    <Tooltip style={styles.toolTip} id="complianceMode-tooltip" />
+                                    <input
+                                        type="text"
+                                        style={styles.input}
+                                        name="complianceMode"
+                                        value={formData.complianceMode}
+                                        onChange={handleInputChange}
+                                        placeholder="e.g., No medical claims, No financial guarantees"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="col-md-6">
+                                <div style={styles.formGroup}>
                                     <label htmlFor="goal" style={styles.label}>
                                         Goal / Objective <span style={{ color: '#ef4444' }}>*</span>
                                         <span style={styles.infoIcon} data-tooltip-id="goal-tooltip" data-tooltip-content="What should this script/story achieve (e.g., educate, entertain, sell).">i</span>
@@ -1898,9 +1927,10 @@ const ScriptStoryWriterTool = () => {
                                         <span style={styles.infoIcon} data-tooltip-id="includeHook-tooltip" data-tooltip-content="Toggle whether to include a strong opening hook.">i</span>
                                     </label>
                                     <Tooltip style={styles.toolTip} id="includeHook-tooltip" />
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#e2e8f0' }}>
+                                    <div style={styles.checkboxRow}>
                                         <input
                                             type="checkbox"
+                                            style={styles.checkboxInput}
                                             checked={formData.includeHook}
                                             onChange={(e) => {
                                                 const checked = e.target.checked;
@@ -1963,9 +1993,10 @@ const ScriptStoryWriterTool = () => {
                                         <span style={styles.infoIcon} data-tooltip-id="includeCta-tooltip" data-tooltip-content="Toggle whether to include a call-to-action at the end.">i</span>
                                     </label>
                                     <Tooltip style={styles.toolTip} id="includeCta-tooltip" />
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#e2e8f0' }}>
+                                    <div style={styles.checkboxRow}>
                                         <input
                                             type="checkbox"
+                                            style={styles.checkboxInput}
                                             checked={formData.includeCta}
                                             onChange={(e) => {
                                                 const checked = e.target.checked;
@@ -2235,24 +2266,6 @@ const ScriptStoryWriterTool = () => {
                                             />
                                         </div>
                                     )}
-                                </div>
-                            </div>
-
-                            <div className="col-md-6">
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>
-                                        Compliance Mode (Content & Claim Safety Controls)
-                                        <span style={styles.infoIcon} data-tooltip-id="complianceMode-tooltip" data-tooltip-content="Optional safety/compliance guidelines (e.g., avoid claims, sensitive topics).">i</span>
-                                    </label>
-                                    <Tooltip style={styles.toolTip} id="complianceMode-tooltip" />
-                                    <input
-                                        type="text"
-                                        style={styles.input}
-                                        name="complianceMode"
-                                        value={formData.complianceMode}
-                                        onChange={handleInputChange}
-                                        placeholder="e.g., No medical claims, No financial guarantees"
-                                    />
                                 </div>
                             </div>
 
