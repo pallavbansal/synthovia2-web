@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./DashboardOverviewPage.module.css";
 import API from "@/utils/api";
 import { getAuthHeader, getUser } from "@/utils/auth";
@@ -165,6 +165,9 @@ const DashboardOverviewPage = () => {
   const [startDate, setStartDate] = useState(toDateInputValue(initialRange.start));
   const [endDate, setEndDate] = useState(toDateInputValue(initialRange.end));
 
+  const [timelineDropdownOpen, setTimelineDropdownOpen] = useState(false);
+  const timelineDropdownRef = useRef(null);
+
   const RECENT_LOGS_PER_PAGE = 5;
   const [recentLogsPage, setRecentLogsPage] = useState(1);
 
@@ -242,6 +245,29 @@ const DashboardOverviewPage = () => {
       cancelled = true;
     };
   }, [timeline, timelineSelection, startDate, endDate, recentLogsPage]);
+
+  useEffect(() => {
+    const handleDocumentMouseDown = (event) => {
+      if (!timelineDropdownRef.current) return;
+      if (!timelineDropdownRef.current.contains(event.target)) {
+        setTimelineDropdownOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setTimelineDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleDocumentMouseDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleDocumentMouseDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const creditsUsed = stats?.credits_usage?.credits_used ?? 0;
   const creditsRemaining = stats?.credits_usage?.credits_remaining ?? 0;
@@ -332,11 +358,14 @@ const DashboardOverviewPage = () => {
     setEndDate(toDateInputValue(range.end));
   };
 
+  const timelineSelectedLabel =
+    TIMELINES.find((t) => t.value === timelineSelection)?.label || "Select an option";
+
   return (
     <div className={styles.page}>
       <div className={styles.hero}>
         <div className={styles.greeting}>
-          <div className={styles.greetingTitle}>Hello, {name}!</div>
+          <div className={styles.greetingTitle}>Welcome Back, {name}!</div>
           <div className={styles.greetingSub}>
             Here’s your credits usage and recent generation activity.
           </div>
@@ -347,17 +376,44 @@ const DashboardOverviewPage = () => {
         <div className={styles.filters}>
           <div className={styles.control}>
             <div className={styles.label}>Timeline</div>
-            <select
-              className={styles.select}
-              value={timelineSelection}
-              onChange={(e) => onTimelineChange(e.target.value)}
-            >
-              {TIMELINES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
+            <div className={styles.timelineDropdown} ref={timelineDropdownRef}>
+              <button
+                type="button"
+                className={`${styles.timelineDropdownBtn} ${timelineDropdownOpen ? styles.timelineDropdownBtnOpen : ""}`.trim()}
+                aria-haspopup="listbox"
+                aria-expanded={timelineDropdownOpen}
+                onClick={() => setTimelineDropdownOpen((v) => !v)}
+              >
+                <span className={styles.timelineDropdownBtnLabel}>{timelineSelectedLabel}</span>
+                <span
+                  className={`${styles.timelineDropdownCaret} ${timelineDropdownOpen ? styles.timelineDropdownCaretOpen : ""}`.trim()}
+                  aria-hidden="true"
+                />
+              </button>
+
+              {timelineDropdownOpen ? (
+                <div className={styles.timelineDropdownMenu} role="listbox" aria-label="Timeline">
+                  {TIMELINES.map((t) => {
+                    const active = timelineSelection === t.value;
+                    return (
+                      <button
+                        key={t.value}
+                        type="button"
+                        role="option"
+                        aria-selected={active}
+                        className={`${styles.timelineDropdownOption} ${active ? styles.timelineDropdownOptionActive : ""}`.trim()}
+                        onClick={() => {
+                          onTimelineChange(t.value);
+                          setTimelineDropdownOpen(false);
+                        }}
+                      >
+                        {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
           </div>
 
           {timelineSelection === "custom" ? (

@@ -1100,7 +1100,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
 
   const styles = {
     container: {
-      maxWidth: "1100px",
+      // maxWidth: "1100px",
       margin: "0 auto",
       padding: "24px",
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
@@ -1573,11 +1573,12 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       <Toast />
 
       <div style={styles.container}>
-        <div style={styles.card}>
-          <div style={styles.header}>
+         <div style={styles.header}>
             <h2 style={styles.title}>SEO Keyword & Meta Tag Generator</h2>
             <p style={styles.subtitle}>Generate keyword clusters, meta tags, and schema guidance for your page.</p>
           </div>
+        <div style={styles.card}>
+         
 
           <div style={{ padding: "32px" }}>
             <form onSubmit={handleSubmit}>
