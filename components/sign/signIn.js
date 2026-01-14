@@ -243,62 +243,7 @@ const SignIn = () => {
                   </div>
                 </div>
               </div>
-              {/* <div className="col-lg-6 right-wrapper">
-                <div className="client-feedback-area">
-                  <div className="single-feedback">
-                    <div className="inner">
-                      <div className="meta-img-section">
-                        <a className="image" href="#">
-                          <Image
-                            src={userImg}
-                            width={93}
-                            height={93}
-                            alt="User Image"
-                          />
-                        </a>
-                      </div>
-                      <div className="rating">
-                        <a href="#rating">
-                          <i className="fa-sharp fa-solid fa-star"></i>
-                        </a>
-                        <a href="#rating">
-                          <i className="fa-sharp fa-solid fa-star"></i>
-                        </a>
-                        <a href="#rating">
-                          <i className="fa-sharp fa-solid fa-star"></i>
-                        </a>
-                        <a href="#rating">
-                          <i className="fa-sharp fa-solid fa-star"></i>
-                        </a>
-                        <a href="#rating">
-                          <i className="fa-sharp fa-solid fa-star"></i>
-                        </a>
-                      </div>
-                      <div className="content">
-                        <p className="description">
-                          Rainbow-Themes is now a crucial component of our work!
-                          We made it simple to collaborate across departments by
-                          grouping our work
-                        </p>
-                        <div className="bottom-content">
-                          <div className="meta-info-section">
-                            <h4 className="title-text mb--0">Guy Hawkins</h4>
-                            <p className="desc mb--20">Nursing Assistant</p>
-                            <div className="desc-img">
-                              <Image
-                                src={brandImg}
-                                width={83}
-                                height={23}
-                                alt="Brand Image"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div> */}
+              
             </div>
           </div>
           <Link className="close-button" href="/">
