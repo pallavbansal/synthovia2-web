@@ -6,6 +6,7 @@ import { getUser, logout } from "@/utils/auth";
 
 const NAV_ITEMS = [
   { href: "/dashboard-overview", label: "Dashboard", iconClass: "fa-solid fa-gauge" },
+  { href: "/tool-history", label: "Tool History", iconClass: "fa-solid fa-clock-rotate-left" },
   {
     href: "/copywriting-assistant",
     label: "Copywriting Tool",
