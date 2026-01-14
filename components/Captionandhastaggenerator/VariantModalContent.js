@@ -275,7 +275,7 @@ const VariantModalContent = ({
                                     }}
                                     onClick={() => toggleExpand(index)}
                                 >
-                                    <span style={{flexGrow: 1, minWidth: 0}}>Variant {index + 1}: {inputs.platform?.value} ({inputs.placement?.value})</span>
+                                    <span style={{flexGrow: 1, minWidth: 0}}>Variant {index + 1}: {inputs.platform?.value}</span>
                                     
                                     <div 
                                         onClick={(e) => e.stopPropagation()} 
