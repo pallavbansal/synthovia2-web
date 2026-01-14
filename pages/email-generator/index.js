@@ -20,9 +20,8 @@ const EmailGeneratorPage = () => {
                 <div className="rbt-daynamic-page-content">
                   <div className="rbt-dashboard-content">
                     <div className="content-page">
-                      <div className="chat-box-section">
-                        <EmailGenerator />
-                      </div>
+                     
+                          <EmailGenerator />
                     </div>
                   </div>
                 </div>

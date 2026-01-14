@@ -16,15 +16,11 @@ const CopywritingAssistantPage = () => {
             <Context>
               <div className="rbt-main-content">
                 <div className="rbt-daynamic-page-content">
-                  <div className="rbt-dashboard-content">
-                    <div className="chat-box-section">
-                      <div className="rbt-card">
+                
                         <div className="rbt-card-body">
                           <CopywritingAssistantForm />
                         </div>
-                      </div>
-                    </div>
-                  </div>
+                    
                 </div>
               </div>
             </Context>
