@@ -45,6 +45,7 @@ export const API = {
 
   PROFILE: `${BASE_URL}/profile`,
   SUBSCRIPTION_PLANS: `${BASE_URL}/subscriptions/plans`,
+  SUBSCRIPTION_CHECKOUT: `${BASE_URL}/subscriptions/checkout`,
   AD_COPY_HISTORY: ({ perPage = 100, page = 1, from, to } = {}) =>
     buildQueryUrl(`${BASE_URL}/ad-copy/history`, { per_page: perPage, page, from, to }),
 

@@ -19,6 +19,7 @@ const SubscriptionPlanPage = () => {
   const [plans, setPlans] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [checkoutLoadingPlanId, setCheckoutLoadingPlanId] = useState(null);
 
   useEffect(() => {
     Sal();
@@ -57,6 +58,49 @@ const SubscriptionPlanPage = () => {
       cancelled = true;
     };
   }, []);
+
+  const handleCheckout = async (planId) => {
+    if (!planId) return;
+    if (checkoutLoadingPlanId != null) return;
+
+    setCheckoutLoadingPlanId(planId);
+    setErrorMessage("");
+    try {
+      const body = new URLSearchParams({
+        plan_id: String(planId),
+        payment_method: "paypal",
+      });
+
+      const res = await fetch(API.SUBSCRIPTION_CHECKOUT, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: getAuthHeader(),
+        },
+        body: body.toString(),
+      });
+
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.message || `Checkout failed (${res.status})`);
+      if (!json || json.status_code !== 1) throw new Error(json?.message || "Checkout failed");
+
+      const redirectUrl = json?.redirect_url;
+      const subscriptionReference = json?.subscription_reference;
+      if (subscriptionReference) {
+        try {
+          sessionStorage.setItem("subscription_reference", String(subscriptionReference));
+        } catch (e) {}
+      }
+
+      if (!redirectUrl) throw new Error("Missing PayPal redirect URL");
+      window.location.assign(String(redirectUrl));
+    } catch (e) {
+      setErrorMessage(e?.message || "Checkout failed");
+    } finally {
+      setCheckoutLoadingPlanId(null);
+    }
+  };
 
   return (
     <>
@@ -116,6 +160,9 @@ const SubscriptionPlanPage = () => {
                     const price = String(plan?.price || "");
                     const billing = String(plan?.billing_period || "");
                     const credits = plan?.credits;
+                    const planId = plan?.id;
+                    const isCheckoutLoading =
+                      checkoutLoadingPlanId != null && String(checkoutLoadingPlanId) === String(planId);
 
                     return (
                       <div className="col-xl-4 col-lg-6 col-md-6 col-12 mt--40" key={plan?.id ?? name}>
@@ -143,9 +190,14 @@ const SubscriptionPlanPage = () => {
                               </div>
                             </div>
                             <div className="pricing-footer">
-                              <a className="btn-default btn-border" href="#">
-                                Get Started
-                              </a>
+                              <button
+                                type="button"
+                                className="btn-default btn-border"
+                                onClick={() => handleCheckout(planId)}
+                                disabled={isCheckoutLoading || isLoading || !planId}
+                              >
+                                {isCheckoutLoading ? "Redirecting..." : "Subscribe"}
+                              </button>
                             </div>
                           </div>
                         </div>
