@@ -44,6 +44,7 @@ export const API = {
   SEO_KEYWORD_GENERATE_STREAM: `${BASE_URL}/seo-keyword/generate-stream`,
 
   PROFILE: `${BASE_URL}/profile`,
+  SUBSCRIPTION_PLANS: `${BASE_URL}/subscriptions/plans`,
   AD_COPY_HISTORY: ({ perPage = 100, page = 1, from, to } = {}) =>
     buildQueryUrl(`${BASE_URL}/ad-copy/history`, { per_page: perPage, page, from, to }),
 
