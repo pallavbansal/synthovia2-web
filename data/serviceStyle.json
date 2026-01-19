@@ -2,33 +2,33 @@
   "serviceOne": [
     {
       "img": "/images/icons/service-icon-01.svg",
-      "title": "Ask anything",
-      "desc": "Lets users quickly find answers to their questions without having to search through multiple sources."
+      "title": "Structured Inputs, Clear Outputs",
+      "desc": "Define your goal, audience, tone, and key details before writing. Synthovia uses structured inputs to generate content that stays focused, relevant, and usable."
     },
     {
       "img": "/images/icons/service-icon-02.svg",
-      "title": "Connect everywhere",
-      "desc": "Lets users quickly find answers to their questions without having to search through multiple sources."
+      "title": "Built for Real Marketing Use",
+      "desc": "Generate ads, emails, SEO content, scripts, and social posts designed for practical use — not generic AI text that needs heavy rewriting."
     },
     {
       "img": "/images/icons/service-icon-03.svg",
-      "title": "Fast responding",
-      "desc": "Lets users quickly find answers to their questions without having to search through multiple sources."
+      "title": "Control Over Every Generation",
+      "desc": "Choose content type, length, tone, variants, and advanced options to shape exactly how your content is written — without losing creative control."
     },
     {
       "img": "/images/icons/service-icon-01.svg",
-      "title": "Ask anything",
-      "desc": "Lets users quickly find answers to their questions without having to search through multiple sources."
+      "title": "Multiple Tools, One Workflow",
+      "desc": "Access ad copy, email writing, SEO generation, scripts, and social content tools from a single platform without switching between multiple AI products."
     },
     {
       "img": "/images/icons/service-icon-02.svg",
-      "title": "Connect everywhere",
-      "desc": "Lets users quickly find answers to their questions without having to search through multiple sources."
+      "title": "Designed to Reduce Guesswork",
+      "desc": "Mandatory and optional inputs help you think through goals, audience, and messaging before writing — reducing trial-and-error with AI outputs."
     },
     {
       "img": "/images/icons/service-icon-03.svg",
-      "title": "Fast responding",
-      "desc": "Lets users quickly find answers to their questions without having to search through multiple sources."
+      "title": "Flexible, Not Over-Automated",
+      "desc": "Synthovia assists your writing process without locking you into rigid automation, giving you freedom to experiment, adjust, and regenerate content as needed."
     }
   ],
   "serviceTwo": [

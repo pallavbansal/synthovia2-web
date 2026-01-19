@@ -126,41 +126,41 @@
       "tabId": "home",
       "target": "home-tab",
       "isSelect": true,
-      "menuText": "Connect with AI",
+      "menuText": "Choose a Tool & Content Type",
       "img": "/images/split/split-1.png",
-      "subTitle": "How it work",
-      "title": "Connect with Al chatbot",
-      "desc": "Dentify the platform or interface through which you can access the chatbot. This could be a website, a messaging app, or a dedicated application."
+      "subTitle": "How Synthovia Works",
+      "title": "Choose a Tool & Content Type",
+      "desc": "Select what you want to create — ad copy, email, SEO content, social post, or script — using one of Synthovia’s focused AI tools designed for specific content needs."
     },
     {
       "tabId": "profile",
       "target": "profile-tab",
       "isSelect": false,
-      "menuText": "Streamline Workflow",
+      "menuText": "Add Structured Inputs",
       "img": "/images/split/split-4.png",
       "subTitle": "Exploring Efficiency",
-      "title": "Streamline Your Workflow",
-      "desc": "Discover tools and techniques to optimize your workflow, making your tasks more efficient and manageable."
+      "title": "Add Structured Inputs",
+      "desc": "Provide key details like your goal, audience, tone, platform, and key points. Synthovia uses these structured inputs to guide how the content is generated."
     },
     {
       "tabId": "contact",
       "target": "contact-tab",
       "isSelect": false,
-      "menuText": "Cybersecurity",
+      "menuText": "Generate & Review Content",
       "img": "/images/split/split-3.png",
       "subTitle": "Navigating Cybersecurity",
-      "title": "Protecting Your Digital Presence",
-      "desc": "Gain insights into cybersecurity measures and strategies to safeguard your online identity and sensitive information."
+      "title": "Generate & Review Content",
+      "desc": "The AI generates content based on your inputs. Review the output, regenerate variations, or adjust inputs until it fits your needs."
     },
     {
       "tabId": "contact",
       "target": "contact-tab",
       "isSelect": false,
-      "menuText": "Data Analysis",
+      "menuText": "Download & Use Your Content",
       "img": "/images/split/split-5.png",
       "subTitle": "Mastering Data Analysis",
-      "title": "Demystifying Data Analytics",
-      "desc": "Learn the fundamentals of data analysis, including tools and methodologies, to extract meaningful insights from raw data."
+      "title": "Download & Use Your Content",
+      "desc": "Download the generated content and use it directly in your campaigns, platforms, or workflows based on your needs."
     }
   ]
 }

@@ -75,8 +75,9 @@ const Home = () => {
             <div className="col-lg-12">
               <div className="inner text-center mt--140">
                 <h1 className="title display-one">
-                  Examine the Potential of
-                  <br />{" "}
+                  One Platform to Plan, Structure, and Write Content — Powered by AI
+                  {/* <br /> */}
+                  {/* {" "}
                   <span className="header-caption">
                     <span className="cd-headline rotate-1">
                       <span className="cd-words-wrapper">
@@ -110,11 +111,11 @@ const Home = () => {
                       </span>
                     </span>
                   </span>{" "}
-                  AI Hack
+                  AI Hack */}
                 </h1>
                 <p className="description">
-                  Unleash Brainwave's AI potential. Use the open AI <br />{" "}
-                  conversation app Rainbow theme
+                  Generate ads, emails, SEO, and social content with AI  <br />{" "}
+                  that works from your inputs and helps shape content for practical use.
                 </p>
                 {/* <div className="form-group">
                   <textarea
@@ -192,7 +193,7 @@ const Home = () => {
         </div>
       </div>
 
-      <div className="rainbow-brand-area rainbow-section-gap">
+      {/* <div className="rainbow-brand-area rainbow-section-gap">
         <div className="container">
           <div className="row">
             <div className="col-lg-12">
@@ -214,7 +215,7 @@ const Home = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       <div id="features" className="rainbow-service-area rainbow-section-gap">
         <div className="container">
@@ -255,7 +256,7 @@ const Home = () => {
                   <span className="theme-gradient">Assisting individuals</span>
                 </h4>
                 <h2 className="title mb--60">
-                  Chat Smarter, Not <br /> Harder with
+                  Generate Smarter, Not <br /> Harder with
                 </h2>
               </div>
             </div>
@@ -289,12 +290,11 @@ const Home = () => {
                   <span className="theme-gradient">AI Collaboration</span>
                 </h4>
                 <h2 className="title mb--20">
-                  AI Chat app for seamless
-                  <br /> collaboration
+                  Synthovia Ecosystem
                 </h2>
                 <Link
                   className="btn-default btn-large color-blacked"
-                  href="/contact"
+                  href="/signin"
                 >
                   Try It Now{" "}
                   <i className="fa-sharp fa-light fa-arrow-right ml--5"></i>
@@ -333,7 +333,7 @@ const Home = () => {
         </div>
       </div> */}
 
-      <div id="pricing" className="aiwave-pricing-area wrapper rainbow-section-gap-big">
+      {/* <div id="pricing" className="aiwave-pricing-area wrapper rainbow-section-gap-big">
         <div className="container">
           <div className="row">
             <div className="col-lg-12">
@@ -393,15 +393,15 @@ const Home = () => {
             gap="mt_dec--40"
           />
         </div>
-      </div>
+      </div> */}
 
-      <div className="aiwave-service-area rainbow-section-gap">
+      {/* <div className="aiwave-service-area rainbow-section-gap">
         <div className="container">
           <div className="row row--15 service-wrapper">
             <ServiceTwo />
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* <div className="rainbow-testimonial-area rainbow-section-gap">
         <div className="container">
@@ -424,7 +424,7 @@ const Home = () => {
         <Testimonial />
       </div> */}
 
-      <div className="rainbow-brand-area rainbow-section-gap">
+      {/* <div className="rainbow-brand-area rainbow-section-gap">
         <div className="container">
           <div className="row">
             <div className="col-lg-12">
@@ -465,7 +465,7 @@ const Home = () => {
             />
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* <div className="rainbow-cta-area rainbow-section-gap rainbow-section-gapBottom-big">
         <div className="container">

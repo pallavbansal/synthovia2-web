@@ -20,7 +20,7 @@ const ContactPage = () => {
 
       <main className="page-wrapper">
         <Context>
-          <HeaderTop />
+          {/* <HeaderTop /> */}
           <Header
             headerTransparent="header-transparent"
             headerSticky="header-sticky"
