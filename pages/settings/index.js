@@ -35,6 +35,8 @@ const SettingsPage = () => {
     return num.toLocaleString(undefined, { style: "currency", currency: "USD" });
   };
 
+  const showBuyPlanCta = Boolean(profileState.data) && !Boolean(profileState.data?.subscription?.active);
+
   const getSubscriptionBadgeClass = (sub) => {
     if (!sub || !sub.active) return styles.badgeRed;
     const status = String(sub.status || "").toLowerCase();
@@ -454,18 +456,20 @@ const SettingsPage = () => {
             </div>
           </div>
 
-          <div className={`${styles.card} ${styles.ctaCard}`.trim()}>
-            <div className={styles.ctaInner}>
-              <div className={styles.ctaLeft}>
-                <h3 className={styles.ctaTitle}>Unlock more credits and premium features</h3>
-                <p className={styles.ctaSubtitle}>Buy a subscription plan to boost your productivity.</p>
+          {showBuyPlanCta ? (
+            <div className={`${styles.card} ${styles.ctaCard}`.trim()}>
+              <div className={styles.ctaInner}>
+                <div className={styles.ctaLeft}>
+                  <h3 className={styles.ctaTitle}>Unlock more credits and premium features</h3>
+                  <p className={styles.ctaSubtitle}>Buy a subscription plan to boost your productivity.</p>
+                </div>
+                <a href="/subscription-plan" className={styles.ctaBtn}>
+                  <i className="fa-solid fa-bolt" />
+                  Buy
+                </a>
               </div>
-              <a href="/subscription-plan" className={styles.ctaBtn}>
-                <i className="fa-solid fa-bolt" />
-                Buy
-              </a>
             </div>
-          </div>
+          ) : null}
 
           <div className={styles.card}>
             {renderProfileTab()}
