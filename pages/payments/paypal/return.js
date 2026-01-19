@@ -19,7 +19,10 @@ const PayPalReturnPage = () => {
   const router = useRouter();
 
   const [isConfirming, setIsConfirming] = useState(false);
+  const [isPollingStatus, setIsPollingStatus] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
+  const [isActivated, setIsActivated] = useState(false);
+  const [statusText, setStatusText] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   const paypalSubscriptionId = useMemo(() => {
@@ -51,6 +54,60 @@ const PayPalReturnPage = () => {
     }
 
     let cancelled = false;
+    let intervalId = null;
+
+    const clearPoll = () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
+
+    const checkStatus = async () => {
+      try {
+        const statusUrl = API.SUBSCRIPTION_STATUS(subscriptionReference);
+        const res = await fetch(statusUrl, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: getAuthHeader(),
+          },
+        });
+
+        const json = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(json?.message || `Status check failed (${res.status})`);
+
+        const data = json?.data ?? json;
+        const completed = Boolean(data?.completed);
+        const status = String(data?.status || "").toLowerCase();
+
+        if (cancelled) return;
+
+        setStatusText(String(data?.status || data?.message || "pending"));
+
+        if (completed || status === "active") {
+          setIsActivated(true);
+          setIsPollingStatus(false);
+          clearPoll();
+          try {
+            sessionStorage.removeItem("subscription_reference");
+          } catch (e) {}
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setErrorMessage(e?.message || "Status check failed");
+          setIsPollingStatus(false);
+          clearPoll();
+        }
+      }
+    };
+
+    const startPolling = () => {
+      if (cancelled) return;
+      setIsPollingStatus(true);
+      checkStatus();
+      intervalId = setInterval(checkStatus, 3000);
+    };
 
     const confirmSubscription = async () => {
       setIsConfirming(true);
@@ -77,9 +134,8 @@ const PayPalReturnPage = () => {
         if (cancelled) return;
 
         setIsConfirmed(true);
-        try {
-          sessionStorage.removeItem("subscription_reference");
-        } catch (e) {}
+        setStatusText("pending");
+        startPolling();
 
         // Optional: redirect to dashboard/subscription page
         // router.replace("/dashboard");
@@ -94,6 +150,7 @@ const PayPalReturnPage = () => {
 
     return () => {
       cancelled = true;
+      clearPoll();
     };
   }, [router.isReady, paypalSubscriptionId, subscriptionReference]);
 
@@ -116,10 +173,17 @@ const PayPalReturnPage = () => {
 
                     {errorMessage ? (
                       <p style={{ color: "#ef4444" }}>{errorMessage}</p>
-                    ) : isConfirmed ? (
-                      <p style={{ color: "#22c55e" }}>Subscription confirmed successfully.</p>
+                    ) : isActivated ? (
+                      <p style={{ color: "#22c55e" }}>Subscription activated successfully.</p>
                     ) : isConfirming ? (
                       <p style={{ color: "#94a3b8" }}>Confirming your subscription...</p>
+                    ) : isPollingStatus ? (
+                      <p style={{ color: "#94a3b8" }}>
+                        Subscription is pending confirmation. Please wait...
+                        {statusText ? ` (${statusText})` : ""}
+                      </p>
+                    ) : isConfirmed ? (
+                      <p style={{ color: "#94a3b8" }}>Waiting for final confirmation...</p>
                     ) : (
                       <p style={{ color: "#94a3b8" }}>Preparing confirmation...</p>
                     )}

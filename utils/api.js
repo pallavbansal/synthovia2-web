@@ -47,6 +47,8 @@ export const API = {
   SUBSCRIPTION_PLANS: `${BASE_URL}/subscriptions/plans`,
   SUBSCRIPTION_CHECKOUT: `${BASE_URL}/subscriptions/checkout`,
   SUBSCRIPTION_CONFIRM: `${BASE_URL}/subscriptions/confirm`,
+  SUBSCRIPTION_STATUS: (subscriptionReference) =>
+    buildQueryUrl(`${BASE_URL}/subscriptions/status`, { subscription_reference: subscriptionReference }),
   AD_COPY_HISTORY: ({ perPage = 100, page = 1, from, to } = {}) =>
     buildQueryUrl(`${BASE_URL}/ad-copy/history`, { per_page: perPage, page, from, to }),
 
