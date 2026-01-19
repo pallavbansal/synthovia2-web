@@ -22,6 +22,7 @@ const PayPalReturnPage = () => {
   const [isPollingStatus, setIsPollingStatus] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isActivated, setIsActivated] = useState(false);
+  const [redirectSeconds, setRedirectSeconds] = useState(3);
   const [statusText, setStatusText] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -154,6 +155,35 @@ const PayPalReturnPage = () => {
     };
   }, [router.isReady, paypalSubscriptionId, subscriptionReference]);
 
+  useEffect(() => {
+    if (!isActivated) return;
+    if (errorMessage) return;
+
+    let cancelled = false;
+    setRedirectSeconds(3);
+
+    const id = setInterval(() => {
+      if (cancelled) return;
+      setRedirectSeconds((s) => {
+        const next = Number(s) - 1;
+        return next;
+      });
+    }, 1000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [isActivated, errorMessage]);
+
+  useEffect(() => {
+    if (!isActivated) return;
+    if (errorMessage) return;
+    if (redirectSeconds > 0) return;
+    if (!router?.replace) return;
+    router.replace("/settings");
+  }, [isActivated, errorMessage, redirectSeconds, router]);
+
   return (
     <>
       <PageHead title="Confirming Subscription" />
@@ -251,13 +281,19 @@ const PayPalReturnPage = () => {
                       ) : null}
 
                       {!errorMessage && isActivated ? (
-                        <div className="paypal-status-success">
-                          <div className="paypal-status-success-icon">✓</div>
-                          <div>
-                            <div className="paypal-status-success-title">Subscription activated</div>
-                            <div className="paypal-status-success-subtitle">Enjoy your plan benefits now.</div>
+                        <>
+                          <div className="paypal-status-success">
+                            <div className="paypal-status-success-icon">✓</div>
+                            <div>
+                              <div className="paypal-status-success-title">Subscription activated</div>
+                              <div className="paypal-status-success-subtitle">Enjoy your plan benefits now.</div>
+                            </div>
                           </div>
-                        </div>
+
+                          <div className="paypal-redirect-pill" aria-live="polite">
+                            Redirecting to Settings in <strong>{Math.max(0, Number(redirectSeconds) || 0)}s</strong>
+                          </div>
+                        </>
                       ) : null}
 
                       {!!paypalSubscriptionId ? (
@@ -485,6 +521,17 @@ const PayPalReturnPage = () => {
           font-size: 12px;
           text-align: center;
           word-break: break-word;
+        }
+
+        .paypal-redirect-pill {
+          width: 100%;
+          border-radius: 14px;
+          padding: 10px 12px;
+          background: rgba(59, 130, 246, 0.12);
+          border: 1px solid rgba(59, 130, 246, 0.22);
+          color: rgba(219, 234, 254, 0.92);
+          font-size: 13px;
+          text-align: center;
         }
 
         @media (min-width: 992px) {
