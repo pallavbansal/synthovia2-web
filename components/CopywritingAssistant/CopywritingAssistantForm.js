@@ -531,7 +531,6 @@ const CopywritingAssistantForm = () => {
 
         sessionRequestIdRef.current = createSessionRequestId();
 
-        // --- Build Core Objects ---
         const useCaseType = formData.useCaseMode === 'custom' ? 'custom' : 'predefined';
         const useCaseValue = formData.useCaseMode === 'custom' ? formData.customUseCase : formData.useCase;
         const useCaseObj = buildOptionObject('use_case', useCaseValue, useCaseType) || { id: null, value: useCaseValue, type: useCaseType };
@@ -546,13 +545,10 @@ const CopywritingAssistantForm = () => {
 
         let lengthTargetObj;
         if (formData.lengthTargetMode === 'custom') {
-            // Custom numeric word count
-            lengthTargetObj = { id: null, value: formData.customWordCount, type: 'custom' };
+            lengthTargetObj = { id: null, value: String(formData.customWordCount ?? ''), type: 'custom' };
         } else if (formData.lengthTarget === 'auto-detect') {
-            // Auto-detect remains a special predefined option
             lengthTargetObj = { id: 'auto-detect', value: null, type: 'predefined' };
         } else {
-            // Standard predefined option from API/static list
             lengthTargetObj =
                 buildOptionObject('length_target', formData.lengthTarget) || {
                     id: null,
@@ -560,8 +556,9 @@ const CopywritingAssistantForm = () => {
                     type: 'predefined',
                 };
         }
-
-        // --- Build Advanced Objects with Mode Support ---
+        if (lengthTargetObj && lengthTargetObj.value != null) {
+            lengthTargetObj = { ...lengthTargetObj, value: String(lengthTargetObj.value) };
+        }
 
         let ctaStyleObj = null;
         if (formData.ctaStyleMode === 'custom' && formData.customCtaStyle) {
@@ -612,7 +609,6 @@ const CopywritingAssistantForm = () => {
             writingFrameworkObj = buildOptionObject('writing_framework', formData.writingFramework) || { id: null, value: formData.writingFramework, type: 'predefined' };
         }
 
-        // --- UPDATED LOGIC FOR GRAMMAR STRICTNESS ---
         let grammarStrictnessObj = null;
         if (formData.proofreading) {
             if (formData.grammarStrictnessMode === 'custom' && formData.customGrammarStrictness) {
@@ -621,13 +617,11 @@ const CopywritingAssistantForm = () => {
                 grammarStrictnessObj = buildOptionObject('grammar_strictness', formData.grammarStrictness) || { id: null, value: formData.grammarStrictness, type: 'predefined' };
             }
         }
-        // ------------------------------------------
 
         const outputStructureObj = formData.outputStructure
             ? buildOptionObject('output_structure_type', formData.outputStructure) || { id: null, value: formData.outputStructure, type: 'predefined' }
             : null;
 
-        // --- Prepare Payload ---
         const keywordsArray = formData.keywords
             ? formData.keywords
                 .split(',')
@@ -673,7 +667,7 @@ const CopywritingAssistantForm = () => {
             creativity_level: Number(formData.creativityLevel) / 10,
             reference_url: formData.referenceUrl || null,
             proofreading_optimization: !!formData.proofreading,
-            grammar_strictness: grammarStrictnessObj, // UPDATED
+            grammar_strictness: grammarStrictnessObj,
             session_request_id: sessionRequestIdRef.current,
         };
 
@@ -860,7 +854,6 @@ const CopywritingAssistantForm = () => {
                     return { ...prev, variants: next };
                 });
             }
-
         } catch (err) {
             console.error('Error generating copywriting variants:', err);
             showNotification(`Error: ${err.message || 'Failed to generate'}`, 'error');
