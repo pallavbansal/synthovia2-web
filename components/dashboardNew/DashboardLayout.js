@@ -5,6 +5,7 @@ import styles from "./DashboardLayout.module.css";
 import { getUser, logout } from "@/utils/auth";
 
 const NAV_ITEMS = [
+  { href: "/", label: "Home", iconClass: "fa-solid fa-house" },
   { href: "/dashboard-overview", label: "Dashboard", iconClass: "fa-solid fa-gauge" },
   { href: "/tool-history", label: "Tool History", iconClass: "fa-solid fa-clock-rotate-left" },
   {

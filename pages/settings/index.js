@@ -14,6 +14,15 @@ const SettingsPage = () => {
     data: null,
   });
 
+  const [subscriptionHistoryState, setSubscriptionHistoryState] = useState({
+    loading: false,
+    error: "",
+    items: [],
+    pagination: null,
+    page: 1,
+    perPage: 15,
+  });
+
   const [profileEditMode, setProfileEditMode] = useState(false);
   const [firstNameDraft, setFirstNameDraft] = useState("");
   const [lastNameDraft, setLastNameDraft] = useState("");
@@ -101,6 +110,44 @@ const SettingsPage = () => {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchHistory = async () => {
+      setSubscriptionHistoryState((s) => ({ ...s, loading: true, error: "" }));
+      try {
+        const res = await fetch(
+          API.SUBSCRIPTION_HISTORY({ perPage: subscriptionHistoryState.perPage, page: subscriptionHistoryState.page }),
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              Authorization: getAuthHeader(),
+            },
+          }
+        );
+
+        const json = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(json?.message || `Failed to load subscription history (${res.status})`);
+        if (!json || json.status_code !== 1) throw new Error(json?.message || "Failed to load subscription history");
+
+        const history = Array.isArray(json?.history) ? json.history : [];
+        const pagination = json?.pagination || null;
+
+        if (cancelled) return;
+        setSubscriptionHistoryState((s) => ({ ...s, loading: false, items: history, pagination }));
+      } catch (err) {
+        if (cancelled) return;
+        setSubscriptionHistoryState((s) => ({ ...s, loading: false, error: err?.message || "Failed to load subscription history" }));
+      }
+    };
+
+    fetchHistory();
+    return () => {
+      cancelled = true;
+    };
+  }, [subscriptionHistoryState.page, subscriptionHistoryState.perPage]);
 
   useEffect(() => {
     if (profileEditMode) return;
@@ -280,6 +327,115 @@ const SettingsPage = () => {
               <div className={styles.k}>Next billing</div>
               <div className={styles.v}>{sub?.next_billing_at || "—"}</div>
             </div>
+
+            <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end" }}>
+              <a href="/subscription-plan" className={styles.smallBtn}>
+                Buy Plan
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className={`${styles.card} ${styles.transactionsCard}`.trim()}>
+          <div className={styles.historyHeaderRow}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <div style={{ fontWeight: 900, fontSize: 14 }}>Subscription Transactions</div>
+              <span className={styles.badge}>History</span>
+            </div>
+
+            <div className={styles.pagination}>
+              <span className={styles.pageLabel}>
+                Page {subscriptionHistoryState.pagination?.current_page ?? subscriptionHistoryState.page} of{" "}
+                {subscriptionHistoryState.pagination?.last_page ?? "—"}
+              </span>
+
+              <button
+                type="button"
+                className={`${styles.smallBtn} ${
+                  subscriptionHistoryState.loading || (subscriptionHistoryState.pagination?.current_page ?? subscriptionHistoryState.page) <= 1
+                    ? styles.btnDisabled
+                    : ""
+                }`.trim()}
+                disabled={
+                  subscriptionHistoryState.loading ||
+                  (subscriptionHistoryState.pagination?.current_page ?? subscriptionHistoryState.page) <= 1
+                }
+                onClick={() => setSubscriptionHistoryState((s) => ({ ...s, page: Math.max(1, (s.page || 1) - 1) }))}
+              >
+                Prev
+              </button>
+
+              <button
+                type="button"
+                className={`${styles.smallBtn} ${
+                  subscriptionHistoryState.loading ||
+                  (subscriptionHistoryState.pagination?.last_page != null &&
+                    (subscriptionHistoryState.pagination?.current_page ?? subscriptionHistoryState.page) >=
+                      subscriptionHistoryState.pagination?.last_page)
+                    ? styles.btnDisabled
+                    : ""
+                }`.trim()}
+                disabled={
+                  subscriptionHistoryState.loading ||
+                  (subscriptionHistoryState.pagination?.last_page != null &&
+                    (subscriptionHistoryState.pagination?.current_page ?? subscriptionHistoryState.page) >=
+                      subscriptionHistoryState.pagination?.last_page)
+                }
+                onClick={() => setSubscriptionHistoryState((s) => ({ ...s, page: (s.page || 1) + 1 }))}
+              >
+                Next
+              </button>
+
+              <select
+                className={styles.select}
+                value={subscriptionHistoryState.perPage}
+                disabled={subscriptionHistoryState.loading}
+                onChange={(e) =>
+                  setSubscriptionHistoryState((s) => ({
+                    ...s,
+                    perPage: Number(e.target.value) || 15,
+                    page: 1,
+                  }))
+                }
+              >
+                <option value={15}>15 / page</option>
+                <option value={30}>30 / page</option>
+                <option value={50}>50 / page</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={{ marginTop: 12 }}>
+            {subscriptionHistoryState.loading ? <div className={styles.muted}>Loading transactions…</div> : null}
+            {subscriptionHistoryState.error ? <div className={styles.muted}>{subscriptionHistoryState.error}</div> : null}
+            {!subscriptionHistoryState.loading && !subscriptionHistoryState.error && subscriptionHistoryState.items.length === 0 ? (
+              <div className={styles.muted}>No transactions found.</div>
+            ) : null}
+
+            {!subscriptionHistoryState.error && subscriptionHistoryState.items.length > 0 ? (
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th className={styles.th}>Transaction ID</th>
+                      <th className={styles.th}>Amount</th>
+                      <th className={styles.th}>Status</th>
+                      <th className={styles.th}>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {subscriptionHistoryState.items.map((tx, idx) => (
+                      <tr className={styles.tr} key={`${tx?.transaction_id || "tx"}-${idx}`}>
+                        <td className={styles.td}>{tx?.transaction_id || "—"}</td>
+                        <td className={styles.td}>{tx?.amount != null ? formatMoney(tx.amount) : "—"}</td>
+                        <td className={styles.td}>{tx?.status || "—"}</td>
+                        <td className={styles.td}>{tx?.date || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
@@ -295,6 +451,19 @@ const SettingsPage = () => {
             <div className={styles.titleBlock}>
               <h1 className={styles.title}>Settings</h1>
               <p className={styles.subtitle}>Manage your profile, credits, and subscription.</p>
+            </div>
+          </div>
+
+          <div className={`${styles.card} ${styles.ctaCard}`.trim()}>
+            <div className={styles.ctaInner}>
+              <div className={styles.ctaLeft}>
+                <h3 className={styles.ctaTitle}>Unlock more credits and premium features</h3>
+                <p className={styles.ctaSubtitle}>Buy a subscription plan to boost your productivity.</p>
+              </div>
+              <a href="/subscription-plan" className={styles.ctaBtn}>
+                <i className="fa-solid fa-bolt" />
+                Buy
+              </a>
             </div>
           </div>
 
