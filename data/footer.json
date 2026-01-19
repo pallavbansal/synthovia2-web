@@ -3,54 +3,38 @@
     {
       "links": [
         {
-          "title": "Qucik Links",
+          "title": "Services",
           "innerItem": [
             {
-              "link": "#",
-              "text": "Pages"
+              "link": "/ad-copy-generator",
+              "text": "AdCopy Generator"
             },
             {
-              "link": "/blog",
-              "text": "Blog"
+              "link": "/copywriting-assistant",
+              "text": "Copy Writing assistant"
             },
             {
-              "link": "/contact",
-              "text": "Contact"
-            },
-            {
-              "link": "/utilize",
-              "text": "How to use"
-            },
-            {
-              "link": "/roadmap",
-              "text": "Roadmap"
+              "link": "/caption-and-hastag-generator",
+              "text": "Caption and Hastag generator"
             }
           ]
         }
       ],
       "services": [
         {
-          "title": "Services",
+          "title": "",
           "innerItem": [
             {
-              "link": "/image-generator",
-              "text": "Image Generator"
+              "link": "/email-generator",
+              "text": "email and newsletter writing tool"
             },
             {
-              "link": "/vedio-generator",
-              "text": "Video Generator"
+              "link": "/seo-keyword-meta-tag-generator",
+              "text": "SEO Keyword & Meta Tag Generator"
             },
             {
-              "link": "/text-generator",
-              "text": "Text Generator"
-            },
-            {
-              "link": "/code-generator",
-              "text": "Code Generator"
-            },
-            {
-              "link": "#",
-              "text": "Education Feedback"
+              "link": "/script-story-writer-tool",
+              "text": "Script Writing Generator"
             }
           ]
         }

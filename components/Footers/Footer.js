@@ -14,7 +14,7 @@ const Footer = () => {
         <div className="footer-top">
           <div className="container">
             <div className="row justify-content-between">
-              <div className="col-lg-4 col-md-6 col-sm-12 col-12">
+              <div className="col-lg-2 col-md-6 col-sm-12 col-12">
                 <div className="rainbow-footer-widget">
                   <div className="logo">
                     <Link href="/">
@@ -31,7 +31,7 @@ const Footer = () => {
                     It has long been known that a reader's <br /> attention will
                     be diverted from{" "}
                   </p>
-                  <h6 className="subtitle">Join a Newsletter</h6>
+                  {/* <h6 className="subtitle">Join a Newsletter</h6>
                   <form className="newsletter-form" action="#">
                     <div className="form-group">
                       <input type="email" placeholder="Enter Your Email Here" />
@@ -42,11 +42,11 @@ const Footer = () => {
                         <i className="fa-sharp fa-regular fa-arrow-right"></i>
                       </button>
                     </div>
-                  </form>
+                  </form> */}
                 </div>
               </div>
 
-              <div className="col-lg-2 col-md-6 col-sm-6 col-12">
+              <div className="col-lg-3 col-md-6 col-sm-6 col-12">
                 {FooterData &&
                   FooterData.footer.map((data, index) => (
                     <div className="rainbow-footer-widget" key={index}>
@@ -55,7 +55,7 @@ const Footer = () => {
                   ))}
               </div>
 
-              <div className="col-lg-2 col-md-6 col-sm-6 col-12">
+              <div className="col-lg-3 col-md-6 col-sm-6 col-12">
                 {FooterData &&
                   FooterData.footer.map((data, index) => (
                     <div className="rainbow-footer-widget" key={index}>

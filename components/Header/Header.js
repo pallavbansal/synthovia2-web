@@ -32,7 +32,7 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
   }, []);
   return (
     <>
-      <DarkSwitch isLight={isLightTheme} switchTheme={toggleTheme} />
+      {/* <DarkSwitch isLight={isLightTheme} switchTheme={toggleTheme} /> */}
       <header
         className={`rainbow-header header-default ${headerTransparent} ${headerSticky} ${
           isSticky ? "sticky" : ""
@@ -75,7 +75,7 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
             <div className="col-lg-2 col-md-6 col-6 position-static">
               <div className="header-right">
                 <div className="header-btn">
-                  <Link className={`${btnClass}`} href="/text-generator">
+                  <Link className={`${btnClass}`} href="/signin">
                     <span>Get Start</span>
                   </Link>
                 </div>

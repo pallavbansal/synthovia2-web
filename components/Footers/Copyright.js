@@ -16,21 +16,21 @@ const Copyright = () => {
                   <li>
                     <Link href="/terms-policy">Terms And Condition</Link>
                   </li>
-                  <li>
+                  {/* <li>
                     <Link href="/contact">Contact Us</Link>
-                  </li>
+                  </li> */}
                 </ul>
               </div>
             </div>
             <div className="col-lg-6 col-md-4 col-sm-12 col-12">
               <div className="copyright-right text-center text-lg-end">
                 <p className="copyright-text">
-                  Copyright © 2024{" "}
+                  Copyright © 2026{" "}
                   <Link
-                    href="https://themeforest.net/user/rainbow-themes"
+                    href="#"
                     className="btn-read-more"
                   >
-                    <span>Rainbow-Themes.</span>
+                    <span>Synthovia</span>
                   </Link>
                 </p>
               </div>

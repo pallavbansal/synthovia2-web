@@ -57,7 +57,7 @@ const SignUp = () => {
   };
   return (
     <>
-      <DarkSwitch isLight={isLightTheme} switchTheme={toggleTheme} />
+      {/* <DarkSwitch isLight={isLightTheme} switchTheme={toggleTheme} /> */}
       <main className="page-wrapper">
         <div className="signup-area">
           <div className="wrapper">
