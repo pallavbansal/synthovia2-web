@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Sal from "sal.js";
 
@@ -20,6 +20,7 @@ const SubscriptionPlanPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [checkoutLoadingPlanId, setCheckoutLoadingPlanId] = useState(null);
+  const [billingMode, setBillingMode] = useState("annual");
 
   useEffect(() => {
     Sal();
@@ -102,6 +103,58 @@ const SubscriptionPlanPage = () => {
     }
   };
 
+  const displayPlans = useMemo(() => {
+    const list = Array.isArray(plans) ? [...plans] : [];
+
+    const byPrice = list
+      .map((p) => ({
+        ...p,
+        _priceNum: Number(p?.price),
+      }))
+      .sort((a, b) => {
+        const ap = Number.isFinite(a._priceNum) ? a._priceNum : Number.POSITIVE_INFINITY;
+        const bp = Number.isFinite(b._priceNum) ? b._priceNum : Number.POSITIVE_INFINITY;
+        return ap - bp;
+      });
+
+    const mode = String(billingMode || "").toLowerCase();
+    const filtered = byPrice.filter((p) => {
+      const period = String(p?.billing_period || "").toLowerCase();
+      if (!period) return false;
+      if (mode === "annual") return period.includes("year") || period.includes("annual") || period.includes("yr");
+      if (mode === "monthly") return period.includes("month") || period.includes("monthly");
+      return true;
+    });
+
+    const out = filtered.length ? filtered : byPrice;
+    return out.slice(0, 3);
+  }, [plans, billingMode]);
+
+  const getPlanFeatures = (plan) => {
+    if (Array.isArray(plan?.features) && plan.features.length) {
+      return plan.features.map((f) => String(f)).filter(Boolean).slice(0, 6);
+    }
+
+    const description = String(plan?.description || "").trim();
+    if (description) {
+      const fromNewLines = description
+        .split(/\r?\n/)
+        .map((t) => t.trim())
+        .filter(Boolean);
+      if (fromNewLines.length >= 2) return fromNewLines.slice(0, 6);
+
+      const fromSentences = description
+        .split(".")
+        .map((t) => t.trim())
+        .filter(Boolean);
+      if (fromSentences.length >= 2) return fromSentences.slice(0, 6);
+    }
+
+    const credits = plan?.credits;
+    const creditsLine = Number.isFinite(Number(credits)) ? `${credits} credits` : "Credits included";
+    return [creditsLine, "Priority support", "Advanced tools access", "Cancel anytime", "Secure payments"];
+  };
+
   return (
     <>
       <PageHead title="Subscription Plans" />
@@ -116,23 +169,28 @@ const SubscriptionPlanPage = () => {
           />
           <PopupMobileMenu />
 
-          <div id="pricing" className="aiwave-pricing-area wrapper rainbow-section-gap-big">
-            <div className="container">
-              <div className="row">
-                <div className="col-lg-12">
-                  <div
-                    className="section-title text-center"
-                    data-sal="slide-up"
-                    data-sal-duration="400"
-                    data-sal-delay="150"
-                  >
-                    <h4 className="subtitle">
-                      <span className="theme-gradient">Pricing</span>
-                    </h4>
-                    <h2 className="title w-600 mb--40">Pricing plans for everyone</h2>
+          <div id="pricing" className="subscription-plan-area rainbow-section-gap-big">
+            <div className="subscription-plan-area-inner">
+              <div className="container">
+                <div className="row">
+                  <div className="col-lg-12">
+                    <div
+                      className="subscription-plan-hero"
+                      data-sal="slide-up"
+                      data-sal-duration="400"
+                      data-sal-delay="150"
+                    >
+                      <div className="subscription-plan-hero-sparkle sparkle-left" />
+                      <div className="subscription-plan-hero-sparkle sparkle-right" />
+                      <h1 className="subscription-plan-title">Choose your pricing</h1>
+                      <p className="subscription-plan-subtitle">
+                        Find the perfect plan to your business needs. We provide flexible solutions for startups,
+                        growing businesses, and enterprises.
+                      </p>
+
+                    </div>
                   </div>
                 </div>
-              </div>
 
               {errorMessage ? (
                 <div className="row">
@@ -153,52 +211,59 @@ const SubscriptionPlanPage = () => {
                   </div>
                 </div>
               ) : (
-                <div className="row row--15 mt_dec--40">
-                  {(plans || []).map((plan) => {
+                <div className="subscription-plan-grid">
+                  {(displayPlans || []).map((plan, index) => {
                     const name = String(plan?.name || "");
                     const description = String(plan?.description || "");
                     const price = String(plan?.price || "");
                     const billing = String(plan?.billing_period || "");
-                    const credits = plan?.credits;
                     const planId = plan?.id;
                     const isCheckoutLoading =
                       checkoutLoadingPlanId != null && String(checkoutLoadingPlanId) === String(planId);
 
+                    const isPopular = index === 1;
+                    const features = getPlanFeatures(plan);
+
+                    const billingLabel = billing || (billingMode === "annual" ? "year" : "month");
+
                     return (
-                      <div className="col-xl-4 col-lg-6 col-md-6 col-12 mt--40" key={plan?.id ?? name}>
-                        <div className="rainbow-pricing style-aiwave">
-                          <div className="pricing-table-inner">
-                            <div className="pricing-top">
-                              <div className="pricing-header">
-                                <h4 className="title">{name}</h4>
-                                <p className="subtitle">{description}</p>
-                                <div className="pricing">
-                                  <span className="price-text">${price}</span>
-                                  <span className="text">/{billing || "month"}</span>
-                                </div>
-                              </div>
-                              <div className="pricing-body">
-                                <div className="features-section has-show-more">
-                                  <h6>Includes</h6>
-                                  <ul className="list-style--1 has-show-more-inner-content">
-                                    <li>
-                                      <i className="fa-regular fa-circle-check"></i>
-                                      {Number.isFinite(Number(credits)) ? `${credits} credits` : "Credits included"}
-                                    </li>
-                                  </ul>
-                                </div>
-                              </div>
+                      <div
+                        className={`subscription-plan-card ${isPopular ? "is-popular" : ""}`}
+                        key={plan?.id ?? name ?? index}
+                      >
+                        <div className="subscription-plan-card-inner">
+                          <div className="subscription-plan-card-head">
+                            <div className="subscription-plan-card-title-row">
+                              <h3 className="subscription-plan-card-title">{name || "Plan"}</h3>
+                              {isPopular ? <span className="subscription-plan-badge">Popular</span> : null}
                             </div>
-                            <div className="pricing-footer">
-                              <button
-                                type="button"
-                                className="btn-default btn-border"
-                                onClick={() => handleCheckout(planId)}
-                                disabled={isCheckoutLoading || isLoading || !planId}
-                              >
-                                {isCheckoutLoading ? "Redirecting..." : "Subscribe"}
-                              </button>
+
+                            <div className="subscription-plan-price-row">
+                              <span className="subscription-plan-price">${price}</span>
+                              <span className="subscription-plan-period">per {billingLabel}</span>
                             </div>
+
+                            <p className="subscription-plan-card-desc">{description}</p>
+
+                            <button
+                              type="button"
+                              className={`subscription-plan-cta ${isPopular ? "primary" : "secondary"}`}
+                              onClick={() => handleCheckout(planId)}
+                              disabled={isCheckoutLoading || isLoading || !planId}
+                            >
+                              {isCheckoutLoading ? "Redirecting..." : "Get Started"}
+                            </button>
+                          </div>
+
+                          <div className="subscription-plan-features">
+                            <ul className="subscription-plan-feature-list">
+                              {(features || []).map((item, i) => (
+                                <li key={`${planId}-${i}`}>
+                                  <i className="fa-regular fa-circle-check"></i>
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
                           </div>
                         </div>
                       </div>
@@ -207,6 +272,7 @@ const SubscriptionPlanPage = () => {
                 </div>
               )}
             </div>
+          </div>
           </div>
 
           <Footer />

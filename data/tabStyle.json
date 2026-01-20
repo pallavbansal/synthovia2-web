@@ -4,9 +4,9 @@
       "title": "Video generating AI refers to artificial intelligence.",
       "img": "/images/generator-img/chat-export-vedio.png",
       "imgLight": "/images/light/generator-img/chat-export-audio.png",
-      "menuId": "video-generator",
-      "text": "Vedio Generator",
-      "target": "video-generate",
+      "menuId": "ad-copy-generator",
+      "text": "Add Copy Generator",
+      "target": "ad-copy-generator",
       "iconImg": "/images/icons/video-g.png",
       "isSelect": false,
       "subItem": [
@@ -28,9 +28,9 @@
       "title": "Audio generating AI refers to artificial intelligence.",
       "img": "/images/generator-img/chat-export-audio.png",
       "imgLight": "/images/light/generator-img/chat-export-audio.png",
-      "menuId": "audio-generator",
-      "text": "Audio Generator",
-      "target": "audio-generate",
+      "menuId": "caption-and-hastag-generator",
+      "text": "Caption Hashtag Generator",
+      "target": "caption-and-hastag-generator",
       "iconImg": "/images/icons/audio-g.png",
       "isSelect": true,
       "subItem": [
@@ -52,9 +52,9 @@
       "title": "Photo generating AI refers to artificial intelligence.",
       "img": "/images/generator-img/chat-export-photo.png",
       "imgLight": "/images/light/generator-img/chat-export-audio.png",
-      "menuId": "photo-generator",
-      "text": "Photo Generator",
-      "target": "photo-generate",
+      "menuId": "copywriting-assistant",
+      "text": "Copy Writing Generator",
+      "target": "copywriting-assistant",
       "iconImg": "/images/icons/photo-g.png",
       "isSelect": false,
       "subItem": [
@@ -76,9 +76,9 @@
       "title": "Text generating AI refers to artificial intelligence.",
       "img": "/images/generator-img/chat-export.png",
       "imgLight": "/images/light/generator-img/chat-export-audio.png",
-      "menuId": "text-generator",
-      "text": "Text Generator",
-      "target": "text-generate",
+      "menuId": "script-writing-generator",
+      "text": "Scripting Writing Generator",
+      "target": "script-writing-generator",
       "iconImg": "/images/icons/text-g.png",
       "isSelect": false,
       "subItem": [
@@ -100,9 +100,33 @@
       "title": "Code generating AI refers to artificial intelligence.",
       "img": "/images/generator-img/chat-export-code.png",
       "imgLight": "/images/light/generator-img/chat-export-audio.png",
-      "menuId": "code-generator",
-      "text": "Code Generator",
-      "target": "code-generate",
+      "menuId": "email-generator",
+      "text": "Email and Newsletter Generator",
+      "target": "email-generator",
+      "iconImg": "/images/icons/code-g.png",
+      "isSelect": false,
+      "subItem": [
+        {
+          "text": "Transformer Models"
+        },
+        {
+          "text": "Conditional Generative Models"
+        },
+        {
+          "text": "Pre-trained Models"
+        },
+        {
+          "text": "Variational Autoencoders"
+        }
+      ]
+    },
+    {
+      "title": "Code generating AI refers to artificial intelligence.",
+      "img": "/images/generator-img/chat-export-code.png",
+      "imgLight": "/images/light/generator-img/chat-export-audio.png",
+      "menuId": "seo-keyword-meta-tag-generator",
+      "text": "Seo Keyword and Meta Tag Generator",
+      "target": "seo-keyword-meta-tag-generator",
       "iconImg": "/images/icons/code-g.png",
       "isSelect": false,
       "subItem": [

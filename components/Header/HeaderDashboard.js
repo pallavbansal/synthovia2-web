@@ -1,11 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAppContext } from "@/context/Context";
 
 import logo from "../../public/images/logo/logo.png";
 import logoDark from "../../public/images/logo/logo.png";
-import avatar from "../../public/images/team/team-01sm.jpg";
 
 import Nav from "./Nav";
 import UserMenu from "./UserMenu";
@@ -20,11 +19,11 @@ const HeaderDashboard = ({ display }) => {
     setRightBar,
     activeMobileMenu,
     setActiveMobileMenu,
-    isLightTheme,
   } = useAppContext();
 
   const [userTitle, setUserTitle] = useState("-");
   const [userSub, setUserSub] = useState("-");
+  const [profilePicture, setProfilePicture] = useState("");
 
   useEffect(() => {
     const user = getUser();
@@ -40,7 +39,16 @@ const HeaderDashboard = ({ display }) => {
 
     setUserTitle(full);
     setUserSub(user?.email || "-");
+    const pic = (user && (user.profile_picture || user.avatar || user.picture || user.image_url)) || "";
+    setProfilePicture(pic ? String(pic) : "");
   }, []);
+
+  const avatarText = useMemo(() => {
+    const parts = String(userTitle || "User").trim().split(/\s+/).filter(Boolean);
+    const a = parts[0]?.[0] || "U";
+    const b = parts.length > 1 ? parts[1]?.[0] : "";
+    return `${a}${b}`.toUpperCase();
+  }, [userTitle]);
   return (
     <>
       <header className="rbt-dashboard-header rainbow-header header-default header-left-align rbt-fluid-header">
@@ -139,14 +147,39 @@ const HeaderDashboard = ({ display }) => {
                     <a className="d-flex align-items-center" href="#">
                       <div className="inner d-flex align-items-center">
                         <div className="img-box">
-                          <Image src={avatar} alt="Admin" />
+                          {profilePicture ? (
+                            <img
+                              src={profilePicture}
+                              alt={userTitle}
+                              style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }}
+                            />
+                          ) : (
+                            <div
+                              style={{
+                                width: 36,
+                                height: 36,
+                                borderRadius: "50%",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontWeight: 800,
+                                fontSize: 12,
+                                letterSpacing: "0.06em",
+                                color: "#fff",
+                                background:
+                                  "linear-gradient(135deg, rgba(124,58,237,1) 0%, rgba(99,102,241,1) 60%, rgba(236,72,153,0.9) 100%)",
+                              }}
+                            >
+                              {avatarText}
+                            </div>
+                          )}
                         </div>
                         <div className="content">
                           <span className="title ">{userTitle}</span>
                           <p>{userSub}</p>
                         </div>
                       </div>
-                      <div className="icon">
+                      <div className="icon" style={{ marginLeft: 6, display: "flex", alignItems: "center" }}>
                         <i className="fa-sharp fa-solid fa-chevron-down"></i>
                       </div>
                     </a>
