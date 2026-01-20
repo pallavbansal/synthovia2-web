@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAppContext } from "@/context/Context";
 
 import logo from "../../public/images/logo/logo.png";
-import logoDark from "../../public/images/light/logo/logo-dark.png";
+import logoDark from "../../public/images/logo/logo.png";
 import avatar from "../../public/images/team/team-01sm.jpg";
 
 import Nav from "./Nav";
@@ -72,13 +72,44 @@ const HeaderDashboard = ({ display }) => {
                 </div>
                 <div className="logo">
                   <Link href="/">
-                    <Image
-                      className="logo-light"
-                      src={isLightTheme ? logo : logoDark}
-                      width={135}
-                      height={35}
-                      alt="Corporate Logo"
-                    />
+                    <span
+                      style={{
+                        position: "relative",
+                        display: "inline-block",
+                        width: 44,
+                        height: 44,
+                        overflow: "hidden",
+                        verticalAlign: "middle",
+                      }}
+                    >
+                      <Image
+                        className="logo-light"
+                        src={logo}
+                        fill
+                        sizes="44px"
+                        alt="Corporate Logo"
+                        style={{ objectFit: "cover", transform: "scale(1.35)", transformOrigin: "center" }}
+                      />
+                    </span>
+                    <span
+                      style={{
+                        position: "relative",
+                        display: "inline-block",
+                        width: 44,
+                        height: 44,
+                        overflow: "hidden",
+                        verticalAlign: "middle",
+                      }}
+                    >
+                      <Image
+                        className="logo-dark"
+                        src={logoDark}
+                        fill
+                        sizes="44px"
+                        alt="Corporate Logo"
+                        style={{ objectFit: "cover", transform: "scale(1.35)", transformOrigin: "center" }}
+                      />
+                    </span>
                   </Link>
                 </div>
               </div>

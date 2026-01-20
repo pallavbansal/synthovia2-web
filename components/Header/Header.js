@@ -4,14 +4,13 @@ import Link from "next/link";
 
 import { useAppContext } from "@/context/Context";
 
-import logo from "../../public/images/logo/logo.png";
+import logo from "../../public/images/logo/logo2.png";
 import logoDark from "../../public/images/light/logo/logo-dark.png";
 import Nav from "./Nav";
 import DarkSwitch from "./dark-switch";
 
 const Header = ({ headerTransparent, headerSticky, btnClass }) => {
-  const { activeMobileMenu, setActiveMobileMenu, isLightTheme, toggleTheme } =
-    useAppContext();
+  const { activeMobileMenu, setActiveMobileMenu } = useAppContext();
   const [isSticky, setIsSticky] = useState(false);
 
   useEffect(() => {
@@ -43,25 +42,34 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
             <div className="col-lg-2 col-md-6 col-6">
               <div className="logo">
                 <Link href="/">
-                  {isLightTheme ? (
+                  <span
+                    style={{
+                      position: "relative",
+                      display: "inline-block",
+                      width: 44,
+                      height: 44,
+                      overflow: "hidden",
+                      verticalAlign: "middle",
+                    }}
+                  >
                     <Image
                       className="logo-light"
                       src={logo}
-                      width={135}
-                      height={35}
+                      fill
+                      sizes="44px"
                       priority={true}
                       alt="ChatBot Logo"
+                      style={{ objectFit: "cover", transform: "scale(1.35)", transformOrigin: "center" }}
                     />
-                  ) : (
-                    <Image
-                      className="logo-light"
-                      src={logoDark}
-                      width={135}
-                      height={35}
-                      priority={true}
-                      alt="ChatBot Logo"
-                    />
-                  )}
+                  </span>
+                  <Image
+                    className="logo-dark"
+                    src={logoDark}
+                    width={135}
+                    height={35}
+                    priority={true}
+                    alt="ChatBot Logo"
+                  />
                 </Link>
               </div>
             </div>
