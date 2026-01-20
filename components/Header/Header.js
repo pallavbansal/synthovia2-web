@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { useAppContext } from "@/context/Context";
 
-import logo from "../../public/images/logo/logo2.png";
+import logo from "../../public/images/logo/logo4.png";
 import logoDark from "../../public/images/light/logo/logo-dark.png";
 import Nav from "./Nav";
 import DarkSwitch from "./dark-switch";
