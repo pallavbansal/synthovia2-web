@@ -7,6 +7,13 @@ import { useAppContext } from "@/context/Context";
 
 const TabStyleOne = () => {
   const { isLightTheme } = useAppContext();
+
+  const getToolHref = (tab) => {
+    const menuId = tab?.menuId;
+    if (!menuId) return "#";
+    return `/${String(menuId).replace(/^\/+/, "")}`;
+  };
+
   return (
     <>
       <div className="row row--30 align-items-center">
@@ -77,7 +84,7 @@ const TabStyleOne = () => {
                             <div className="read-more">
                               <Link
                                 className="btn-default color-blacked"
-                                href="#"
+                                href={getToolHref(tab)}
                               >
                                 Start Exploring Now
                                 <i className="fa-sharp fa-solid fa-arrow-right ps-2"></i>
@@ -89,12 +96,14 @@ const TabStyleOne = () => {
                           <div className="export-img">
                             <div className="inner-without-padding">
                               <div className="export-img img-bg-shape">
-                                <Image
-                                  src={isLightTheme ? tab.img : tab.imgLight}
-                                  width={569}
-                                  height={483}
-                                  alt="Chat example Image"
-                                />
+                                <Link href={getToolHref(tab)} aria-label={`Open ${tab.text || "tool"}`}>
+                                  <Image
+                                    src={isLightTheme ? tab.img : tab.imgLight}
+                                    width={569}
+                                    height={483}
+                                    alt="Chat example Image"
+                                  />
+                                </Link>
                                 <div className="image-shape"></div>
                               </div>
                             </div>
