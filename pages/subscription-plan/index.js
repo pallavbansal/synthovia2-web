@@ -298,14 +298,7 @@ const SubscriptionPlanPage = () => {
               }}
             >
               <div className="subscription-auth-modal">
-                {/* <button
-                  type="button"
-                  className="subscription-auth-modal-close"
-                  onClick={() => setAuthPromptOpen(false)}
-                  aria-label="Close"
-                >
-                  ×
-                </button> */}
+              
 
                 <div className="subscription-auth-modal-title">Sign in to buy a plan</div>
                 <div className="subscription-auth-modal-subtitle">
