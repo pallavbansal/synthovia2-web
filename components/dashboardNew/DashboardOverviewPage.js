@@ -513,7 +513,7 @@ const DashboardOverviewPage = () => {
               <div className={styles.muted}>Loading...</div>
             ) : error ? (
               <div className={styles.muted}>{error}</div>
-            ) : hasToolUsage ? (
+            ) : (
               <div className={styles.columnChart}>
                 <div className={styles.yAxis} aria-hidden="true">
                   {chartTicks.map((t) => (
@@ -541,8 +541,7 @@ const DashboardOverviewPage = () => {
                         const count = toNumberSafe(t.count);
                         const clamped = Math.max(0, count);
                         const rawPct = chartMax ? (clamped / chartMax) * 100 : 0;
-                        const heightPct =
-                          clamped > 0 ? Math.min(100, Math.max(2, Math.round(rawPct))) : 0;
+                        const heightPct = clamped > 0 ? Math.min(100, Math.max(2, Math.round(rawPct))) : 0;
                         return (
                           <div className={styles.barColPlot} key={t.label}>
                             <div className={styles.barValue}>{t.count}</div>
@@ -553,6 +552,8 @@ const DashboardOverviewPage = () => {
                         );
                       })}
                     </div>
+
+                    {!hasToolUsage ? <div className={styles.noDataOverlay}>No data yet</div> : null}
                   </div>
 
                   <div className={styles.xLabels}>
@@ -571,8 +572,6 @@ const DashboardOverviewPage = () => {
                   </div>
                 </div>
               </div>
-            ) : (
-              <div className={styles.muted}>No tool usage in this range.</div>
             )}
           </div>
         </div>
