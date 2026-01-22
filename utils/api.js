@@ -1,5 +1,4 @@
 const BASE_URL = "https://lightslategray-horse-496166.hostingersite.com/public/api/v1";
-
 const buildQueryUrl = (base, params) => {
   const qs = new URLSearchParams();
   Object.entries(params || {}).forEach(([k, v]) => {

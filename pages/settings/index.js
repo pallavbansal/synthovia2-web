@@ -423,6 +423,7 @@ const SettingsPage = () => {
                       <th className={styles.th}>Amount</th>
                       <th className={styles.th}>Status</th>
                       <th className={styles.th}>Date</th>
+                      <th className={styles.th}>Invoice</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -432,6 +433,24 @@ const SettingsPage = () => {
                         <td className={styles.td}>{tx?.amount != null ? formatMoney(tx.amount) : "—"}</td>
                         <td className={styles.td}>{tx?.status || "—"}</td>
                         <td className={styles.td}>{tx?.date || "—"}</td>
+                        <td className={styles.td}>
+                          {tx?.invoice_pdf_url ? (
+                            tx?.invoice_pdf_ready === false ? (
+                              <span className={styles.muted}>Preparing</span>
+                            ) : (
+                              <a
+                                href={tx.invoice_pdf_url}
+                                className={styles.smallBtn}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                View
+                              </a>
+                            )
+                          ) : (
+                            "—"
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
