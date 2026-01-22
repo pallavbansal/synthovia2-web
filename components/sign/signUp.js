@@ -48,7 +48,9 @@ const SignUp = () => {
         password_confirmation: confirmPassword,
       });
       setSuccess("Registration successful. Redirecting to Dashboard...");
-      router.replace("/dashboard");
+      const next = router?.query?.next;
+      const safeNext = typeof next === "string" && next.startsWith("/") ? next : "";
+      router.replace(safeNext || "/dashboard");
     } catch (err) {
       setError(err?.message || "Registration failed");
     } finally {

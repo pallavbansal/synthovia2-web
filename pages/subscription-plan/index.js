@@ -1,5 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useRouter } from "next/router";
 import Sal from "sal.js";
 
 import PageHead from "../Head";
@@ -12,15 +14,54 @@ import Footer from "@/components/Footers/Footer";
 import Copyright from "@/components/Footers/Copyright";
 import BackToTop from "../backToTop";
 
-import { getAuthHeader } from "@/utils/auth";
+import { getAuthHeader, isAuthenticated } from "@/utils/auth";
 import API from "@/utils/api";
 
 const SubscriptionPlanPage = () => {
+  const router = useRouter();
   const [plans, setPlans] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [checkoutLoadingPlanId, setCheckoutLoadingPlanId] = useState(null);
   const [billingMode, setBillingMode] = useState("annual");
+
+  const autoCheckoutRanRef = useRef(false);
+
+  const [authPromptOpen, setAuthPromptOpen] = useState(false);
+  const [authPromptPlanId, setAuthPromptPlanId] = useState(null);
+
+  const fallbackPlans = useMemo(
+    () => [
+      {
+        id: null,
+        name: "Starter",
+        description: "Perfect for getting started.",
+        price: "9",
+        billing_period: "month",
+        credits: 1000,
+        features: ["1,000 credits", "Core tools access", "Email support"],
+      },
+      {
+        id: null,
+        name: "Pro",
+        description: "Best for growing teams and creators.",
+        price: "29",
+        billing_period: "month",
+        credits: 5000,
+        features: ["5,000 credits", "All tools access", "Priority support"],
+      },
+      {
+        id: null,
+        name: "Business",
+        description: "For businesses that need more scale.",
+        price: "99",
+        billing_period: "month",
+        credits: 20000,
+        features: ["20,000 credits", "Advanced tools", "Dedicated support"],
+      },
+    ],
+    []
+  );
 
   useEffect(() => {
     Sal();
@@ -33,17 +74,33 @@ const SubscriptionPlanPage = () => {
       setIsLoading(true);
       setErrorMessage("");
       try {
+        const authHeader = getAuthHeader();
         const res = await fetch(API.SUBSCRIPTION_PLANS, {
           method: "GET",
           headers: {
             Accept: "application/json",
-            Authorization: getAuthHeader(),
+            ...(authHeader ? { Authorization: authHeader } : {}),
           },
         });
 
         const json = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(json?.message || `Failed to load plans (${res.status})`);
-        if (!json || json.status_code !== 1) throw new Error(json?.message || "Failed to load plans");
+        if (!res.ok || !json || json.status_code !== 1) {
+          const isUnauth =
+            res.status === 401 ||
+            String(json?.message || "")
+              .toLowerCase()
+              .includes("unauth");
+
+          if (isUnauth) {
+            if (!cancelled) {
+              setPlans(fallbackPlans);
+              setErrorMessage("");
+            }
+            return;
+          }
+
+          throw new Error(json?.message || `Failed to load plans (${res.status})`);
+        }
 
         const nextPlans = Array.isArray(json?.plans) ? json.plans : [];
         if (!cancelled) setPlans(nextPlans);
@@ -60,6 +117,42 @@ const SubscriptionPlanPage = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (autoCheckoutRanRef.current) return;
+    if (!isAuthenticated()) return;
+    if (isLoading) return;
+    if (!Array.isArray(plans) || plans.length === 0) return;
+
+    try {
+      const raw = sessionStorage.getItem("pending_subscription_plan_selection");
+      if (!raw) return;
+
+      const selection = JSON.parse(raw);
+      if (!selection) return;
+
+      let matched = null;
+
+      if (selection.plan_id != null) {
+        matched = plans.find((p) => String(p?.id) === String(selection.plan_id));
+      }
+
+      if (!matched && selection.name) {
+        matched = plans.find((p) => {
+          const sameName = String(p?.name || "").toLowerCase() === String(selection.name || "").toLowerCase();
+          const samePeriod = String(p?.billing_period || "").toLowerCase() === String(selection.billing_period || "").toLowerCase();
+          const samePrice = String(p?.price || "") === String(selection.price || "");
+          return sameName && (samePeriod || samePrice);
+        });
+      }
+
+      if (!matched) return;
+
+      autoCheckoutRanRef.current = true;
+      sessionStorage.removeItem("pending_subscription_plan_selection");
+      handleCheckout(matched?.id);
+    } catch (e) {}
+  }, [plans, isLoading]);
+
   const handleCheckout = async (planId) => {
     if (!planId) return;
     if (checkoutLoadingPlanId != null) return;
@@ -67,6 +160,7 @@ const SubscriptionPlanPage = () => {
     setCheckoutLoadingPlanId(planId);
     setErrorMessage("");
     try {
+      const authHeader = getAuthHeader();
       const body = new URLSearchParams({
         plan_id: String(planId),
         payment_method: "paypal",
@@ -77,7 +171,7 @@ const SubscriptionPlanPage = () => {
         headers: {
           Accept: "application/json",
           "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: getAuthHeader(),
+          ...(authHeader ? { Authorization: authHeader } : {}),
         },
         body: body.toString(),
       });
@@ -101,6 +195,29 @@ const SubscriptionPlanPage = () => {
     } finally {
       setCheckoutLoadingPlanId(null);
     }
+  };
+
+  const handleBuyClick = (plan) => {
+    const planId = plan?.id;
+    if (!isAuthenticated()) {
+      setAuthPromptPlanId(planId || plan?.name || "");
+      setAuthPromptOpen(true);
+
+      try {
+        sessionStorage.setItem(
+          "pending_subscription_plan_selection",
+          JSON.stringify({
+            plan_id: planId != null ? String(planId) : null,
+            name: plan?.name || "",
+            billing_period: plan?.billing_period || "",
+            price: plan?.price != null ? String(plan.price) : "",
+          })
+        );
+      } catch (e) {}
+
+      return;
+    }
+    handleCheckout(planId);
   };
 
   const displayPlans = useMemo(() => {
@@ -129,6 +246,8 @@ const SubscriptionPlanPage = () => {
     const out = filtered.length ? filtered : byPrice;
     return out.slice(0, 3);
   }, [plans, billingMode]);
+
+  const authed = useMemo(() => isAuthenticated(), []);
 
   const getPlanFeatures = (plan) => {
     if (Array.isArray(plan?.features) && plan.features.length) {
@@ -168,6 +287,56 @@ const SubscriptionPlanPage = () => {
             btnClass="rainbow-gradient-btn"
           />
           <PopupMobileMenu />
+
+          {authPromptOpen ? (
+            <div
+              className="subscription-auth-modal-overlay"
+              role="dialog"
+              aria-modal="true"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setAuthPromptOpen(false);
+              }}
+            >
+              <div className="subscription-auth-modal">
+                {/* <button
+                  type="button"
+                  className="subscription-auth-modal-close"
+                  onClick={() => setAuthPromptOpen(false)}
+                  aria-label="Close"
+                >
+                  ×
+                </button> */}
+
+                <div className="subscription-auth-modal-title">Sign in to buy a plan</div>
+                <div className="subscription-auth-modal-subtitle">
+                  Create an account or log in to continue checkout securely.
+                </div>
+
+                <div className="subscription-auth-modal-actions">
+                  <Link
+                    className="subscription-auth-modal-btn primary"
+                    href={{ pathname: "/signin", query: { next: router?.asPath || "/subscription-plan" } }}
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    className="subscription-auth-modal-btn secondary"
+                    href={{ pathname: "/signup", query: { next: router?.asPath || "/subscription-plan" } }}
+                  >
+                    Create account
+                  </Link>
+                </div>
+
+                <button
+                  type="button"
+                  className="subscription-auth-modal-btn ghost"
+                  onClick={() => setAuthPromptOpen(false)}
+                >
+                  Continue browsing
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           <div id="pricing" className="subscription-plan-area rainbow-section-gap-big">
             <div className="subscription-plan-area-inner">
@@ -248,8 +417,8 @@ const SubscriptionPlanPage = () => {
                             <button
                               type="button"
                               className={`subscription-plan-cta ${isPopular ? "primary" : "secondary"}`}
-                              onClick={() => handleCheckout(planId)}
-                              disabled={isCheckoutLoading || isLoading || !planId}
+                              onClick={() => handleBuyClick(plan)}
+                              disabled={isCheckoutLoading || isLoading || (authed && !planId)}
                             >
                               {isCheckoutLoading ? "Redirecting..." : "Get Started"}
                             </button>
