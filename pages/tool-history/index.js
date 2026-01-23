@@ -111,6 +111,8 @@ const flattenInputs = (obj, prefix = "") => {
 const ToolHistoryPage = () => {
   const [activeToolTab, setActiveToolTab] = useState("ad_copy");
 
+  const [copiedVariantKey, setCopiedVariantKey] = useState("");
+
   const [historyDateDraft, setHistoryDateDraft] = useState({ from: "", to: "" });
   const [historyDateFilter, setHistoryDateFilter] = useState({ from: "", to: "" });
   const [historyDateError, setHistoryDateError] = useState("");
@@ -195,6 +197,34 @@ const ToolHistoryPage = () => {
     const dt = new Date(String(raw).replace(" ", "T"));
     if (Number.isNaN(dt.getTime())) return String(raw);
     return dt.toLocaleString();
+  };
+
+  const copyToClipboard = async (text) => {
+    const value = String(text || "");
+    if (!value.trim()) return false;
+
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+        return true;
+      }
+    } catch (e) {}
+
+    try {
+      const el = document.createElement("textarea");
+      el.value = value;
+      el.setAttribute("readonly", "");
+      el.style.position = "fixed";
+      el.style.top = "-1000px";
+      el.style.left = "-1000px";
+      document.body.appendChild(el);
+      el.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(el);
+      return !!ok;
+    } catch (e) {
+      return false;
+    }
   };
 
   const fetchToolHistory = async (toolKey, overrides = {}) => {
@@ -547,8 +577,35 @@ const ToolHistoryPage = () => {
                                         <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
                                           {row.variants.map((v) => (
                                             <div key={v?.id || Math.random()} className={styles.card} style={{ padding: 12 }}>
-                                              <div className={styles.muted} style={{ fontWeight: 900, marginBottom: 8 }}>
-                                                Variant #{v?.id || "—"}
+                                              <div
+                                                style={{
+                                                  display: "flex",
+                                                  alignItems: "center",
+                                                  justifyContent: "space-between",
+                                                  gap: 10,
+                                                  marginBottom: 8,
+                                                }}
+                                              >
+                                                <div className={styles.muted} style={{ fontWeight: 900 }}>
+                                                  Variant #{v?.id || "—"}
+                                                </div>
+                                                <button
+                                                  type="button"
+                                                  className={styles.smallBtn}
+                                                  onClick={async () => {
+                                                    const key = `${sessionId}-${String(v?.id || "")}`;
+                                                    const ok = await copyToClipboard(v?.content);
+                                                    if (ok) {
+                                                      setCopiedVariantKey(key);
+                                                      window.setTimeout(() => {
+                                                        setCopiedVariantKey((prev) => (prev === key ? "" : prev));
+                                                      }, 1200);
+                                                    }
+                                                  }}
+                                                  disabled={!String(v?.content || "").trim()}
+                                                >
+                                                  {copiedVariantKey === `${sessionId}-${String(v?.id || "")}` ? "Copied" : "Copy"}
+                                                </button>
                                               </div>
                                               <pre className={styles.pre}>{String(v?.content || "")}</pre>
                                             </div>

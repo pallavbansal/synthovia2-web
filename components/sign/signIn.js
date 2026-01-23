@@ -96,7 +96,9 @@ const SignIn = () => {
               throw new Error("Google login failed");
             }
             await googleLogin({ id_token });
-            router.replace("/dashboard");
+            const next = router?.query?.next;
+            const safeNext = typeof next === "string" && next.startsWith("/") ? next : "";
+            router.replace(safeNext || "/dashboard");
           } catch (err) {
             setError(err?.message || "Google login failed");
           } finally {
@@ -150,7 +152,9 @@ const SignIn = () => {
     setSubmitting(true);
     try {
       await login({ email, password });
-      router.replace("/dashboard");
+      const next = router?.query?.next;
+      const safeNext = typeof next === "string" && next.startsWith("/") ? next : "";
+      router.replace(safeNext || "/dashboard");
     } catch (err) {
       setError(err?.message || "Login failed");
     } finally {
