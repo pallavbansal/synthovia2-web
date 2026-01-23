@@ -64,7 +64,7 @@ const Footer = () => {
                   ))}
               </div>
 
-              <div className="col-lg-3 col-md-6 col-sm-6 col-12">
+              {/* <div className="col-lg-3 col-md-6 col-sm-6 col-12">
                 {FooterData &&
                   FooterData.footer.map((data, index) => (
                     <div className="rainbow-footer-widget" key={index}>
@@ -91,7 +91,7 @@ const Footer = () => {
                       </div>
                     </div>
                   ))}
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

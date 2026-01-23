@@ -1254,7 +1254,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       fontSize: "14px",
       color: "#94a3b8",
     },
-    formGroup: { marginBottom: "20px" },
+    // formGroup: { marginBottom: "20px" },
     label: {
       display: "block",
       marginBottom: "6px",
@@ -1631,9 +1631,9 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                           required
                           style={styles.textarea}
                         />
-                        <div style={{ marginTop: "8px", fontSize: "12px", color: "#94a3b8" }}>
+                        {/* <div style={{ marginTop: "8px", fontSize: "12px", color: "#94a3b8" }}>
                           Brief semantic summary so AI can infer keyword themes.
-                        </div>
+                        </div> */}
                       </div>
                     </div>
 
@@ -1663,7 +1663,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
 
                       {formData.pageGoalMode === "predefined" ? (
                         <select
-                          style={{ ...styles.select, marginTop: "8px" }}
+                          style={{ ...styles.select,marginTop: "8px" }}
                           value={formData.pageGoal}
                           onChange={(e) => setFormData((p) => ({ ...p, pageGoal: e.target.value }))}
                           required
@@ -1685,18 +1685,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                         />
                       )}
                     </Labeled>
-
-                    {renderTagInput({
-                      label: "Target Audience / Region",
-                      required: true,
-                      valueKey: "targetAudience",
-                      inputValue: audienceInput,
-                      setInputValue: setAudienceInput,
-                      suggestions: audienceSuggestions,
-                      showSuggestions: showAudienceSuggestions,
-                      setShowSuggestions: setShowAudienceSuggestions,
-                      help: "Audience segments & regions added as tags.",
-                    })}
 
                     <PredefinedCustom
                       label="Tone"
@@ -1721,6 +1709,21 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                       options={fieldOptions?.keyword_focus_type || []}
                       placeholder="Enter custom focus type"
                       help="Granularity & clustering strategy for keywords."
+                      formData={formData}
+                      setFormData={setFormData}
+                      styles={styles}
+                    />
+
+                    <PredefinedCustom
+                      label="Text Length"
+                      required
+                      modeKey="textLengthMode"
+                      valueKey="textLength"
+                      customKey="textLengthCustom"
+                      options={fieldOptions?.text_length || []}
+                      placeholder="Enter text length (1-500)"
+                      help="Text length preference."
+                      customInputProps={{ type: "number", min: 1, max: 500, step: 1 }}
                       formData={formData}
                       setFormData={setFormData}
                       styles={styles}
@@ -1762,22 +1765,20 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                       </select>
                     </Labeled>
 
-                    <PredefinedCustom
-                      label="Text Length"
-                      required
-                      modeKey="textLengthMode"
-                      valueKey="textLength"
-                      customKey="textLengthCustom"
-                      options={fieldOptions?.text_length || []}
-                      placeholder="Enter text length (1-500)"
-                      help="Text length preference."
-                      customInputProps={{ type: "number", min: 1, max: 500, step: 1 }}
-                      formData={formData}
-                      setFormData={setFormData}
-                      styles={styles}
-                    />
 
-                    <div className="col-12">
+                    {renderTagInput({
+                      label: "Target Audience / Region",
+                      required: true,
+                      valueKey: "targetAudience",
+                      inputValue: audienceInput,
+                      setInputValue: setAudienceInput,
+                      suggestions: audienceSuggestions,
+                      showSuggestions: showAudienceSuggestions,
+                      setShowSuggestions: setShowAudienceSuggestions,
+                      help: "Audience segments & regions added as tags.",
+                    })}
+
+                    <div className="col-12 col-md-6">
                       <div style={styles.formGroup}>
                         <label htmlFor="variants" style={styles.label}>
                           Number of Variants: {formData.variantsCount}
@@ -1825,6 +1826,20 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     styles={styles}
                   />
 
+                  <PredefinedCustom
+                    label="Language"
+                    required={false}
+                    modeKey="languageMode"
+                    valueKey="language"
+                    customKey="languageCustom"
+                    options={fieldOptions?.language || []}
+                    placeholder="Enter custom language"
+                    help="Language for generated SEO output."
+                    formData={formData}
+                    setFormData={setFormData}
+                    styles={styles}
+                  />
+
                   <Labeled label="Brand / Website Name" required={false} help="Used for branded keywords and SERP trust signals." styles={styles}>
                     <input
                       style={styles.input}
@@ -1843,49 +1858,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     />
                   </Labeled>
 
-                  <PredefinedCustom
-                    label="Language"
-                    required={false}
-                    modeKey="languageMode"
-                    valueKey="language"
-                    customKey="languageCustom"
-                    options={fieldOptions?.language || []}
-                    placeholder="Enter custom language"
-                    help="Language for generated SEO output."
-                    formData={formData}
-                    setFormData={setFormData}
-                    styles={styles}
-                  />
-
-                  <PredefinedCustom
-                    label="Schema / Rich Result Type"
-                    required={false}
-                    modeKey="schemaTypeMode"
-                    valueKey="schemaType"
-                    customKey="schemaTypeCustom"
-                    options={fieldOptions?.schema_rich_result_type || []}
-                    placeholder="Enter custom schema type"
-                    help="JSON-LD schema for rich results."
-                    formData={formData}
-                    setFormData={setFormData}
-                    styles={styles}
-                  />
-
-                  <Labeled label="Output Depth" required={false} help="Defines verbosity of generated SEO assets." styles={styles}>
-                    <select
-                      style={styles.select}
-                      value={formData.outputDepth}
-                      onChange={(e) => setFormData((p) => ({ ...p, outputDepth: e.target.value }))}
-                    >
-                      {(fieldOptions?.output_depth || []).map((opt) => (
-                        <option key={opt.key} value={opt.key}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </Labeled>
-
-                  <Labeled label="Output Format" required={false} help="Defines how generated results are displayed or exported." styles={styles}>
+                  {/* <Labeled label="Output Format" required={false} help="Defines how generated results are displayed or exported." styles={styles}>
                     <select
                       style={styles.select}
                       value={formData.outputFormat}
@@ -1897,7 +1870,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                         </option>
                       ))}
                     </select>
-                  </Labeled>
+                  </Labeled> */}
 
                   {renderTagInput({
                     label: "Include Keywords",
@@ -1924,6 +1897,20 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                   })}
 
                   <PredefinedCustom
+                    label="Schema / Rich Result Type"
+                    required={false}
+                    modeKey="schemaTypeMode"
+                    valueKey="schemaType"
+                    customKey="schemaTypeCustom"
+                    options={fieldOptions?.schema_rich_result_type || []}
+                    placeholder="Enter custom schema type"
+                    help="JSON-LD schema for rich results."
+                    formData={formData}
+                    setFormData={setFormData}
+                    styles={styles}
+                  />
+
+                  <PredefinedCustom
                     label="Compliance & Content Guidelines"
                     required={false}
                     modeKey="complianceGuidelinesMode"
@@ -1936,6 +1923,20 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     setFormData={setFormData}
                     styles={styles}
                   />
+
+                  <Labeled label="Output Depth" required={false} help="Defines verbosity of generated SEO assets." styles={styles}>
+                    <select
+                      style={styles.select}
+                      value={formData.outputDepth}
+                      onChange={(e) => setFormData((p) => ({ ...p, outputDepth: e.target.value }))}
+                    >
+                      {(fieldOptions?.output_depth || []).map((opt) => (
+                        <option key={opt.key} value={opt.key}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Labeled>
                 </>
               )}
 

@@ -64,6 +64,22 @@ const Home = () => {
     };
   }, []);
 
+  const styles = {
+    glasstext : {
+        
+        color: "rgba(255, 255, 255, 0.9)",
+        background: "linear-gradient(180deg,rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.7) 100%)",
+        "-webkit-background-clip": "text",
+        "-webkit-text-fill-color": "transparent",
+        "background-clip": "text",
+        "text-shadow": "0 0 40px rgba(255, 255, 255, 0.1),0 8px 32px rgba(0, 0, 0, 0.3)",
+        "filter": "drop-shadow(0 4px 20px rgba(255, 255, 255, 0.15))",
+      },
+    fontLarge:{
+      "font-size":" xxx-large",
+    }
+  };
+
   return (
     <>
       <div
@@ -74,7 +90,7 @@ const Home = () => {
           <div className="row justify-content-center">
             <div className="col-lg-12">
               <div className="inner text-center mt--140">
-                <h1 className="title display-one">
+                <h1 className="title display-one" style={{...styles.glasstext,...styles.fontLarge}}>
                   One Platform to Plan, Structure, and Write Content — Powered by AI
                   {/* <br /> */}
                   {/* {" "}
@@ -113,7 +129,7 @@ const Home = () => {
                   </span>{" "}
                   AI Hack */}
                 </h1>
-                <p className="description">
+                <p className="description" style={{...styles.glasstext}}>
                   Generate ads, emails, SEO, and social content with AI  <br />{" "}
                   that works from your inputs and helps shape content for practical use.
                 </p>

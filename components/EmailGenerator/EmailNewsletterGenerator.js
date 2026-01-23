@@ -247,7 +247,7 @@ const EmailNewsletterGenerator = () => {
             color: '#94a3b8',
         },
         formGroup: {
-            marginBottom: '20px',
+            // marginBottom: '20px',
         },
         label: {
             display: 'block',
@@ -1253,7 +1253,7 @@ const EmailNewsletterGenerator = () => {
                                             padding: '4px',
                                             border: '1px solid #334155',
                                             borderRadius: '6px',
-                                            backgroundColor: '#1e293b',
+                                            backgroundColor: '#FFFFFF',
                                         }}
                                     >
                                         {formData.targetAudience.length === 0 && (
@@ -1653,7 +1653,7 @@ const EmailNewsletterGenerator = () => {
                                 </div>
                             </div>
 
-                            <div className="col-md-6">
+                            <div className="col-12">
                                 <div style={styles.formGroup}>
                                     <label htmlFor="variantsCount" style={styles.label}>
                                         Number of Variants: {formData.variantsCount}
@@ -1702,7 +1702,7 @@ const EmailNewsletterGenerator = () => {
 
                             {formData.showAdvanced && (
                                 <>
-                                    <div className="col-12">
+                                    <div className="col-md-6">
                                         <div style={styles.formGroup}>
                                             <label style={styles.label}>
                                                 Personalization Tags (Optional)
@@ -1761,7 +1761,7 @@ const EmailNewsletterGenerator = () => {
                                         </div>
                                     </div>
 
-                                    <div className="col-12">
+                                    <div className="col-md-6">
                                         <div style={styles.formGroup}>
                                             <label style={styles.label}>
                                                 Key Highlights / Bullet Points (Optional)

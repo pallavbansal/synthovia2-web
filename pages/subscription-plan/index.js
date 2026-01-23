@@ -152,7 +152,7 @@ const SubscriptionPlanPage = () => {
 
     const credits = plan?.credits;
     const creditsLine = Number.isFinite(Number(credits)) ? `${credits} credits` : "Credits included";
-    return [creditsLine, "Priority support", "Advanced tools access", "Cancel anytime", "Secure payments"];
+    return [creditsLine, "Advanced tools access", "Cancel anytime", "Secure payments"];
   };
 
   return (
@@ -240,7 +240,7 @@ const SubscriptionPlanPage = () => {
 
                             <div className="subscription-plan-price-row">
                               <span className="subscription-plan-price">${price}</span>
-                              <span className="subscription-plan-period">per {billingLabel}</span>
+                              <span className="subscription-plan-period">/ {billingLabel}</span>
                             </div>
 
                             <p className="subscription-plan-card-desc">{description}</p>
