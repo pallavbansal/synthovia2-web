@@ -1238,7 +1238,7 @@ const CopywritingAssistantForm = () => {
         header: { padding: '24px 32px', borderBottom: '1px solid #1e293b' },
         title: { margin: 0, fontSize: '24px', fontWeight: '600', color: '#f8fafc' },
         subtitle: { margin: '6px 0 0', fontSize: '14px', color: '#94a3b8' },
-        formGroup: { marginBottom: '8px' },
+        // formGroup: { marginBottom: '8px' },
         label: { display: 'block', marginBottom: '6px', fontSize: '16px', fontWeight: '500', color: '#e2e8f0' },
         input: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box' },
         checkboxInput: {
@@ -2110,93 +2110,8 @@ const CopywritingAssistantForm = () => {
                                         </div>
                                     </div>
 
-                                    {/* --- BRAND VOICE REFERENCE + CONTENT STYLE (two-column row) --- */}
-                                    <div style={twoColContainerStyle}>
-                                        {/* Brand Voice Reference (Left Half) */}
-                                        <div style={colHalfStyle}>
-                                            {renderModeToggle(
-                                                'brandVoiceMode',
-                                                'Brand Voice Reference',
-                                                'Select a predefined brand voice or describe your custom brand voice'
-                                            )}
-
-                                            {formData.brandVoiceMode === 'predefined' && (
-                                                <div style={styles.formGroup}>
-                                                    <select
-                                                        id="brandVoice"
-                                                        name="brandVoice"
-                                                        value={formData.brandVoice || ''}
-                                                        onChange={handleChange}
-                                                        style={styles.select}
-                                                    >
-                                                        <option value="">Select Brand Voice</option>
-                                                        {brandVoiceOptions.map((opt, index) => (
-                                                            <option key={index} value={opt.value}>{opt.label}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            )}
-
-                                            {formData.brandVoiceMode === 'custom' && (
-                                                <div style={styles.formGroup}>
-                                                    <input
-                                                        type="text"
-                                                        id="customBrandVoice"
-                                                        name="customBrandVoice"
-                                                        value={formData.customBrandVoice}
-                                                        onChange={handleChange}
-                                                        style={styles.input}
-                                                        placeholder="e.g., Authoritative, technical, focused on sustainability"
-                                                        maxLength={120}
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Content Style Preference (Right Half) */}
-                                        <div style={colHalfStyle}>
-                                            {renderModeToggle(
-                                                'contentStyleMode',
-                                                'Content Style Preference',
-                                                'Select the preferred content style or describe a custom one'
-                                            )}
-
-                                            {formData.contentStyleMode === 'predefined' && (
-                                                <div style={styles.formGroup}>
-                                                    <select
-                                                        id="contentStyle"
-                                                        name="contentStyle"
-                                                        value={formData.contentStyle || ''}
-                                                        onChange={handleChange}
-                                                        style={styles.select}
-                                                    >
-                                                        <option value="">Select Style</option>
-                                                        {contentStyleOptions.map((opt, index) => (
-                                                            <option key={index} value={opt.value}>{opt.label}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            )}
-
-                                            {formData.contentStyleMode === 'custom' && (
-                                                <div style={styles.formGroup}>
-                                                    <input
-                                                        type="text"
-                                                        id="customContentStyle"
-                                                        name="customContentStyle"
-                                                        value={formData.customContentStyle}
-                                                        onChange={handleChange}
-                                                        style={styles.input}
-                                                        placeholder="e.g., Short-form vertical video script style"
-                                                        maxLength={120}
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
                                     {/* Formatting Options */}
-                                    <div className="col-12">
+                                    <div className="col-md-6">
                                         <div style={styles.formGroup}>
                                             <label style={styles.label}>
                                                 Formatting Options (optional)

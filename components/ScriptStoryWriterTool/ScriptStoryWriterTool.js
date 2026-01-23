@@ -273,7 +273,7 @@ const ScriptStoryWriterTool = () => {
               color: '#94a3b8' 
           },
           formGroup: { 
-              marginBottom: '20px' 
+            //   marginBottom: '20px' 
           },
           label: { 
               display: 'block', 
@@ -409,14 +409,14 @@ const ScriptStoryWriterTool = () => {
               marginBottom: '8px'
           },
           radioItem: { 
-              display: 'flex', 
+              display: 'inline-block', 
               alignItems: 'center', 
               gap: '8px',
               color: '#e2e8f0',
               fontSize: '14px'
           },
           checkboxRow: {
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'flex-start',
               gap: '10px',
@@ -1398,25 +1398,7 @@ const ScriptStoryWriterTool = () => {
                                 </div>
                             </div>
 
-                            <div className="col-md-6">
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>
-                                        Compliance Mode (Content & Claim Safety Controls)
-                                        <span style={styles.infoIcon} data-tooltip-id="complianceMode-tooltip" data-tooltip-content="Optional safety/compliance guidelines (e.g., avoid claims, sensitive topics).">i</span>
-                                    </label>
-                                    <Tooltip style={styles.toolTip} id="complianceMode-tooltip" />
-                                    <input
-                                        type="text"
-                                        style={styles.input}
-                                        name="complianceMode"
-                                        value={formData.complianceMode}
-                                        onChange={handleInputChange}
-                                        placeholder="e.g., No medical claims, No financial guarantees"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="col-md-6">
+                             <div className="col-md-6">
                                 <div style={styles.formGroup}>
                                     <label htmlFor="goal" style={styles.label}>
                                         Goal / Objective <span style={{ color: '#ef4444' }}>*</span>
@@ -1488,69 +1470,6 @@ const ScriptStoryWriterTool = () => {
                                 </div>
                             </div>
 
-                            {/* Target Audience */}
-                            <div className="col-12">
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>
-                                    Target Audience <span style={{ color: '#ef4444' }}>*</span>
-                                    <span style={styles.infoIcon} data-tooltip-id="targetAudience-tooltip" data-tooltip-content="Add one or more audience tags (press Enter to add).">i</span>
-                                    </label>
-
-                                    <Tooltip style={styles.toolTip} id="targetAudience-tooltip" />
-
-                                    <div style={{
-                                        display: 'flex',
-                                        flexWrap: 'wrap',
-                                        gap: '8px',
-                                        marginBottom: '8px',
-                                        minHeight: '40px',
-                                        alignItems: 'center',
-                                        padding: '4px',
-                                        border: '1px solid #334155',
-                                        borderRadius: '6px',
-                                        backgroundColor: '#1e293b'
-                                    }}>
-                                        {formData.targetAudience.length === 0 && (
-                                            <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
-                                                Type and press Enter to add audience tags
-                                            </span>
-                                        )}
-                                        {formData.targetAudience.map((chip, index) => (
-                                            <span
-                                                key={index}
-                                                style={{
-                                                    ...styles.badge,
-                                                    ...styles.badgePrimary,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '6px',
-                                                    padding: '4px 10px'
-                                                }}
-                                            >
-                                                {chip}
-                                                <button
-                                                    type="button"
-                                                    style={styles.removeBtn}
-                                                    onClick={() => removeTag(chip)}
-                                                >
-                                                    ×
-                                                </button>
-                                            </span>
-                                        ))}
-                                    </div>
-
-                                    <input
-                                        type="text"
-                                        style={styles.input}
-                                        id="audienceInput"
-                                        value={audienceInput}
-                                        onChange={(e) => setAudienceInput(e.target.value)}
-                                        onKeyDown={handleTagInput}
-                                        placeholder="Type and press Enter to add audience tags"
-                                        required={formData.targetAudience.length === 0}
-                                    />
-                                </div>
-                            </div>
                             <div className="col-md-6">
                                 <div style={styles.formGroup}>
                                     <label htmlFor="tone" style={styles.label}>
@@ -1621,118 +1540,143 @@ const ScriptStoryWriterTool = () => {
                                         </div>
                                     )}
                                 </div>
-                            </div>
+                            </div>        
 
                             <div className="col-md-6">
                                 <div style={styles.formGroup}>
                                     <label style={styles.label}>
-                                        Video Length / Duration <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} data-tooltip-id="duration-tooltip" data-tooltip-content="Choose how long the script should be. Use presets, slider, or custom input.">i</span>
+                                        Script Style <span style={{ color: '#ef4444' }}>*</span>
+                                        <span style={styles.infoIcon} data-tooltip-id="scriptStyle-tooltip" data-tooltip-content="Select the structure/style of the script (or switch to Custom to type your own).">i</span>
                                     </label>
 
-                                    <Tooltip style={styles.toolTip} id="duration-tooltip" />
+                                    <Tooltip style={styles.toolTip} id="scriptStyle-tooltip" />
 
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-                                        {durationPresets.map((seconds) => {
-                                            const active = formData.durationPresetSeconds === seconds;
-                                            return (
-                                                <button
-                                                    key={seconds}
-                                                    type="button"
-                                                    style={{
-                                                        ...styles.badge,
-                                                        backgroundColor: active ? '#3b82f6' : '#1e293b',
-                                                        color: active ? 'white' : '#e2e8f0',
-                                                        border: '1px solid #334155',
-                                                        cursor: 'pointer',
-                                                    }}
-                                                    onClick={() => handleDurationPresetClick(seconds)}
-                                                >
-                                                    {formatDuration(seconds)}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
+                                    {renderModeToggle('scriptStyleMode', (mode) => {
+                                        if (mode === 'custom') {
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                scriptStyleMode: 'custom',
+                                                scriptStyle: '',
+                                            }));
+                                            return;
+                                        }
 
-                                    <div style={{ marginBottom: '10px' }}>
-                                        <input
-                                            type="range"
-                                            min={15}
-                                            max={1800}
-                                            step={1}
-                                            value={formData.durationSeconds}
-                                            onChange={handleDurationSliderChange}
-                                            style={{ width: '100%' }}
-                                        />
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', color: '#94a3b8', fontSize: '13px' }}>
-                                            <span>15s</span>
-                                            <span>{formatDuration(formData.durationSeconds)} — Target ≈ {estimateWords(formData.durationSeconds)} words</span>
-                                            <span>30m</span>
-                                        </div>
-                                    </div>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            scriptStyleMode: 'predefined',
+                                            scriptStyleCustom: '',
+                                            scriptStyle: '',
+                                        }));
+                                    })}
 
-                                    <label style={styles.label}>
-                                        Custom Duration
-                                        <span style={styles.infoIcon} data-tooltip-id="customDuration-tooltip" data-tooltip-content="Optional: specify a custom duration like 45s or 2m 30s.">i</span>
-                                    </label>
-                                    <Tooltip style={styles.toolTip} id="customDuration-tooltip" />
-
-                                    <div style={{ display: 'flex', gap: '10px' }}>
-                                        <input
-                                            type="text"
-                                            style={styles.input}
-                                            value={customDurationInput}
-                                            onChange={(e) => setCustomDurationInput(e.target.value)}
-                                            placeholder="Custom (10s–180s), e.g., 45s or 2m 30s"
-                                        />
-                                        <button
-                                            type="button"
-                                            style={{ ...styles.btn, ...styles.btnOutline, whiteSpace: 'nowrap' }}
-                                            onClick={applyCustomDuration}
-                                            disabled={!customDurationInput.trim()}
+                                    {formData.scriptStyleMode === 'predefined' && (
+                                        <select
+                                            style={styles.select}
+                                            name="scriptStyle"
+                                            value={formData.scriptStyle}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    scriptStyle: value,
+                                                }));
+                                            }}
+                                            required
                                         >
-                                            Apply
-                                        </button>
-                                    </div>
+                                            <option value="">Select style</option>
+                                            {fieldOptions.scriptStyles.map(option => (
+                                                <option key={option.id || option.key} value={option.key}>
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+
+                                    {formData.scriptStyleMode === 'custom' && (
+                                        <div style={{ marginTop: '10px' }}>
+                                            <label style={styles.label}>
+                                                Custom Script Style <span style={{ color: '#ef4444' }}>*</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="scriptStyleCustom-tooltip" data-tooltip-content="Describe the script style/structure you want.">i</span>
+                                            </label>
+                                            <Tooltip style={styles.toolTip} id="scriptStyleCustom-tooltip" />
+                                            <input
+                                                type="text"
+                                                style={styles.input}
+                                                name="scriptStyleCustom"
+                                                value={formData.scriptStyleCustom}
+                                                onChange={handleInputChange}
+                                                placeholder="Enter custom script style"
+                                                required
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-
-                            <div className="col-12">
+                           
+                            {/* Target Audience */}
+                            <div className="col-md-6">
                                 <div style={styles.formGroup}>
-                                    <label htmlFor="variantsCount" style={styles.label}>
-                                        Number of Variants: {formData.variantsCount}
-                                        <span style={styles.infoIcon} data-tooltip-id="variantsCount-tooltip" data-tooltip-content="How many variations you want the AI to generate.">i</span>
+                                    <label style={styles.label}>
+                                    Target Audience <span style={{ color: '#ef4444' }}>*</span>
+                                    <span style={styles.infoIcon} data-tooltip-id="targetAudience-tooltip" data-tooltip-content="Add one or more audience tags (press Enter to add).">i</span>
                                     </label>
-                                    <Tooltip style={styles.toolTip} id="variantsCount-tooltip" />
-                                    <input
-                                        type="range"
-                                        id="variantsCount"
-                                        name="variantsCount"
-                                        min="1"
-                                        max="5"
-                                        value={formData.variantsCount}
-                                        onChange={handleInputChange}
-                                        style={{ width: '100%' }}
-                                    />
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            fontSize: '12px',
-                                            color: '#94a3b8',
-                                            marginTop: '6px',
-                                        }}
-                                    >
-                                        <span>1</span>
-                                        <span>2</span>
-                                        <span>3</span>
-                                        <span>4</span>
-                                        <span>5</span>
+
+                                    <Tooltip style={styles.toolTip} id="targetAudience-tooltip" />
+
+                                    <div style={{
+                                        display: 'flex',
+                                        flexWrap: 'wrap',
+                                        gap: '8px',
+                                        marginBottom: '8px',
+                                        minHeight: '40px',
+                                        alignItems: 'center',
+                                        padding: '4px',
+                                        border: '1px solid #334155',
+                                        borderRadius: '6px',
+                                        backgroundColor: '#FFFFFF'
+                                    }}>
+                                        {formData.targetAudience.length === 0 && (
+                                            <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
+                                                Type and press Enter to add audience tags
+                                            </span>
+                                        )}
+                                        {formData.targetAudience.map((chip, index) => (
+                                            <span
+                                                key={index}
+                                                style={{
+                                                    ...styles.badge,
+                                                    ...styles.badgePrimary,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    padding: '4px 10px'
+                                                }}
+                                            >
+                                                {chip}
+                                                <button
+                                                    type="button"
+                                                    style={styles.removeBtn}
+                                                    onClick={() => removeTag(chip)}
+                                                >
+                                                    ×
+                                                </button>
+                                            </span>
+                                        ))}
                                     </div>
+
+                                    <input
+                                        type="text"
+                                        style={styles.input}
+                                        id="audienceInput"
+                                        value={audienceInput}
+                                        onChange={(e) => setAudienceInput(e.target.value)}
+                                        onKeyDown={handleTagInput}
+                                        placeholder="Type and press Enter to add audience tags"
+                                        required={formData.targetAudience.length === 0}
+                                    />
                                 </div>
                             </div>
-
-                            <div className="col-12">
+                            <div className="col-md-6">
                                 <div style={styles.formGroup}>
                                     <label style={styles.label}>
                                         Text Length
@@ -1837,78 +1781,133 @@ const ScriptStoryWriterTool = () => {
                                 </div>
                             </div>
 
-                            <div className="col-md-6">
+                            <div className="col-12">
                                 <div style={styles.formGroup}>
                                     <label style={styles.label}>
-                                        Script Style <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} data-tooltip-id="scriptStyle-tooltip" data-tooltip-content="Select the structure/style of the script (or switch to Custom to type your own).">i</span>
+                                        Video Length / Duration <span style={{ color: '#ef4444' }}>*</span>
+                                        <span style={styles.infoIcon} data-tooltip-id="duration-tooltip" data-tooltip-content="Choose how long the script should be. Use presets, slider, or custom input.">i</span>
                                     </label>
 
-                                    <Tooltip style={styles.toolTip} id="scriptStyle-tooltip" />
+                                    <Tooltip style={styles.toolTip} id="duration-tooltip" />
 
-                                    {renderModeToggle('scriptStyleMode', (mode) => {
-                                        if (mode === 'custom') {
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                scriptStyleMode: 'custom',
-                                                scriptStyle: '',
-                                            }));
-                                            return;
-                                        }
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+                                        {durationPresets.map((seconds) => {
+                                            const active = formData.durationPresetSeconds === seconds;
+                                            return (
+                                                <button
+                                                    key={seconds}
+                                                    type="button"
+                                                    style={{
+                                                        ...styles.badge,
+                                                        backgroundColor: active ? '#3b82f6' : '#1e293b',
+                                                        color: active ? 'white' : '#e2e8f0',
+                                                        border: '1px solid #334155',
+                                                        cursor: 'pointer',
+                                                    }}
+                                                    onClick={() => handleDurationPresetClick(seconds)}
+                                                >
+                                                    {formatDuration(seconds)}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
 
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            scriptStyleMode: 'predefined',
-                                            scriptStyleCustom: '',
-                                            scriptStyle: '',
-                                        }));
-                                    })}
-
-                                    {formData.scriptStyleMode === 'predefined' && (
-                                        <select
-                                            style={styles.select}
-                                            name="scriptStyle"
-                                            value={formData.scriptStyle}
-                                            onChange={(e) => {
-                                                const value = e.target.value;
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    scriptStyle: value,
-                                                }));
-                                            }}
-                                            required
-                                        >
-                                            <option value="">Select style</option>
-                                            {fieldOptions.scriptStyles.map(option => (
-                                                <option key={option.id || option.key} value={option.key}>
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    )}
-
-                                    {formData.scriptStyleMode === 'custom' && (
-                                        <div style={{ marginTop: '10px' }}>
-                                            <label style={styles.label}>
-                                                Custom Script Style <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} data-tooltip-id="scriptStyleCustom-tooltip" data-tooltip-content="Describe the script style/structure you want.">i</span>
-                                            </label>
-                                            <Tooltip style={styles.toolTip} id="scriptStyleCustom-tooltip" />
-                                            <input
-                                                type="text"
-                                                style={styles.input}
-                                                name="scriptStyleCustom"
-                                                value={formData.scriptStyleCustom}
-                                                onChange={handleInputChange}
-                                                placeholder="Enter custom script style"
-                                                required
-                                            />
+                                    <div style={{ marginBottom: '10px' }}>
+                                        <input
+                                            type="range"
+                                            min={15}
+                                            max={90}
+                                            step={1}
+                                            value={formData.durationSeconds}
+                                            onChange={handleDurationSliderChange}
+                                            style={{ width: '100%' }}
+                                        />
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', color: '#94a3b8', fontSize: '13px' }}>
+                                            <span>15s</span>
+                                            <span>{formatDuration(formData.durationSeconds)} — Target ≈ {estimateWords(formData.durationSeconds)} words</span>
+                                            <span>1m 30s</span>
                                         </div>
-                                    )}
+                                    </div>
+
+                                    <label style={styles.label}>
+                                        Custom Duration
+                                        <span style={styles.infoIcon} data-tooltip-id="customDuration-tooltip" data-tooltip-content="Optional: specify a custom duration like 45s or 2m 30s.">i</span>
+                                    </label>
+                                    <Tooltip style={styles.toolTip} id="customDuration-tooltip" />
+
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                        <input
+                                            type="text"
+                                            style={styles.input}
+                                            value={customDurationInput}
+                                            onChange={(e) => setCustomDurationInput(e.target.value)}
+                                            placeholder="Custom (10s–180s), e.g., 45s or 2m 30s"
+                                        />
+                                        <button
+                                            type="button"
+                                            style={{ ...styles.btn, ...styles.btnOutline, whiteSpace: 'nowrap' }}
+                                            onClick={applyCustomDuration}
+                                            disabled={!customDurationInput.trim()}
+                                        >
+                                            Apply
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
-                                </>
+                            <div className="col-md-6">
+                                <div style={styles.formGroup}>
+                                    <label htmlFor="variantsCount" style={styles.label}>
+                                        Number of Variants: {formData.variantsCount}
+                                        <span style={styles.infoIcon} data-tooltip-id="variantsCount-tooltip" data-tooltip-content="How many variations you want the AI to generate.">i</span>
+                                    </label>
+                                    <Tooltip style={styles.toolTip} id="variantsCount-tooltip" />
+                                    <input
+                                        type="range"
+                                        id="variantsCount"
+                                        name="variantsCount"
+                                        min="1"
+                                        max="5"
+                                        value={formData.variantsCount}
+                                        onChange={handleInputChange}
+                                        style={{ width: '100%' }}
+                                    />
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            fontSize: '12px',
+                                            color: '#94a3b8',
+                                            marginTop: '6px',
+                                        }}
+                                    >
+                                        <span>1</span>
+                                        <span>2</span>
+                                        <span>3</span>
+                                        <span>4</span>
+                                        <span>5</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="col-md-6">
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>
+                                        Compliance Mode (Content & Claim Safety Controls)
+                                        <span style={styles.infoIcon} data-tooltip-id="complianceMode-tooltip" data-tooltip-content="Optional safety/compliance guidelines (e.g., avoid claims, sensitive topics).">i</span>
+                                    </label>
+                                    <Tooltip style={styles.toolTip} id="complianceMode-tooltip" />
+                                    <input
+                                        type="text"
+                                        style={styles.input}
+                                        name="complianceMode"
+                                        value={formData.complianceMode}
+                                        onChange={handleInputChange}
+                                        placeholder="e.g., No medical claims, No financial guarantees"
+                                    />
+                                </div>
+                            </div>
+                            </>
                             )}
 
                             {/* Advanced Features Toggle */}
@@ -1947,7 +1946,7 @@ const ScriptStoryWriterTool = () => {
                             </div>
 
                             {formData.includeHook && (
-                                <div className="col-12">
+                                <div className="col-md-6">
                                     <div style={styles.formGroup}>
                                         <label style={styles.label}>
                                             Hook Style
@@ -1967,7 +1966,7 @@ const ScriptStoryWriterTool = () => {
                                                 </option>
                                             ))}
                                         </select>
-                                        <div style={{ marginTop: '10px' }}>
+                                        {/* <div style={{ marginTop: '10px' }}>
                                             <label style={styles.label}>
                                                 Custom Hook Pattern
                                                 <span style={styles.infoIcon} data-tooltip-id="hookStyleCustomPattern-tooltip" data-tooltip-content="Optional: provide a hook sentence template (e.g., 'Stop scrolling if...').">i</span>
@@ -1981,7 +1980,7 @@ const ScriptStoryWriterTool = () => {
                                                 onChange={handleInputChange}
                                                 placeholder="Optional: Custom pattern (e.g., 'Stop scrolling if...')"
                                             />
-                                        </div>
+                                        </div> */}
                                     </div>
                                 </div>
                             )}
@@ -2083,122 +2082,6 @@ const ScriptStoryWriterTool = () => {
                                     </div>
                                 </div>
                             )}
-
-                            <div className="col-md-6">
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>
-                                        Narration Style (POV)
-                                        <span style={styles.infoIcon} data-tooltip-id="narrationStyle-tooltip" data-tooltip-content="Select point-of-view / narration style (or switch to Custom to type your own).">i</span>
-                                    </label>
-
-                                    <Tooltip style={styles.toolTip} id="narrationStyle-tooltip" />
-
-                                    {renderModeToggle('narrationStyleMode', (mode) => {
-                                        if (mode === 'custom') {
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                narrationStyleMode: 'custom',
-                                                narrationStyle: '',
-                                            }));
-                                            return;
-                                        }
-
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            narrationStyleMode: 'predefined',
-                                            narrationStyleCustom: '',
-                                            narrationStyle: '',
-                                        }));
-                                    })}
-
-                                    {formData.narrationStyleMode === 'predefined' && (
-                                    <select
-                                        style={styles.select}
-                                        name="narrationStyle"
-                                        value={formData.narrationStyle}
-                                        onChange={(e) => {
-                                            const value = e.target.value;
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                narrationStyle: value,
-                                            }));
-                                        }}
-                                    >
-                                        <option value="">Select POV</option>
-                                        {fieldOptions.narrationStyles.map(option => (
-                                            <option key={option.id || option.key} value={option.key}>
-                                                {option.label}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    )}
-
-                                    {formData.narrationStyleMode === 'custom' && (
-                                        <div style={{ marginTop: '10px' }}>
-                                            <label style={styles.label}>
-                                                Custom Narration Style
-                                                <span style={styles.infoIcon} data-tooltip-id="narrationStyleCustom-tooltip" data-tooltip-content="Describe the narration/POV style in your own words.">i</span>
-                                            </label>
-                                            <Tooltip style={styles.toolTip} id="narrationStyleCustom-tooltip" />
-                                            <input
-                                                type="text"
-                                                style={styles.input}
-                                                name="narrationStyleCustom"
-                                                value={formData.narrationStyleCustom}
-                                                onChange={handleInputChange}
-                                                placeholder="Enter custom narration style"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="col-md-6">
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>
-                                        Output Format (Export Type)
-                                        <span style={styles.infoIcon} data-tooltip-id="outputFormat-tooltip" data-tooltip-content="Choose how you want the output formatted/exported.">i</span>
-                                    </label>
-                                    <Tooltip style={styles.toolTip} id="outputFormat-tooltip" />
-                                    <select
-                                        style={styles.select}
-                                        name="outputFormat"
-                                        value={formData.outputFormat}
-                                        onChange={handleInputChange}
-                                    >
-                                        {fieldOptions.outputFormats.map(option => (
-                                            <option key={option.key} value={option.key}>
-                                                {option.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="col-12">
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>
-                                        Script Structure Depth (Level of Detail)
-                                        <span style={styles.infoIcon} data-tooltip-id="structureDepth-tooltip" data-tooltip-content="How detailed the script structure should be.">i</span>
-                                    </label>
-                                    <Tooltip style={styles.toolTip} id="structureDepth-tooltip" />
-                                    <div style={styles.radioGroup}>
-                                        {fieldOptions.structureDepths.map((opt) => (
-                                            <label key={opt.key} style={styles.radioItem}>
-                                                <input
-                                                    type="radio"
-                                                    name="structureDepth"
-                                                    value={opt.key}
-                                                    checked={formData.structureDepth === opt.key}
-                                                    onChange={handleInputChange}
-                                                />
-                                                <span>{opt.label}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
 
                             <div className="col-md-6">
                                 <div style={styles.formGroup}>
@@ -2333,6 +2216,122 @@ const ScriptStoryWriterTool = () => {
                                             />
                                         </div>
                                     )}
+                                </div>
+                            </div>
+
+                            <div className="col-12">
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>
+                                        Script Structure Depth (Level of Detail)
+                                        <span style={styles.infoIcon} data-tooltip-id="structureDepth-tooltip" data-tooltip-content="How detailed the script structure should be.">i</span>
+                                    </label>
+                                    <Tooltip style={styles.toolTip} id="structureDepth-tooltip" />
+                                    <div style={styles.radioGroup}>
+                                        {fieldOptions.structureDepths.map((opt) => (
+                                            <label key={opt.key} style={styles.radioItem}>
+                                                <input
+                                                    type="radio"
+                                                    name="structureDepth"
+                                                    value={opt.key}
+                                                    checked={formData.structureDepth === opt.key}
+                                                    onChange={handleInputChange}
+                                                />
+                                                <span>{opt.label}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="col-12">
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>
+                                        Narration Style (POV)
+                                        <span style={styles.infoIcon} data-tooltip-id="narrationStyle-tooltip" data-tooltip-content="Select point-of-view / narration style (or switch to Custom to type your own).">i</span>
+                                    </label>
+
+                                    <Tooltip style={styles.toolTip} id="narrationStyle-tooltip" />
+
+                                    {renderModeToggle('narrationStyleMode', (mode) => {
+                                        if (mode === 'custom') {
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                narrationStyleMode: 'custom',
+                                                narrationStyle: '',
+                                            }));
+                                            return;
+                                        }
+
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            narrationStyleMode: 'predefined',
+                                            narrationStyleCustom: '',
+                                            narrationStyle: '',
+                                        }));
+                                    })}
+
+                                    {formData.narrationStyleMode === 'predefined' && (
+                                    <select
+                                        style={styles.select}
+                                        name="narrationStyle"
+                                        value={formData.narrationStyle}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                narrationStyle: value,
+                                            }));
+                                        }}
+                                    >
+                                        <option value="">Select POV</option>
+                                        {fieldOptions.narrationStyles.map(option => (
+                                            <option key={option.id || option.key} value={option.key}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    )}
+
+                                    {formData.narrationStyleMode === 'custom' && (
+                                        <div style={{ marginTop: '10px' }}>
+                                            <label style={styles.label}>
+                                                Custom Narration Style
+                                                <span style={styles.infoIcon} data-tooltip-id="narrationStyleCustom-tooltip" data-tooltip-content="Describe the narration/POV style in your own words.">i</span>
+                                            </label>
+                                            <Tooltip style={styles.toolTip} id="narrationStyleCustom-tooltip" />
+                                            <input
+                                                type="text"
+                                                style={styles.input}
+                                                name="narrationStyleCustom"
+                                                value={formData.narrationStyleCustom}
+                                                onChange={handleInputChange}
+                                                placeholder="Enter custom narration style"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="col-12">
+                                <div style={styles.formGroup}>
+                                    <label style={styles.label}>
+                                        Output Format (Export Type)
+                                        <span style={styles.infoIcon} data-tooltip-id="outputFormat-tooltip" data-tooltip-content="Choose how you want the output formatted/exported.">i</span>
+                                    </label>
+                                    <Tooltip style={styles.toolTip} id="outputFormat-tooltip" />
+                                    <select
+                                        style={styles.select}
+                                        name="outputFormat"
+                                        value={formData.outputFormat}
+                                        onChange={handleInputChange}
+                                    >
+                                        {fieldOptions.outputFormats.map(option => (
+                                            <option key={option.key} value={option.key}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
 

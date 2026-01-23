@@ -6,7 +6,7 @@ import { useRouter } from "next/router";
 import { useAppContext } from "@/context/Context";
 import { getUser, isAuthenticated, logout } from "@/utils/auth";
 
-import logo from "../../public/images/logo/logo4.png";
+import logo from "../../public/images/logo/logo.png";
 import logoDark from "../../public/images/light/logo/logo-dark.png";
 import Nav from "./Nav";
 
@@ -101,9 +101,9 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
                     style={{
                       position: "relative",
                       display: "inline-block",
-                      width: 44,
+                      width: 60,
                       height: 44,
-                      overflow: "hidden",
+                      // overflow: "hidden",
                       verticalAlign: "middle",
                     }}
                   >

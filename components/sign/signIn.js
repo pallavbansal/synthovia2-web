@@ -190,7 +190,7 @@ const SignIn = () => {
                   </div>
                   <div className="signup-box-bottom">
                     <div className="signup-box-content">
-                      <div className="social-btn-grp">
+                      <div style={{ margin: "30px" }}>
                         <div ref={googleButtonRef} style={{ width: "100%" }} />
                       </div>
                       <div className="text-social-area">

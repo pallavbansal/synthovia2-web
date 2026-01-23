@@ -90,17 +90,6 @@ const SignUp = () => {
                           </span>
                           Login with Google
                         </a>
-                        <a className="btn-default btn-border" href="#">
-                          <span className="icon-left">
-                            <Image
-                              src={facebook}
-                              width={18}
-                              height={18}
-                              alt="Facebook Icon"
-                            />
-                          </span>
-                          Login with Facebook
-                        </a>
                       </div>
                       <div className="text-social-area">
                         <hr />
