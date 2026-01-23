@@ -284,10 +284,10 @@ const SettingsPage = () => {
               <div className={styles.k}>Remaining</div>
               <div className={styles.v}>{credits?.credits_remaining ?? "—"}</div>
             </div>
-            <div className={styles.kv}>
+            {/* <div className={styles.kv}>
               <div className={styles.k}>Used (current cycle)</div>
               <div className={styles.v}>{credits?.credits_used_current_cycle ?? "—"}</div>
-            </div>
+            </div> */}
             <div className={styles.kv}>
               <div className={styles.k}>Used (all time)</div>
               <div className={styles.v}>{credits?.credits_used_all_time ?? "—"}</div>

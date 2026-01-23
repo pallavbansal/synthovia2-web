@@ -1282,7 +1282,7 @@ const CopywritingAssistantForm = () => {
         flexWrap: 'wrap',
         justifyContent: 'space-between',
         gap: COLUMN_GAP,
-        marginBottom: '20px',
+        // marginBottom: '20px',
         width: '100%'
     };
     const colHalfStyle = {
@@ -1290,7 +1290,7 @@ const CopywritingAssistantForm = () => {
     };
     const colFullStyle = {
         width: '100%',
-        marginBottom: '20px',
+        // marginBottom: '20px',
     };
 
     // Helper function for radio buttons in the advanced section
@@ -2384,54 +2384,61 @@ const CopywritingAssistantForm = () => {
                                     </div>
 
                                     {/* Grammar Strictness (shown when proofreading is enabled) */}
-                                    {formData.proofreading && (
-                                        <>
-                                            {/* --- GRAMMAR STRICTNESS MODE TOGGLE - NEW --- */}
-                                            {renderModeToggle('grammarStrictnessMode', 'Grammar Strictness', 'Select how strictly grammar and style rules should be applied, or describe custom rules')}
+                                    <div style={twoColContainerStyle}>
+                                        {/* Emotional Intent (Left Half) */}
+                                        <div style={colHalfStyle}>  
 
-                                            {/* Grammar Strictness (Predefined/Custom Input) */}
-                                            {formData.grammarStrictnessMode === 'predefined' && (
-                                                <div className="col-md-6">
-                                                    <div style={styles.formGroup}>
-                                                        <label htmlFor="grammarStrictness" style={styles.label}>
-                                                            Select Grammar Strictness
-                                                        </label>
-                                                        <select
-                                                            id="grammarStrictness"
-                                                            name="grammarStrictness"
-                                                            value={formData.grammarStrictness}
-                                                            onChange={handleChange}
-                                                            style={styles.select}
-                                                        >
-                                                            {grammarStrictnessOptions.map((opt, index) => (
-                                                                <option key={index} value={opt.value}>{opt.label}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            )}
+                                            {formData.proofreading && (
+                                                <>
+                                                {/* --- GRAMMAR STRICTNESS MODE TOGGLE - NEW --- */}
+                                                {renderModeToggle('grammarStrictnessMode', 'Grammar Strictness', 'Select how strictly grammar and style rules should be applied, or describe custom rules')}
 
-                                            {formData.grammarStrictnessMode === 'custom' && (
-                                                <div className="col-md-6">
-                                                    <div style={styles.formGroup}>
-                                                        <label htmlFor="customGrammarStrictness" style={styles.label}>
-                                                            Custom Grammar Strictness
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            id="customGrammarStrictness"
-                                                            name="customGrammarStrictness"
-                                                            value={formData.customGrammarStrictness}
-                                                            onChange={handleChange}
-                                                            style={styles.input}
-                                                            placeholder="e.g., Use Oxford comma, avoid passive voice"
-                                                            maxLength={120}
-                                                        />
-                                                    </div>
-                                                </div>
+                                                {/* Grammar Strictness (Predefined/Custom Input) */}
+                                                {formData.grammarStrictnessMode === 'predefined' && (
+                                                    
+                                                        <div style={styles.formGroup}>
+                                                            <label htmlFor="grammarStrictness" style={styles.label}>
+                                                                Select Grammar Strictness
+                                                            </label>
+                                                            <select
+                                                                id="grammarStrictness"
+                                                                name="grammarStrictness"
+                                                                value={formData.grammarStrictness}
+                                                                onChange={handleChange}
+                                                                style={styles.select}
+                                                            >
+                                                                {grammarStrictnessOptions.map((opt, index) => (
+                                                                    <option key={index} value={opt.value}>{opt.label}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                )}
+
+                                                {formData.grammarStrictnessMode === 'custom' && (
+                                                        <div style={styles.formGroup}>
+                                                            <label htmlFor="customGrammarStrictness" style={styles.label}>
+                                                                Custom Grammar Strictness
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                id="customGrammarStrictness"
+                                                                name="customGrammarStrictness"
+                                                                value={formData.customGrammarStrictness}
+                                                                onChange={handleChange}
+                                                                style={styles.input}
+                                                                placeholder="e.g., Use Oxford comma, avoid passive voice"
+                                                                maxLength={120}
+                                                            />
+                                                        </div>                                            
+                                                )}
+                                                </>
                                             )}
-                                        </>
-                                    )}
+                                        </div>
+
+                                        {/* Writing Framework (Right Half) */}
+                                        <div style={colHalfStyle}></div>
+                                    </div>
+
                                 </>
                             )}
 
@@ -2439,15 +2446,16 @@ const CopywritingAssistantForm = () => {
                             <div className="col-12" style={{ marginTop: '20px' }}>
                                 <button
                                     type="submit"
-                                    style={{
-                                        ...styles.btn,
-                                        ...styles.btnPrimary,
-                                        padding: '12px 24px',
-                                        fontSize: '16px',
-                                        fontWeight: '600'
-                                    }}
+                                    className='personal-info-button'
+                                    // style={{
+                                    //     ...styles.btn,
+                                    //     ...styles.btnPrimary,
+                                    //     padding: '12px 24px',
+                                    //     fontSize: '16px',
+                                    //     fontWeight: '600'
+                                    // }}
                                 >
-                                    Generate Copy
+                                    Review & Generate
                                 </button>
                             </div>
                         </div>

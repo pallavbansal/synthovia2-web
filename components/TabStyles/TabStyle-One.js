@@ -83,7 +83,7 @@ const TabStyleOne = () => {
                             </div>
                             <div className="read-more">
                               <Link
-                                className="btn-default color-blacked"
+                                className="personal-info-button"
                                 href={getToolHref(tab)}
                               >
                                 Start Exploring Now

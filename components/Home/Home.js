@@ -65,19 +65,18 @@ const Home = () => {
   }, []);
 
   const styles = {
-    glasstext : {
-        
-        color: "rgba(255, 255, 255, 0.9)",
-        background: "linear-gradient(180deg,rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.7) 100%)",
-        "-webkit-background-clip": "text",
-        "-webkit-text-fill-color": "transparent",
-        "background-clip": "text",
-        "text-shadow": "0 0 40px rgba(255, 255, 255, 0.1),0 8px 32px rgba(0, 0, 0, 0.3)",
-        "filter": "drop-shadow(0 4px 20px rgba(255, 255, 255, 0.15))",
-      },
-    fontLarge:{
-      "font-size":" xxx-large",
-    }
+    glasstext: {
+      color: "rgba(255, 255, 255, 0.9)",
+      background: "linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.7) 100%)",
+      WebkitBackgroundClip: "text",
+      WebkitTextFillColor: "transparent",
+      backgroundClip: "text",
+      textShadow: "0 0 40px rgba(255, 255, 255, 0.1), 0 8px 32px rgba(0, 0, 0, 0.3)",
+      filter: "drop-shadow(0 4px 20px rgba(255, 255, 255, 0.15))",
+    },
+    fontLarge: {
+      fontSize: "xxx-large",
+    },
   };
 
   return (
@@ -309,7 +308,8 @@ const Home = () => {
                   Synthovia Ecosystem
                 </h2>
                 <Link
-                  className="btn-default btn-large color-blacked"
+                  // className="btn-default btn-large color-blacked"
+                  className="personal-info-button"
                   href="/signin"
                 >
                   Try It Now{" "}

@@ -1945,7 +1945,8 @@ const EmailNewsletterGenerator = () => {
                                     </button>
                                     <button
                                         type="submit"
-                                        style={{ ...styles.btn, ...styles.btnPrimary }}
+                                        className='personal-info-button'
+                                        // style={{ ...styles.btn, ...styles.btnPrimary }}
                                         disabled={isGenerating || isApiLoading}
                                     >
                                         Review & Generate

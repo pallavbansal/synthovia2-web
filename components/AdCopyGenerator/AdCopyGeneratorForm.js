@@ -2725,7 +2725,8 @@ const AdCopyGeneratorForm = () => {
                                             </button>
                                             <button
                                                 type="submit"
-                                                style={{ ...styles.btn, ...styles.btnPrimary }}
+                                                className='personal-info-button'
+                                                // style={{ ...styles.btn, ...styles.btnPrimary }}
                                                 disabled={isGenerating || isApiLoading}
                                             >
                                                 {isGenerating || isApiLoading ? (
@@ -2742,7 +2743,7 @@ const AdCopyGeneratorForm = () => {
                                                             marginLeft: '8px'
                                                         }} />
                                                     </>
-                                                ) : 'Generate Ad Copy'}</button>
+                                                ) : 'Review &Generate'}</button>
                                         </div>
                                     </div>
                                 </div>

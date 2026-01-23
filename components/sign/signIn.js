@@ -222,11 +222,11 @@ const SignIn = () => {
                           />
                         </div>
                         {error ? <p className="mt--10">{error}</p> : null}
-                        <div className="forget-text">
+                        {/* <div className="forget-text">
                           <a className="btn-read-more" href="#">
                             <span>Forgot password</span>
                           </a>
-                        </div>
+                        </div> */}
                         <button
                           type="submit"
                           className="btn-default"

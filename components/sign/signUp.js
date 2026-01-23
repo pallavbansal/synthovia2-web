@@ -1,15 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import Script from "next/script";
 
 import logo from "../../public/images/logo/logo.png";
 import logoDark from "../../public/images/light/logo/logo-dark.png";
-import google from "../../public/images/sign-up/google.png";
 import facebook from "../../public/images/sign-up/facebook.png";
 import { useAppContext } from "@/context/Context";
 import DarkSwitch from "../Header/dark-switch";
-import { register } from "@/utils/auth";
+import { googleLogin, register } from "@/utils/auth";
 
 const SignUp = () => {
   const { isLightTheme, toggleTheme } = useAppContext();
@@ -22,6 +22,137 @@ const SignUp = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [googleBtnReady, setGoogleBtnReady] = useState(false);
+  const [googleSdkLoaded, setGoogleSdkLoaded] = useState(false);
+  const googleButtonRef = useRef(null);
+  const googleInitializedRef = useRef(false);
+  const googleBtnWidthRef = useRef(0);
+
+  useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      window.google &&
+      window.google.accounts &&
+      window.google.accounts.id
+    ) {
+      setGoogleSdkLoaded(true);
+    }
+  }, []);
+
+  const renderGoogleButton = () => {
+    if (
+      typeof window === "undefined" ||
+      !window.google ||
+      !window.google.accounts ||
+      !window.google.accounts.id ||
+      !googleButtonRef.current
+    ) {
+      return;
+    }
+
+    const container =
+      googleButtonRef.current.parentElement || googleButtonRef.current;
+    const nextWidth = Math.round(container.getBoundingClientRect().width || 0);
+    if (!nextWidth) return;
+    if (googleBtnReady && googleBtnWidthRef.current === nextWidth) return;
+
+    googleButtonRef.current.innerHTML = "";
+    window.google.accounts.id.renderButton(googleButtonRef.current, {
+      theme: "outline",
+      size: "large",
+      text: "signup_with",
+      shape: "rectangular",
+      width: nextWidth,
+    });
+
+    googleBtnWidthRef.current = nextWidth;
+    setGoogleBtnReady(true);
+  };
+
+  const initGoogle = () => {
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+    if (!googleClientId) {
+      setError("Google Client ID is not configured");
+      return;
+    }
+
+    if (
+      typeof window === "undefined" ||
+      !window.google ||
+      !window.google.accounts ||
+      !window.google.accounts.id
+    ) {
+      setError("Google SDK failed to load");
+      return;
+    }
+
+    if (!googleButtonRef.current) return;
+
+    if (!googleInitializedRef.current) {
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        ux_mode: "popup",
+        callback: async (credentialResponse) => {
+          setError("");
+          setSuccess("");
+          setSubmitting(true);
+          try {
+            const id_token = credentialResponse && credentialResponse.credential;
+            if (!id_token) {
+              throw new Error("Google login failed");
+            }
+            await googleLogin({ id_token });
+            const next = router?.query?.next;
+            const safeNext =
+              typeof next === "string" && next.startsWith("/") ? next : "";
+            router.replace(safeNext || "/dashboard");
+          } catch (err) {
+            setError(err?.message || "Google login failed");
+          } finally {
+            setSubmitting(false);
+          }
+        },
+      });
+      googleInitializedRef.current = true;
+    }
+
+    renderGoogleButton();
+  };
+
+  useEffect(() => {
+    if (!googleSdkLoaded || googleBtnReady) return;
+    initGoogle();
+  }, [googleSdkLoaded, googleBtnReady]);
+
+  useEffect(() => {
+    if (!googleSdkLoaded) return;
+    const container = googleButtonRef.current?.parentElement;
+    if (!container) return;
+
+    let ro;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => {
+        renderGoogleButton();
+      });
+      ro.observe(container);
+    }
+
+    const handleWindowResize = () => {
+      renderGoogleButton();
+    };
+    window.addEventListener("resize", handleWindowResize);
+
+    const t = window.setTimeout(() => {
+      initGoogle();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener("resize", handleWindowResize);
+      if (ro) ro.disconnect();
+    };
+  }, [googleSdkLoaded]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -59,6 +190,14 @@ const SignUp = () => {
   };
   return (
     <>
+      <Script
+        src="https://accounts.google.com/gsi/client"
+        async
+        defer
+        onLoad={() => setGoogleSdkLoaded(true)}
+        onReady={() => setGoogleSdkLoaded(true)}
+        onError={() => setError("Google SDK failed to load")}
+      />
       {/* <DarkSwitch isLight={isLightTheme} switchTheme={toggleTheme} /> */}
       <main className="page-wrapper">
         <div className="signup-area">
@@ -78,18 +217,8 @@ const SignUp = () => {
                   </div>
                   <div className="signup-box-bottom">
                     <div className="signup-box-content">
-                      <div className="social-btn-grp">
-                        <a className="btn-default btn-border" href="#">
-                          <span className="icon-left">
-                            <Image
-                              src={google}
-                              width={18}
-                              height={18}
-                              alt="Google Icon"
-                            />
-                          </span>
-                          Login with Google
-                        </a>
+                      <div style={{ margin: "30px" }}>
+                        <div ref={googleButtonRef} style={{ width: "100%" }} />
                       </div>
                       <div className="text-social-area">
                         <hr />
@@ -154,11 +283,11 @@ const SignUp = () => {
                         </div>
                         {error ? <p className="mt--10">{error}</p> : null}
                         {success ? <p className="mt--10">{success}</p> : null}
-                        <div className="forget-text">
+                        {/* <div className="forget-text">
                           <a className="btn-read-more" href="#">
                             <span>Forgot password</span>
                           </a>
-                        </div>
+                        </div> */}
                         <button
                           type="submit"
                           className="btn-default"
