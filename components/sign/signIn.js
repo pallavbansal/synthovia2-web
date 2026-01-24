@@ -15,6 +15,7 @@ const SignIn = () => {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [googleBtnReady, setGoogleBtnReady] = useState(false);
@@ -215,11 +216,19 @@ const SignIn = () => {
                             <i className="fa-sharp fa-regular fa-lock"></i>
                           </div>
                           <input
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             placeholder="Password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                           />
+                          <button
+                            type="button"
+                            className="password-toggle-btn"
+                            aria-label={showPassword ? "Hide password" : "Show password"}
+                            onClick={() => setShowPassword((v) => !v)}
+                          >
+                            <i className={showPassword ? "fa-solid fa-eye-slash" : "fa-solid fa-eye"} />
+                          </button>
                         </div>
                         {error ? <p className="mt--10">{error}</p> : null}
                         {/* <div className="forget-text">

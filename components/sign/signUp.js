@@ -19,6 +19,8 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -264,22 +266,42 @@ const SignUp = () => {
                             <i className="fa-sharp fa-regular fa-lock"></i>
                           </div>
                           <input
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             placeholder="Create Password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                           />
+                          <button
+                            type="button"
+                            className="password-toggle-btn"
+                            aria-label={showPassword ? "Hide password" : "Show password"}
+                            onClick={() => setShowPassword((v) => !v)}
+                          >
+                            <i className={showPassword ? "fa-solid fa-eye-slash" : "fa-solid fa-eye"} />
+                          </button>
                         </div>{" "}
                         <div className="input-section password-section">
                           <div className="icon">
                             <i className="fa-sharp fa-regular fa-lock"></i>
                           </div>
                           <input
-                            type="password"
+                            type={showConfirmPassword ? "text" : "password"}
                             placeholder="Confirm Password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                           />
+                          <button
+                            type="button"
+                            className="password-toggle-btn"
+                            aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                            onClick={() => setShowConfirmPassword((v) => !v)}
+                          >
+                            <i
+                              className={
+                                showConfirmPassword ? "fa-solid fa-eye-slash" : "fa-solid fa-eye"
+                              }
+                            />
+                          </button>
                         </div>
                         {error ? <p className="mt--10">{error}</p> : null}
                         {success ? <p className="mt--10">{success}</p> : null}
