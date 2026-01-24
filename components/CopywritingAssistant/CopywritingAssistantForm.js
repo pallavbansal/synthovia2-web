@@ -39,6 +39,7 @@ const CopywritingAssistantForm = () => {
         useCaseMode: 'predefined',
         useCase: '',
         customUseCase: '',
+
         primaryGoal: '',
         targetAudience: [],
 
@@ -49,7 +50,7 @@ const CopywritingAssistantForm = () => {
         language: 'English',
         customLanguage: '',
         lengthTargetMode: 'predefined',
-        lengthTarget: 'auto-detect',
+        lengthTarget: 'short',
         customWordCount: 180,
         keyPoints: [],
 
@@ -93,6 +94,8 @@ const CopywritingAssistantForm = () => {
         submitted: false,
     });
 
+    const [customUseCaseError, setCustomUseCaseError] = useState('');
+
     const [apiOptions, setApiOptions] = useState(null);
 
     const [showSummary, setShowSummary] = useState(false);
@@ -128,6 +131,7 @@ const CopywritingAssistantForm = () => {
 
     const streamControllersRef = useRef([]);
     const sessionRequestIdRef = useRef(null);
+    const customUseCaseInputRef = useRef(null);
 
     const abortAllStreams = useCallback(() => {
         const controllers = streamControllersRef.current;
@@ -211,9 +215,13 @@ const CopywritingAssistantForm = () => {
             ]
     );
 
-    // Length Target: always include an explicit Auto Detect option at the top
+    // Length Target
     const rawLengthTargets = getOptions('length_target').length
-        ? getOptions('length_target')
+        ? getOptions('length_target').filter((opt) => {
+            const key = opt?.key ?? opt?.value;
+            const label = opt?.label ?? opt?.name;
+            return key !== 'auto-detect' && label !== 'Auto Detect';
+        })
         : [
             { key: 'short', label: 'Short (50-150 words)' },
             { key: 'medium', label: 'Medium (150-400 words)' },
@@ -221,11 +229,7 @@ const CopywritingAssistantForm = () => {
             { key: 'custom', label: 'Custom' },
         ];
 
-    const lengthTargetOptions = normalizeOptions([
-        // Synthetic Auto Detect option that always exists and uses key/value 'auto-detect'
-        { key: 'auto-detect', label: 'Auto Detect' },
-        ...rawLengthTargets,
-    ]);
+    const lengthTargetOptions = normalizeOptions([...rawLengthTargets]);
 
     const ctaStyleOptions = normalizeOptions(
         getOptions('cta_style').length
@@ -366,6 +370,14 @@ const CopywritingAssistantForm = () => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+
+        if (name === 'customUseCase') {
+            setCustomUseCaseError('');
+        }
+        if (name === 'useCaseMode' && value !== 'custom') {
+            setCustomUseCaseError('');
+        }
+
         setFormData((prev) => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value,
@@ -459,6 +471,8 @@ const CopywritingAssistantForm = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
+        setCustomUseCaseError('');
+
         // Basic validation for required fields
         if (
             !formData.primaryGoal ||
@@ -479,6 +493,43 @@ const CopywritingAssistantForm = () => {
         if (formData.useCaseMode === 'custom' && !formData.customUseCase) {
             alert('Please enter a Custom Use Case.');
             return;
+        }
+
+        // Block references to other tools in custom use case
+        if (formData.useCaseMode === 'custom') {
+            const raw = String(formData.customUseCase || '').trim();
+            const forbidden = [
+                /\bad\s*generator\b/i,
+                /\bad\s*copy\b/i,
+                /\bad\s*copy\s*generator\b/i,
+                /\bemails?\b/i,
+                /\bnewsletters?\b/i,
+                /\bseo\b/i,
+                /\bmeta\s*tags?\b/i,
+                /\bcaption\s*(?:&|and)?\s*hashtags?\b/i,
+                /\bhashtags?\b/i,
+                /\bscripts?\b/i,
+                /\bstory\s*writers?\b/i,
+                /\b\/ad-copy-generator\b/i,
+                /\b\/email-generator\b/i,
+                /\b\/seo-keyword-meta-tag-generator\b/i,
+                /\b\/caption-and-hastag-generator\b/i,
+                /\b\/script-story-writer-tool\b/i,
+            ];
+
+            const hasForbidden = raw && forbidden.some((re) => re.test(raw));
+            if (hasForbidden) {
+                setCustomUseCaseError('Please don\'t reference other tools in this field.');
+
+                const el = customUseCaseInputRef.current;
+                if (el && typeof el.scrollIntoView === 'function') {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                if (el && typeof el.focus === 'function') {
+                    el.focus();
+                }
+                return;
+            }
         }
 
         if (formData.toneMode === 'predefined' && !formData.toneOfVoice) {
@@ -513,7 +564,11 @@ const CopywritingAssistantForm = () => {
                 alert('Please enter a Custom Writing Framework.');
                 return;
             }
-            if (formData.proofreading && formData.grammarStrictnessMode === 'custom' && !formData.customGrammarStrictness) {
+            if (
+                formData.proofreading &&
+                formData.grammarStrictnessMode === 'custom' &&
+                !formData.customGrammarStrictness
+            ) {
                 alert('Please enter a Custom Grammar Strictness.');
                 return;
             }
@@ -528,6 +583,44 @@ const CopywritingAssistantForm = () => {
 
     const handleGenerate = async () => {
         if (isGenerating) return;
+
+        if (formData.useCaseMode === 'custom') {
+            const raw = String(formData.customUseCase || '').trim();
+            const forbidden = [
+                /\bad\s*generator\b/i,
+                /\bad\s*copy\b/i,
+                /\bad\s*copy\s*generator\b/i,
+                /\bemails?\b/i,
+                /\bnewsletters?\b/i,
+                /\bseo\b/i,
+                /\bmeta\s*tags?\b/i,
+                /\bcaption\s*(?:&|and)?\s*hashtags?\b/i,
+                /\bhashtags?\b/i,
+                /\bscripts?\b/i,
+                /\bstory\s*writers?\b/i,
+                /\b\/ad-copy-generator\b/i,
+                /\b\/email-generator\b/i,
+                /\b\/seo-keyword-meta-tag-generator\b/i,
+                /\b\/caption-and-hastag-generator\b/i,
+                /\b\/script-story-writer-tool\b/i,
+            ];
+
+            const hasForbidden = raw && forbidden.some((re) => re.test(raw));
+            if (hasForbidden) {
+                setCustomUseCaseError('Please don\'t reference other tools in this field.');
+
+                setShowSummary(false);
+
+                const el = customUseCaseInputRef.current;
+                if (el && typeof el.scrollIntoView === 'function') {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                if (el && typeof el.focus === 'function') {
+                    el.focus();
+                }
+                return;
+            }
+        }
 
         sessionRequestIdRef.current = createSessionRequestId();
 
@@ -546,8 +639,6 @@ const CopywritingAssistantForm = () => {
         let lengthTargetObj;
         if (formData.lengthTargetMode === 'custom') {
             lengthTargetObj = { id: null, value: String(formData.customWordCount ?? ''), type: 'custom' };
-        } else if (formData.lengthTarget === 'auto-detect') {
-            lengthTargetObj = { id: 'auto-detect', value: null, type: 'predefined' };
         } else {
             lengthTargetObj =
                 buildOptionObject('length_target', formData.lengthTarget) || {
@@ -556,6 +647,7 @@ const CopywritingAssistantForm = () => {
                     type: 'predefined',
                 };
         }
+
         if (lengthTargetObj && lengthTargetObj.value != null) {
             lengthTargetObj = { ...lengthTargetObj, value: String(lengthTargetObj.value) };
         }
@@ -1408,11 +1500,25 @@ const CopywritingAssistantForm = () => {
                                                             name="customUseCase"
                                                             value={formData.customUseCase}
                                                             onChange={handleChange}
-                                                            style={styles.input}
+                                                            ref={customUseCaseInputRef}
+                                                            style={{
+                                                                ...styles.input,
+                                                                border: customUseCaseError ? '1px solid #ef4444' : styles.input.border,
+                                                            }}
                                                             placeholder="Describe your specific use case"
                                                             maxLength={150}
                                                             required={formData.useCaseMode === 'custom'}
+                                                            aria-invalid={customUseCaseError ? 'true' : 'false'}
+                                                            aria-describedby={customUseCaseError ? 'customUseCase-error' : undefined}
                                                         />
+                                                        {customUseCaseError ? (
+                                                            <div
+                                                                id="customUseCase-error"
+                                                                style={{ marginTop: '6px', color: '#ef4444', fontSize: '13px' }}
+                                                            >
+                                                                {customUseCaseError}
+                                                            </div>
+                                                        ) : null}
                                                     </div>
                                                 </div>
                                             )}

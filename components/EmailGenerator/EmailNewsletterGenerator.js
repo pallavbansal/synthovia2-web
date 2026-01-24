@@ -104,7 +104,7 @@ const EmailNewsletterGenerator = () => {
         toneStyle: '',
         toneStyleMode: 'predefined',
         toneStyleCustom: '',
-        lengthPreference: 'auto',
+        lengthPreference: 'short',
         lengthPreferenceMode: 'predefined',
         lengthPreferenceCustom: '',
         ctaType: '',
@@ -189,7 +189,11 @@ const EmailNewsletterGenerator = () => {
                     subjectLineFocus: normalize(data.email_subject_focus),
                     emailGoals: normalize(data.goal_or_purpose),
                     toneStyles: normalize(data.tone_style),
-                    lengthPreferences: normalize(data.text_length),
+                    lengthPreferences: normalize(data.text_length).filter((opt) => {
+                        const key = String(opt?.key || '').toLowerCase();
+                        const label = String(opt?.label || '').toLowerCase();
+                        return key !== 'auto' && label !== 'auto' && label !== 'auto-detect';
+                    }),
                     ctaTypes: normalize(data.call_to_action),
                     sendFrequencies: normalize(data.send_frequency_cadence),
                 };
@@ -200,6 +204,14 @@ const EmailNewsletterGenerator = () => {
                         ...prev,
                         ...next,
                     }));
+
+                    setFormData((prev) => {
+                        if (prev.lengthPreferenceMode === 'custom') return prev;
+                        const defaultLength = next.lengthPreferences?.[0]?.key || '';
+                        const hasCurrent = (next.lengthPreferences || []).some((o) => String(o?.key) === String(prev.lengthPreference));
+                        if (hasCurrent) return prev;
+                        return { ...prev, lengthPreference: defaultLength };
+                    });
                 }
             } catch (e) {
                 if (isActive) {
@@ -499,15 +511,13 @@ const EmailNewsletterGenerator = () => {
             }
 
             const selectedKey = String(formData.lengthPreference || '').trim();
-            if (!selectedKey || selectedKey === 'auto') {
-                return { type: 'auto-detect', id: null, value: null };
-            }
+            const resolvedKey = selectedKey || fieldOptions.lengthPreferences?.[0]?.key || '';
 
-            const opt = (fieldOptions.lengthPreferences || []).find((o) => String(o?.key) === String(selectedKey));
+            const opt = (fieldOptions.lengthPreferences || []).find((o) => String(o?.key) === String(resolvedKey));
             return {
                 type: 'predefined',
                 id: opt?.id ?? null,
-                value: opt?.label ?? selectedKey,
+                value: opt?.label ?? resolvedKey,
             };
         })();
 
@@ -962,6 +972,7 @@ const EmailNewsletterGenerator = () => {
     };
 
     const handleReset = () => {
+        const defaultLengthPreference = fieldOptions.lengthPreferences?.[0]?.key || '';
         setFormData({
             emailType: '',
             emailTypeMode: 'predefined',
@@ -978,7 +989,7 @@ const EmailNewsletterGenerator = () => {
             toneStyle: '',
             toneStyleMode: 'predefined',
             toneStyleCustom: '',
-            lengthPreference: 'auto',
+            lengthPreference: defaultLengthPreference,
             lengthPreferenceMode: 'predefined',
             lengthPreferenceCustom: '',
             ctaType: '',
@@ -1548,7 +1559,6 @@ const EmailNewsletterGenerator = () => {
                                             onChange={handleInputChange}
                                             required
                                         >
-                                            <option value="auto">Auto-detect</option>
                                             {fieldOptions.lengthPreferences.map((option) => (
                                                 <option key={option.key} value={option.key}>
                                                     {option.label}

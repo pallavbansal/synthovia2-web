@@ -105,6 +105,7 @@ const AdCopyGeneratorForm = () => {
         platform: 'Meta (Facebook & Instagram)',
         platformMode: 'predefined',
         platformCustom: '',
+
         placement: 'Facebook Feed',
         campaignObjective: 'Brand Awareness',
         customObjective: '',
@@ -114,12 +115,13 @@ const AdCopyGeneratorForm = () => {
         variants: 1,
         tone: 'Auto-Detect (Based on Platform)',
         headlineFocus: 'Auto-Select (Recommended)',
-        adTextLength: 'Auto-Length (Platform Optimized)',
+        adTextLength: '',
         ctaType: 'Learn More',
         emotionalAngle: 'Pain → Solution',
         complianceNote: '',
         brandVoice: '',
         assetReuseStrategy: 'Auto-Detect (Recommended)',
+
         offerPricing: '',
         audiencePain: [],
         campaignDuration: { start: '', end: '' },
@@ -268,7 +270,7 @@ const AdCopyGeneratorForm = () => {
                             campaignObjective: loadedOptions.campaign_objective.find(opt => opt.label === prev.campaignObjective)?.label || prev.campaignObjective,
                             tone: loadedOptions.tone_style.find(opt => opt.label === prev.tone || prev.tone.includes('Auto'))?.label || prev.tone,
                             headlineFocus: loadedOptions.headline_focus.find(opt => opt.label === prev.headlineFocus || prev.headlineFocus.includes('Auto'))?.label || prev.headlineFocus,
-                            adTextLength: loadedOptions.primary_text_length.find(opt => opt.label === prev.adTextLength || prev.adTextLength.includes('Auto'))?.label || prev.adTextLength,
+                            adTextLength: loadedOptions.primary_text_length.find(opt => opt.label === prev.adTextLength)?.label || loadedOptions.primary_text_length?.[0]?.label || prev.adTextLength,
                             ctaType: loadedOptions.cta_type.find(opt => opt.label === prev.ctaType)?.label || prev.ctaType,
                             emotionalAngle: loadedOptions.emotional_angle.find(opt => opt.label.replace('\t', '→') === prev.emotionalAngle)?.label.replace('\t', '→') || prev.emotionalAngle,
                             assetReuseStrategy: loadedOptions.asset_reuse_strategy.find(opt => opt.label === prev.assetReuseStrategy || prev.assetReuseStrategy.includes('Auto'))?.label || prev.assetReuseStrategy,
@@ -1134,10 +1136,12 @@ const AdCopyGeneratorForm = () => {
 
     // Reset handler (Retained)
     const handleReset = () => {
+        const defaultAdTextLength = fieldOptions.primary_text_length?.[0]?.label || '';
         setFormData({
             platform: 'Meta (Facebook & Instagram)',
             platformMode: 'predefined',
             platformCustom: '',
+
             placement: 'Facebook Feed',
             campaignObjective: 'Brand Awareness',
             customObjective: '',
@@ -1148,7 +1152,7 @@ const AdCopyGeneratorForm = () => {
             tone: 'Auto-Detect (Based on Platform)',
             headlineFocus: 'Auto-Select (Recommended)',
             adTextLengthMode: 'predefined',
-            adTextLength: 'Auto-Length (Platform Optimized)',
+            adTextLength: defaultAdTextLength,
             adTextLengthCustom: '',
             ctaType: 'Learn More',
             emotionalAngle: 'Pain → Solution',
@@ -1156,6 +1160,7 @@ const AdCopyGeneratorForm = () => {
             brandVoice: '',
             assetReuseStrategy: 'Auto-Detect (Recommended)',
             offerPricing: '',
+
             audiencePain: [],
             campaignDuration: { start: '', end: '' },
             geoLanguageTarget: '',
@@ -1238,7 +1243,7 @@ const AdCopyGeneratorForm = () => {
         checkboxItem: { display: 'flex', alignItems: 'center', gap: '8px' },
         radioGroup: { display: 'flex', gap: '16px', marginTop: '8px' },
         radioItem: { display: 'flex', alignItems: 'center', gap: '8px' },
-        toast: { position: 'fixed', top: '20px', right: '20px', padding: '16px 24px', color: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 9999 },
+        toast: { position: 'fixed', top: '20px', right: '20px', padding: '16px 24px', color: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)', zIndex: 9999 },
         toolTip: { width: '40%' },
         summaryContainer: {
             backgroundColor: '#0f1624',
@@ -1851,7 +1856,6 @@ const AdCopyGeneratorForm = () => {
                                                             value={fieldOptions.tone_style.find(opt => opt.label === formData.tone)?.key || formData.tone}
                                                             onChange={handleChange}
                                                             style={{ ...styles.select, marginTop: '8px' }}
-                                                            required
                                                         >
                                                             <option value="Auto-Detect (Based on Platform)">Auto-Detect (Based on Platform)</option>
                                                             {fieldOptions.tone_style && fieldOptions.tone_style.map((option) => (
@@ -1877,7 +1881,6 @@ const AdCopyGeneratorForm = () => {
                                                             }}
                                                             style={{ ...styles.input, marginTop: '8px' }}
                                                             placeholder="Enter custom tone"
-                                                            required
                                                         />
                                                     )}
                                                 </div>
@@ -1959,7 +1962,6 @@ const AdCopyGeneratorForm = () => {
                                                             }}
                                                             style={{ ...styles.input, marginTop: '8px' }}
                                                             placeholder="Enter custom headline focus"
-                                                            required
                                                         />
                                                     )}
                                                 </div>
@@ -1990,10 +1992,10 @@ const AdCopyGeneratorForm = () => {
                                                                 checked={adTextLengthMode === 'predefined'}
                                                                 onChange={() => {
                                                                     setAdTextLengthMode('predefined');
-                                                                    // Reset to default auto-length option when switching back
+                                                                    const defaultAdTextLength = fieldOptions.primary_text_length?.[0]?.label || '';
                                                                     setFormData(prev => ({
                                                                         ...prev,
-                                                                        adTextLength: 'Auto-Length (Platform Optimized)',
+                                                                        adTextLength: defaultAdTextLength,
                                                                     }));
                                                                 }}
                                                             />
@@ -2027,7 +2029,6 @@ const AdCopyGeneratorForm = () => {
                                                             onChange={handleChange}
                                                             style={{ ...styles.select, marginTop: '8px' }}
                                                         >
-                                                            <option value="Auto-Length (Platform Optimized)">Auto-Length (Platform Optimized)</option>
                                                             {fieldOptions.primary_text_length && fieldOptions.primary_text_length.map((option) => (
                                                                 <option
                                                                     key={option.key || option.id}

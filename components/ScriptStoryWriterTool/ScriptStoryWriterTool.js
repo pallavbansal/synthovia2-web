@@ -86,6 +86,11 @@ const defaultFieldOptions = {
         { id: 4, key: 'fr', label: 'French' },
         { id: 5, key: 'de', label: 'German' },
     ],
+    textLengths: [
+        { id: 1, key: 'short', label: 'Short' },
+        { id: 2, key: 'medium', label: 'Medium' },
+        { id: 3, key: 'long', label: 'Long' },
+    ],
 };
 
 const ScriptStoryWriterTool = () => {
@@ -111,7 +116,7 @@ const ScriptStoryWriterTool = () => {
         variantsCount: 1,
 
         textLengthMode: 'predefined',
-        textLength: 'auto',
+        textLength: 'short',
         textLengthCustom: '',
 
         scriptStyle: '',
@@ -215,24 +220,43 @@ const ScriptStoryWriterTool = () => {
                         ...v,
                         key: v.key || String(v.id),
                     })),
-                    textLengths: normalize(data.text_length),
+                    textLengths: normalize(data.text_length).filter((opt) => {
+                        const key = String(opt?.key || '').toLowerCase();
+                        const label = String(opt?.label || '').toLowerCase();
+                        return key !== 'auto' && label !== 'auto' && label !== 'auto-detect';
+                    }),
                 };
 
                 setFieldOptions(nextFieldOptions);
 
                 setFormData((prev) => {
-                    if (prev.languageMode === 'custom') return prev;
-                    const currentLanguageId = prev.language;
-                    const hasCurrent = nextFieldOptions.languages.some(
-                        (opt) => String(opt.id) === String(currentLanguageId)
-                    );
-                    if (hasCurrent) return prev;
+                    let next = { ...prev };
 
-                    const firstId = nextFieldOptions.languages?.[0]?.id;
-                    return {
-                        ...prev,
-                        language: firstId ? String(firstId) : prev.language,
-                    };
+                    if (prev.languageMode !== 'custom') {
+                        const currentLanguageId = prev.language;
+                        const hasCurrentLanguage = nextFieldOptions.languages.some(
+                            (opt) => String(opt.id) === String(currentLanguageId)
+                        );
+
+                        if (!hasCurrentLanguage) {
+                            const firstId = nextFieldOptions.languages?.[0]?.id;
+                            next.language = firstId ? String(firstId) : prev.language;
+                        }
+                    }
+
+                    if (prev.textLengthMode !== 'custom') {
+                        const defaultTextLength = nextFieldOptions.textLengths?.[0]?.key || '';
+                        const currentTextLength = prev.textLength;
+                        const hasCurrentTextLength = nextFieldOptions.textLengths.some(
+                            (opt) => String(opt.key) === String(currentTextLength)
+                        );
+
+                        if (!hasCurrentTextLength) {
+                            next.textLength = defaultTextLength;
+                        }
+                    }
+
+                    return next;
                 });
             } catch (e) {
             }
@@ -693,14 +717,12 @@ const ScriptStoryWriterTool = () => {
                             return Math.min(1000, parsed);
                         })(),
                     }
-                  : formData.textLength === 'auto' || !formData.textLength
-                      ? { type: 'auto-detect', id: null, value: null }
-                      : buildSelectObject({
-                            mode: 'predefined',
-                            valueKey: formData.textLength,
-                            customValue: '',
-                            options: fieldOptions.textLengths,
-                        });
+                  : buildSelectObject({
+                        mode: 'predefined',
+                        valueKey: formData.textLength || fieldOptions.textLengths?.[0]?.key || '',
+                        customValue: '',
+                        options: fieldOptions.textLengths,
+                    });
 
           return {
               title: formData.scriptTitle,
@@ -1219,6 +1241,7 @@ const ScriptStoryWriterTool = () => {
       };
   
       const handleReset = () => {
+          const defaultTextLength = fieldOptions.textLengths?.[0]?.key || '';
           setFormData({
               scriptTitle: '',
               platform: '',
@@ -1235,7 +1258,7 @@ const ScriptStoryWriterTool = () => {
               durationPresetSeconds: null,
               variantsCount: 1,
               textLengthMode: 'predefined',
-              textLength: 'auto',
+              textLength: defaultTextLength,
               textLengthCustom: '',
               scriptStyle: '',
               scriptStyleMode: 'predefined',
@@ -1697,7 +1720,10 @@ const ScriptStoryWriterTool = () => {
                                                         ...prev,
                                                         textLengthMode: 'predefined',
                                                         textLengthCustom: '',
-                                                        textLength: prev.textLength || 'auto',
+                                                        textLength:
+                                                            prev.textLength && prev.textLength !== 'auto'
+                                                                ? prev.textLength
+                                                                : fieldOptions.textLengths?.[0]?.key || '',
                                                     }))
                                                 }
                                             />
@@ -1724,7 +1750,7 @@ const ScriptStoryWriterTool = () => {
                                         <select
                                             style={styles.select}
                                             name="textLength"
-                                            value={formData.textLength || 'auto'}
+                                            value={formData.textLength || fieldOptions.textLengths?.[0]?.key || ''}
                                             onChange={(e) => {
                                                 const selected = e.target.value;
                                                 setFormData((prev) => ({
@@ -1735,7 +1761,6 @@ const ScriptStoryWriterTool = () => {
                                                 }));
                                             }}
                                         >
-                                            <option value="auto">Auto-detect</option>
                                             {(fieldOptions.textLengths || []).map((opt) => (
                                                 <option key={opt.id || opt.key} value={opt.key}>
                                                     {opt.label}

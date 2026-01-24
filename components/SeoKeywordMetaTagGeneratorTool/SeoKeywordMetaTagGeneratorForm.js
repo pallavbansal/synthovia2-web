@@ -255,7 +255,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     complianceGuidelinesCustom: "",
 
     textLengthMode: "predefined",
-    textLength: "auto",
+    textLength: "short",
     textLengthCustom: "",
 
     variantsCount: 3,
@@ -779,7 +779,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       ].map(toObj),
       compliance_guidelines: ["None", "General", "Healthcare", "Finance", "Legal", "Education", "E-commerce", "Custom"].map(toObj),
       text_length: [
-        { id: null, key: "auto", label: "Auto" },
         { id: null, key: "short", label: "Short" },
         { id: null, key: "medium", label: "Medium" },
         { id: null, key: "long", label: "Long" },
@@ -845,7 +844,13 @@ const SeoKeywordMetaTagGeneratorForm = () => {
           output_depth: normalizeOptionsOnce(data.output_depth) || fallbackFieldOptions.output_depth,
           output_format: normalizeOptionsOnce(data.output_format) || fallbackFieldOptions.output_format,
           compliance_guidelines: normalizeOptionsOnce(data.compliance_guidelines) || fallbackFieldOptions.compliance_guidelines,
-          text_length: normalizeOptionsOnce(data.text_length)?.length ? normalizeOptionsOnce(data.text_length) : fallbackFieldOptions.text_length,
+          text_length: normalizeOptionsOnce(data.text_length)?.length
+            ? normalizeOptionsOnce(data.text_length).filter((opt) => {
+                const key = String(opt?.key || '').toLowerCase();
+                const label = String(opt?.label || '').toLowerCase();
+                return key !== 'auto' && label !== 'auto' && label !== 'auto-detect';
+              })
+            : fallbackFieldOptions.text_length,
         };
 
         if (!cancelled) {
@@ -863,7 +868,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
             outputDepth: prev.outputDepth || next.output_depth?.[0]?.key || "",
             outputFormat: prev.outputFormat || next.output_format?.[0]?.key || "",
             complianceGuidelines: prev.complianceGuidelines || next.compliance_guidelines?.[0]?.key || "",
-            textLength: prev.textLength || next.text_length?.[0]?.key || "auto",
+            textLength: prev.textLength || next.text_length?.[0]?.key || "short",
           }));
         }
       } catch (err) {
@@ -1214,7 +1219,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       complianceGuidelinesCustom: "",
 
       textLengthMode: "predefined",
-      textLength: getDefaultKeyFromOptions("text_length", "auto"),
+      textLength: getDefaultKeyFromOptions("text_length", "short"),
       textLengthCustom: "",
 
       variantsCount: 3,

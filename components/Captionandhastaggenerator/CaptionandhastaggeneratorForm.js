@@ -35,13 +35,6 @@ const createSessionRequestId = () => {
     });
 };
 
-// --- MANUAL CONSTANT FOR AUTO-DETECT POST LENGTH ---
-const AUTO_DETECT_POST_LENGTH = {
-    key: 'auto-detect',
-    label: 'Auto-Detect (Platform Optimized)',
-    isAuto: true
-};
-
 const Captionandhastaggeneratorform = () => {
     // [STATE UPDATED TO SUPPORT CUSTOM/PREDEFINED TOGGLES FOR 5 FIELDS]
     const [formData, setFormData] = useState({
@@ -68,7 +61,7 @@ const Captionandhastaggeneratorform = () => {
         customEmotionalIntent: '', // <--- NEW STATE
         // Post length selection & value
         postLengthSelection: 'predefined',
-        postLength: 'auto-detect', // default to Auto-Detect (Platform Optimized)
+        postLength: '', // default to Auto-Detect (Platform Optimized)
         customPostLength: '',
         formattingOptions: [], // Multi-select checkbox array (e.g., ['emoji', 'linebreaks'])
         // CTA selection - NEW LOGIC TOGGLES ADDED
@@ -139,17 +132,6 @@ const Captionandhastaggeneratorform = () => {
     const getOptionDetails = (fieldKey, value, customValue = null, typeOverride = null) => {
         if (!apiOptions) return { type: 'predefined', id: null, value: value || 'N/A' };
 
-        // --- NEW LOGIC FOR AUTO-DETECT POST LENGTH ---
-        // IMPORTANT: auto-detect should only apply when Post Length is in predefined mode.
-        if (fieldKey === 'caption_post_length' && value === 'auto-detect' && !(formData.postLengthSelection === 'custom' || typeOverride === 'custom')) {
-            return {
-                type: null,
-                id: 'auto-detect',
-                value: 'Auto-Length (Platform Optimized)',
-                isAuto: true
-            };
-        }
-
         // Determine if the *mode* is explicitly custom based on the selector state
         let isCustomMode = false;
         if (fieldKey === 'caption_platform' && formData.platformType === 'custom') isCustomMode = true;
@@ -207,8 +189,7 @@ const Captionandhastaggeneratorform = () => {
     const toneOptions = getOptions('caption_tone_of_voice');
     const languageOptions = getOptions('caption_language_locale');
     const emotionalIntentOptions = getOptions('caption_emotional_intent');
-    // Inject the Auto-Detect option into the Post Length options list
-    const postLengthOptions = [AUTO_DETECT_POST_LENGTH, ...getOptions('caption_post_length')];
+    const postLengthOptions = getOptions('caption_post_length');
     // Including 'custom' manually for the dropdown for consistent UX
     const ctaTypeOptions = [...getOptions('caption_cta_type'), { key: 'custom', label: 'Custom CTA' }];
     const captionStyleOptions = getOptions('caption_style');
@@ -253,9 +234,7 @@ const Captionandhastaggeneratorform = () => {
                     const defaultCta = result.data.caption_cta_type.find(o => o.key === 'caption_cta_1')?.key || result.data.caption_cta_type[0]?.key || '';
                     const defaultCaptionStyle = result.data.caption_style[0]?.key || '';
                     const defaultHashtagStyle = result.data.caption_hashtag_style[0]?.key || '';
-
-                    // Post length defaults to 'auto-detect' now (set in initial state, no change needed here)
-
+                    const defaultPostLength = result.data.caption_post_length[0]?.key || '';
                     // Set default for Hashtag Limit from API
                     const defaultHashtagLimit = result.data.caption_hashtag_limit?.find(o => o.key === '15')?.key || result.data.caption_hashtag_limit?.[0]?.key || '15';
 
@@ -265,7 +244,7 @@ const Captionandhastaggeneratorform = () => {
                         toneOfVoice: defaultTone,
                         language: defaultLanguage,
                         emotionalIntent: defaultEmotionalIntent,
-                        // postLength remains 'auto-detect' from initial state
+                        postLength: defaultPostLength,
                         includeCtaType: defaultCta,
                         captionStyle: defaultCaptionStyle,
                         hashtagStyle: defaultHashtagStyle,
@@ -428,9 +407,7 @@ const Captionandhastaggeneratorform = () => {
                 emotional_intent: emotionalIntentPayload,
                 post_length: formData.postLengthSelection === 'custom'
                     ? { type: 'custom', id: null, value: customPostLengthInt }
-                    : (postLengthPayload.isAuto
-                        ? { type: null, id: postLengthPayload.id, value: postLengthPayload.value }
-                        : { type: 'predefined', id: postLengthPayload.id, value: postLengthPayload.value }),
+                    : { type: 'predefined', id: postLengthPayload.id, value: postLengthPayload.value },
                 caption_style: captionStylePayload,
                 cta_type: ctaPayload,
                 custom_cta_text: ctaPayload.type === 'custom' ? formData.customCta : null,
@@ -451,6 +428,7 @@ const Captionandhastaggeneratorform = () => {
 
             setRequestId(null);
             setGeneratedVariantsData({
+                requestId: null,
                 variants: Array.from({ length: variantCount }).map((_, index) => ({
                     client_id: `${clientRequestKey}-${index}`,
                     id: null,
@@ -672,6 +650,7 @@ const Captionandhastaggeneratorform = () => {
 
             if (!response.body) {
                 const result = await response.json();
+
                 setGeneratedVariantsData((prev) => {
                     const next = [...(prev.variants || [])];
                     if (next[variantIndex]) {
@@ -913,6 +892,7 @@ const Captionandhastaggeneratorform = () => {
         const defaultCta = ctaTypeOptions.find(o => o.key === 'caption_cta_1')?.key || ctaTypeOptions[0]?.key || '';
         const defaultCaptionStyle = captionStyleOptions[0]?.key || '';
         const defaultHashtagStyle = hashtagStyleOptions[0]?.key || '';
+        const defaultPostLength = postLengthOptions[0]?.key || '';
         // Reset Hashtag Limit to its new default
         const defaultHashtagLimit = hashtagLimitOptions?.find(o => o.key === '15')?.key || hashtagLimitOptions?.[0]?.key || '15';
 
@@ -938,7 +918,7 @@ const Captionandhastaggeneratorform = () => {
             emotionalIntentSelection: 'predefined',
             emotionalIntent: defaultEmotionalIntent,
             customEmotionalIntent: '',
-            postLength: 'auto-detect', // Reset default post length to Auto-Detect
+            postLength: defaultPostLength,
             formattingOptions: [],
             ctaSelection: 'predefined', // Reset CTA toggle
             includeCtaType: defaultCta,
