@@ -1225,7 +1225,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
 
   const styles = {
     container: {
-      // maxWidth: "1100px",
+      maxWidth: "1100px !important",
       margin: "0 auto",
       padding: "24px",
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
