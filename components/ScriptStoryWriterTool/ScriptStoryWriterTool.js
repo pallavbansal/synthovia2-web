@@ -430,14 +430,12 @@ const ScriptStoryWriterTool = () => {
               display: 'flex', 
               gap: '16px', 
               marginTop: '8px',
-              marginBottom: '8px'
+              marginBottom:'8px'
           },
           radioItem: { 
-              display: 'inline-block', 
+              display: 'flex', 
               alignItems: 'center', 
-              gap: '8px',
-              color: '#e2e8f0',
-              fontSize: '14px'
+              gap: '8px'
           },
           checkboxRow: {
               display: 'inline-flex',
@@ -522,8 +520,8 @@ const ScriptStoryWriterTool = () => {
   
       const durationPresets = useMemo(() => {
           const key = formData.platformMode === 'custom' ? 'custom' : formData.platform;
-          if (key === 'youtube') return [120, 180, 300, 420, 600, 900];
-          if (key === 'podcast') return [300, 600, 900, 1200, 1800];
+          if (key === 'youtube') return [15, 30, 45, 60, 90, 180];
+          if (key === 'podcast') return [15, 30, 45, 60, 90, 180];
           if (key === 'video_ad') return [15, 30, 45, 60, 90];
           if (key === 'tiktok' || key === 'reels' || key === 'shorts' || key === 'instagram_reel' || key === 'youtube_shorts') return [15, 30, 45, 60, 90];
           return [15, 30, 45, 60, 90];
@@ -1841,7 +1839,7 @@ const ScriptStoryWriterTool = () => {
                                         <input
                                             type="range"
                                             min={15}
-                                            max={90}
+                                            max={180}
                                             step={1}
                                             value={formData.durationSeconds}
                                             onChange={handleDurationSliderChange}
@@ -1850,7 +1848,7 @@ const ScriptStoryWriterTool = () => {
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', color: '#94a3b8', fontSize: '13px' }}>
                                             <span>15s</span>
                                             <span>{formatDuration(formData.durationSeconds)} — Target ≈ {estimateWords(formData.durationSeconds)} words</span>
-                                            <span>1m 30s</span>
+                                            <span>3m</span>
                                         </div>
                                     </div>
 
