@@ -7,6 +7,29 @@ import VariantModalContent from './VariantModalContent';
 
 import API from "@/utils/api";
 
+const createSessionRequestId = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+        const bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+        const hex = Array.from(bytes)
+            .map((b) => b.toString(16).padStart(2, '0'))
+            .join('');
+        return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    }
+
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+};
+
 // Default field options
 const defaultFieldOptions = {
     platforms: [
@@ -125,6 +148,8 @@ const ScriptStoryWriterTool = () => {
 
         includeHook: true,
         hookStyle: '',
+        hookStyleMode: 'predefined',
+        hookStyleCustom: '',
         hookStyleCustomPattern: '',
 
         includeCta: true,
@@ -170,9 +195,11 @@ const ScriptStoryWriterTool = () => {
     const [mounted, setMounted] = useState(false);
 
     const streamControllersRef = useRef([]);
+    const sessionRequestIdRef = useRef(null);
 
     useEffect(() => {
         setMounted(true);
+        sessionRequestIdRef.current = createSessionRequestId();
     }, []);
 
     useEffect(() => {
@@ -763,9 +790,9 @@ const ScriptStoryWriterTool = () => {
               include_hook: !!formData.includeHook,
               hook_style: formData.includeHook
                   ? buildSelectObject({
-                        mode: 'predefined',
+                        mode: formData.hookStyleMode,
                         valueKey: formData.hookStyle,
-                        customValue: '',
+                        customValue: formData.hookStyleCustom,
                         options: fieldOptions.hookStyles,
                     })
                   : null,
@@ -816,7 +843,11 @@ const ScriptStoryWriterTool = () => {
                   return;
               }
 
-              const payload = buildPayload();
+              sessionRequestIdRef.current = createSessionRequestId();
+              const payload = {
+                  ...buildPayload(),
+                  session_request_id: sessionRequestIdRef.current,
+              };
 
               showNotification('Generating scripts, please wait...', 'info');
 
@@ -1032,7 +1063,11 @@ const ScriptStoryWriterTool = () => {
       const handleRegenerateVariant = async (variantId) => {
           if (!variantId) return;
 
-          const payload = buildPayload();
+          sessionRequestIdRef.current = createSessionRequestId();
+          const payload = {
+              ...buildPayload(),
+              session_request_id: sessionRequestIdRef.current,
+          };
           const variantIndex = (generatedVariantsData.variants || []).findIndex((v) => v?.id === variantId);
           if (variantIndex === -1) return;
 
@@ -1265,6 +1300,8 @@ const ScriptStoryWriterTool = () => {
               scriptStyleCustom: '',
               includeHook: true,
               hookStyle: '',
+              hookStyleMode: 'predefined',
+              hookStyleCustom: '',
               hookStyleCustomPattern: '',
               includeCta: true,
               ctaType: '',
@@ -1961,7 +1998,14 @@ const ScriptStoryWriterTool = () => {
                                                 setFormData(prev => ({
                                                     ...prev,
                                                     includeHook: checked,
-                                                    ...(checked ? {} : { hookStyle: '', hookStyleCustomPattern: '' }),
+                                                    ...(checked
+                                                        ? {}
+                                                        : {
+                                                              hookStyle: '',
+                                                              hookStyleMode: 'predefined',
+                                                              hookStyleCustom: '',
+                                                              hookStyleCustomPattern: '',
+                                                          }),
                                                 }));
                                             }}
                                         />
@@ -1978,19 +2022,49 @@ const ScriptStoryWriterTool = () => {
                                             <span style={styles.infoIcon} data-tooltip-id="hookStyle-tooltip" data-tooltip-content="Pick a hook style and optionally provide a custom hook pattern.">i</span>
                                         </label>
                                         <Tooltip style={styles.toolTip} id="hookStyle-tooltip" />
-                                        <select
-                                            style={styles.select}
-                                            name="hookStyle"
-                                            value={formData.hookStyle}
-                                            onChange={handleInputChange}
-                                        >
-                                            <option value="">Select hook style</option>
-                                            {fieldOptions.hookStyles.map(option => (
-                                                <option key={option.id || option.key} value={option.key}>
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </select>
+
+                                        {renderModeToggle('hookStyleMode', (mode) => {
+                                            if (mode === 'custom') {
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    hookStyleMode: 'custom',
+                                                    hookStyle: '',
+                                                }));
+                                                return;
+                                            }
+
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                hookStyleMode: 'predefined',
+                                                hookStyleCustom: '',
+                                                hookStyle: '',
+                                            }));
+                                        })}
+
+                                        {formData.hookStyleMode === 'custom' ? (
+                                            <input
+                                                type="text"
+                                                style={styles.input}
+                                                name="hookStyleCustom"
+                                                value={formData.hookStyleCustom}
+                                                onChange={handleInputChange}
+                                                placeholder="Enter custom hook style"
+                                            />
+                                        ) : (
+                                            <select
+                                                style={styles.select}
+                                                name="hookStyle"
+                                                value={formData.hookStyle}
+                                                onChange={handleInputChange}
+                                            >
+                                                <option value="">Select hook style</option>
+                                                {fieldOptions.hookStyles.map(option => (
+                                                    <option key={option.id || option.key} value={option.key}>
+                                                        {option.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        )}
                                         {/* <div style={{ marginTop: '10px' }}>
                                             <label style={styles.label}>
                                                 Custom Hook Pattern
