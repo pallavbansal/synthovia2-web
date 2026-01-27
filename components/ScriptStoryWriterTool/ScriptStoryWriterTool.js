@@ -741,7 +741,7 @@ const ScriptStoryWriterTool = () => {
                         value: (() => {
                             const parsed = parseInt(formData.textLengthCustom, 10);
                             if (!Number.isFinite(parsed) || parsed <= 0) return null;
-                            return Math.min(1000, parsed);
+                            return String(Math.min(1000, parsed));
                         })(),
                     }
                   : buildSelectObject({

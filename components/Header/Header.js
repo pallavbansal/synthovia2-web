@@ -213,16 +213,7 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
                   </div>
                 )}
 
-                <div className="mobile-menu-bar ml--5 d-flex justify-content-end d-lg-none">
-                  <div className="hamberger">
-                    <button
-                      className="hamberger-button"
-                      onClick={() => setActiveMobileMenu(!activeMobileMenu)}
-                    >
-                      <i className="fa-sharp fa-regular fa-bars"></i>
-                    </button>
-                  </div>
-                </div>
+                
               </div>
             </div>
           </div>
