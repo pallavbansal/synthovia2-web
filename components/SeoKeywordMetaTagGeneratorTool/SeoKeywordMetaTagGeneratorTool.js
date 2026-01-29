@@ -9,9 +9,7 @@ const SeoKeywordMetaTagGeneratorTool = () => {
         <div className="rbt-daynamic-page-content center-width">
           <div className="rbt-dashboard-content">
             <div className="content-page pb--50">
-              <div className="chat-box-section">
                 <SeoKeywordMetaTagGeneratorForm />
-              </div>
             </div>
           </div>
         </div>

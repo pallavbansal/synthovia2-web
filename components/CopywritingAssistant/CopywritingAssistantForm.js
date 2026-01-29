@@ -2052,7 +2052,7 @@ const CopywritingAssistantForm = () => {
                                                 name="keywords"
                                                 value={formData.keywords}
                                                 onChange={handleChange}
-                                                style={styles.input}
+                                                style={{ ...styles.input, marginBottom: '20px' }}
                                                 placeholder="e.g., digital marketing, seo, content strategy"
                                                 maxLength={250}
                                             />
@@ -2062,7 +2062,7 @@ const CopywritingAssistantForm = () => {
 
                                     {/* CTA Style (Predefined/Custom Input) */}
                                     {formData.ctaStyleMode === 'predefined' && (
-                                        <div className="col-md-6">
+                                        <div className="col-12">
                                             <div style={styles.formGroup}>
                                                 <select
                                                     id="ctaStyle"
@@ -2552,14 +2552,14 @@ const CopywritingAssistantForm = () => {
                             <div className="col-12" style={{ marginTop: '20px' }}>
                                 <button
                                     type="submit"
-                                    className='personal-info-button'
-                                    // style={{
-                                    //     ...styles.btn,
-                                    //     ...styles.btnPrimary,
-                                    //     padding: '12px 24px',
-                                    //     fontSize: '16px',
-                                    //     fontWeight: '600'
-                                    // }}
+                                    // className='personal-info-button'
+                                    style={{
+                                        ...styles.btn,
+                                        ...styles.btnPrimary,
+                                        padding: '12px 24px',
+                                        fontSize: '16px',
+                                        fontWeight: '600'
+                                    }}
                                 >
                                     Review & Generate
                                 </button>

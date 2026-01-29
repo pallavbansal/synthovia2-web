@@ -38,7 +38,7 @@ const niceCeil = (value) => {
 const CHART_TOOLS = [
   {
     label: "Ad Copy Generator",
-    displayLines: ["Ad Copy", "Generator"],
+    displayLines: ["Ad Copy"],
     matches: ["Ad Copy Generator"],
   },
   {
@@ -48,22 +48,22 @@ const CHART_TOOLS = [
   },
   {
     label: "Caption & Hashtag Generator",
-    displayLines: ["Caption &", "Hashtag", "Generator"],
+    displayLines: ["Caption &", "Hashtag"],
     matches: ["Caption & Hashtag Generator"],
   },
   {
     label: "Email & Newsletter Writer",
-    displayLines: ["Email &", "Newsletter", "Writer"],
+    displayLines: ["Email &", "Newsletter"],
     matches: ["Email & Newsletter Writer", "Email & Newsletter Generator"],
   },
   {
     label: "Script & Story Writer",
-    displayLines: ["Script &", "Story", "Writer"],
+    displayLines: ["Script &", "Story"],
     matches: ["Script & Story Writer", "Script Writer", "Script & Story Writer Tool"],
   },
   {
     label: "SEO Keyword & Meta Tag Generator",
-    displayLines: ["SEO", "Keyword &", "Meta Tag", "Generator"],
+    displayLines: ["SEO", "Keyword &", "Meta Tag"],
     matches: [
       "SEO Keyword & Meta Tag Generator",
       "SEO Keyword & Meta Tag Generator Tool",

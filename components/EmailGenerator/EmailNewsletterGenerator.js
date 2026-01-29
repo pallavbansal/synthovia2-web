@@ -1073,636 +1073,641 @@ const EmailNewsletterGenerator = () => {
                 <div style={{ padding: '24px' }}>
                     <form onSubmit={handleSubmit}>
                         <div className="row g-4">
-                            <div className="col-md-6">
-                                <div style={styles.formGroup}>
-                                    <label htmlFor="emailType" style={styles.label}>
-                                        Email Type / Use Case <span style={{ color: '#ef4444' }}>*</span>
-                                        <span
-                                            style={styles.infoIcon}
-                                            title="Select the type of email you want to generate (e.g., Newsletter, Promotional, Welcome Series)"
-                                        >
-                                            i
-                                        </span>
-                                    </label>
 
-                                    <div style={styles.radioGroup}>
-                                        <label style={styles.radioItem}>
-                                            <input
-                                                type="radio"
-                                                name="emailTypeMode"
-                                                value="predefined"
-                                                checked={formData.emailTypeMode === 'predefined'}
-                                                onChange={(e) => {
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        emailTypeMode: e.target.value,
-                                                        emailType: prev.emailType || '',
-                                                    }));
-                                                }}
-                                            />
-                                            <span>Predefined</span>
-                                        </label>
-                                        <label style={styles.radioItem}>
-                                            <input
-                                                type="radio"
-                                                name="emailTypeMode"
-                                                value="custom"
-                                                checked={formData.emailTypeMode === 'custom'}
-                                                onChange={(e) => {
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        emailTypeMode: e.target.value,
-                                                        emailType: prev.emailTypeCustom || '',
-                                                    }));
-                                                }}
-                                            />
-                                            <span>Custom</span>
-                                        </label>
+                            {!formData.showAdvanced && (
+                                <>
+                                    <div className="col-md-6">
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="emailType" style={styles.label}>
+                                                Email Type / Use Case <span style={{ color: '#ef4444' }}>*</span>
+                                                <span
+                                                    style={styles.infoIcon}
+                                                    title="Select the type of email you want to generate (e.g., Newsletter, Promotional, Welcome Series)"
+                                                >
+                                                    i
+                                                </span>
+                                            </label>
+
+                                            <div style={styles.radioGroup}>
+                                                <label style={styles.radioItem}>
+                                                    <input
+                                                        type="radio"
+                                                        name="emailTypeMode"
+                                                        value="predefined"
+                                                        checked={formData.emailTypeMode === 'predefined'}
+                                                        onChange={(e) => {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                emailTypeMode: e.target.value,
+                                                                emailType: prev.emailType || '',
+                                                            }));
+                                                        }}
+                                                    />
+                                                    <span>Predefined</span>
+                                                </label>
+                                                <label style={styles.radioItem}>
+                                                    <input
+                                                        type="radio"
+                                                        name="emailTypeMode"
+                                                        value="custom"
+                                                        checked={formData.emailTypeMode === 'custom'}
+                                                        onChange={(e) => {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                emailTypeMode: e.target.value,
+                                                                emailType: prev.emailTypeCustom || '',
+                                                            }));
+                                                        }}
+                                                    />
+                                                    <span>Custom</span>
+                                                </label>
+                                            </div>
+
+                                            {formData.emailTypeMode === 'predefined' && (
+                                                <select
+                                                    style={styles.select}
+                                                    id="emailType"
+                                                    name="emailType"
+                                                    value={formData.emailType}
+                                                    onChange={handleInputChange}
+                                                    required
+                                                >
+                                                    <option value="">Select email type</option>
+                                                    {fieldOptions.emailTypes.map((option) => (
+                                                        <option key={option.key} value={option.key}>
+                                                            {option.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            )}
+
+                                            {formData.emailTypeMode === 'custom' && (
+                                                <input
+                                                    type="text"
+                                                    style={styles.input}
+                                                    name="emailTypeCustom"
+                                                    value={formData.emailTypeCustom}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            emailTypeCustom: val,
+                                                            emailType: val,
+                                                        }));
+                                                    }}
+                                                    placeholder="Enter custom email type"
+                                                    required
+                                                />
+                                            )}
+                                        </div>
                                     </div>
 
-                                    {formData.emailTypeMode === 'predefined' && (
-                                        <select
-                                            style={styles.select}
-                                            id="emailType"
-                                            name="emailType"
-                                            value={formData.emailType}
-                                            onChange={handleInputChange}
-                                            required
-                                        >
-                                            <option value="">Select email type</option>
-                                            {fieldOptions.emailTypes.map((option) => (
-                                                <option key={option.key} value={option.key}>
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    )}
+                                    <div className="col-md-6">
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="subjectLineFocus" style={styles.label}>
+                                                Email Subject Line Focus <span style={{ color: '#ef4444' }}>*</span>
+                                                <span style={styles.infoIcon} title="Choose the approach for your email subject line">
+                                                    i
+                                                </span>
+                                            </label>
 
-                                    {formData.emailTypeMode === 'custom' && (
-                                        <input
-                                            type="text"
-                                            style={styles.input}
-                                            name="emailTypeCustom"
-                                            value={formData.emailTypeCustom}
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    emailTypeCustom: val,
-                                                    emailType: val,
-                                                }));
-                                            }}
-                                            placeholder="Enter custom email type"
-                                            required
-                                        />
-                                    )}
-                                </div>
-                            </div>
+                                            <div style={styles.radioGroup}>
+                                                <label style={styles.radioItem}>
+                                                    <input
+                                                        type="radio"
+                                                        name="subjectLineFocusMode"
+                                                        value="predefined"
+                                                        checked={formData.subjectLineFocusMode === 'predefined'}
+                                                        onChange={(e) => {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                subjectLineFocusMode: e.target.value,
+                                                            }));
+                                                        }}
+                                                    />
+                                                    <span>Predefined</span>
+                                                </label>
+                                                <label style={styles.radioItem}>
+                                                    <input
+                                                        type="radio"
+                                                        name="subjectLineFocusMode"
+                                                        value="custom"
+                                                        checked={formData.subjectLineFocusMode === 'custom'}
+                                                        onChange={(e) => {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                subjectLineFocusMode: e.target.value,
+                                                                subjectLineFocus: prev.subjectLineFocusCustom || '',
+                                                            }));
+                                                        }}
+                                                    />
+                                                    <span>Custom</span>
+                                                </label>
+                                            </div>
 
-                            <div className="col-md-6">
-                                <div style={styles.formGroup}>
-                                    <label htmlFor="subjectLineFocus" style={styles.label}>
-                                        Email Subject Line Focus <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} title="Choose the approach for your email subject line">
-                                            i
-                                        </span>
-                                    </label>
+                                            {formData.subjectLineFocusMode === 'predefined' && (
+                                                <select
+                                                    style={styles.select}
+                                                    id="subjectLineFocus"
+                                                    name="subjectLineFocus"
+                                                    value={formData.subjectLineFocus}
+                                                    onChange={handleInputChange}
+                                                    required
+                                                >
+                                                    <option value="">Select subject line focus</option>
+                                                    {fieldOptions.subjectLineFocus.map((option) => (
+                                                        <option key={option.key} value={option.key}>
+                                                            {option.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            )}
 
-                                    <div style={styles.radioGroup}>
-                                        <label style={styles.radioItem}>
-                                            <input
-                                                type="radio"
-                                                name="subjectLineFocusMode"
-                                                value="predefined"
-                                                checked={formData.subjectLineFocusMode === 'predefined'}
-                                                onChange={(e) => {
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        subjectLineFocusMode: e.target.value,
-                                                    }));
-                                                }}
-                                            />
-                                            <span>Predefined</span>
-                                        </label>
-                                        <label style={styles.radioItem}>
-                                            <input
-                                                type="radio"
-                                                name="subjectLineFocusMode"
-                                                value="custom"
-                                                checked={formData.subjectLineFocusMode === 'custom'}
-                                                onChange={(e) => {
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        subjectLineFocusMode: e.target.value,
-                                                        subjectLineFocus: prev.subjectLineFocusCustom || '',
-                                                    }));
-                                                }}
-                                            />
-                                            <span>Custom</span>
-                                        </label>
+                                            {formData.subjectLineFocusMode === 'custom' && (
+                                                <input
+                                                    type="text"
+                                                    style={styles.input}
+                                                    name="subjectLineFocusCustom"
+                                                    value={formData.subjectLineFocusCustom}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            subjectLineFocusCustom: val,
+                                                            subjectLineFocus: val,
+                                                        }));
+                                                    }}
+                                                    placeholder="Enter custom subject line focus"
+                                                    required
+                                                />
+                                            )}
+                                        </div>
                                     </div>
 
-                                    {formData.subjectLineFocusMode === 'predefined' && (
-                                        <select
-                                            style={styles.select}
-                                            id="subjectLineFocus"
-                                            name="subjectLineFocus"
-                                            value={formData.subjectLineFocus}
-                                            onChange={handleInputChange}
-                                            required
-                                        >
-                                            <option value="">Select subject line focus</option>
-                                            {fieldOptions.subjectLineFocus.map((option) => (
-                                                <option key={option.key} value={option.key}>
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    )}
+                                    <div className="col-12">
+                                        <div style={styles.formGroup}>
+                                            <label style={styles.label}>
+                                                Target Audience / Recipient Type <span style={{ color: '#ef4444' }}>*</span>
+                                                <span
+                                                    style={styles.infoIcon}
+                                                    title="Define who will receive this email (e.g., Marketing Managers, E-commerce Shoppers)"
+                                                >
+                                                    i
+                                                </span>
+                                            </label>
 
-                                    {formData.subjectLineFocusMode === 'custom' && (
-                                        <input
-                                            type="text"
-                                            style={styles.input}
-                                            name="subjectLineFocusCustom"
-                                            value={formData.subjectLineFocusCustom}
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    subjectLineFocusCustom: val,
-                                                    subjectLineFocus: val,
-                                                }));
-                                            }}
-                                            placeholder="Enter custom subject line focus"
-                                            required
-                                        />
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="col-12">
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>
-                                        Target Audience / Recipient Type <span style={{ color: '#ef4444' }}>*</span>
-                                        <span
-                                            style={styles.infoIcon}
-                                            title="Define who will receive this email (e.g., Marketing Managers, E-commerce Shoppers)"
-                                        >
-                                            i
-                                        </span>
-                                    </label>
-
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            flexWrap: 'wrap',
-                                            gap: '8px',
-                                            marginBottom: '8px',
-                                            minHeight: '40px',
-                                            alignItems: 'center',
-                                            padding: '4px',
-                                            border: '1px solid #334155',
-                                            borderRadius: '6px',
-                                            backgroundColor: '#FFFFFF',
-                                        }}
-                                    >
-                                        {formData.targetAudience.length === 0 && (
-                                            <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
-                                                Type and press Enter to add audience segments
-                                            </span>
-                                        )}
-                                        {formData.targetAudience.map((chip, index) => (
-                                            <span
-                                                key={index}
+                                            <div
                                                 style={{
-                                                    ...styles.badge,
-                                                    ...styles.badgePrimary,
                                                     display: 'flex',
+                                                    flexWrap: 'wrap',
+                                                    gap: '8px',
+                                                    marginBottom: '8px',
+                                                    minHeight: '40px',
                                                     alignItems: 'center',
-                                                    gap: '6px',
-                                                    padding: '4px 10px',
+                                                    padding: '4px',
+                                                    border: '1px solid #334155',
+                                                    borderRadius: '6px',
+                                                    backgroundColor: '#FFFFFF',
                                                 }}
                                             >
-                                                {chip}
-                                                <button
-                                                    type="button"
-                                                    style={styles.removeBtn}
-                                                    onClick={() => removeTag(chip, 'audience')}
+                                                {formData.targetAudience.length === 0 && (
+                                                    <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
+                                                        Type and press Enter to add audience segments
+                                                    </span>
+                                                )}
+                                                {formData.targetAudience.map((chip, index) => (
+                                                    <span
+                                                        key={index}
+                                                        style={{
+                                                            ...styles.badge,
+                                                            ...styles.badgePrimary,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '6px',
+                                                            padding: '4px 10px',
+                                                        }}
+                                                    >
+                                                        {chip}
+                                                        <button
+                                                            type="button"
+                                                            style={styles.removeBtn}
+                                                            onClick={() => removeTag(chip, 'audience')}
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </span>
+                                                ))}
+                                            </div>
+
+                                            <input
+                                                type="text"
+                                                style={styles.input}
+                                                id="audienceInput"
+                                                value={audienceInput}
+                                                onChange={(e) => setAudienceInput(e.target.value)}
+                                                onKeyDown={(e) => handleTagInput(e, 'audience')}
+                                                placeholder="Type and press Enter to add audience segments"
+                                                required={formData.targetAudience.length === 0}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="col-md-12">
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="brandContext" style={styles.label}>
+                                                Sender / Brand Context <span style={{ color: '#ef4444' }}>*</span>
+                                                <span style={styles.infoIcon} title="Your company or brand name and brief context">
+                                                    i
+                                                </span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                style={styles.input}
+                                                id="brandContext"
+                                                name="brandContext"
+                                                value={formData.brandContext}
+                                                onChange={handleInputChange}
+                                                placeholder="Your company/brand name and context"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="col-md-6">
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="emailGoal" style={styles.label}>
+                                                Goal or Purpose of Email <span style={{ color: '#ef4444' }}>*</span>
+                                                <span style={styles.infoIcon} title="What do you want to achieve with this email?">
+                                                    i
+                                                </span>
+                                            </label>
+
+                                            <div style={styles.radioGroup}>
+                                                <label style={styles.radioItem}>
+                                                    <input
+                                                        type="radio"
+                                                        name="emailGoalMode"
+                                                        value="predefined"
+                                                        checked={formData.emailGoalMode === 'predefined'}
+                                                        onChange={(e) => {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                emailGoalMode: e.target.value,
+                                                            }));
+                                                        }}
+                                                    />
+                                                    <span>Predefined</span>
+                                                </label>
+                                                <label style={styles.radioItem}>
+                                                    <input
+                                                        type="radio"
+                                                        name="emailGoalMode"
+                                                        value="custom"
+                                                        checked={formData.emailGoalMode === 'custom'}
+                                                        onChange={(e) => {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                emailGoalMode: e.target.value,
+                                                                emailGoal: 'Custom Goal',
+                                                            }));
+                                                        }}
+                                                    />
+                                                    <span>Custom</span>
+                                                </label>
+                                            </div>
+
+                                            {formData.emailGoalMode === 'predefined' && (
+                                                <select
+                                                    style={styles.select}
+                                                    id="emailGoal"
+                                                    name="emailGoal"
+                                                    value={formData.emailGoal}
+                                                    onChange={handleInputChange}
+                                                    required
                                                 >
-                                                    ×
-                                                </button>
-                                            </span>
-                                        ))}
+                                                    <option value="">Select email goal</option>
+                                                    {fieldOptions.emailGoals.map((option) => (
+                                                        <option key={option.key} value={option.key}>
+                                                            {option.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            )}
+
+                                            {formData.emailGoalMode === 'custom' && (
+                                                <input
+                                                    type="text"
+                                                    style={styles.input}
+                                                    name="customGoal"
+                                                    value={formData.customGoal}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Specify custom goal"
+                                                    required
+                                                />
+                                            )}
+                                        </div>
                                     </div>
 
-                                    <input
-                                        type="text"
-                                        style={styles.input}
-                                        id="audienceInput"
-                                        value={audienceInput}
-                                        onChange={(e) => setAudienceInput(e.target.value)}
-                                        onKeyDown={(e) => handleTagInput(e, 'audience')}
-                                        placeholder="Type and press Enter to add audience segments"
-                                        required={formData.targetAudience.length === 0}
-                                    />
-                                </div>
-                            </div>
+                                    <div className="col-md-6">
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="toneStyle" style={styles.label}>
+                                                Tone or Style <span style={{ color: '#ef4444' }}>*</span>
+                                                <span style={styles.infoIcon} title="Select the tone or style for your email content">
+                                                    i
+                                                </span>
+                                            </label>
 
-                            <div className="col-md-12">
-                                <div style={styles.formGroup}>
-                                    <label htmlFor="brandContext" style={styles.label}>
-                                        Sender / Brand Context <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} title="Your company or brand name and brief context">
-                                            i
-                                        </span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        style={styles.input}
-                                        id="brandContext"
-                                        name="brandContext"
-                                        value={formData.brandContext}
-                                        onChange={handleInputChange}
-                                        placeholder="Your company/brand name and context"
-                                        required
-                                    />
-                                </div>
-                            </div>
+                                            <div style={styles.radioGroup}>
+                                                <label style={styles.radioItem}>
+                                                    <input
+                                                        type="radio"
+                                                        name="toneStyleMode"
+                                                        value="predefined"
+                                                        checked={formData.toneStyleMode === 'predefined'}
+                                                        onChange={(e) => {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                toneStyleMode: e.target.value,
+                                                            }));
+                                                        }}
+                                                    />
+                                                    <span>Predefined</span>
+                                                </label>
+                                                <label style={styles.radioItem}>
+                                                    <input
+                                                        type="radio"
+                                                        name="toneStyleMode"
+                                                        value="custom"
+                                                        checked={formData.toneStyleMode === 'custom'}
+                                                        onChange={(e) => {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                toneStyleMode: e.target.value,
+                                                                toneStyle: prev.toneStyleCustom || '',
+                                                            }));
+                                                        }}
+                                                    />
+                                                    <span>Custom</span>
+                                                </label>
+                                            </div>
 
-                            <div className="col-md-6">
-                                <div style={styles.formGroup}>
-                                    <label htmlFor="emailGoal" style={styles.label}>
-                                        Goal or Purpose of Email <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} title="What do you want to achieve with this email?">
-                                            i
-                                        </span>
-                                    </label>
+                                            {formData.toneStyleMode === 'predefined' && (
+                                                <select
+                                                    style={styles.select}
+                                                    id="toneStyle"
+                                                    name="toneStyle"
+                                                    value={formData.toneStyle}
+                                                    onChange={handleInputChange}
+                                                    required
+                                                >
+                                                    <option value="">Select tone or style</option>
+                                                    {fieldOptions.toneStyles.map((option) => (
+                                                        <option key={option.key} value={option.key}>
+                                                            {option.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            )}
 
-                                    <div style={styles.radioGroup}>
-                                        <label style={styles.radioItem}>
-                                            <input
-                                                type="radio"
-                                                name="emailGoalMode"
-                                                value="predefined"
-                                                checked={formData.emailGoalMode === 'predefined'}
-                                                onChange={(e) => {
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        emailGoalMode: e.target.value,
-                                                    }));
-                                                }}
-                                            />
-                                            <span>Predefined</span>
-                                        </label>
-                                        <label style={styles.radioItem}>
-                                            <input
-                                                type="radio"
-                                                name="emailGoalMode"
-                                                value="custom"
-                                                checked={formData.emailGoalMode === 'custom'}
-                                                onChange={(e) => {
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        emailGoalMode: e.target.value,
-                                                        emailGoal: 'Custom Goal',
-                                                    }));
-                                                }}
-                                            />
-                                            <span>Custom</span>
-                                        </label>
+                                            {formData.toneStyleMode === 'custom' && (
+                                                <input
+                                                    type="text"
+                                                    style={styles.input}
+                                                    name="toneStyleCustom"
+                                                    value={formData.toneStyleCustom}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            toneStyleCustom: val,
+                                                            toneStyle: val,
+                                                        }));
+                                                    }}
+                                                    placeholder="Enter custom tone or style"
+                                                    required
+                                                />
+                                            )}
+                                        </div>
                                     </div>
 
-                                    {formData.emailGoalMode === 'predefined' && (
-                                        <select
-                                            style={styles.select}
-                                            id="emailGoal"
-                                            name="emailGoal"
-                                            value={formData.emailGoal}
-                                            onChange={handleInputChange}
-                                            required
-                                        >
-                                            <option value="">Select email goal</option>
-                                            {fieldOptions.emailGoals.map((option) => (
-                                                <option key={option.key} value={option.key}>
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    )}
-
-                                    {formData.emailGoalMode === 'custom' && (
-                                        <input
-                                            type="text"
-                                            style={styles.input}
-                                            name="customGoal"
-                                            value={formData.customGoal}
-                                            onChange={handleInputChange}
-                                            placeholder="Specify custom goal"
-                                            required
-                                        />
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="col-md-6">
-                                <div style={styles.formGroup}>
-                                    <label htmlFor="toneStyle" style={styles.label}>
-                                        Tone or Style <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} title="Select the tone or style for your email content">
-                                            i
-                                        </span>
-                                    </label>
-
-                                    <div style={styles.radioGroup}>
-                                        <label style={styles.radioItem}>
-                                            <input
-                                                type="radio"
-                                                name="toneStyleMode"
-                                                value="predefined"
-                                                checked={formData.toneStyleMode === 'predefined'}
-                                                onChange={(e) => {
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        toneStyleMode: e.target.value,
-                                                    }));
-                                                }}
+                                    <div className="col-12">
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="keyMessage" style={styles.label}>
+                                                Key Message / Offer <span style={{ color: '#ef4444' }}>*</span>
+                                                <span style={styles.infoIcon} title="The main message or offer you want to communicate in your email">
+                                                    i
+                                                </span>
+                                            </label>
+                                            <textarea
+                                                style={{ ...styles.textarea, minHeight: '100px' }}
+                                                id="keyMessage"
+                                                name="keyMessage"
+                                                value={formData.keyMessage}
+                                                onChange={handleInputChange}
+                                                placeholder="Describe the main message or offer of your email"
+                                                required
                                             />
-                                            <span>Predefined</span>
-                                        </label>
-                                        <label style={styles.radioItem}>
-                                            <input
-                                                type="radio"
-                                                name="toneStyleMode"
-                                                value="custom"
-                                                checked={formData.toneStyleMode === 'custom'}
-                                                onChange={(e) => {
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        toneStyleMode: e.target.value,
-                                                        toneStyle: prev.toneStyleCustom || '',
-                                                    }));
-                                                }}
-                                            />
-                                            <span>Custom</span>
-                                        </label>
+                                        </div>
                                     </div>
 
-                                    {formData.toneStyleMode === 'predefined' && (
-                                        <select
-                                            style={styles.select}
-                                            id="toneStyle"
-                                            name="toneStyle"
-                                            value={formData.toneStyle}
-                                            onChange={handleInputChange}
-                                            required
-                                        >
-                                            <option value="">Select tone or style</option>
-                                            {fieldOptions.toneStyles.map((option) => (
-                                                <option key={option.key} value={option.key}>
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    )}
+                                    <div className="col-md-6">
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="lengthPreference" style={styles.label}>
+                                                Length Preference <span style={{ color: '#ef4444' }}>*</span>
+                                                <span style={styles.infoIcon} title="Choose the desired length for your email content">
+                                                    i
+                                                </span>
+                                            </label>
 
-                                    {formData.toneStyleMode === 'custom' && (
-                                        <input
-                                            type="text"
-                                            style={styles.input}
-                                            name="toneStyleCustom"
-                                            value={formData.toneStyleCustom}
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    toneStyleCustom: val,
-                                                    toneStyle: val,
-                                                }));
-                                            }}
-                                            placeholder="Enter custom tone or style"
-                                            required
-                                        />
-                                    )}
-                                </div>
-                            </div>
+                                            <div style={styles.radioGroup}>
+                                                <label style={styles.radioItem}>
+                                                    <input
+                                                        type="radio"
+                                                        name="lengthPreferenceMode"
+                                                        value="predefined"
+                                                        checked={formData.lengthPreferenceMode === 'predefined'}
+                                                        onChange={(e) => {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                lengthPreferenceMode: e.target.value,
+                                                            }));
+                                                        }}
+                                                    />
+                                                    <span>Predefined</span>
+                                                </label>
+                                                <label style={styles.radioItem}>
+                                                    <input
+                                                        type="radio"
+                                                        name="lengthPreferenceMode"
+                                                        value="custom"
+                                                        checked={formData.lengthPreferenceMode === 'custom'}
+                                                        onChange={(e) => {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                lengthPreferenceMode: e.target.value,
+                                                                lengthPreference: prev.lengthPreferenceCustom || '',
+                                                            }));
+                                                        }}
+                                                    />
+                                                    <span>Custom</span>
+                                                </label>
+                                            </div>
 
-                            <div className="col-12">
-                                <div style={styles.formGroup}>
-                                    <label htmlFor="keyMessage" style={styles.label}>
-                                        Key Message / Offer <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} title="The main message or offer you want to communicate in your email">
-                                            i
-                                        </span>
-                                    </label>
-                                    <textarea
-                                        style={{ ...styles.textarea, minHeight: '100px' }}
-                                        id="keyMessage"
-                                        name="keyMessage"
-                                        value={formData.keyMessage}
-                                        onChange={handleInputChange}
-                                        placeholder="Describe the main message or offer of your email"
-                                        required
-                                    />
-                                </div>
-                            </div>
+                                            {formData.lengthPreferenceMode === 'predefined' && (
+                                                <select
+                                                    style={styles.select}
+                                                    id="lengthPreference"
+                                                    name="lengthPreference"
+                                                    value={formData.lengthPreference}
+                                                    onChange={handleInputChange}
+                                                    required
+                                                >
+                                                    {fieldOptions.lengthPreferences.map((option) => (
+                                                        <option key={option.key} value={option.key}>
+                                                            {option.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            )}
 
-                            <div className="col-md-6">
-                                <div style={styles.formGroup}>
-                                    <label htmlFor="lengthPreference" style={styles.label}>
-                                        Length Preference <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} title="Choose the desired length for your email content">
-                                            i
-                                        </span>
-                                    </label>
-
-                                    <div style={styles.radioGroup}>
-                                        <label style={styles.radioItem}>
-                                            <input
-                                                type="radio"
-                                                name="lengthPreferenceMode"
-                                                value="predefined"
-                                                checked={formData.lengthPreferenceMode === 'predefined'}
-                                                onChange={(e) => {
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        lengthPreferenceMode: e.target.value,
-                                                    }));
-                                                }}
-                                            />
-                                            <span>Predefined</span>
-                                        </label>
-                                        <label style={styles.radioItem}>
-                                            <input
-                                                type="radio"
-                                                name="lengthPreferenceMode"
-                                                value="custom"
-                                                checked={formData.lengthPreferenceMode === 'custom'}
-                                                onChange={(e) => {
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        lengthPreferenceMode: e.target.value,
-                                                        lengthPreference: prev.lengthPreferenceCustom || '',
-                                                    }));
-                                                }}
-                                            />
-                                            <span>Custom</span>
-                                        </label>
+                                            {formData.lengthPreferenceMode === 'custom' && (
+                                                <input
+                                                    type="text"
+                                                    style={styles.input}
+                                                    name="lengthPreferenceCustom"
+                                                    value={formData.lengthPreferenceCustom}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            lengthPreferenceCustom: val,
+                                                            lengthPreference: val,
+                                                        }));
+                                                    }}
+                                                    placeholder="Enter custom length preference"
+                                                    required
+                                                />
+                                            )}
+                                        </div>
                                     </div>
 
-                                    {formData.lengthPreferenceMode === 'predefined' && (
-                                        <select
-                                            style={styles.select}
-                                            id="lengthPreference"
-                                            name="lengthPreference"
-                                            value={formData.lengthPreference}
-                                            onChange={handleInputChange}
-                                            required
-                                        >
-                                            {fieldOptions.lengthPreferences.map((option) => (
-                                                <option key={option.key} value={option.key}>
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    )}
+                                    <div className="col-md-6">
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="ctaType" style={styles.label}>
+                                                Call to Action (CTA) <span style={{ color: '#ef4444' }}>*</span>
+                                                <span style={styles.infoIcon} title="Select or specify the call-to-action for your email">
+                                                    i
+                                                </span>
+                                            </label>
 
-                                    {formData.lengthPreferenceMode === 'custom' && (
-                                        <input
-                                            type="text"
-                                            style={styles.input}
-                                            name="lengthPreferenceCustom"
-                                            value={formData.lengthPreferenceCustom}
-                                            onChange={(e) => {
-                                                const val = e.target.value;
-                                                setFormData((prev) => ({
-                                                    ...prev,
-                                                    lengthPreferenceCustom: val,
-                                                    lengthPreference: val,
-                                                }));
-                                            }}
-                                            placeholder="Enter custom length preference"
-                                            required
-                                        />
-                                    )}
-                                </div>
-                            </div>
+                                            <div style={styles.radioGroup}>
+                                                <label style={styles.radioItem}>
+                                                    <input
+                                                        type="radio"
+                                                        name="ctaTypeMode"
+                                                        value="predefined"
+                                                        checked={formData.ctaTypeMode === 'predefined'}
+                                                        onChange={(e) => {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                ctaTypeMode: e.target.value,
+                                                            }));
+                                                        }}
+                                                    />
+                                                    <span>Predefined</span>
+                                                </label>
+                                                <label style={styles.radioItem}>
+                                                    <input
+                                                        type="radio"
+                                                        name="ctaTypeMode"
+                                                        value="custom"
+                                                        checked={formData.ctaTypeMode === 'custom'}
+                                                        onChange={(e) => {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                ctaTypeMode: e.target.value,
+                                                                ctaType: 'Custom',
+                                                            }));
+                                                        }}
+                                                    />
+                                                    <span>Custom</span>
+                                                </label>
+                                            </div>
 
-                            <div className="col-md-6">
-                                <div style={styles.formGroup}>
-                                    <label htmlFor="ctaType" style={styles.label}>
-                                        Call to Action (CTA) <span style={{ color: '#ef4444' }}>*</span>
-                                        <span style={styles.infoIcon} title="Select or specify the call-to-action for your email">
-                                            i
-                                        </span>
-                                    </label>
+                                            {formData.ctaTypeMode === 'predefined' && (
+                                                <select
+                                                    style={styles.select}
+                                                    id="ctaType"
+                                                    name="ctaType"
+                                                    value={formData.ctaType}
+                                                    onChange={handleInputChange}
+                                                    required
+                                                >
+                                                    <option value="">Select CTA type</option>
+                                                    {fieldOptions.ctaTypes.map((option) => (
+                                                        <option key={option.key} value={option.key}>
+                                                            {option.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            )}
 
-                                    <div style={styles.radioGroup}>
-                                        <label style={styles.radioItem}>
-                                            <input
-                                                type="radio"
-                                                name="ctaTypeMode"
-                                                value="predefined"
-                                                checked={formData.ctaTypeMode === 'predefined'}
-                                                onChange={(e) => {
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        ctaTypeMode: e.target.value,
-                                                    }));
-                                                }}
-                                            />
-                                            <span>Predefined</span>
-                                        </label>
-                                        <label style={styles.radioItem}>
-                                            <input
-                                                type="radio"
-                                                name="ctaTypeMode"
-                                                value="custom"
-                                                checked={formData.ctaTypeMode === 'custom'}
-                                                onChange={(e) => {
-                                                    setFormData((prev) => ({
-                                                        ...prev,
-                                                        ctaTypeMode: e.target.value,
-                                                        ctaType: 'Custom',
-                                                    }));
-                                                }}
-                                            />
-                                            <span>Custom</span>
-                                        </label>
+                                            {formData.ctaTypeMode === 'custom' && (
+                                                <input
+                                                    type="text"
+                                                    style={styles.input}
+                                                    name="customCta"
+                                                    value={formData.customCta}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Enter custom CTA text"
+                                                    required
+                                                />
+                                            )}
+                                        </div>
                                     </div>
 
-                                    {formData.ctaTypeMode === 'predefined' && (
-                                        <select
-                                            style={styles.select}
-                                            id="ctaType"
-                                            name="ctaType"
-                                            value={formData.ctaType}
-                                            onChange={handleInputChange}
-                                            required
-                                        >
-                                            <option value="">Select CTA type</option>
-                                            {fieldOptions.ctaTypes.map((option) => (
-                                                <option key={option.key} value={option.key}>
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    )}
-
-                                    {formData.ctaTypeMode === 'custom' && (
-                                        <input
-                                            type="text"
-                                            style={styles.input}
-                                            name="customCta"
-                                            value={formData.customCta}
-                                            onChange={handleInputChange}
-                                            placeholder="Enter custom CTA text"
-                                            required
-                                        />
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="col-12">
-                                <div style={styles.formGroup}>
-                                    <label htmlFor="variantsCount" style={styles.label}>
-                                        Number of Variants: {formData.variantsCount}
-                                        <span style={styles.infoIcon} title="How many different email variations would you like to generate?">
-                                            i
-                                        </span>
-                                    </label>
-                                    <input
-                                        type="range"
-                                        id="variantsCount"
-                                        name="variantsCount"
-                                        min="1"
-                                        max="5"
-                                        value={formData.variantsCount}
-                                        onChange={(e) => {
-                                            const raw = Number(e.target.value);
-                                            const clamped = Math.max(1, Math.min(5, Number.isFinite(raw) ? raw : 1));
-                                            setFormData((prev) => ({ ...prev, variantsCount: clamped }));
-                                        }}
-                                        style={styles.rangeInput}
-                                        disabled={isGenerating || isApiLoading}
-                                    />
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            fontSize: '12px',
-                                            color: '#94a3b8',
-                                            marginTop: '4px',
-                                        }}
-                                    >
-                                        <span>1</span>
-                                        <span>2</span>
-                                        <span>3</span>
-                                        <span>4</span>
-                                        <span>5</span>
+                                    <div className="col-12">
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="variantsCount" style={styles.label}>
+                                                Number of Variants: {formData.variantsCount}
+                                                <span style={styles.infoIcon} title="How many different email variations would you like to generate?">
+                                                    i
+                                                </span>
+                                            </label>
+                                            <input
+                                                type="range"
+                                                id="variantsCount"
+                                                name="variantsCount"
+                                                min="1"
+                                                max="5"
+                                                value={formData.variantsCount}
+                                                onChange={(e) => {
+                                                    const raw = Number(e.target.value);
+                                                    const clamped = Math.max(1, Math.min(5, Number.isFinite(raw) ? raw : 1));
+                                                    setFormData((prev) => ({ ...prev, variantsCount: clamped }));
+                                                }}
+                                                style={styles.rangeInput}
+                                                disabled={isGenerating || isApiLoading}
+                                            />
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    fontSize: '12px',
+                                                    color: '#94a3b8',
+                                                    marginTop: '4px',
+                                                }}
+                                            >
+                                                <span>1</span>
+                                                <span>2</span>
+                                                <span>3</span>
+                                                <span>4</span>
+                                                <span>5</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
+
+                                </>)}
 
                             <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #1e293b', margin: '5px 0' }} />
 
@@ -1732,7 +1737,7 @@ const EmailNewsletterGenerator = () => {
                                                     padding: '4px',
                                                     border: '1px solid #334155',
                                                     borderRadius: '6px',
-                                                    backgroundColor: '#1e293b',
+                                                    backgroundColor: '#ffffff',
                                                 }}
                                             >
                                                 {formData.personalizationTags.length === 0 && (
@@ -1791,7 +1796,7 @@ const EmailNewsletterGenerator = () => {
                                                     padding: '4px',
                                                     border: '1px solid #334155',
                                                     borderRadius: '6px',
-                                                    backgroundColor: '#1e293b',
+                                                    backgroundColor: '#ffffff',
                                                 }}
                                             >
                                                 {formData.keyHighlights.length === 0 && (
@@ -1955,8 +1960,8 @@ const EmailNewsletterGenerator = () => {
                                     </button>
                                     <button
                                         type="submit"
-                                        className='personal-info-button'
-                                        // style={{ ...styles.btn, ...styles.btnPrimary }}
+                                    // className='personal-info-button'
+                                        style={{ ...styles.btn, ...styles.btnPrimary }}
                                         disabled={isGenerating || isApiLoading}
                                     >
                                         Review & Generate
