@@ -372,10 +372,25 @@
 
 .subscription-plan-area{
     position: relative;
-    background: radial-gradient(1100px 560px at 50% 0%, rgba(124, 58, 237, 0.35) 0%, rgba(14, 12, 21, 0.08) 55%, rgba(14, 12, 21, 0) 100%),
-        radial-gradient(900px 520px at 20% 10%, rgba(99, 102, 241, 0.20) 0%, rgba(14, 12, 21, 0) 65%),
-        radial-gradient(900px 520px at 80% 10%, rgba(236, 72, 153, 0.14) 0%, rgba(14, 12, 21, 0) 70%),
-        #0B0717;
+    background:
+  radial-gradient(
+    1100px 560px at 50% 0%,
+    rgba(124, 58, 237, 0.35) 0%,
+    rgba(14, 12, 21, 0.08) 55%,
+    rgba(14, 12, 21, 0) 100%
+  ),
+  radial-gradient(
+    900px 520px at 20% 10%,
+    rgba(99, 102, 241, 0.2) 0%,
+    rgba(14, 12, 21, 0) 65%
+  ),
+  radial-gradient(
+    900px 520px at 80% 10%,
+    rgba(79, 70, 229, 0.22) 0%, 
+    rgba(14, 12, 21, 0) 70%
+  ),
+  #0B0717;
+
 }
 
 .subscription-plan-area-inner{
