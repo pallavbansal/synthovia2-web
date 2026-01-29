@@ -951,7 +951,7 @@ const Captionandhastaggeneratorform = () => {
 
     // [ ... styles remain the same ...]
     const styles = {
-        container: { maxWidth: '1100px', margin: '0 auto', padding: '24px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', backgroundColor: '#0a0e1a', minHeight: '100vh' },
+        container: { maxWidth: '1100px', margin: '0 auto', padding: '10px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', backgroundColor: '#0a0e1a', minHeight: '100vh' },
         card: { backgroundColor: '#141b2d', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.3)', overflow: 'hidden', border: '1px solid #1e293b' },
         header: { padding: '24px 32px', borderBottom: '1px solid #1e293b' },
         title: { margin: 0, fontSize: '24px', fontWeight: '600', color: '#f8fafc' },

@@ -297,7 +297,7 @@ const ScriptStoryWriterTool = () => {
           container: { 
               maxWidth: '1100px', 
               margin: '0 auto', 
-              padding: '24px', 
+              padding: '10px', 
               fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', 
               backgroundColor: '#0a0e1a', 
               minHeight: '100vh' 
