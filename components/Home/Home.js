@@ -75,7 +75,10 @@ const Home = () => {
       filter: "drop-shadow(0 4px 20px rgba(255, 255, 255, 0.15))",
     },
     gradientText: {
-      background: "linear-gradient(90deg,#c77dff,#9d4edd,#7b2cbf),-webkit-background-clip: text; -webkit-text-fill-color: transparent;position: relative;",
+      background: "linear-gradient(90deg,#c77dff,#9d4edd,#7b2cbf)";
+        -webkit-background-clip: text; 
+        -webkit-text-fill-color: transparent;
+        position: relative;
     },
     fontLarge: {
       fontSize: "xxx-large",
