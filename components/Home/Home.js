@@ -314,8 +314,8 @@ const Home = () => {
                   Synthovia Ecosystem
                 </h2>
                 <Link
-                  // className="btn-default btn-large color-blacked"
-                  className="personal-info-button"
+                  className="btn-default btn-large color-blacked"
+                  // className="personal-info-button"
                   href="/signin"
                 >
                   Try It Now{" "}

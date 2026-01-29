@@ -249,7 +249,7 @@
             }
             .subtitle{
                 margin-bottom: 13px;
-                font-size: var(--font-size-b1);
+                font-size: 15px;
                 list-style: var(--line-height-b1);
             }
             .pricing{
@@ -416,9 +416,19 @@
     margin: 18px auto 0;
     max-width: 640px;
     color: rgba(255,255,255,0.72);
-    font-size: 15px;
+    font-size: 18px;
     line-height: 1.7;
 }
+
+.glasstext {
+      color: rgba(255, 255, 255, 0.9);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.7) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 40px rgba(255, 255, 255, 0.1), 0 8px 32px rgba(0, 0, 0, 0.3);
+      filter: drop-shadow(0 4px 20px rgba(255, 255, 255, 0.15));
+    }
 
 .subscription-plan-toggle{
     margin: 26px auto 0;

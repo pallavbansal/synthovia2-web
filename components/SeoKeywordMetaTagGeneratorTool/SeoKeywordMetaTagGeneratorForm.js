@@ -1246,7 +1246,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     },
     header: {
       padding: "24px 32px",
-      borderBottom: "1px solid #1e293b",
     },
     title: {
       margin: 0,
@@ -1256,7 +1255,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     },
     subtitle: {
       margin: "6px 0 0",
-      fontSize: "14px",
+      fontSize: "15px",
       color: "#94a3b8",
     },
     // formGroup: { marginBottom: "20px" },

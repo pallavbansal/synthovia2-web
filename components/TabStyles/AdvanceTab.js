@@ -69,8 +69,8 @@ const AdvanceTab = () => {
                               data-sal-delay="400"
                             >
                               <Link
-                                // className="btn-default color-blacked"
-                                className="personal-info-button"
+                                className="btn-default color-blacked"
+                                // className="personal-info-button"
                                 href="/signin"
                               >
                                 Try It Now{" "}

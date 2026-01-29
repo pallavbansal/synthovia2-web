@@ -245,7 +245,6 @@ const EmailNewsletterGenerator = () => {
         },
         header: {
             padding: '24px 32px',
-            borderBottom: '1px solid #1e293b',
         },
         title: {
             margin: 0,
@@ -255,7 +254,7 @@ const EmailNewsletterGenerator = () => {
         },
         subtitle: {
             margin: '6px 0 0',
-            fontSize: '14px',
+            fontSize: '15px',
             color: '#94a3b8',
         },
         formGroup: {
@@ -1572,19 +1571,31 @@ const EmailNewsletterGenerator = () => {
 
                                             {formData.lengthPreferenceMode === 'custom' && (
                                                 <input
-                                                    type="text"
+                                                    type="number"
+                                                    inputMode="numeric"
+                                                    min={1}
+                                                    max={1000}
+                                                    step={1}
                                                     style={styles.input}
                                                     name="lengthPreferenceCustom"
                                                     value={formData.lengthPreferenceCustom}
                                                     onChange={(e) => {
                                                         const val = e.target.value;
+                                                        if (val === '') {
+                                                        setFormData((prev) => ({ ...prev, lengthPreferenceCustom: '' }));
+                                                        return;
+                                                    }
+                                                    const parsed = parseInt(val, 10);
+                                                    const clamped = Number.isFinite(parsed)
+                                                        ? Math.min(1000, Math.max(1, parsed))
+                                                        : '';
                                                         setFormData((prev) => ({
                                                             ...prev,
-                                                            lengthPreferenceCustom: val,
+                                                            lengthPreferenceCustom:clamped === '' ? '' : String(clamped),
                                                             lengthPreference: val,
                                                         }));
                                                     }}
-                                                    placeholder="Enter custom length preference"
+                                                    placeholder="Enter custom length preference max upto 1000"
                                                     required
                                                 />
                                             )}

@@ -267,7 +267,7 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                     >
                         &lt; Edit
                     </button>
-                    {typeof onViewLog === 'function' && (
+                    {/* {typeof onViewLog === 'function' && (
                         <button
                             type="button"
                             style={{ ...styles.btn, ...styles.btnOutline }}
@@ -276,7 +276,7 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                         >
                             View History
                         </button>
-                    )}
+                    )} */}
                     <button
                         type="button"
                         style={{ ...styles.btn, ...styles.btnPrimary }}

@@ -310,8 +310,7 @@ const ScriptStoryWriterTool = () => {
               border: '1px solid #1e293b' 
           },
           header: { 
-              padding: '24px 32px', 
-              borderBottom: '1px solid #1e293b', 
+              padding: '24px 32px',  
           },
           title: { 
               margin: 0, 
@@ -321,7 +320,7 @@ const ScriptStoryWriterTool = () => {
           },
           subtitle: { 
               margin: '6px 0 0', 
-              fontSize: '14px', 
+              fontSize: '15px', 
               color: '#94a3b8' 
           },
           formGroup: { 
@@ -1439,10 +1438,10 @@ const ScriptStoryWriterTool = () => {
 
                                     {formData.platformMode === 'custom' && (
                                         <div style={{ marginTop: '10px' }}>
-                                            <label style={styles.label}>
+                                            {/* <label style={styles.label}>
                                                 Custom Platform <span style={{ color: '#ef4444' }}>*</span>
                                                 <span style={styles.infoIcon} data-tooltip-id="platformCustom-tooltip" data-tooltip-content="Type the platform name if it is not listed.">i</span>
-                                            </label>
+                                            </label> */}
                                             <Tooltip style={styles.toolTip} id="platformCustom-tooltip" />
                                             <input
                                                 type="text"
@@ -1511,10 +1510,10 @@ const ScriptStoryWriterTool = () => {
 
                                     {formData.goalMode === 'custom' && (
                                         <div style={{ marginTop: '10px' }}>
-                                            <label style={styles.label}>
+                                            {/* <label style={styles.label}>
                                                 Custom Goal <span style={{ color: '#ef4444' }}>*</span>
                                                 <span style={styles.infoIcon} data-tooltip-id="goalCustom-tooltip" data-tooltip-content="Type the goal/objective in your own words.">i</span>
-                                            </label>
+                                            </label> */}
                                             <Tooltip style={styles.toolTip} id="goalCustom-tooltip" />
                                             <input
                                                 type="text"
@@ -1583,10 +1582,10 @@ const ScriptStoryWriterTool = () => {
 
                                     {formData.toneMode === 'custom' && (
                                         <div style={{ marginTop: '10px' }}>
-                                            <label style={styles.label}>
+                                            {/* <label style={styles.label}>
                                                 Custom Tone <span style={{ color: '#ef4444' }}>*</span>
                                                 <span style={styles.infoIcon} data-tooltip-id="toneCustom-tooltip" data-tooltip-content="Describe the desired tone (e.g., witty, dramatic, warm).">i</span>
-                                            </label>
+                                            </label> */}
                                             <Tooltip style={styles.toolTip} id="toneCustom-tooltip" />
                                             <input
                                                 type="text"
@@ -1654,10 +1653,10 @@ const ScriptStoryWriterTool = () => {
 
                                     {formData.scriptStyleMode === 'custom' && (
                                         <div style={{ marginTop: '10px' }}>
-                                            <label style={styles.label}>
+                                            {/* <label style={styles.label}>
                                                 Custom Script Style <span style={{ color: '#ef4444' }}>*</span>
                                                 <span style={styles.infoIcon} data-tooltip-id="scriptStyleCustom-tooltip" data-tooltip-content="Describe the script style/structure you want.">i</span>
-                                            </label>
+                                            </label> */}
                                             <Tooltip style={styles.toolTip} id="scriptStyleCustom-tooltip" />
                                             <input
                                                 type="text"
@@ -1808,10 +1807,10 @@ const ScriptStoryWriterTool = () => {
 
                                     {formData.textLengthMode === 'custom' && (
                                         <div style={{ marginTop: '10px' }}>
-                                            <label style={styles.label}>
+                                            {/* <label style={styles.label}>
                                                 Custom Text Length
                                                 <span style={styles.infoIcon} data-tooltip-id="textLengthCustom-tooltip" data-tooltip-content="Enter a custom max length/word count (1–1000).">i</span>
-                                            </label>
+                                            </label> */}
                                             <Tooltip style={styles.toolTip} id="textLengthCustom-tooltip" />
                                             <input
                                                 type="number"
@@ -2052,10 +2051,10 @@ const ScriptStoryWriterTool = () => {
 
                                         {formData.hookStyleMode === 'custom' && (
                                             <div style={{ marginTop: '10px' }}>
-                                                <label style={styles.label}>
+                                                {/* <label style={styles.label}>
                                                     Custom Hook
                                                     <span style={styles.infoIcon} data-tooltip-id="hookStyleCustomPattern-tooltip" data-tooltip-content="Provide a hook sentence template (e.g., 'Stop scrolling if...').">i</span>
-                                                </label>
+                                                </label> */}
                                                 <Tooltip style={styles.toolTip} id="hookStyleCustomPattern-tooltip" />
                                                 <input
                                                     type="text"
@@ -2150,10 +2149,10 @@ const ScriptStoryWriterTool = () => {
 
                                         {formData.ctaTypeMode === 'custom' && (
                                             <div style={{ marginTop: '10px' }}>
-                                                <label style={styles.label}>
+                                                {/* <label style={styles.label}>
                                                     Custom CTA
                                                     <span style={styles.infoIcon} data-tooltip-id="ctaTypeCustom-tooltip" data-tooltip-content="Type a custom call-to-action if needed (e.g., 'Book a free demo').">i</span>
-                                                </label>
+                                                </label> */}
                                                 <Tooltip style={styles.toolTip} id="ctaTypeCustom-tooltip" />
                                                 <input
                                                     type="text"
@@ -2220,10 +2219,10 @@ const ScriptStoryWriterTool = () => {
 
                                     {formData.visualToneMode === 'custom' && (
                                         <div style={{ marginTop: '10px' }}>
-                                            <label style={styles.label}>
+                                            {/* <label style={styles.label}>
                                                 Custom Visual Mood
                                                 <span style={styles.infoIcon} data-tooltip-id="visualToneCustom-tooltip" data-tooltip-content="Describe the visual mood (e.g., sleek, gritty, high-energy).">i</span>
-                                            </label>
+                                            </label> */}
                                             <Tooltip style={styles.toolTip} id="visualToneCustom-tooltip" />
                                             <input
                                                 type="text"
@@ -2287,10 +2286,10 @@ const ScriptStoryWriterTool = () => {
 
                                     {formData.languageMode === 'custom' && (
                                         <div style={{ marginTop: '10px' }}>
-                                            <label style={styles.label}>
+                                            {/* <label style={styles.label}>
                                                 Custom Language / Locale
                                                 <span style={styles.infoIcon} data-tooltip-id="languageCustom-tooltip" data-tooltip-content="Type a custom language/locale (e.g., English (US), Hinglish).">i</span>
-                                            </label>
+                                            </label> */}
                                             <Tooltip style={styles.toolTip} id="languageCustom-tooltip" />
                                             <input
                                                 type="text"
@@ -2381,10 +2380,10 @@ const ScriptStoryWriterTool = () => {
 
                                     {formData.narrationStyleMode === 'custom' && (
                                         <div style={{ marginTop: '10px' }}>
-                                            <label style={styles.label}>
+                                            {/* <label style={styles.label}>
                                                 Custom Narration Style
                                                 <span style={styles.infoIcon} data-tooltip-id="narrationStyleCustom-tooltip" data-tooltip-content="Describe the narration/POV style in your own words.">i</span>
-                                            </label>
+                                            </label> */}
                                             <Tooltip style={styles.toolTip} id="narrationStyleCustom-tooltip" />
                                             <input
                                                 type="text"

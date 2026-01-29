@@ -406,10 +406,10 @@ const ToolHistoryPage = () => {
           <div className={styles.card}>
             <div className={styles.historyHeaderRow}>
               <div>
-                <div style={{ fontWeight: 900, fontSize: 14 }}>Tool History</div>
-                <div className={styles.muted} style={{ marginTop: 4 }}>
-                  View your past generations. Use session IDs to correlate frontend submissions.
-                </div>
+                <div style={{ fontWeight: 900, fontSize: 14 }}>View your past generations</div>
+                {/* <div className={styles.muted} style={{ marginTop: 4 }}>
+                  View your past generations.
+                </div> */}
                 {historyDateError ? <div className={styles.muted} style={{ marginTop: 6 }}>{historyDateError}</div> : null}
               </div>
 

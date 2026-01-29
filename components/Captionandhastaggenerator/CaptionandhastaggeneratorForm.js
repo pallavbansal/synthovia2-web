@@ -953,9 +953,9 @@ const Captionandhastaggeneratorform = () => {
     const styles = {
         container: { maxWidth: '1100px', margin: '0 auto', padding: '10px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', backgroundColor: '#0a0e1a', minHeight: '100vh' },
         card: { backgroundColor: '#141b2d', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.3)', overflow: 'hidden', border: '1px solid #1e293b' },
-        header: { padding: '24px 32px', borderBottom: '1px solid #1e293b' },
+        header: { padding: '24px 32px' },
         title: { margin: 0, fontSize: '24px', fontWeight: '600', color: '#f8fafc' },
-        subtitle: { margin: '6px 0 0', fontSize: '14px', color: '#94a3b8' },
+        subtitle: { margin: '6px 0 0', fontSize: '15px', color: '#94a3b8' },
         // formGroup: { marginBottom: '8px' },
         label: { display: 'block', marginBottom: '6px', fontSize: '16px', fontWeight: '500', color: '#e2e8f0' },
         input: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box' },
@@ -1330,10 +1330,10 @@ const Captionandhastaggeneratorform = () => {
                                                 ) : (
                                                     <div>
                                                         <div style={styles.formGroup}>
-                                                            <label htmlFor="customPlatform" style={styles.label}>
+                                                            {/* <label htmlFor="customPlatform" style={styles.label}>
                                                                 Custom Platform Description <span style={{ color: '#ef4444' }}>*</span>
                                                                 <span style={styles.infoIcon} data-tooltip-id="customPlatform-tooltip" data-tooltip-content="Enter a description of your custom platform and desired post type">i</span>
-                                                            </label>
+                                                            </label> */}
                                                             <Tooltip style={styles.toolTip} id="customPlatform-tooltip" />
                                                             <input
                                                                 type="text"
@@ -1404,10 +1404,10 @@ const Captionandhastaggeneratorform = () => {
                                                     </select>
                                                 ) : (
                                                     <div>
-                                                        <label htmlFor="customTone" style={styles.label}>
+                                                        {/* <label htmlFor="customTone" style={styles.label}>
                                                             Custom Tone <span style={{ color: '#ef4444' }}>*</span>
                                                             <span style={styles.infoIcon} data-tooltip-id="customTone-tooltip" data-tooltip-content="Describe your custom tone (max 60 characters)">i</span>
-                                                        </label>
+                                                        </label> */}
                                                         <Tooltip style={styles.toolTip} id="customTone-tooltip" />
                                                         <input
                                                             type="text"
@@ -1519,14 +1519,14 @@ const Captionandhastaggeneratorform = () => {
                                                                 setFormData(prev => ({ ...prev, customPostLength: clamped.toString() }));
                                                             }}
                                                             min={1}
-                                                            max={2000}
+                                                            max={500}
                                                             step={1}
                                                             style={styles.input}
                                                             placeholder="Enter desired post length (1-500 characters)"
                                                         />
                                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
                                                                 <span style={{ color: '#9ca3af', fontSize: '14px' }}>
-                                                                    Custom post  length must be an integer between 1 and 2000 characters.
+                                                                    Custom post  length must be an integer between 1 and 500 characters.
                                                                 </span>
                                                             </div>
                                                     </div>

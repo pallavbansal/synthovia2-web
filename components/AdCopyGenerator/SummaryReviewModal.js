@@ -394,14 +394,14 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                     >
                         &lt; Edit Selections
                     </button>
-                    <button
+                    {/* <button
                         type="button"
                         style={{ ...styles.btn, ...styles.btnOutline }}
                         onClick={onViewLog}
                         disabled={isGenerating}
                     >
                         View History
-                    </button>
+                    </button> */}
                     <button
                         type="button"
                         style={{ ...styles.btn, ...styles.btnPrimary }}

@@ -1327,9 +1327,9 @@ const CopywritingAssistantForm = () => {
     const styles = {
         container: { maxWidth: '1100px', margin: '0 auto', padding: '10px', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', backgroundColor: '#0a0e1a', minHeight: '100vh' },
         card: { backgroundColor: '#141b2d', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.3)', overflow: 'hidden', border: '1px solid #1e293b' },
-        header: { padding: '24px 32px', borderBottom: '1px solid #1e293b' },
+        header: { padding: '24px 32px' },
         title: { margin: 0, fontSize: '24px', fontWeight: '600', color: '#f8fafc' },
-        subtitle: { margin: '6px 0 0', fontSize: '14px', color: '#94a3b8' },
+        subtitle: { margin: '6px 0 0', fontSize: '15px', color: '#94a3b8' },
         // formGroup: { marginBottom: '8px' },
         label: { display: 'block', marginBottom: '6px', fontSize: '16px', fontWeight: '500', color: '#e2e8f0' },
         input: { width: '100%', padding: '10px 14px', fontSize: '14px', lineHeight: '1.5', color: '#e2e8f0', backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '6px', transition: 'all 0.15s ease-in-out', boxSizing: 'border-box' },
@@ -1395,7 +1395,7 @@ const CopywritingAssistantForm = () => {
                     <span style={styles.infoIcon} data-tooltip-id={`${modeName}-tooltip`} data-tooltip-content={tooltipContent}>i</span>
                 </label>
                 <Tooltip style={styles.toolTip} id={`${modeName}-tooltip`} />
-                <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
+                <div style={{ display: 'flex', gap: '20px', marginBottom: '8px' }}>
                     <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                         <input
                             type="radio"
@@ -1987,12 +1987,12 @@ const CopywritingAssistantForm = () => {
                                                         value={formData.customWordCount}
                                                         onChange={handleChange}
                                                         min="50"
-                                                        max="2000"
+                                                        max="1200"
                                                         style={{ ...styles.input, maxWidth: '160px' }}
-                                                        placeholder="Target words (50-2000)"
+                                                        placeholder="Target words (50-1200)"
                                                     />
                                                     <div style={{ fontSize: '12px', color: '#9ca3af' }}>
-                                                        Custom length target should be between 50 and 2000 words. The generator will aim for this length.
+                                                        Custom length target should be between 50 and 1200 words. The generator will aim for this length.
                                                     </div>
                                                 </div>
                                             )}

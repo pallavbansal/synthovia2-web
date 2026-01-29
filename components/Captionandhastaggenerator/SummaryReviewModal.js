@@ -283,14 +283,14 @@ const SummaryReviewModal = ({ formData, apiOptions, onGenerate, onEdit, onViewLo
                     >
                         &lt; Edit Request
                     </button>
-                    <button
+                    {/* <button
                         type="button"
                         style={{ ...styles.btn, ...styles.btnOutline }}
                         onClick={onViewLog}
                         disabled={isGenerating}
                     >
                         View Log
-                    </button>
+                    </button> */}
                     <button
                         type="button"
                         style={{ ...styles.btn, ...styles.btnGenerate }}

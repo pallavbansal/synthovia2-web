@@ -32,7 +32,7 @@
 }
 
 .card {
-  /* background: rgba(255, 255, 255, 0.04); */
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   padding: 14px;
@@ -44,7 +44,7 @@
   overflow: hidden;
   border-radius: 18px;
   border: 1px solid rgba(120, 132, 255, 0.22);
-  /* background: linear-gradient(135deg, rgba(120, 132, 255, 0.18), rgba(0, 209, 255, 0.10)); */
+  background: linear-gradient(135deg, rgba(120, 132, 255, 0.18), rgba(0, 209, 255, 0.10));
 }
 
 .ctaInner {
@@ -108,7 +108,7 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.03);
   color: rgba(255, 255, 255, 0.72);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
 }

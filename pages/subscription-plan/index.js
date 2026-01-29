@@ -344,7 +344,7 @@ const SubscriptionPlanPage = () => {
                     >
                       <div className="subscription-plan-hero-sparkle sparkle-left" />
                       <div className="subscription-plan-hero-sparkle sparkle-right" />
-                      <h1 className="subscription-plan-title">Choose your pricing</h1>
+                      <h1 className="subscription-plan-title glasstext">Choose your pricing</h1>
                       <p className="subscription-plan-subtitle">
                         Find the perfect plan to your business needs. We provide flexible solutions for startups,
                         growing businesses, and enterprises.
@@ -448,8 +448,8 @@ const SubscriptionPlanPage = () => {
                     data-sal-duration="400"
                     data-sal-delay="150"
                   >
-                    <h2 className="title">How Credits Work</h2>
-                    <p className="description" style={{ maxWidth: 700, margin: "0 auto" }}>
+                    <h2 className="title glasstext">How Credits Work</h2>
+                    <p className="subscription-plan-subtitle">
                       Credits are simple - each AI tool uses a specific number of credits per generation, 
                       multiplied by the number of variants you create.
                     </p>
@@ -619,7 +619,7 @@ const SubscriptionPlanPage = () => {
                       </div>
                       <div className="key-point-content">
                         <h4>Multiple Variants</h4>
-                        <p>Generate as many variants as you need - credits scale linearly</p>
+                        <p>Generate upto 5 variants as per your need - credits scale linearly</p>
                       </div>
                     </div>
 
@@ -649,8 +649,8 @@ const SubscriptionPlanPage = () => {
                     data-sal-duration="400"
                     data-sal-delay="150"
                   >
-                    <h2 className="title">Frequently Asked Questions</h2>
-                    <p className="description" style={{ maxWidth: 600, margin: "0 auto" }}>
+                    <h2 className="title glasstext">Frequently Asked Questions</h2>
+                    <p className="subscription-plan-subtitle">
                       Get answers to common questions about our pricing plans and subscriptions.
                     </p>
                   </div>

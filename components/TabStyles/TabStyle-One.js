@@ -40,12 +40,15 @@ const TabStyleOne = () => {
                       aria-selected="false"
                     >
                       <span className="generator-icon">
-                        <Image
+                        {/* <Image
                           src={data.iconImg}
                           width={24}
                           height={24}
                           alt="Vedio Generator Icon"
-                        />
+                        /> */}
+                        <div className="credits-tool-icon" style={{fontSize:"15px !important", width:"40px !important",height:"40px !important", marginBottom:"0px !important"}}>
+                          <i className={data.iconClass}></i>
+                        </div>
                         {data.text}
                       </span>
                       <span className="border-bottom-style"></span>
@@ -83,7 +86,7 @@ const TabStyleOne = () => {
                             </div>
                             <div className="read-more">
                               <Link
-                                className="personal-info-button"
+                                className="btn-default btn-large color-blacked"
                                 href={getToolHref(tab)}
                               >
                                 Start Exploring Now

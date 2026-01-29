@@ -8,6 +8,7 @@
       "text": "Add Copy Generator",
       "target": "ad-copy-generator",
       "iconImg": "/images/icons/video-g.png",
+      "iconClass": "fa-solid fa-ad",
       "isSelect": false,
       "subItem": [
         {
@@ -32,6 +33,7 @@
       "text": "Caption Hashtag Generator",
       "target": "caption-and-hastag-generator",
       "iconImg": "/images/icons/audio-g.png",
+      "iconClass": "fa-solid fa-hashtag",
       "isSelect": true,
       "subItem": [
         {
@@ -56,6 +58,7 @@
       "text": "Copy Writing Generator",
       "target": "copywriting-assistant",
       "iconImg": "/images/icons/photo-g.png",
+      "iconClass": "fa-solid fa-file-text",
       "isSelect": false,
       "subItem": [
         {
@@ -80,6 +83,7 @@
       "text": "Scripting Writing Generator",
       "target": "script-writing-generator",
       "iconImg": "/images/icons/text-g.png",
+      "iconClass": "fa-solid fa-file-video",
       "isSelect": false,
       "subItem": [
         {
@@ -101,9 +105,10 @@
       "img": "/images/generator-img/chat-export-code.png",
       "imgLight": "/images/light/generator-img/chat-export-audio.png",
       "menuId": "email-generator",
-      "text": "Email and Newsletter Generator",
+      "text": "Email & Newsletter Generator",
       "target": "email-generator",
       "iconImg": "/images/icons/code-g.png",
+      "iconClass": "fa-solid fa-envelope",
       "isSelect": false,
       "subItem": [
         {
@@ -125,9 +130,10 @@
       "img": "/images/generator-img/chat-export-code.png",
       "imgLight": "/images/light/generator-img/chat-export-audio.png",
       "menuId": "seo-keyword-meta-tag-generator",
-      "text": "Seo Keyword and Meta Tag Generator",
+      "text": "Seo Keyword Generator",
       "target": "seo-keyword-meta-tag-generator",
       "iconImg": "/images/icons/code-g.png",
+      "iconClass": "fa-solid fa-key",
       "isSelect": false,
       "subItem": [
         {

@@ -222,7 +222,7 @@ const VariantModalContent = ({
         <div style={modalStyles.overlay}>
             <div style={modalStyles.modal}>
                 <div style={modalStyles.header}>
-                    <h2 style={modalStyles.title}>Generated Ad Copy Variants ({variants.length})
+                    <h2 style={modalStyles.title}>Generated Caption and Hashtag Variants ({variants.length})
                         {isHistoryView && (
                             <span style={{ marginLeft: '10px', fontSize: '14px', color: '#94a3b8', fontWeight: '400' }}>
                                 (History Log)

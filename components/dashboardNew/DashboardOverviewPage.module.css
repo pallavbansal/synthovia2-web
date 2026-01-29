@@ -25,7 +25,7 @@
 }
 
 .greetingSub {
-  font-size: 12px;
+  font-size: 18px;
   color: rgba(255, 255, 255, 0.6);
 }
 
@@ -148,10 +148,73 @@
   backdrop-filter: blur(10px);
 }
 
+ .ctaCard {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(120, 132, 255, 0.22);
+  background: radial-gradient(900px 420px at 0% 0%, rgba(120, 132, 255, 0.22), transparent 60%),
+    radial-gradient(700px 380px at 100% 0%, rgba(0, 209, 255, 0.16), transparent 55%),
+    rgba(255, 255, 255, 0.04);
+ }
+
+ .ctaInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+ }
+
+ .ctaLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+ }
+
+ .ctaTitle {
+  font-size: 15px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+ }
+
+ .ctaSubtitle {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+ }
+
+ .ctaBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+ }
+
+ .ctaBtn:hover {
+  background: rgba(0, 0, 0, 0.36);
+ }
+
 .grid {
   display: grid;
   grid-template-columns: 1.3fr 0.7fr;
   gap: 14px;
+}
+
+@media (max-width: 860px) {
+.leftCol {
+  display: none !important;
+  visibility: hidden !important;
+}
 }
 
 .leftCol {
@@ -498,7 +561,7 @@
 }
 
 .barLabel {
-  font-size: 8px;
+  font-size: 11px;
   font-weight:500;
   color: rgba(255, 255, 255, 0.72);
   text-align: center;

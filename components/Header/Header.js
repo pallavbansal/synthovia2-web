@@ -176,7 +176,7 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
                         </div>
                       </a>
                     </div>
-                    <div className="rbt-user-menu-list-wrapper">
+                    <div className="rbt-user-menu-list-wrapper" style={{ borderRadius: "10px" }}>
                       <div className="inner">
                         <div className="rbt-admin-profile" style={{ padding: "10px 12px 8px" }}>
                           <div className="admin-info">

@@ -317,6 +317,7 @@
   .sidebar {
     width: 100%;
     flex-basis: auto;
+    margin-bottom: 10px;
   }
 
   .main {

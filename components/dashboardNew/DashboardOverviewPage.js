@@ -175,6 +175,54 @@ const DashboardOverviewPage = () => {
   const [error, setError] = useState("");
   const [stats, setStats] = useState(null);
 
+  const [profileState, setProfileState] = useState({
+    loading: false,
+    error: "",
+    data: null,
+  });
+
+  useEffect(() => {
+    const auth = getAuthHeader();
+    if (!auth) return;
+
+    let cancelled = false;
+
+    const fetchProfile = async () => {
+      setProfileState({ loading: true, error: "", data: null });
+      try {
+        const res = await fetch(API.PROFILE, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: auth,
+          },
+        });
+
+        const json = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(json?.message || `Failed to load profile (${res.status})`);
+        if (!json || json.status_code !== 1) throw new Error(json?.message || "Failed to load profile");
+
+        if (!cancelled) {
+          setProfileState({ loading: false, error: "", data: json });
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setProfileState({
+            loading: false,
+            error: err?.message || "Failed to load profile",
+            data: null,
+          });
+        }
+      }
+    };
+
+    fetchProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -361,6 +409,11 @@ const DashboardOverviewPage = () => {
   const timelineSelectedLabel =
     TIMELINES.find((t) => t.value === timelineSelection)?.label || "Select an option";
 
+  const subscriptionActive = Boolean(
+    profileState.data?.subscription?.active ?? profileState.data?.data?.subscription?.active
+  );
+  const showBuyPlanCta = Boolean(profileState.data) && !subscriptionActive;
+
   return (
     <div className={styles.page}>
       <div className={styles.hero}>
@@ -371,6 +424,21 @@ const DashboardOverviewPage = () => {
           </div>
         </div>
       </div>
+
+      {showBuyPlanCta ? (
+        <div className={`${styles.card} ${styles.ctaCard}`.trim()}>
+          <div className={styles.ctaInner}>
+            <div className={styles.ctaLeft}>
+              <h3 className={styles.ctaTitle}>Unlock more credits and premium features</h3>
+              <p className={styles.ctaSubtitle}>Buy a subscription plan to boost your productivity.</p>
+            </div>
+            <a href="/subscription-plan" className={styles.ctaBtn}>
+              <i className="fa-solid fa-bolt" />
+              Buy
+            </a>
+          </div>
+        </div>
+      ) : null}
 
       <div className={styles.filterBar}>
         <div className={styles.filters}>
