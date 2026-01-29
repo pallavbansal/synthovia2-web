@@ -297,7 +297,9 @@ const SettingsPage = () => {
 
         <div className={`${styles.card} ${styles.subscriptionCard}`.trim()}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-            <div style={{ fontWeight: 900, fontSize: 14 }}>Subscription - {remainingDays !== null ? `${remainingDays} days remaining` : ""}</div>
+            <div style={{ fontWeight: 900, fontSize: 14 }}>Subscription
+              // - {remainingDays !== null ? `${remainingDays} days remaining` : ""}
+</div>
             <span className={`${styles.badge} ${getSubscriptionBadgeClass(sub)}`.trim()}>
               {sub?.active ? "Active" : "Inactive"}
               {sub?.status ? ` • ${sub.status}` : ""}
@@ -328,12 +330,12 @@ const SettingsPage = () => {
               <div className={styles.k}>Expires</div>
               <div className={styles.v}>{sub?.expires_at || "—"}</div>
             </div>
-            {/* {remainingDays !== null ? (
+            {remainingDays !== null ? (
               <div className={styles.kv}>
                 <div className={styles.k}>Remaining days</div>
                 <div className={styles.v}>{remainingDays}</div>
               </div>
-            ) : null} */}
+            ) : null} 
             <div className={styles.kv}>
               <div className={styles.k}>Next billing</div>
               <div className={styles.v}>{sub?.next_billing_at || "—"}</div>
