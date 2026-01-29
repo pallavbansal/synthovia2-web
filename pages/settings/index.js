@@ -297,9 +297,7 @@ const SettingsPage = () => {
 
         <div className={`${styles.card} ${styles.subscriptionCard}`.trim()}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-            <div style={{ fontWeight: 900, fontSize: 14 }}>Subscription
-              // - {remainingDays !== null ? `${remainingDays} days remaining` : ""}
-</div>
+            <div style={{ fontWeight: 900, fontSize: 14 }}>Subscription</div>
             <span className={`${styles.badge} ${getSubscriptionBadgeClass(sub)}`.trim()}>
               {sub?.active ? "Active" : "Inactive"}
               {sub?.status ? ` • ${sub.status}` : ""}
