@@ -298,12 +298,12 @@ const VariantModalContent = ({
                                     >
                                         <button
                                             type="button"
-                                            style={{
-                                                ...modalStyles.actionButton,
-                                                backgroundColor: isInteractionDisabled ? '#e5e7eb' : '#f3f4f6',
-                                                color: isInteractionDisabled ? '#9ca3af' : '#1f2937',
-                                                cursor: isInteractionDisabled ? 'not-allowed' : 'pointer',
-                                            }}
+                                                style={{
+                                                    ...modalStyles.actionButton,
+                                                    backgroundColor: "#10b981",
+                                                    color: "white",
+                                                    border: "none",
+                                                }}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleCopy(contentToRender, variant.id || index + 1);
@@ -317,9 +317,10 @@ const VariantModalContent = ({
                                             type="button"
                                             style={{
                                                 ...modalStyles.actionButton,
-                                                backgroundColor: isInteractionDisabled ? '#e5e7eb' : '#f3f4f6',
-                                                color: isInteractionDisabled ? '#9ca3af' : '#1f2937',
-                                                cursor: isInteractionDisabled ? 'not-allowed' : 'pointer',
+                                                backgroundColor: "#3b82f6",
+                                                color: "white",
+                                                border: "none",
+                                                cursor: isInteractionDisabled ? "default" : "pointer",
                                             }}
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -332,11 +333,12 @@ const VariantModalContent = ({
 
                                         <button
                                             type="button"
-                                            style={{
-                                                ...modalStyles.actionButton,
-                                                backgroundColor: isInteractionDisabled ? '#e5e7eb' : '#f3f4f6',
-                                                color: isInteractionDisabled ? '#9ca3af' : '#1f2937',
-                                                cursor: isInteractionDisabled ? 'not-allowed' : 'pointer',
+                                           style={{
+                                            ...modalStyles.actionButton,
+                                            backgroundColor: isInteractionDisabled ? "#9ca3af" : "#f97316",
+                                            color: "white",
+                                            border: "none",
+                                            cursor: isInteractionDisabled ? "wait" : "pointer",
                                             }}
                                             onClick={(e) => {
                                                 e.stopPropagation();

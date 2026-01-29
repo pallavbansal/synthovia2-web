@@ -7,6 +7,29 @@ import VariantModalContent from './VariantModalContent';
 
 import API from "@/utils/api";
 
+const createSessionRequestId = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+        const bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+        const hex = Array.from(bytes)
+            .map((b) => b.toString(16).padStart(2, '0'))
+            .join('');
+        return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    }
+
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+};
+
 // Default field options
 const defaultFieldOptions = {
     platforms: [
@@ -126,6 +149,8 @@ const ScriptStoryWriterTool = () => {
         includeHook: true,
         hookStyleMode: 'predefined',
         hookStyle: '',
+        hookStyleMode: 'predefined',
+        hookStyleCustom: '',
         hookStyleCustomPattern: '',
 
         includeCta: true,
@@ -171,9 +196,11 @@ const ScriptStoryWriterTool = () => {
     const [mounted, setMounted] = useState(false);
 
     const streamControllersRef = useRef([]);
+    const sessionRequestIdRef = useRef(null);
 
     useEffect(() => {
         setMounted(true);
+        sessionRequestIdRef.current = createSessionRequestId();
     }, []);
 
     useEffect(() => {
@@ -713,7 +740,7 @@ const ScriptStoryWriterTool = () => {
                         value: (() => {
                             const parsed = parseInt(formData.textLengthCustom, 10);
                             if (!Number.isFinite(parsed) || parsed <= 0) return null;
-                            return Math.min(1000, parsed);
+                            return String(Math.min(1000, parsed));
                         })(),
                     }
                   : buildSelectObject({
@@ -815,7 +842,11 @@ const ScriptStoryWriterTool = () => {
                   return;
               }
 
-              const payload = buildPayload();
+              sessionRequestIdRef.current = createSessionRequestId();
+              const payload = {
+                  ...buildPayload(),
+                  session_request_id: sessionRequestIdRef.current,
+              };
 
               showNotification('Generating scripts, please wait...', 'info');
 
@@ -1031,7 +1062,11 @@ const ScriptStoryWriterTool = () => {
       const handleRegenerateVariant = async (variantId) => {
           if (!variantId) return;
 
-          const payload = buildPayload();
+          sessionRequestIdRef.current = createSessionRequestId();
+          const payload = {
+              ...buildPayload(),
+              session_request_id: sessionRequestIdRef.current,
+          };
           const variantIndex = (generatedVariantsData.variants || []).findIndex((v) => v?.id === variantId);
           if (variantIndex === -1) return;
 
@@ -1265,6 +1300,8 @@ const ScriptStoryWriterTool = () => {
               includeHook: true,
               hookStyleMode: 'predefined',
               hookStyle: '',
+              hookStyleMode: 'predefined',
+              hookStyleCustom: '',
               hookStyleCustomPattern: '',
               includeCta: true,
               ctaType: '',
