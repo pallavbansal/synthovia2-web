@@ -44,7 +44,7 @@
   overflow: hidden;
   border-radius: 18px;
   border: 1px solid rgba(120, 132, 255, 0.22);
-  background: linear-gradient(135deg, rgba(120, 132, 255, 0.18), rgba(0, 209, 255, 0.10));
+  /* background: linear-gradient(135deg, rgba(120, 132, 255, 0.18), rgba(0, 209, 255, 0.10)); */
 }
 
 .ctaInner {

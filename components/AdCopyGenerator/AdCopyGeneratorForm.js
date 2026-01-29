@@ -2726,8 +2726,8 @@ const AdCopyGeneratorForm = () => {
                                             </button>
                                             <button
                                                 type="submit"
-                                                className='personal-info-button'
-                                                // style={{ ...styles.btn, ...styles.btnPrimary }}
+                                                // className='personal-info-button'
+                                                style={{ ...styles.btn, ...styles.btnPrimary }}
                                                 disabled={isGenerating || isApiLoading}
                                             >
                                                 {isGenerating || isApiLoading ? (

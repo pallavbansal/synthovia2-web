@@ -11,12 +11,29 @@ const SeoKeywordMetaTagGeneratorPage = () => {
       <PageHead title="SEO Keyword & Meta Tag Generator" />
 
       <DashboardLayout title="SEO Keyword & Meta Tag Generator">
-        <main className="page-wrapper rbt-dashboard-page">
+        {/* <main className="page-wrapper rbt-dashboard-page">
           <Context>
             <div className="rbt-panel-wrapper">
               <SeoKeywordMetaTagGeneratorTool />
             </div>
           </Context>
+        </main> */}
+        <main className="page-wrapper rbt-dashboard-page">
+          <div className="rbt-panel-wrapper">
+            <Context>
+              <div className="rbt-main-content">
+                <div className="rbt-daynamic-page-content">
+                  <div className="rbt-dashboard-content">
+                    <div className="content-page">
+                      <SeoKeywordMetaTagGeneratorTool />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* <BackToTop /> */}
+            </Context>
+          </div>
         </main>
         <style jsx global>{`
           [data-dashboard-layout='new'] .rbt-main-content {

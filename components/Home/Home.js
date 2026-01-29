@@ -74,6 +74,9 @@ const Home = () => {
       textShadow: "0 0 40px rgba(255, 255, 255, 0.1), 0 8px 32px rgba(0, 0, 0, 0.3)",
       filter: "drop-shadow(0 4px 20px rgba(255, 255, 255, 0.15))",
     },
+    gradientText: {
+      background: "linear-gradient(90deg,#c77dff,#9d4edd,#7b2cbf),-webkit-background-clip: text; -webkit-text-fill-color: transparent;position: relative;",
+    },
     fontLarge: {
       fontSize: "xxx-large",
     },
@@ -90,7 +93,7 @@ const Home = () => {
             <div className="col-lg-12">
               <div className="inner text-center mt--140">
                 <h1 className="title display-one" style={{...styles.glasstext,...styles.fontLarge}}>
-                  One Platform to Plan, Structure, and Write Content — Powered by AI
+                  One Platform to Plan, Structure, and Write Content — <span style={styles.gradientText}>Powered by AI</span>
                   {/* <br /> */}
                   {/* {" "}
                   <span className="header-caption">

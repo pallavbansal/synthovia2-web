@@ -124,6 +124,7 @@ const ScriptStoryWriterTool = () => {
         scriptStyleCustom: '',
 
         includeHook: true,
+        hookStyleMode: 'predefined',
         hookStyle: '',
         hookStyleCustomPattern: '',
 
@@ -520,11 +521,11 @@ const ScriptStoryWriterTool = () => {
   
       const durationPresets = useMemo(() => {
           const key = formData.platformMode === 'custom' ? 'custom' : formData.platform;
-          if (key === 'youtube') return [15, 30, 45, 60, 90, 180];
-          if (key === 'podcast') return [15, 30, 45, 60, 90, 180];
-          if (key === 'video_ad') return [15, 30, 45, 60, 90];
-          if (key === 'tiktok' || key === 'reels' || key === 'shorts' || key === 'instagram_reel' || key === 'youtube_shorts') return [15, 30, 45, 60, 90];
-          return [15, 30, 45, 60, 90];
+          if (key === 'youtube') return [15, 30, 45, 60, 90, 180,240,360];
+          if (key === 'podcast') return [15, 30, 45, 60, 90, 180,240,360];
+          if (key === 'video_ad') return [15, 30, 45, 60, 90,180,240,360];
+          if (key === 'tiktok' || key === 'reels' || key === 'shorts' || key === 'instagram_reel' || key === 'youtube_shorts') return [15, 30, 45, 60, 90,180,240,360];
+          return [15, 30, 45, 60, 90,180,240,360];
       }, [formData.platform, formData.platformMode]);
   
       const sliderSnap = (rawSeconds) => {
@@ -585,8 +586,8 @@ const ScriptStoryWriterTool = () => {
               return;
           }
   
-          if (seconds < 10 || seconds > 180) {
-              showNotification('Custom duration must be between 10s and 3m (180s)', 'error');
+          if (seconds < 10 || seconds > 360) {
+              showNotification('Custom duration must be between 10s and 6m (180s)', 'error');
               return;
           }
   
@@ -761,9 +762,9 @@ const ScriptStoryWriterTool = () => {
               include_hook: !!formData.includeHook,
               hook_style: formData.includeHook
                   ? buildSelectObject({
-                        mode: 'predefined',
+                        mode: formData.hookStyleMode,
                         valueKey: formData.hookStyle,
-                        customValue: '',
+                        customValue: formData.hookStyleCustomPattern,
                         options: fieldOptions.hookStyles,
                     })
                   : null,
@@ -1262,6 +1263,7 @@ const ScriptStoryWriterTool = () => {
               scriptStyleMode: 'predefined',
               scriptStyleCustom: '',
               includeHook: true,
+              hookStyleMode: 'predefined',
               hookStyle: '',
               hookStyleCustomPattern: '',
               includeCta: true,
@@ -1331,9 +1333,9 @@ const ScriptStoryWriterTool = () => {
                                         <span style={styles.infoIcon} data-tooltip-id="scriptTitle-tooltip" data-tooltip-content="Short topic/title for the script (required).">i</span>
                                     </label>
                                     <Tooltip style={styles.toolTip} id="scriptTitle-tooltip" />
-                                    <input
+                                    <textarea
                                         type="text"
-                                        style={styles.input}
+                                        style={{ ...styles.textarea, minHeight: '80px' }}
                                         id="scriptTitle"
                                         name="scriptTitle"
                                         value={formData.scriptTitle}
@@ -1839,7 +1841,7 @@ const ScriptStoryWriterTool = () => {
                                         <input
                                             type="range"
                                             min={15}
-                                            max={180}
+                                            max={360}
                                             step={1}
                                             value={formData.durationSeconds}
                                             onChange={handleDurationSliderChange}
@@ -1848,7 +1850,7 @@ const ScriptStoryWriterTool = () => {
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', color: '#94a3b8', fontSize: '13px' }}>
                                             <span>15s</span>
                                             <span>{formatDuration(formData.durationSeconds)} — Target ≈ {estimateWords(formData.durationSeconds)} words</span>
-                                            <span>3m</span>
+                                            <span>6m</span>
                                         </div>
                                     </div>
 
@@ -1864,7 +1866,7 @@ const ScriptStoryWriterTool = () => {
                                             style={styles.input}
                                             value={customDurationInput}
                                             onChange={(e) => setCustomDurationInput(e.target.value)}
-                                            placeholder="Custom (10s–180s), e.g., 45s or 2m 30s"
+                                            placeholder="Custom (10s–360s), e.g., 45s or 2m 30s"
                                         />
                                         <button
                                             type="button"
@@ -1878,7 +1880,7 @@ const ScriptStoryWriterTool = () => {
                                 </div>
                             </div>
 
-                            <div className="col-md-6">
+                            <div className="col-12">
                                 <div style={styles.formGroup}>
                                     <label htmlFor="variantsCount" style={styles.label}>
                                         Number of Variants: {formData.variantsCount}
@@ -1913,16 +1915,16 @@ const ScriptStoryWriterTool = () => {
                                 </div>
                             </div>
 
-                            <div className="col-md-6">
+                            <div className="col-12">
                                 <div style={styles.formGroup}>
                                     <label style={styles.label}>
                                         Compliance Mode (Content & Claim Safety Controls)
                                         <span style={styles.infoIcon} data-tooltip-id="complianceMode-tooltip" data-tooltip-content="Optional safety/compliance guidelines (e.g., avoid claims, sensitive topics).">i</span>
                                     </label>
                                     <Tooltip style={styles.toolTip} id="complianceMode-tooltip" />
-                                    <input
+                                    <textarea
                                         type="text"
-                                        style={styles.input}
+                                        style={{ ...styles.textarea, minHeight: '80px' }}
                                         name="complianceMode"
                                         value={formData.complianceMode}
                                         onChange={handleInputChange}
@@ -1942,7 +1944,7 @@ const ScriptStoryWriterTool = () => {
                             {formData.showAdvanced && (
                                 <>
 
-                            <div className="col-md-6">
+                            {/* <div className="col-md-6">
                                 <div style={styles.formGroup}>
                                     <label style={styles.label}>
                                         Include Hook (Yes/No)
@@ -1959,14 +1961,14 @@ const ScriptStoryWriterTool = () => {
                                                 setFormData(prev => ({
                                                     ...prev,
                                                     includeHook: checked,
-                                                    ...(checked ? {} : { hookStyle: '', hookStyleCustomPattern: '' }),
+                                                    ...(checked ? {} : { hookStyleMode: 'predefined', hookStyle: '', hookStyleCustomPattern: '' }),
                                                 }));
                                             }}
                                         />
                                         <span>{formData.includeHook ? 'Yes' : 'No'}</span>
                                     </div>
                                 </div>
-                            </div>
+                            </div> */}
 
                             {formData.includeHook && (
                                 <div className="col-md-6">
@@ -1976,6 +1978,26 @@ const ScriptStoryWriterTool = () => {
                                             <span style={styles.infoIcon} data-tooltip-id="hookStyle-tooltip" data-tooltip-content="Pick a hook style and optionally provide a custom hook pattern.">i</span>
                                         </label>
                                         <Tooltip style={styles.toolTip} id="hookStyle-tooltip" />
+
+                                        {renderModeToggle('hookStyleMode', (mode) => {
+                                            if (mode === 'custom') {
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    hookStyleMode: 'custom',
+                                                    hookStyle: '',
+                                                }));
+                                                return;
+                                            }
+
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                hookStyleMode: 'predefined',
+                                                hookStyleCustomPattern: '',
+                                                hookStyle: '',
+                                            }));
+                                        })}
+
+                                        {formData.hookStyleMode === 'predefined' && (
                                         <select
                                             style={styles.select}
                                             name="hookStyle"
@@ -1989,26 +2011,30 @@ const ScriptStoryWriterTool = () => {
                                                 </option>
                                             ))}
                                         </select>
-                                        {/* <div style={{ marginTop: '10px' }}>
-                                            <label style={styles.label}>
-                                                Custom Hook Pattern
-                                                <span style={styles.infoIcon} data-tooltip-id="hookStyleCustomPattern-tooltip" data-tooltip-content="Optional: provide a hook sentence template (e.g., 'Stop scrolling if...').">i</span>
-                                            </label>
-                                            <Tooltip style={styles.toolTip} id="hookStyleCustomPattern-tooltip" />
-                                            <input
-                                                type="text"
-                                                style={styles.input}
-                                                name="hookStyleCustomPattern"
-                                                value={formData.hookStyleCustomPattern}
-                                                onChange={handleInputChange}
-                                                placeholder="Optional: Custom pattern (e.g., 'Stop scrolling if...')"
-                                            />
-                                        </div> */}
+                                        )}
+
+                                        {formData.hookStyleMode === 'custom' && (
+                                            <div style={{ marginTop: '10px' }}>
+                                                <label style={styles.label}>
+                                                    Custom Hook
+                                                    <span style={styles.infoIcon} data-tooltip-id="hookStyleCustomPattern-tooltip" data-tooltip-content="Provide a hook sentence template (e.g., 'Stop scrolling if...').">i</span>
+                                                </label>
+                                                <Tooltip style={styles.toolTip} id="hookStyleCustomPattern-tooltip" />
+                                                <input
+                                                    type="text"
+                                                    style={styles.input}
+                                                    name="hookStyleCustomPattern"
+                                                    value={formData.hookStyleCustomPattern}
+                                                    onChange={handleInputChange}
+                                                    placeholder="e.g., Stop scrolling if..."
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
 
-                            <div className="col-md-6">
+                            {/* <div className="col-md-6">
                                 <div style={styles.formGroup}>
                                     <label style={styles.label}>
                                         Include CTA (Yes/No)
@@ -2032,7 +2058,7 @@ const ScriptStoryWriterTool = () => {
                                         <span>{formData.includeCta ? 'Yes' : 'No'}</span>
                                     </div>
                                 </div>
-                            </div>
+                            </div> */}
 
                             {formData.includeCta && (
                                 <div className="col-md-6">
@@ -2391,8 +2417,8 @@ const ScriptStoryWriterTool = () => {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="personal-info-button"
-                                        // style={{ ...styles.btn, ...styles.btnPrimary }}
+                                        // className="personal-info-button"
+                                        style={{ ...styles.btn, ...styles.btnPrimary }}
                                         disabled={isLoading || isGenerating || isApiLoading}
                                     >
                                         {isLoading ? (

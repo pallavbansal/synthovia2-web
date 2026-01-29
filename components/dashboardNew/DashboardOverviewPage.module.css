@@ -498,8 +498,8 @@
 }
 
 .barLabel {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 8px;
+  font-weight:500;
   color: rgba(255, 255, 255, 0.72);
   text-align: center;
   line-height: 1.15;

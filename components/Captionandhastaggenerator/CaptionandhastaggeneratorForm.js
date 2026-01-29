@@ -2048,8 +2048,8 @@ const Captionandhastaggeneratorform = () => {
                                     </button>
                                     <button
                                         type="submit" // This triggers handleSubmit (shows summary modal)
-                                        className="personal-info-button"
-                                        // style={{ ...styles.btn, ...styles.btnPrimary }}
+                                        // className="personal-info-button"
+                                        style={{ ...styles.btn, ...styles.btnPrimary }}
                                         disabled={isGenerating}
                                     >
                                         {'Review & Generate'}
