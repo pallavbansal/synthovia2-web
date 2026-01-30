@@ -2503,9 +2503,9 @@ const CopywritingAssistantForm = () => {
                                                 {formData.grammarStrictnessMode === 'predefined' && (
                                                     
                                                         <div style={styles.formGroup}>
-                                                            <label htmlFor="grammarStrictness" style={styles.label}>
+                                                            {/* <label htmlFor="grammarStrictness" style={styles.label}>
                                                                 Select Grammar Strictness
-                                                            </label>
+                                                            </label> */}
                                                             <select
                                                                 id="grammarStrictness"
                                                                 name="grammarStrictness"
@@ -2522,9 +2522,9 @@ const CopywritingAssistantForm = () => {
 
                                                 {formData.grammarStrictnessMode === 'custom' && (
                                                         <div style={styles.formGroup}>
-                                                            <label htmlFor="customGrammarStrictness" style={styles.label}>
+                                                            {/* <label htmlFor="customGrammarStrictness" style={styles.label}>
                                                                 Custom Grammar Strictness
-                                                            </label>
+                                                            </label> */}
                                                             <input
                                                                 type="text"
                                                                 id="customGrammarStrictness"
