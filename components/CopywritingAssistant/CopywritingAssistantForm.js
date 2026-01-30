@@ -468,6 +468,88 @@ const CopywritingAssistantForm = () => {
         }));
     };
 
+    // Reset handler (Retained)
+    const handleReset = () => {
+        abortAllStreams();
+        setCustomUseCaseError('');
+
+        setFormData({
+            useCaseMode: 'predefined',
+            useCase: '',
+            customUseCase: '',
+
+            primaryGoal: '',
+            targetAudience: [],
+
+            toneMode: 'predefined',
+            toneOfVoice: '',
+            customTone: '',
+            languageMode: 'predefined',
+            language: 'English',
+            customLanguage: '',
+            lengthTargetMode: 'predefined',
+            lengthTarget: 'short',
+            customWordCount: 180,
+            keyPoints: [],
+
+            variants: 1,
+            showAdvanced: false,
+            keywords: '',
+            ctaStyleMode: 'predefined',
+            ctaStyle: '',
+            customCtaStyle: '',
+            referenceText: '',
+            rewriteMode: false,
+            readingLevelMode: 'predefined',
+            readingLevel: 'standard',
+            customReadingLevel: '',
+            targetPlatformMode: 'predefined',
+            targetPlatform: '',
+            customTargetPlatform: '',
+            brandVoiceMode: 'predefined',
+            brandVoice: '',
+            customBrandVoice: '',
+            contentStyleMode: 'predefined',
+            contentStyle: '',
+            customContentStyle: '',
+            emotionalIntentMode: 'predefined',
+            emotionalIntent: '',
+            customEmotionalIntent: '',
+            writingFrameworkMode: 'predefined',
+            writingFramework: '',
+            customWritingFramework: '',
+            grammarStrictnessMode: 'predefined',
+            grammarStrictness: 'medium',
+            customGrammarStrictness: '',
+            formattingOptions: ['structured_layout'],
+            includeWords: [],
+            excludeWords: [],
+            complianceNotes: '',
+            outputStructure: 'plain_text',
+            creativityLevel: 5,
+            referenceUrl: '',
+            proofreading: true,
+            submitted: false,
+        });
+
+        setAudienceInput('');
+        setShowAudienceSuggestions(false);
+
+        setKeyPointsInput('');
+        setShowKeyPointsSuggestions(false);
+
+        setShowSummary(false);
+        setGeneratedVariantsData({ requestId: null, variants: [], inputs: {} });
+        setShowVariantsModal(false);
+        setRequestId(null); // Clear request ID
+        setIsApiLoading(false); // Reset loading state
+        setIsGenerating(false); // Reset button state
+        setIsHistoryView(false);
+        setIsFetchingLog(false);
+        setModalTitle('Generated Variants');
+        showNotification('Form has been reset', 'info');
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
 
@@ -2052,7 +2134,7 @@ const CopywritingAssistantForm = () => {
                                                 name="keywords"
                                                 value={formData.keywords}
                                                 onChange={handleChange}
-                                                style={{ ...styles.input, marginBottom: '20px' }}
+                                                style={{ ...styles.input, marginBottom: '3rem' }}
                                                 placeholder="e.g., digital marketing, seo, content strategy"
                                                 maxLength={250}
                                             />
@@ -2549,14 +2631,22 @@ const CopywritingAssistantForm = () => {
                             )}
 
                             {/* Submit Button */}
-                            <div className="col-12" style={{ marginTop: '20px' }}>
+                            <div className="col-12" style={{ marginTop: '20px', display: 'flex', gap: '12px' }}>
+                                <button
+                                    type="button"
+                                    style={{ ...styles.btn, ...styles.btnOutline, marginRight:'10px' }}
+                                    onClick={handleReset}
+                                    disabled={isGenerating || isApiLoading}
+                                >
+                                    Reset Form
+                                </button>
                                 <button
                                     type="submit"
                                     // className='personal-info-button'
                                     style={{
                                         ...styles.btn,
                                         ...styles.btnPrimary,
-                                        padding: '12px 24px',
+                                        padding: '8px 20px',
                                         fontSize: '16px',
                                         fontWeight: '600'
                                     }}

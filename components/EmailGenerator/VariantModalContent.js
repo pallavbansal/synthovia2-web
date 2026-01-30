@@ -351,7 +351,7 @@ const VariantModalContent = ({
                                 </div>
                                 
                                 {isExpanded && (
-                                    <div style={modalStyles.cardContent}>
+                                    <div style={{...modalStyles.cardContent, margin: 0, fontFamily: 'inherit' }}>
                                         {isVariantStreaming && !contentToRender ? <SurfingLoading mode="generate" /> : contentToRender}
                                     </div>
                                 )}
