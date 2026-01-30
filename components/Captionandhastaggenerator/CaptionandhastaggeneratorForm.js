@@ -2055,16 +2055,16 @@ const Captionandhastaggeneratorform = () => {
                                         {'Review & Generate'}
                                     </button>
                                 </div>
-                                // {requestId && (
-                                //     <button
-                                //         type="button"
-                                //         style={{ ...styles.btn, ...styles.btnOutline, marginTop: '10px' }}
-                                //         onClick={handleViewLog}
-                                //         disabled={isGenerating}
-                                //     >
-                                //         View Last Generation Log
-                                //     </button>
-                                // )}
+                                {/* {requestId && (
+                                    <button
+                                        type="button"
+                                        style={{ ...styles.btn, ...styles.btnOutline, marginTop: '10px' }}
+                                        onClick={handleViewLog}
+                                        disabled={isGenerating}
+                                    >
+                                        View Last Generation Log
+                                    </button>
+                                )} */}
                             </div>
                         </div>
                     </form>
