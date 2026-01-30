@@ -406,7 +406,7 @@ const Captionandhastaggeneratorform = () => {
                 language_locale: languagePayload,
                 emotional_intent: emotionalIntentPayload,
                 post_length: formData.postLengthSelection === 'custom'
-                    ? { type: 'custom', id: null, value: customPostLengthInt }
+                    ? { type: 'custom', id: null, value: String(customPostLengthInt) }
                     : { type: 'predefined', id: postLengthPayload.id, value: postLengthPayload.value },
                 caption_style: captionStylePayload,
                 cta_type: ctaPayload,
