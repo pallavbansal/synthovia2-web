@@ -21,7 +21,7 @@ const HashtagGridSystem = ({ text }) => {
 
     return (
         <div>
-            <p style={{ margin: 0, whiteSpace: 'pre-wrap', marginBottom: '16px' }}>{bodyText.trim()}</p>
+            <p style={{ margin: 0, whiteSpace: 'pre-wrap', marginBottom: '16px' }}>{bodyText}</p>
             
             <p style={{ fontWeight: 'bold', margin: '0 0 8px 0', color: '#1e293b' }}>Hashtags:</p>
             <div style={{
