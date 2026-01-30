@@ -153,9 +153,7 @@
   overflow: hidden;
   border-radius: 18px;
   border: 1px solid rgba(120, 132, 255, 0.22);
-  background: radial-gradient(900px 420px at 0% 0%, rgba(120, 132, 255, 0.22), transparent 60%),
-    radial-gradient(700px 380px at 100% 0%, rgba(0, 209, 255, 0.16), transparent 55%),
-    rgba(255, 255, 255, 0.04);
+  background: linear-gradient(135deg, rgba(120, 132, 255, 0.18), rgba(0, 209, 255, 0.10));
  }
 
  .ctaInner {
