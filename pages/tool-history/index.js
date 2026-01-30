@@ -210,124 +210,58 @@ const processSeoMarkdown = (content) => {
 
 const historyMarkdownComponents = {
   h1: ({ children, ...props }) => (
-    <h1
-      style={{
-        color: "rgba(255, 255, 255, 0.92)",
-        fontSize: "22px",
-        lineHeight: 1.2,
-        fontWeight: 900,
-        margin: "0 0 10px 0",
-      }}
-      {...props}
-    >
+    <span {...props}>
       {children}
-    </h1>
+      {"\n"}
+    </span>
   ),
   h2: ({ children, ...props }) => (
-    <h2
-      style={{
-        color: "rgba(255, 255, 255, 0.92)",
-        fontSize: "18px",
-        lineHeight: 1.25,
-        fontWeight: 900,
-        margin: "14px 0 8px 0",
-      }}
-      {...props}
-    >
+    <span {...props}>
       {children}
-    </h2>
+      {"\n"}
+    </span>
   ),
   h3: ({ children, ...props }) => (
-    <h3
-      style={{
-        color: "rgba(255, 255, 255, 0.92)",
-        fontSize: "15px",
-        lineHeight: 1.3,
-        fontWeight: 900,
-        margin: "12px 0 6px 0",
-      }}
-      {...props}
-    >
+    <span {...props}>
       {children}
-    </h3>
+      {"\n"}
+    </span>
   ),
   p: ({ children, ...props }) => (
-    <p
-      style={{
-        margin: 0,
-        lineHeight: 1.55,
-        color: "rgba(255, 255, 255, 0.92)",
-      }}
-      {...props}
-    >
+    <span {...props}>
       {children}
-    </p>
+      {"\n"}
+    </span>
   ),
+  strong: ({ children, ...props }) => <span {...props}>{children}</span>,
+  em: ({ children, ...props }) => <span {...props}>{children}</span>,
+  a: ({ children, ...props }) => <span {...props}>{children}</span>,
   ul: ({ children, ...props }) => (
-    <ul
-      style={{
-        margin: "4px 0 8px 18px",
-        padding: 0,
-        color: "rgba(255, 255, 255, 0.92)",
-      }}
-      {...props}
-    >
+    <span {...props}>
       {children}
-    </ul>
+      {"\n"}
+    </span>
   ),
   ol: ({ children, ...props }) => (
-    <ol
-      style={{
-        margin: "4px 0 8px 18px",
-        padding: 0,
-        color: "rgba(255, 255, 255, 0.92)",
-      }}
-      {...props}
-    >
+    <span {...props}>
       {children}
-    </ol>
+      {"\n"}
+    </span>
   ),
   li: ({ children, ...props }) => (
-    <li
-      style={{
-        margin: 0,
-        lineHeight: 1.55,
-        color: "rgba(255, 255, 255, 0.92)",
-      }}
-      {...props}
-    >
+    <span {...props}>
+      {"- "}
       {children}
-    </li>
+      {"\n"}
+    </span>
   ),
   pre: ({ children, ...props }) => (
-    <pre
-      style={{
-        margin: "6px 0 10px 0",
-        padding: 0,
-        background: "transparent",
-        color: "rgba(255, 255, 255, 0.92)",
-        whiteSpace: "pre-wrap",
-        fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-        fontSize: 12,
-        lineHeight: 1.55,
-      }}
-      {...props}
-    >
+    <span {...props}>
       {children}
-    </pre>
+      {"\n"}
+    </span>
   ),
-  code: ({ children, ...props }) => (
-    <code
-      style={{
-        background: "transparent",
-        color: "rgba(255, 255, 255, 0.92)",
-        fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-      }}
-      {...props}
-    >
-      {children}
-    </code>
-  ),
+  code: ({ children, ...props }) => <span {...props}>{children}</span>,
 };
 
 const ToolHistoryPage = () => {
@@ -830,13 +764,13 @@ const ToolHistoryPage = () => {
                                                 </button>
                                               </div>
                                               {activeToolTab === "copywriting" || activeToolTab === "seo_keyword" ? (
-                                                <div className={styles.pre} style={{ fontFamily: "inherit" }}>
+                                                <pre className={styles.pre}>
                                                   <ReactMarkdown components={historyMarkdownComponents}>
                                                     {activeToolTab === "copywriting"
                                                       ? processCopywritingMarkdown(String(v?.content || ""))
                                                       : processSeoMarkdown(String(v?.content || ""))}
                                                   </ReactMarkdown>
-                                                </div>
+                                                </pre>
                                               ) : (
                                                 <pre className={styles.pre}>{String(v?.content || "")}</pre>
                                               )}
