@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import SurfingLoading from "./SurfingLoading";
 
 const VariantModalContent = ({
@@ -13,6 +14,218 @@ const VariantModalContent = ({
   const [expandedIndex, setExpandedIndex] = useState(0);
   const [regeneratingId, setRegeneratingId] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+
+  const processContent = (content) => {
+    if (!content) return "";
+
+    const normalized = String(content)
+      .replace(/<strong>(.*?)<\/strong>/g, "**$1**")
+      .replace(/<b>(.*?)<\/b>/g, "**$1**");
+
+    const toHeadingIfBoldOnly = (line) => {
+      const match = line.match(/^\s*\*\*(.+?)\*\*\s*$/);
+      if (!match) return line;
+      const title = String(match[1] || "").trim();
+      if (!title) return line;
+      return `## ${title}`;
+    };
+
+    const isHeading = (line) => /^\s*#{1,6}\s+/.test(line);
+    const isListLine = (line) => /^\s*([-*+])\s+/.test(line) || /^\s*\d+[.)]\s+/.test(line);
+    const isFenceOrTableOrQuote = (line) => /^\s*```/.test(line) || /^\s*\|/.test(line) || /^\s*>/.test(line);
+    const looksLikeSectionTitle = (line) => {
+      const t = String(line || "").trim();
+      if (!t) return false;
+      if (isHeading(t) || isListLine(t) || isFenceOrTableOrQuote(t)) return false;
+      if (t.length > 80) return false;
+      return /:\s*$/.test(t);
+    };
+    const isPlainItemLine = (line) => {
+      const t = String(line || "").trim();
+      if (!t) return false;
+      if (isHeading(t) || isListLine(t) || isFenceOrTableOrQuote(t)) return false;
+      return true;
+    };
+
+    const lines = normalized.split(/\r?\n/).map(toHeadingIfBoldOnly);
+    const out = [];
+
+    const collectPlainItems = (startIndex) => {
+      let j = startIndex;
+      while (j < lines.length && !String(lines[j] ?? "").trim()) j += 1;
+
+      const items = [];
+      let k = j;
+      while (k < lines.length) {
+        const l = String(lines[k] ?? "");
+        const t = l.trim();
+        if (!t) {
+          k += 1;
+          continue;
+        }
+        if (isHeading(t) || isListLine(t) || isFenceOrTableOrQuote(t) || looksLikeSectionTitle(t)) break;
+        if (!isPlainItemLine(t)) break;
+        items.push(t);
+        k += 1;
+      }
+
+      return { items, endIndex: k };
+    };
+
+    for (let i = 0; i < lines.length; i += 1) {
+      const raw = lines[i] ?? "";
+      const line = String(raw);
+      const trimmed = line.trim();
+
+      if (looksLikeSectionTitle(trimmed)) {
+        out.push(`## ${trimmed}`);
+
+        const { items, endIndex } = collectPlainItems(i + 1);
+        if (items.length >= 2) {
+          items.forEach((it) => out.push(`- ${it}`));
+          i = endIndex - 1;
+        }
+        continue;
+      }
+
+      if (isHeading(trimmed)) {
+        out.push(trimmed);
+
+        const { items, endIndex } = collectPlainItems(i + 1);
+        if (items.length >= 2) {
+          items.forEach((it) => out.push(`- ${it}`));
+          i = endIndex - 1;
+        }
+
+        continue;
+      }
+
+      out.push(line);
+    }
+
+    return out
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .replace(/\n\s*\n(?=\s*[-*+]\s)/g, "\n")
+      .replace(/\n\s*\n(?=\s*\d+[.)]\s)/g, "\n");
+  };
+
+  const markdownComponents = {
+    h1: ({ children, ...props }) => (
+      <h1
+        style={{
+          color: "#111827",
+          fontSize: "28px",
+          lineHeight: 1.2,
+          fontWeight: 700,
+          margin: "0 0 10px 0",
+        }}
+        {...props}
+      >
+        {children}
+      </h1>
+    ),
+    h2: ({ children, ...props }) => (
+      <h2
+        style={{
+          color: "#111827",
+          fontSize: "22px",
+          lineHeight: 1.25,
+          fontWeight: 700,
+          margin: "14px 0 8px 0",
+        }}
+        {...props}
+      >
+        {children}
+      </h2>
+    ),
+    h3: ({ children, ...props }) => (
+      <h3
+        style={{
+          color: "#111827",
+          fontSize: "18px",
+          lineHeight: 1.3,
+          fontWeight: 700,
+          margin: "12px 0 6px 0",
+        }}
+        {...props}
+      >
+        {children}
+      </h3>
+    ),
+    p: ({ children, ...props }) => (
+      <p
+        style={{
+          margin: 0,
+          lineHeight: 1.5,
+        }}
+        {...props}
+      >
+        {children}
+      </p>
+    ),
+    ul: ({ children, ...props }) => (
+      <ul
+        style={{
+          margin: "4px 0 8px 18px",
+          padding: 0,
+        }}
+        {...props}
+      >
+        {children}
+      </ul>
+    ),
+    ol: ({ children, ...props }) => (
+      <ol
+        style={{
+          margin: "4px 0 8px 18px",
+          padding: 0,
+        }}
+        {...props}
+      >
+        {children}
+      </ol>
+    ),
+    li: ({ children, ...props }) => (
+      <li
+        style={{
+          margin: 0,
+          lineHeight: 1.5,
+        }}
+        {...props}
+      >
+        {children}
+      </li>
+    ),
+    pre: ({ children, ...props }) => (
+      <pre
+        style={{
+          margin: "6px 0 10px 0",
+          padding: 0,
+          background: "transparent",
+          color: "#1f2937",
+          fontFamily: "inherit",
+          whiteSpace: "pre-wrap",
+        }}
+        {...props}
+      >
+        {children}
+      </pre>
+    ),
+    code: ({ inline, children, ...props }) => (
+      <code
+        style={{
+          background: "transparent",
+          color: "#1f2937",
+          fontFamily: inline ? "inherit" : "inherit",
+          padding: 0,
+        }}
+        {...props}
+      >
+        {children}
+      </code>
+    ),
+  };
 
   useEffect(() => {
     if (variants?.length > 0) setExpandedIndex(0);
@@ -96,7 +309,7 @@ const VariantModalContent = ({
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: "rgba(30, 41, 59, 0.9)",
+      backgroundColor: "transparent",
       zIndex: 1000,
       display: "flex",
       alignItems: "center",
@@ -248,7 +461,7 @@ const VariantModalContent = ({
             const isVariantStreaming = Boolean(variant?.is_streaming || variant?.isStreaming);
             const isInteractionDisabled = isUILocked;
 
-            const contentToRender = variant?.content || "";
+            const contentToRender = processContent(variant?.content || "");
 
             return (
               <div
@@ -340,7 +553,9 @@ const VariantModalContent = ({
                     {isVariantStreaming && (!contentToRender || contentToRender.trim().length === 0) ? (
                       <SurfingLoading mode="generate" embedded={true} />
                     ) : (
-                      contentToRender
+                      <div style={{ margin: 0, fontFamily: "inherit", whiteSpace: "pre-wrap", color: "#1f2937" }}>
+                        <ReactMarkdown components={markdownComponents}>{contentToRender}</ReactMarkdown>
+                      </div>
                     )}
                   </div>
                 )}

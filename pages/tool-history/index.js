@@ -1,5 +1,6 @@
 import dynamic from "next/dynamic";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import PageHead from "../Head";
 import DashboardLayout from "@/components/dashboardNew/DashboardLayout";
 import API from "@/utils/api";
@@ -106,6 +107,227 @@ const flattenInputs = (obj, prefix = "") => {
     entries.push({ key: nextKey, label: toTitleCase(key), value: toDisplayValue(value) });
   });
   return entries;
+};
+
+const processCopywritingMarkdown = (content) => {
+  if (!content) return "";
+  return String(content)
+    .replace(/<strong>(.*?)<\/strong>/g, "**$1**")
+    .replace(/<b>(.*?)<\/b>/g, "**$1**");
+};
+
+const processSeoMarkdown = (content) => {
+  if (!content) return "";
+
+  const normalized = String(content)
+    .replace(/<strong>(.*?)<\/strong>/g, "**$1**")
+    .replace(/<b>(.*?)<\/b>/g, "**$1**");
+
+  const toHeadingIfBoldOnly = (line) => {
+    const match = String(line || "").match(/^\s*\*\*(.+?)\*\*\s*$/);
+    if (!match) return line;
+    const title = String(match[1] || "").trim();
+    if (!title) return line;
+    return `## ${title}`;
+  };
+
+  const isHeading = (line) => /^\s*#{1,6}\s+/.test(line);
+  const isListLine = (line) => /^\s*([-*+])\s+/.test(line) || /^\s*\d+[.)]\s+/.test(line);
+  const isFenceOrTableOrQuote = (line) => /^\s*```/.test(line) || /^\s*\|/.test(line) || /^\s*>/.test(line);
+  const looksLikeSectionTitle = (line) => {
+    const t = String(line || "").trim();
+    if (!t) return false;
+    if (isHeading(t) || isListLine(t) || isFenceOrTableOrQuote(t)) return false;
+    if (t.length > 80) return false;
+    return /:\s*$/.test(t);
+  };
+  const isPlainItemLine = (line) => {
+    const t = String(line || "").trim();
+    if (!t) return false;
+    if (isHeading(t) || isListLine(t) || isFenceOrTableOrQuote(t)) return false;
+    return true;
+  };
+
+  const lines = normalized.split(/\r?\n/).map(toHeadingIfBoldOnly);
+  const out = [];
+
+  const collectPlainItems = (startIndex) => {
+    let j = startIndex;
+    while (j < lines.length && !String(lines[j] ?? "").trim()) j += 1;
+
+    const items = [];
+    let k = j;
+    while (k < lines.length) {
+      const l = String(lines[k] ?? "");
+      const t = l.trim();
+      if (!t) {
+        k += 1;
+        continue;
+      }
+      if (isHeading(t) || isListLine(t) || isFenceOrTableOrQuote(t) || looksLikeSectionTitle(t)) break;
+      if (!isPlainItemLine(t)) break;
+      items.push(t);
+      k += 1;
+    }
+
+    return { items, endIndex: k };
+  };
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const raw = lines[i] ?? "";
+    const line = String(raw);
+    const trimmed = line.trim();
+
+    if (looksLikeSectionTitle(trimmed)) {
+      out.push(`## ${trimmed}`);
+      const { items, endIndex } = collectPlainItems(i + 1);
+      if (items.length >= 2) {
+        items.forEach((it) => out.push(`- ${it}`));
+        i = endIndex - 1;
+      }
+      continue;
+    }
+
+    if (isHeading(trimmed)) {
+      out.push(trimmed);
+      const { items, endIndex } = collectPlainItems(i + 1);
+      if (items.length >= 2) {
+        items.forEach((it) => out.push(`- ${it}`));
+        i = endIndex - 1;
+      }
+      continue;
+    }
+
+    out.push(line);
+  }
+
+  return out
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/\n\s*\n(?=\s*[-*+]\s)/g, "\n")
+    .replace(/\n\s*\n(?=\s*\d+[.)]\s)/g, "\n");
+};
+
+const historyMarkdownComponents = {
+  h1: ({ children, ...props }) => (
+    <h1
+      style={{
+        color: "rgba(255, 255, 255, 0.92)",
+        fontSize: "22px",
+        lineHeight: 1.2,
+        fontWeight: 900,
+        margin: "0 0 10px 0",
+      }}
+      {...props}
+    >
+      {children}
+    </h1>
+  ),
+  h2: ({ children, ...props }) => (
+    <h2
+      style={{
+        color: "rgba(255, 255, 255, 0.92)",
+        fontSize: "18px",
+        lineHeight: 1.25,
+        fontWeight: 900,
+        margin: "14px 0 8px 0",
+      }}
+      {...props}
+    >
+      {children}
+    </h2>
+  ),
+  h3: ({ children, ...props }) => (
+    <h3
+      style={{
+        color: "rgba(255, 255, 255, 0.92)",
+        fontSize: "15px",
+        lineHeight: 1.3,
+        fontWeight: 900,
+        margin: "12px 0 6px 0",
+      }}
+      {...props}
+    >
+      {children}
+    </h3>
+  ),
+  p: ({ children, ...props }) => (
+    <p
+      style={{
+        margin: 0,
+        lineHeight: 1.55,
+        color: "rgba(255, 255, 255, 0.92)",
+      }}
+      {...props}
+    >
+      {children}
+    </p>
+  ),
+  ul: ({ children, ...props }) => (
+    <ul
+      style={{
+        margin: "4px 0 8px 18px",
+        padding: 0,
+        color: "rgba(255, 255, 255, 0.92)",
+      }}
+      {...props}
+    >
+      {children}
+    </ul>
+  ),
+  ol: ({ children, ...props }) => (
+    <ol
+      style={{
+        margin: "4px 0 8px 18px",
+        padding: 0,
+        color: "rgba(255, 255, 255, 0.92)",
+      }}
+      {...props}
+    >
+      {children}
+    </ol>
+  ),
+  li: ({ children, ...props }) => (
+    <li
+      style={{
+        margin: 0,
+        lineHeight: 1.55,
+        color: "rgba(255, 255, 255, 0.92)",
+      }}
+      {...props}
+    >
+      {children}
+    </li>
+  ),
+  pre: ({ children, ...props }) => (
+    <pre
+      style={{
+        margin: "6px 0 10px 0",
+        padding: 0,
+        background: "transparent",
+        color: "rgba(255, 255, 255, 0.92)",
+        whiteSpace: "pre-wrap",
+        fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+        fontSize: 12,
+        lineHeight: 1.55,
+      }}
+      {...props}
+    >
+      {children}
+    </pre>
+  ),
+  code: ({ children, ...props }) => (
+    <code
+      style={{
+        background: "transparent",
+        color: "rgba(255, 255, 255, 0.92)",
+        fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+      }}
+      {...props}
+    >
+      {children}
+    </code>
+  ),
 };
 
 const ToolHistoryPage = () => {
@@ -607,7 +829,17 @@ const ToolHistoryPage = () => {
                                                   {copiedVariantKey === `${sessionId}-${String(v?.id || "")}` ? "Copied" : "Copy"}
                                                 </button>
                                               </div>
-                                              <pre className={styles.pre}>{String(v?.content || "")}</pre>
+                                              {activeToolTab === "copywriting" || activeToolTab === "seo_keyword" ? (
+                                                <div className={styles.pre} style={{ fontFamily: "inherit" }}>
+                                                  <ReactMarkdown components={historyMarkdownComponents}>
+                                                    {activeToolTab === "copywriting"
+                                                      ? processCopywritingMarkdown(String(v?.content || ""))
+                                                      : processSeoMarkdown(String(v?.content || ""))}
+                                                  </ReactMarkdown>
+                                                </div>
+                                              ) : (
+                                                <pre className={styles.pre}>{String(v?.content || "")}</pre>
+                                              )}
                                             </div>
                                           ))}
                                         </div>
