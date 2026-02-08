@@ -9,7 +9,7 @@ import logoDark from "../../public/images/light/logo/logo-dark.png";
 import facebook from "../../public/images/sign-up/facebook.png";
 import { useAppContext } from "@/context/Context";
 import DarkSwitch from "../Header/dark-switch";
-import { googleLogin, register } from "@/utils/auth";
+import { googleLogin, isAdminAuthenticated, register } from "@/utils/auth";
 
 const SignUp = () => {
   const { isLightTheme, toggleTheme } = useAppContext();
@@ -108,7 +108,11 @@ const SignUp = () => {
             const next = router?.query?.next;
             const safeNext =
               typeof next === "string" && next.startsWith("/") ? next : "";
-            router.replace(safeNext || "/dashboard");
+            if (safeNext) {
+              router.replace(safeNext);
+            } else {
+              router.replace(isAdminAuthenticated() ? "/admin/users/dashboard" : "/dashboard");
+            }
           } catch (err) {
             setError(err?.message || "Google login failed");
           } finally {
@@ -183,7 +187,11 @@ const SignUp = () => {
       setSuccess("Registration successful. Redirecting to Dashboard...");
       const next = router?.query?.next;
       const safeNext = typeof next === "string" && next.startsWith("/") ? next : "";
-      router.replace(safeNext || "/dashboard");
+      if (safeNext) {
+        router.replace(safeNext);
+      } else {
+        router.replace(isAdminAuthenticated() ? "/admin/users/dashboard" : "/dashboard");
+      }
     } catch (err) {
       setError(err?.message || "Registration failed");
     } finally {

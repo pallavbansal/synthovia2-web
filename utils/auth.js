@@ -64,6 +64,22 @@ export const clearUser = () => {
 
 export const isAuthenticated = () => !!getToken();
 
+export const getUserRole = () => {
+  const user = getUser();
+  const role = user?.role ?? user?.user?.role;
+  return role ? String(role) : "";
+};
+
+export const isAdminRole = (role) => {
+  const r = String(role || "").trim().toLowerCase();
+  return r === "super_admin" || r === "admin" || r === "sub_admin";
+};
+
+export const isAdminAuthenticated = () => {
+  if (!isAuthenticated()) return false;
+  return isAdminRole(getUserRole());
+};
+
 export const getAuthHeader = () => {
   const token = getToken();
   return token ? `Bearer ${token}` : "";

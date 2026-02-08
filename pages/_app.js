@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Loading from "./loading";
 
-import { getToken } from "@/utils/auth";
+import { getToken, isAdminAuthenticated } from "@/utils/auth";
 
 import "bootstrap/scss/bootstrap.scss";
 
@@ -49,6 +49,7 @@ export default function App({ Component, pageProps }) {
     const protectedPrefixes = [
       "/dashboard",
       "/dashboard-overview",
+      "/admin",
       "/application",
       "/ad-copy-generator",
       "/caption-and-hastag-generator",
@@ -80,8 +81,14 @@ export default function App({ Component, pageProps }) {
       return;
     }
 
-    if (isAuthed && router.pathname === "/signin") {
+    const isAdminRoute = router.pathname === "/admin" || router.pathname.startsWith("/admin/");
+    if (isAuthed && isAdminRoute && !isAdminAuthenticated()) {
       router.replace("/dashboard-overview");
+      return;
+    }
+
+    if (isAuthed && router.pathname === "/signin") {
+      router.replace(isAdminAuthenticated() ? "/admin/users/dashboard" : "/dashboard-overview");
     }
   }, [router.isReady, router.pathname]);
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./DashboardLayout.module.css";
-import { getUser, logout } from "@/utils/auth";
+import { getUser, getUserRole, isAdminRole, logout } from "@/utils/auth";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home", iconClass: "fa-solid fa-house" },
@@ -41,9 +41,20 @@ const NAV_ITEMS = [
   { href: "/settings", label: "Settings", iconClass: "fa-solid fa-gear" },
 ];
 
+const ADMIN_NAV_ITEMS = [
+  { href: "/admin/users/dashboard", label: "Admin Users", iconClass: "fa-solid fa-users" },
+  { href: "/admin/subscriptions/plans", label: "Subscription Plans", iconClass: "fa-solid fa-clipboard-list" },
+];
+
 const isActivePath = (pathname, href) => {
   if (href === "/dashboard-overview") {
     return pathname === "/dashboard-overview";
+  }
+  if (href === "/admin/users/dashboard") {
+    return pathname === "/admin/users" || pathname === "/admin/users/dashboard" || pathname.startsWith("/admin/users/");
+  }
+  if (href === "/admin/subscriptions/plans") {
+    return pathname === "/admin/subscriptions/plans" || pathname.startsWith("/admin/subscriptions/plans/");
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 };
@@ -53,6 +64,29 @@ const DashboardLayout = ({ children, title }) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const userMenuRef = useRef(null);
+
+  const [adminEnabled, setAdminEnabled] = useState(false);
+  useEffect(() => {
+    const readRole = () => {
+      const role = getUserRole();
+      setAdminEnabled(isAdminRole(role));
+    };
+    readRole();
+    const onStorage = (e) => {
+      if (!e || !e.key) return;
+      if (e.key === "synthovia-auth-user") readRole();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  const navItems = useMemo(() => {
+    if (adminEnabled) {
+      const home = NAV_ITEMS.find((i) => i.href === "/") || NAV_ITEMS[0];
+      return [home, ...ADMIN_NAV_ITEMS];
+    }
+    return NAV_ITEMS;
+  }, [adminEnabled]);
 
   const userName = useMemo(() => {
     const user = getUser();
@@ -155,7 +189,7 @@ const DashboardLayout = ({ children, title }) => {
 
         <nav className={styles.nav}>
           <div className={styles.navSectionTitle}>Menu</div>
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const active = isActivePath(router.pathname, item.href);
             const className = `${styles.navLink} ${active ? styles.navLinkActive : ""}`;
             return (
