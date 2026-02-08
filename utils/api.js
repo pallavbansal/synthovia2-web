@@ -1,4 +1,4 @@
-const BASE_URL = "https://lightslategray-horse-496166.hostingersite.com/public/api/v1";
+const BASE_URL = "https://synthovia.boxinallsoftech.com/public/api/v1";
 const buildQueryUrl = (base, params) => {
   const qs = new URLSearchParams();
   Object.entries(params || {}).forEach(([k, v]) => {
@@ -43,6 +43,9 @@ export const API = {
 
   PROFILE: `${BASE_URL}/profile`,
   SUBSCRIPTION_PLANS: `${BASE_URL}/subscriptions/plans`,
+  ADMIN_SUBSCRIPTION_PLANS_CREATE: `${BASE_URL}/admin/subscriptions/plans`,
+  ADMIN_SUBSCRIPTION_PLANS_UPDATE: (id) => `${BASE_URL}/admin/subscriptions/plans/${id}`,
+  ADMIN_SUBSCRIPTION_PLANS_DELETE: (id) => `${BASE_URL}/admin/subscriptions/plans/${id}`,
   SUBSCRIPTION_CHECKOUT: `${BASE_URL}/subscriptions/checkout`,
   SUBSCRIPTION_CONFIRM: `${BASE_URL}/subscriptions/confirm`,
   SUBSCRIPTION_STATUS: (subscriptionReference) =>
@@ -71,6 +74,31 @@ export const API = {
   DASHBOARD_CREDIT_USAGE: `${BASE_URL}/dashboard/credit-usage`,
   DASHBOARD_MOST_USED_TOOL: `${BASE_URL}/dashboard/most-used-tool`,
   DASHBOARD_ACTIVITY_LOGS: `${BASE_URL}/dashboard/activity-logs`,
+
+  ADMIN_USERS: ({ perPage = 15, page = 1, sortBy = "id", sortDir = "desc", role, q } = {}) =>
+    buildQueryUrl(`${BASE_URL}/admin/users`, {
+      per_page: perPage,
+      page,
+      sort_by: sortBy,
+      sort_dir: sortDir,
+      role,
+      q,
+    }),
+  ADMIN_USER_DETAILS: (id) => `${BASE_URL}/admin/users/${id}`,
+  ADMIN_USER_SUBSCRIPTION_HISTORY: ({ id, perPage = 15, page = 1 } = {}) =>
+    buildQueryUrl(`${BASE_URL}/admin/users/${id}/subscriptions/history`, {
+      per_page: perPage,
+      page,
+    }),
+  ADMIN_USER_ACTIVITIES: ({ id, perPage = 15, page = 1 } = {}) =>
+    buildQueryUrl(`${BASE_URL}/admin/users/${id}/activities`, {
+      per_page: perPage,
+      page,
+    }),
+  ADMIN_USER_GRANT_CREDITS: (id) => `${BASE_URL}/admin/users/${id}/credits/grant`,
+  ADMIN_USER_UPDATE: (id) => `${BASE_URL}/admin/users/${id}`,
+  ADMIN_USER_DEACTIVATE: (id) => `${BASE_URL}/admin/users/${id}/deactivate`,
+  ADMIN_USER_DELETE: (id) => `${BASE_URL}/admin/users/${id}`,
 };
 
 export default API;

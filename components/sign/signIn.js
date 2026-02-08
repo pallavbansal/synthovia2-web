@@ -8,7 +8,7 @@ import logo from "../../public/images/logo/logo.png";
 import logoDark from "../../public/images/light/logo/logo-dark.png";
 import DarkSwitch from "../Header/dark-switch";
 import { useAppContext } from "@/context/Context";
-import { googleLogin, login } from "@/utils/auth";
+import { googleLogin, isAdminAuthenticated, login } from "@/utils/auth";
 
 const SignIn = () => {
   const { isLightTheme, toggleTheme } = useAppContext();
@@ -99,7 +99,11 @@ const SignIn = () => {
             await googleLogin({ id_token });
             const next = router?.query?.next;
             const safeNext = typeof next === "string" && next.startsWith("/") ? next : "";
-            router.replace(safeNext || "/dashboard");
+            if (safeNext) {
+              router.replace(safeNext);
+            } else {
+              router.replace(isAdminAuthenticated() ? "/admin/users/dashboard" : "/dashboard");
+            }
           } catch (err) {
             setError(err?.message || "Google login failed");
           } finally {
@@ -155,7 +159,11 @@ const SignIn = () => {
       await login({ email, password });
       const next = router?.query?.next;
       const safeNext = typeof next === "string" && next.startsWith("/") ? next : "";
-      router.replace(safeNext || "/dashboard");
+      if (safeNext) {
+        router.replace(safeNext);
+      } else {
+        router.replace(isAdminAuthenticated() ? "/admin/users/dashboard" : "/dashboard");
+      }
     } catch (err) {
       setError(err?.message || "Login failed");
     } finally {

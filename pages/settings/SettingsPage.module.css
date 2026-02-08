@@ -286,6 +286,32 @@
   outline: none;
 }
 
+.input {
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.22);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  outline: none;
+}
+
+.textarea {
+  min-height: 84px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.22);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  outline: none;
+  resize: vertical;
+  line-height: 1.45;
+}
+
 .pageLabel {
   font-size: 12px;
   font-weight: 900;
