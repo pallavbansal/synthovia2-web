@@ -65,6 +65,10 @@ export default function AdminFeedbackPage() {
   const [guardError, setGuardError] = useState("");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(15);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [activeFrom, setActiveFrom] = useState("");
+  const [activeTo, setActiveTo] = useState("");
   const listFetchSeqRef = useRef(0);
   const [listState, setListState] = useState({ loading: false, error: "", items: [], pagination: null });
 
@@ -76,7 +80,7 @@ export default function AdminFeedbackPage() {
     }
   }, []);
 
-  const fetchFeedbacks = async ({ nextPage = page, nextPerPage = perPage } = {}) => {
+  const fetchFeedbacks = async ({ nextPage = page, nextPerPage = perPage, nextFrom = activeFrom, nextTo = activeTo } = {}) => {
     const auth = getAuthHeader();
     if (!auth) {
       setListState({ loading: false, error: "Not authenticated.", items: [], pagination: null });
@@ -87,7 +91,7 @@ export default function AdminFeedbackPage() {
     const seq = ++listFetchSeqRef.current;
 
     try {
-      const url = API.ADMIN_FEEDBACK({ perPage: nextPerPage, page: nextPage });
+      const url = API.ADMIN_FEEDBACK({ perPage: nextPerPage, page: nextPage, from: nextFrom, to: nextTo });
       const res = await fetch(url, {
         method: "GET",
         headers: {
@@ -130,8 +134,8 @@ export default function AdminFeedbackPage() {
 
   useEffect(() => {
     if (guardError) return;
-    fetchFeedbacks({ nextPage: page, nextPerPage: perPage });
-  }, [guardError, page, perPage]);
+    fetchFeedbacks({ nextPage: page, nextPerPage: perPage, nextFrom: activeFrom, nextTo: activeTo });
+  }, [guardError, page, perPage, activeFrom, activeTo]);
 
   const paging = listState.pagination || {
     page,
@@ -180,12 +184,57 @@ export default function AdminFeedbackPage() {
         </div>
 
         <div className={baseStyles.card}>
-          <div className={baseStyles.pagination} style={{ marginBottom: 10 }}>
+          <div className={baseStyles.pagination} style={{ marginBottom: 10, rowGap: 8, flexWrap: "wrap" }}>
             <span className={baseStyles.pageLabel}>
               Page {paging.page || 1}
               {paging.totalPages != null ? ` / ${paging.totalPages}` : ""}
               {paging.total != null ? ` • ${paging.total} total` : ""}
             </span>
+
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <label className={baseStyles.muted} htmlFor="fromDate">From</label>
+              <input
+                id="fromDate"
+                type="date"
+                className={baseStyles.dateInput}
+                name="from"
+                value={fromDate}
+                onChange={(e) => {
+                  setFromDate(e.target.value);
+                }}
+                style={{ width: 160 }}
+                placeholder="YYYY-MM-DD"
+              />
+              <label className={baseStyles.muted} htmlFor="toDate">To</label>
+              <input
+                id="toDate"
+                type="date"
+                className={baseStyles.dateInput}
+                name="to"
+                value={toDate}
+                onChange={(e) => {
+                  setToDate(e.target.value);
+                }}
+                style={{ width: 160 }}
+                placeholder="YYYY-MM-DD"
+              />
+              <button
+                type="button"
+                className={baseStyles.filterBtn}
+                onClick={() => { setActiveFrom(fromDate); setActiveTo(toDate); setPage(1); }}
+                title="Apply date filters"
+              >
+                Apply
+              </button>
+              <button
+                type="button"
+                className={baseStyles.filterBtn}
+                onClick={() => { setFromDate(""); setToDate(""); setActiveFrom(""); setActiveTo(""); setPage(1); }}
+                title="Reset date filters"
+              >
+                Reset
+              </button>
+            </div>
 
             <label className={baseStyles.muted} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
               Per page

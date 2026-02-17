@@ -12,10 +12,14 @@ const safeText = (v) => {
 
 const normalizePlan = (p) => {
   if (!p || typeof p !== "object") return null;
+  const priceUsd = p.price_usd ?? p.usd_price ?? p.priceUSD ?? null;
+  const priceInr = p.price_inr ?? p.inr_price ?? p.priceINR ?? null;
+  const fallbackPrice = p.price ?? null;
   return {
     id: p.id ?? p.plan_id ?? null,
     name: p.name ?? "",
-    price: p.price ?? "",
+    price_usd: priceUsd != null ? priceUsd : fallbackPrice,
+    price_inr: priceInr != null ? priceInr : fallbackPrice,
     billing_period: p.billing_period ?? "",
     credits: p.credits ?? "",
     description: p.description ?? "",
@@ -32,7 +36,8 @@ const AdminSubscriptionPlansPage = () => {
   const [form, setForm] = useState({
     id: null,
     name: "",
-    price: "",
+    price_usd: "",
+    price_inr: "",
     billing_period: "monthly",
     credits: "",
     description: "",
@@ -100,7 +105,8 @@ const AdminSubscriptionPlansPage = () => {
     setForm({
       id: null,
       name: "",
-      price: "",
+      price_usd: "",
+      price_inr: "",
       billing_period: "monthly",
       credits: "",
       description: "",
@@ -114,7 +120,8 @@ const AdminSubscriptionPlansPage = () => {
     setForm({
       id: plan?.id ?? null,
       name: plan?.name ?? "",
-      price: plan?.price ?? "",
+      price_usd: plan?.price_usd ?? "",
+      price_inr: plan?.price_inr ?? "",
       billing_period: plan?.billing_period ?? "monthly",
       credits: plan?.credits ?? "",
       description: plan?.description ?? "",
@@ -125,12 +132,14 @@ const AdminSubscriptionPlansPage = () => {
   const validateForm = () => {
     const name = String(form.name || "").trim();
     const billingPeriod = String(form.billing_period || "").trim();
-    const priceNum = Number(form.price);
+    const priceUsdNum = Number(form.price_usd);
+    const priceInrNum = Number(form.price_inr);
     const creditsNum = Number(form.credits);
 
     if (!name) return "Name is required.";
     if (!billingPeriod) return "Billing period is required.";
-    if (!Number.isFinite(priceNum) || priceNum < 0) return "Price must be a valid number >= 0.";
+    if (!Number.isFinite(priceUsdNum) || priceUsdNum < 0) return "USD price must be a valid number >= 0.";
+    if (!Number.isFinite(priceInrNum) || priceInrNum < 0) return "INR price must be a valid number >= 0.";
     if (!Number.isFinite(creditsNum) || creditsNum < 0) return "Credits must be a valid number >= 0.";
 
     return "";
@@ -160,7 +169,8 @@ const AdminSubscriptionPlansPage = () => {
 
     const body = {
       name: String(form.name || "").trim(),
-      price: Number(form.price),
+      price_usd: Number(form.price_usd),
+      price_inr: Number(form.price_inr),
       billing_period: String(form.billing_period || "").trim(),
       credits: Number(form.credits),
       description: String(form.description || "").trim(),
@@ -296,7 +306,7 @@ const AdminSubscriptionPlansPage = () => {
             </label>
 
             <label className={styles.field}>
-              <span className={baseStyles.muted}>Price</span>
+              <span className={baseStyles.muted}>Price (USD)</span>
               <input
                 className={baseStyles.input}
                 type="number"
@@ -304,9 +314,24 @@ const AdminSubscriptionPlansPage = () => {
                 step="0.01"
                 min="0"
                 required
-                value={form.price}
-                onChange={(e) => setForm((p) => ({ ...p, price: e.target.value }))}
+                value={form.price_usd}
+                onChange={(e) => setForm((p) => ({ ...p, price_usd: e.target.value }))}
                 placeholder="9.99"
+              />
+            </label>
+
+            <label className={styles.field}>
+              <span className={baseStyles.muted}>Price (INR)</span>
+              <input
+                className={baseStyles.input}
+                type="number"
+                inputMode="numeric"
+                step="1"
+                min="0"
+                required
+                value={form.price_inr}
+                onChange={(e) => setForm((p) => ({ ...p, price_inr: e.target.value }))}
+                placeholder="499"
               />
             </label>
 
@@ -385,7 +410,8 @@ const AdminSubscriptionPlansPage = () => {
             <thead>
               <tr>
                 <th className={baseStyles.th}>Plan</th>
-                <th className={baseStyles.th}>Price</th>
+                <th className={baseStyles.th}>Price (USD)</th>
+                <th className={baseStyles.th}>Price (INR)</th>
                 <th className={baseStyles.th}>Credits</th>
                 <th className={baseStyles.th}>Billing</th>
                 <th className={baseStyles.th}>PayPal</th>
@@ -395,13 +421,13 @@ const AdminSubscriptionPlansPage = () => {
             <tbody>
               {listState.loading ? (
                 <tr>
-                  <td className={baseStyles.td} colSpan={6}>
+                  <td className={baseStyles.td} colSpan={7}>
                     <span className={baseStyles.muted}>Loading…</span>
                   </td>
                 </tr>
               ) : listState.error ? (
                 <tr>
-                  <td className={baseStyles.td} colSpan={6}>
+                  <td className={baseStyles.td} colSpan={7}>
                     <span className={baseStyles.muted}>{listState.error}</span>
                     <div style={{ marginTop: 10 }}>
                       <button type="button" className={baseStyles.smallBtn} onClick={fetchPlans}>
@@ -412,7 +438,7 @@ const AdminSubscriptionPlansPage = () => {
                 </tr>
               ) : !listState.items.length ? (
                 <tr>
-                  <td className={baseStyles.td} colSpan={6}>
+                  <td className={baseStyles.td} colSpan={7}>
                     <span className={baseStyles.muted}>No plans found.</span>
                   </td>
                 </tr>
@@ -425,7 +451,8 @@ const AdminSubscriptionPlansPage = () => {
                         {safeText(p.description)}
                       </div>
                     </td>
-                    <td className={baseStyles.td}>{safeText(p.price)}</td>
+                    <td className={baseStyles.td}>{safeText(p.price_usd)}</td>
+                    <td className={baseStyles.td}>{safeText(p.price_inr)}</td>
                     <td className={baseStyles.td}>{safeText(p.credits)}</td>
                     <td className={baseStyles.td}>{safeText(p.billing_period)}</td>
                     <td className={baseStyles.td}>{safeText(p.paypal_plan_id)}</td>

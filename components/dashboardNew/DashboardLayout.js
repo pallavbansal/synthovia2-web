@@ -46,6 +46,7 @@ const ADMIN_NAV_ITEMS = [
   { href: "/admin/users/dashboard", label: "Admin Users", iconClass: "fa-solid fa-users" },
   { href: "/admin/subscriptions/plans", label: "Subscription Plans", iconClass: "fa-solid fa-clipboard-list" },
   { href: "/admin/feedback", label: "Feedback", iconClass: "fa-solid fa-comments" },
+  { href: "/admin/settings", label: "Settings", iconClass: "fa-solid fa-comments" },
 ];
 
 const isActivePath = (pathname, href) => {
@@ -90,7 +91,8 @@ const DashboardLayout = ({ children, title }) => {
     return NAV_ITEMS;
   }, [adminEnabled]);
 
-  const userName = useMemo(() => {
+  const [userName, setUserName] = useState("User");
+  useEffect(() => {
     const user = getUser();
     const raw =
       (user &&
@@ -100,8 +102,7 @@ const DashboardLayout = ({ children, title }) => {
           [user.first_name, user.last_name].filter(Boolean).join(" ") ||
           user.email)) ||
       "User";
-
-    return String(raw || "User");
+    setUserName(String(raw || "User"));
   }, []);
 
   const avatarText = useMemo(() => {

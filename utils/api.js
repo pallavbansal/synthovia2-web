@@ -107,8 +107,8 @@ export const API = {
   ADMIN_USER_UPDATE: (id) => `${BASE_URL}/admin/users/${id}`,
   ADMIN_USER_DEACTIVATE: (id) => `${BASE_URL}/admin/users/${id}/deactivate`,
   ADMIN_USER_DELETE: (id) => `${BASE_URL}/admin/users/${id}`,
-  ADMIN_FEEDBACK: ({ perPage = 15, page = 1 } = {}) =>
-    buildQueryUrl(`${BASE_URL}/admin/feedback`, { per_page: perPage, page }),
+  ADMIN_FEEDBACK: ({ perPage = 15, page = 1, from, to } = {}) =>
+    buildQueryUrl(`${BASE_URL}/admin/feedback`, { per_page: perPage, page, from, to }),
   ADMIN_TOOLS_HISTORY: ({ toolName, userId, perPage = 100, page = 1, from, to } = {}) =>
     buildQueryUrl(`${BASE_URL}/admin/tools/history`, {
       tool_name: toolName,
