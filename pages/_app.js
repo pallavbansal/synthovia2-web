@@ -50,6 +50,7 @@ export default function App({ Component, pageProps }) {
       "/dashboard",
       "/dashboard-overview",
       "/admin",
+      "/feedback",
       "/application",
       "/ad-copy-generator",
       "/caption-and-hastag-generator",

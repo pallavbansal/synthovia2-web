@@ -29,6 +29,10 @@ const SubscriptionPlanPage = () => {
 
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const [authPromptPlanId, setAuthPromptPlanId] = useState(null);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentPlanId, setPaymentPlanId] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState("razorpay"); // 'razorpay' | 'paypal'
+  const [paymentBusy, setPaymentBusy] = useState(false);
 
   const fallbackPlans = useMemo(
     () => [
@@ -62,6 +66,17 @@ const SubscriptionPlanPage = () => {
     ],
     []
   );
+
+  const detectDefaultPayment = () => {
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+      const langs = Array.isArray(navigator.languages) && navigator.languages.length ? navigator.languages : [navigator.language];
+      const hasINLang = (langs || []).some((l) => String(l || "").toUpperCase().endsWith("-IN"));
+      const tzLower = String(tz).toLowerCase();
+      if (tzLower === "asia/kolkata" || tzLower === "asia/calcutta" || hasINLang) return "razorpay";
+    } catch (e) {}
+    return "razorpay";
+  };
 
   useEffect(() => {
     Sal();
@@ -149,7 +164,9 @@ const SubscriptionPlanPage = () => {
 
       autoCheckoutRanRef.current = true;
       sessionStorage.removeItem("pending_subscription_plan_selection");
-      handleCheckout(matched?.id);
+      setPaymentPlanId(matched?.id);
+      setPaymentMethod(detectDefaultPayment());
+      setPaymentModalOpen(true);
     } catch (e) {}
   }, [plans, isLoading]);
 
@@ -197,6 +214,112 @@ const SubscriptionPlanPage = () => {
     }
   };
 
+  const ensureRazorpayLoaded = () => {
+    return new Promise((resolve, reject) => {
+      if (typeof window === "undefined") return reject(new Error("Window not available"));
+      if (window.Razorpay) return resolve(window.Razorpay);
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => resolve(window.Razorpay);
+      script.onerror = () => reject(new Error("Failed to load Razorpay"));
+      document.body.appendChild(script);
+    });
+  };
+
+  const handleRazorpayCheckout = async (planId) => {
+    if (!planId) return;
+    if (paymentBusy) return;
+    setPaymentBusy(true);
+    setErrorMessage("");
+    try {
+      const authHeader = getAuthHeader();
+      const body = new URLSearchParams({
+        plan_id: String(planId),
+        payment_method: "razorpay",
+      });
+
+      const res = await fetch(API.SUBSCRIPTION_CHECKOUT, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
+          ...(authHeader ? { Authorization: authHeader } : {}),
+        },
+        body: body.toString(),
+      });
+
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.message || `Checkout failed (${res.status})`);
+      if (!json || json.status_code !== 1) throw new Error(json?.message || "Checkout failed");
+
+      const subscriptionReference = json?.subscription_reference;
+      const rz = json?.razorpay || {};
+      if (!rz?.key_id || !rz?.order_id || !rz?.amount || !rz?.currency) throw new Error("Invalid Razorpay init response");
+
+      try {
+        sessionStorage.setItem("subscription_reference", String(subscriptionReference || ""));
+      } catch (e) {}
+
+      await ensureRazorpayLoaded();
+
+      const rzpOptions = {
+        key: String(rz.key_id),
+        amount: Number(rz.amount),
+        currency: String(rz.currency || "INR"),
+        name: "Synthovia",
+        description: "Subscription Payment",
+        order_id: String(rz.order_id),
+        notes: rz.notes || {},
+        handler: async function (response) {
+          try {
+            const confirmBody = new URLSearchParams({
+              payment_method: "razorpay",
+              subscription_reference: String(subscriptionReference || ""),
+              order_id: String(response?.razorpay_order_id || rz.order_id || ""),
+              payment_id: String(response?.razorpay_payment_id || ""),
+              signature: String(response?.razorpay_signature || ""),
+            });
+
+            const confirmRes = await fetch(API.SUBSCRIPTION_CONFIRM, {
+              method: "POST",
+              headers: {
+                Accept: "application/json",
+                "Content-Type": "application/x-www-form-urlencoded",
+                ...(authHeader ? { Authorization: authHeader } : {}),
+              },
+              body: confirmBody.toString(),
+            });
+            const confirmJson = await confirmRes.json().catch(() => null);
+            if (!confirmRes.ok) throw new Error(confirmJson?.message || `Confirm failed (${confirmRes.status})`);
+            if (!confirmJson || confirmJson.status_code !== 1) throw new Error(confirmJson?.message || "Confirm failed");
+
+            setPaymentModalOpen(false);
+            router.push("/dashboard-overview?subscription=active");
+          } catch (e) {
+            setErrorMessage(e?.message || "Confirmation failed");
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setPaymentBusy(false);
+          },
+        },
+        theme: { color: "#7c3aed" },
+      };
+
+      const rzp = new window.Razorpay(rzpOptions);
+      rzp.on && rzp.on("payment.failed", function (resp) {
+        setErrorMessage(resp?.error?.description || "Payment failed");
+        setPaymentBusy(false);
+      });
+      rzp.open();
+    } catch (e) {
+      setErrorMessage(e?.message || "Checkout failed");
+      setPaymentBusy(false);
+    }
+  };
+
   const handleBuyClick = (plan) => {
     const planId = plan?.id;
     if (!isAuthenticated()) {
@@ -217,7 +340,9 @@ const SubscriptionPlanPage = () => {
 
       return;
     }
-    handleCheckout(planId);
+    setPaymentPlanId(planId);
+    setPaymentMethod(detectDefaultPayment());
+    setPaymentModalOpen(true);
   };
 
   const displayPlans = useMemo(() => {
@@ -327,6 +452,79 @@ const SubscriptionPlanPage = () => {
                 >
                   Continue browsing
                 </button>
+              </div>
+            </div>
+          ) : null}
+
+          {paymentModalOpen ? (
+            <div
+              className="subscription-auth-modal-overlay"
+              role="dialog"
+              aria-modal="true"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setPaymentModalOpen(false);
+              }}
+            >
+              <div className="subscription-auth-modal payment-modal">
+                <div className="subscription-auth-modal-title">Choose payment method</div>
+                <div className="subscription-auth-modal-subtitle">Select how you want to pay for your subscription.</div>
+                <div className="payment-methods">
+                  <label className={`payment-option ${paymentMethod === "razorpay" ? "selected" : ""}`} onClick={() => setPaymentMethod("razorpay")}>
+                    <div className="pm-left">
+                      <div className="pm-title">
+                        <i className="fa-solid fa-credit-card" style={{ marginRight: 8 }}></i>
+                        Razorpay
+                        <span className="pm-badge">Default in India</span>
+                      </div>
+                      <div className="pm-sub">UPI, cards, netbanking</div>
+                    </div>
+                    <input
+                      type="radio"
+                      name="payment_method"
+                      value="razorpay"
+                      checked={paymentMethod === "razorpay"}
+                      onChange={() => setPaymentMethod("razorpay")}
+                    />
+                  </label>
+                  <label className={`payment-option ${paymentMethod === "paypal" ? "selected" : ""}`} onClick={() => setPaymentMethod("paypal")}>
+                    <div className="pm-left">
+                      <div className="pm-title">
+                        <i className="fa-brands fa-paypal" style={{ marginRight: 8 }}></i>
+                        PayPal
+                      </div>
+                      <div className="pm-sub">Pay with PayPal account or cards</div>
+                    </div>
+                    <input
+                      type="radio"
+                      name="payment_method"
+                      value="paypal"
+                      checked={paymentMethod === "paypal"}
+                      onChange={() => setPaymentMethod("paypal")}
+                    />
+                  </label>
+                </div>
+
+                <div className="payment-actions">
+                  <button
+                    type="button"
+                    className="subscription-auth-modal-btn primary"
+                    disabled={paymentBusy || !paymentPlanId}
+                    onClick={() => {
+                      if (paymentMethod === "razorpay") return handleRazorpayCheckout(paymentPlanId);
+                      setPaymentModalOpen(false);
+                      return handleCheckout(paymentPlanId);
+                    }}
+                  >
+                    {paymentBusy ? "Processing..." : paymentMethod === "razorpay" ? "Continue with Razorpay" : "Continue with PayPal"}
+                  </button>
+                  <button type="button" className="subscription-auth-modal-btn ghost" onClick={() => setPaymentModalOpen(false)}>
+                    Cancel
+                  </button>
+                </div>
+
+                {errorMessage ? (
+                  <p style={{ color: "#ef4444", marginTop: 8 }}>{errorMessage}</p>
+                ) : null}
               </div>
             </div>
           ) : null}
@@ -880,6 +1078,51 @@ const SubscriptionPlanPage = () => {
         </Context>
       </main>
       <BackToTop />
+      <style jsx>{`
+        .payment-modal {
+          max-width: 520px;
+          width: min(92vw, 520px);
+        }
+        .payment-methods {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          margin-top: 12px;
+        }
+        .payment-option {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+          padding: 14px 16px;
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          color: #e5e7eb;
+          cursor: pointer;
+          user-select: none;
+          transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
+        }
+        .payment-option:hover {
+          background: rgba(255, 255, 255, 0.06);
+          border-color: rgba(255, 255, 255, 0.12);
+        }
+        .payment-option.selected {
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.16), rgba(255, 255, 255, 0.04));
+          border-color: rgba(139, 92, 246, 0.85) !important;
+          box-shadow:
+            0 0 0 1px rgba(139, 92, 246, 0.35) inset,
+            0 10px 30px rgba(139, 92, 246, 0.12);
+        }
+        .pm-left { display: flex; flex-direction: column; gap: 4px; }
+        .pm-title { display: flex; align-items: center; gap: 6px; font-weight: 600; color: #f3f4f6; }
+        .pm-badge { margin-left: 8px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 9999px; background: rgba(139, 92, 246, 0.18); color: #c4b5fd; }
+        .pm-sub { font-size: 12px; color: #94a3b8; }
+        .payment-option input[type="radio"] { accent-color: #8b5cf6; width: 18px; height: 18px; }
+        .payment-actions { display: flex; gap: 12px; margin-top: 16px; }
+        .payment-actions .subscription-auth-modal-btn.primary { flex: 1 1 auto; }
+        .payment-actions .subscription-auth-modal-btn.ghost { flex: 1 1 auto; }
+      `}</style>
     </>
   );
 };

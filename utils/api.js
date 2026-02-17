@@ -69,11 +69,14 @@ export const API = {
   AUTH_LOGIN: `${BASE_URL}/auth/login`,
   AUTH_GOOGLE: `${BASE_URL}/auth/google`,
   AUTH_REGISTER: `${BASE_URL}/auth/register`,
+  AUTH_RESET_PASSWORD: `${BASE_URL}/auth/reset-password`,
 
   DASHBOARD_STATS: `${BASE_URL}/dashboard/stats`,
   DASHBOARD_CREDIT_USAGE: `${BASE_URL}/dashboard/credit-usage`,
   DASHBOARD_MOST_USED_TOOL: `${BASE_URL}/dashboard/most-used-tool`,
   DASHBOARD_ACTIVITY_LOGS: `${BASE_URL}/dashboard/activity-logs`,
+
+  FEEDBACK_SUBMIT: `${BASE_URL}/feedback`,
 
   ADMIN_USERS: ({ perPage = 15, page = 1, sortBy = "id", sortDir = "desc", role, q } = {}) =>
     buildQueryUrl(`${BASE_URL}/admin/users`, {
@@ -95,10 +98,26 @@ export const API = {
       per_page: perPage,
       page,
     }),
+  ADMIN_USER_CREDIT_GRANTS: ({ id, perPage = 100, page = 1 } = {}) =>
+    buildQueryUrl(`${BASE_URL}/admin/users/${id}/credits/grants`, {
+      per_page: perPage,
+      page,
+    }),
   ADMIN_USER_GRANT_CREDITS: (id) => `${BASE_URL}/admin/users/${id}/credits/grant`,
   ADMIN_USER_UPDATE: (id) => `${BASE_URL}/admin/users/${id}`,
   ADMIN_USER_DEACTIVATE: (id) => `${BASE_URL}/admin/users/${id}/deactivate`,
   ADMIN_USER_DELETE: (id) => `${BASE_URL}/admin/users/${id}`,
+  ADMIN_FEEDBACK: ({ perPage = 15, page = 1 } = {}) =>
+    buildQueryUrl(`${BASE_URL}/admin/feedback`, { per_page: perPage, page }),
+  ADMIN_TOOLS_HISTORY: ({ toolName, userId, perPage = 100, page = 1, from, to } = {}) =>
+    buildQueryUrl(`${BASE_URL}/admin/tools/history`, {
+      tool_name: toolName,
+      user_id: userId,
+      per_page: perPage,
+      page,
+      from,
+      to,
+    }),
 };
 
 export default API;

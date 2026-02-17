@@ -239,11 +239,11 @@ const SignIn = () => {
                           </button>
                         </div>
                         {error ? <p className="mt--10">{error}</p> : null}
-                        {/* <div className="forget-text">
-                          <a className="btn-read-more" href="#">
-                            <span>Forgot password</span>
-                          </a>
-                        </div> */}
+                        <div className="forget-text" style={{ marginTop: 10 }}>
+                          <Link className="btn-read-more" href="/auth/reset-password">
+                            <span>Forgot password?</span>
+                          </Link>
+                        </div>
                         <button
                           type="submit"
                           className="btn-default"
