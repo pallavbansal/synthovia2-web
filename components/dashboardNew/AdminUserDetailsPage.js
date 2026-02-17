@@ -13,6 +13,15 @@ const safeText = (v) => {
   return s.trim() ? s : "—";
 };
 
+const formatAmountOnly = (v) => {
+  if (v == null) return "—";
+  const asNum = Number(v);
+  if (Number.isFinite(asNum)) return String(asNum);
+  const s = String(v);
+  const cleaned = s.replace(/[^0-9.\-]/g, "");
+  return cleaned.trim() ? cleaned : "—";
+};
+
 const formatDateTime = (raw) => {
   if (!raw) return "—";
   const dt = new Date(String(raw).replace(" ", "T"));
@@ -1232,6 +1241,7 @@ const AdminUserDetailsPage = () => {
                     <tr>
                       <th className={baseStyles.th}>Invoice</th>
                       <th className={baseStyles.th}>Date</th>
+                      <th className={baseStyles.th}>Provider</th>
                       <th className={baseStyles.th}>Amount</th>
                       <th className={baseStyles.th}>Status</th>
                       <th className={baseStyles.th}>PDF</th>
@@ -1242,7 +1252,8 @@ const AdminUserDetailsPage = () => {
                       <tr key={h?.transaction_id || `${h?.invoice_number}-${h?.date}` || Math.random()} className={baseStyles.tr}>
                         <td className={baseStyles.td}>{safeText(h?.invoice_number)}</td>
                         <td className={baseStyles.td}>{formatDateTime(h?.date)}</td>
-                        <td className={baseStyles.td}>{safeText(h?.amount)}</td>
+                        <td className={baseStyles.td}>{safeText(h?.provider)}</td>
+                        <td className={baseStyles.td}>{formatAmountOnly(h?.amount)}</td>
                         <td className={baseStyles.td}>{safeText(h?.status)}</td>
                         <td className={baseStyles.td}>
                           {h?.invoice_pdf_url ? (

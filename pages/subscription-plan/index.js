@@ -75,8 +75,18 @@ const SubscriptionPlanPage = () => {
       const tzLower = String(tz).toLowerCase();
       if (tzLower === "asia/kolkata" || tzLower === "asia/calcutta" || hasINLang) return "razorpay";
     } catch (e) {}
-    return "razorpay";
+    return "paypal";
   };
+
+  const getPlanPreferredPrice = (plan) => {
+    const method = detectDefaultPayment();
+    const usd = plan?.price_usd != null ? plan.price_usd : plan?.price;
+    const inr = plan?.price_inr != null ? plan.price_inr : plan?.price;
+    if (method === "razorpay") return { currency: "INR", symbol: "₹", value: inr };
+    return { currency: "USD", symbol: "$", value: usd };
+  };
+
+  const isIndia = useMemo(() => detectDefaultPayment() === "razorpay", []);
 
   useEffect(() => {
     Sal();
@@ -178,9 +188,14 @@ const SubscriptionPlanPage = () => {
     setErrorMessage("");
     try {
       const authHeader = getAuthHeader();
+      const plan = (Array.isArray(plans) ? plans : []).find((p) => String(p?.id) === String(planId)) || {};
+      const usd = plan?.price_usd != null ? plan.price_usd : plan?.price;
+      const amount = usd != null ? String(usd) : "";
       const body = new URLSearchParams({
         plan_id: String(planId),
         payment_method: "paypal",
+        amount,
+        currency: "USD",
       });
 
       const res = await fetch(API.SUBSCRIPTION_CHECKOUT, {
@@ -234,9 +249,14 @@ const SubscriptionPlanPage = () => {
     setErrorMessage("");
     try {
       const authHeader = getAuthHeader();
+      const plan = (Array.isArray(plans) ? plans : []).find((p) => String(p?.id) === String(planId)) || {};
+      const inr = plan?.price_inr != null ? plan.price_inr : plan?.price;
+      const amount = inr != null ? String(inr) : "";
       const body = new URLSearchParams({
         plan_id: String(planId),
         payment_method: "razorpay",
+        amount,
+        currency: "INR",
       });
 
       const res = await fetch(API.SUBSCRIPTION_CHECKOUT, {
@@ -349,10 +369,10 @@ const SubscriptionPlanPage = () => {
     const list = Array.isArray(plans) ? [...plans] : [];
 
     const byPrice = list
-      .map((p) => ({
-        ...p,
-        _priceNum: Number(p?.price),
-      }))
+      .map((p) => {
+        const pref = getPlanPreferredPrice(p);
+        return { ...p, _priceNum: Number(pref?.value) };
+      })
       .sort((a, b) => {
         const ap = Number.isFinite(a._priceNum) ? a._priceNum : Number.POSITIVE_INFINITY;
         const bp = Number.isFinite(b._priceNum) ? b._priceNum : Number.POSITIVE_INFINITY;
@@ -469,39 +489,54 @@ const SubscriptionPlanPage = () => {
                 <div className="subscription-auth-modal-title">Choose payment method</div>
                 <div className="subscription-auth-modal-subtitle">Select how you want to pay for your subscription.</div>
                 <div className="payment-methods">
-                  <label className={`payment-option ${paymentMethod === "razorpay" ? "selected" : ""}`} onClick={() => setPaymentMethod("razorpay")}>
-                    <div className="pm-left">
-                      <div className="pm-title">
-                        <i className="fa-solid fa-credit-card" style={{ marginRight: 8 }}></i>
-                        Razorpay
-                        <span className="pm-badge">Default in India</span>
+                  {isIndia ? (
+                    <>
+                      <label className={`payment-option ${paymentMethod === "razorpay" ? "selected" : ""}`} onClick={() => setPaymentMethod("razorpay")}>
+                        <div className="pm-left">
+                          <div className="pm-title">
+                            <i className="fa-solid fa-credit-card" style={{ marginRight: 8 }}></i>
+                            Razorpay
+                            <span className="pm-badge">Default in India</span>
+                          </div>
+                          <div className="pm-sub">UPI, cards, netbanking</div>
+                        </div>
+                        <input
+                          type="radio"
+                          name="payment_method"
+                          value="razorpay"
+                          checked={paymentMethod === "razorpay"}
+                          onChange={() => setPaymentMethod("razorpay")}
+                        />
+                      </label>
+                      <label className={`payment-option ${paymentMethod === "paypal" ? "selected" : ""}`} onClick={() => setPaymentMethod("paypal")}>
+                        <div className="pm-left">
+                          <div className="pm-title">
+                            <i className="fa-brands fa-paypal" style={{ marginRight: 8 }}></i>
+                            PayPal
+                          </div>
+                          <div className="pm-sub">Pay with PayPal account or cards</div>
+                        </div>
+                        <input
+                          type="radio"
+                          name="payment_method"
+                          value="paypal"
+                          checked={paymentMethod === "paypal"}
+                          onChange={() => setPaymentMethod("paypal")}
+                        />
+                      </label>
+                    </>
+                  ) : (
+                    <label className={`payment-option selected`}>
+                      <div className="pm-left">
+                        <div className="pm-title">
+                          <i className="fa-brands fa-paypal" style={{ marginRight: 8 }}></i>
+                          PayPal
+                        </div>
+                        <div className="pm-sub">Pay with PayPal account or cards</div>
                       </div>
-                      <div className="pm-sub">UPI, cards, netbanking</div>
-                    </div>
-                    <input
-                      type="radio"
-                      name="payment_method"
-                      value="razorpay"
-                      checked={paymentMethod === "razorpay"}
-                      onChange={() => setPaymentMethod("razorpay")}
-                    />
-                  </label>
-                  <label className={`payment-option ${paymentMethod === "paypal" ? "selected" : ""}`} onClick={() => setPaymentMethod("paypal")}>
-                    <div className="pm-left">
-                      <div className="pm-title">
-                        <i className="fa-brands fa-paypal" style={{ marginRight: 8 }}></i>
-                        PayPal
-                      </div>
-                      <div className="pm-sub">Pay with PayPal account or cards</div>
-                    </div>
-                    <input
-                      type="radio"
-                      name="payment_method"
-                      value="paypal"
-                      checked={paymentMethod === "paypal"}
-                      onChange={() => setPaymentMethod("paypal")}
-                    />
-                  </label>
+                      <input type="radio" name="payment_method" value="paypal" checked readOnly />
+                    </label>
+                  )}
                 </div>
 
                 <div className="payment-actions">
@@ -575,7 +610,8 @@ const SubscriptionPlanPage = () => {
                   {(displayPlans || []).map((plan, index) => {
                     const name = String(plan?.name || "");
                     const description = String(plan?.description || "");
-                    const price = String(plan?.price || "");
+                    const pref = getPlanPreferredPrice(plan);
+                    const price = String((pref?.value != null ? pref.value : plan?.price) || "");
                     const billing = String(plan?.billing_period || "");
                     const planId = plan?.id;
                     const isCheckoutLoading =
@@ -599,7 +635,7 @@ const SubscriptionPlanPage = () => {
                             </div>
 
                             <div className="subscription-plan-price-row">
-                              <span className="subscription-plan-price">${price}</span>
+                              <span className="subscription-plan-price">{pref?.symbol}{price}</span>
                               <span className="subscription-plan-period">/ {billingLabel}</span>
                             </div>
 

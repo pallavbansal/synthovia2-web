@@ -35,6 +35,15 @@ const SettingsPage = () => {
     return num.toLocaleString(undefined, { style: "currency", currency: "USD" });
   };
 
+  const formatAmountOnly = (v) => {
+    if (v == null) return "—";
+    const asNum = Number(v);
+    if (Number.isFinite(asNum)) return String(asNum);
+    const s = String(v);
+    const cleaned = s.replace(/[^0-9.\-]/g, "");
+    return cleaned.trim() ? cleaned : "—";
+  };
+
   const showBuyPlanCta = Boolean(profileState.data) && !Boolean(profileState.data?.subscription?.active);
 
   const getSubscriptionBadgeClass = (sub) => {
@@ -312,7 +321,7 @@ const SettingsPage = () => {
             <div className={styles.kv}>
               <div className={styles.k}>Price</div>
               <div className={styles.v}>
-                {plan?.price != null ? formatMoney(plan.price) : "—"}
+                {sub?.price != null ? formatAmountOnly(sub.price) : "—"}
                 {plan?.billing_period ? ` / ${plan.billing_period}` : ""}
               </div>
             </div>
@@ -429,6 +438,7 @@ const SettingsPage = () => {
                   <thead>
                     <tr>
                       <th className={styles.th}>Transaction ID</th>
+                      <th className={styles.th}>Provider</th>
                       <th className={styles.th}>Amount</th>
                       <th className={styles.th}>Status</th>
                       <th className={styles.th}>Date</th>
@@ -439,7 +449,8 @@ const SettingsPage = () => {
                     {subscriptionHistoryState.items.map((tx, idx) => (
                       <tr className={styles.tr} key={`${tx?.transaction_id || "tx"}-${idx}`}>
                         <td className={styles.td}>{tx?.transaction_id || "—"}</td>
-                        <td className={styles.td}>{tx?.amount != null ? formatMoney(tx.amount) : "—"}</td>
+                        <td className={styles.td}>{tx?.provider || "—"}</td>
+                        <td className={styles.td}>{formatAmountOnly(tx?.amount)}</td>
                         <td className={styles.td}>{tx?.status || "—"}</td>
                         <td className={styles.td}>{tx?.date || "—"}</td>
                         <td className={styles.td}>
