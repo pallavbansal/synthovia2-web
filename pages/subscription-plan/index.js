@@ -34,6 +34,8 @@ const SubscriptionPlanPage = () => {
   const [paymentMethod, setPaymentMethod] = useState("razorpay"); // 'razorpay' | 'paypal'
   const [paymentBusy, setPaymentBusy] = useState(false);
 
+  const [geoIsIndia, setGeoIsIndia] = useState(null); // null = unknown/denied
+
   const fallbackPlans = useMemo(
     () => [
       {
@@ -78,15 +80,48 @@ const SubscriptionPlanPage = () => {
     return "paypal";
   };
 
+  const isInIndiaByCoords = ({ latitude, longitude }) => {
+    const lat = Number(latitude);
+    const lon = Number(longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    const withinLat = lat >= 6 && lat <= 37;
+    const withinLon = lon >= 68 && lon <= 98;
+    return withinLat && withinLon;
+  };
+
+  const getDefaultPaymentMethod = () => {
+    if (geoIsIndia === true) return "razorpay";
+    if (geoIsIndia === false) return "paypal";
+    return detectDefaultPayment();
+  };
+
   const getPlanPreferredPrice = (plan) => {
-    const method = detectDefaultPayment();
+    const method = getDefaultPaymentMethod();
     const usd = plan?.price_usd != null ? plan.price_usd : plan?.price;
     const inr = plan?.price_inr != null ? plan.price_inr : plan?.price;
     if (method === "razorpay") return { currency: "INR", symbol: "₹", value: inr };
     return { currency: "USD", symbol: "$", value: usd };
   };
 
-  const isIndia = useMemo(() => detectDefaultPayment() === "razorpay", []);
+  const fallbackIsIndia = useMemo(() => detectDefaultPayment() === "razorpay", []);
+  const isIndia = geoIsIndia != null ? geoIsIndia : fallbackIsIndia;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!navigator?.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const next = isInIndiaByCoords(pos?.coords || {});
+        if (next == null) return;
+        setGeoIsIndia(next);
+      },
+      () => {
+        setGeoIsIndia(null);
+      },
+      { enableHighAccuracy: false, timeout: 7000, maximumAge: 5 * 60 * 1000 }
+    );
+  }, []);
 
   useEffect(() => {
     Sal();
@@ -175,10 +210,10 @@ const SubscriptionPlanPage = () => {
       autoCheckoutRanRef.current = true;
       sessionStorage.removeItem("pending_subscription_plan_selection");
       setPaymentPlanId(matched?.id);
-      setPaymentMethod(detectDefaultPayment());
+      setPaymentMethod(getDefaultPaymentMethod());
       setPaymentModalOpen(true);
     } catch (e) {}
-  }, [plans, isLoading]);
+  }, [plans, isLoading, geoIsIndia]);
 
   const handleCheckout = async (planId) => {
     if (!planId) return;
@@ -340,6 +375,16 @@ const SubscriptionPlanPage = () => {
     }
   };
 
+  const openPaymentModalForPlan = (planId) => {
+    if (!planId) {
+      setErrorMessage("Missing plan");
+      return;
+    }
+    setPaymentPlanId(planId);
+    setPaymentMethod(getDefaultPaymentMethod());
+    setPaymentModalOpen(true);
+  };
+
   const handleBuyClick = (plan) => {
     const planId = plan?.id;
     if (!isAuthenticated()) {
@@ -350,23 +395,21 @@ const SubscriptionPlanPage = () => {
         sessionStorage.setItem(
           "pending_subscription_plan_selection",
           JSON.stringify({
-            plan_id: planId != null ? String(planId) : null,
-            name: plan?.name || "",
-            billing_period: plan?.billing_period || "",
-            price: plan?.price != null ? String(plan.price) : "",
+            plan_id: planId,
+            name: plan?.name,
+            billing_period: plan?.billing_period,
+            price: plan?.price,
           })
         );
       } catch (e) {}
-
       return;
     }
-    setPaymentPlanId(planId);
-    setPaymentMethod(detectDefaultPayment());
-    setPaymentModalOpen(true);
+
+    openPaymentModalForPlan(planId);
   };
 
   const displayPlans = useMemo(() => {
-    const list = Array.isArray(plans) ? [...plans] : [];
+    const list = Array.isArray(plans) && plans.length ? plans : fallbackPlans;
 
     const byPrice = list
       .map((p) => {
@@ -390,7 +433,7 @@ const SubscriptionPlanPage = () => {
 
     const out = filtered.length ? filtered : byPrice;
     return out.slice(0, 3);
-  }, [plans, billingMode]);
+  }, [plans, fallbackPlans, billingMode, geoIsIndia]);
 
   const authed = useMemo(() => isAuthenticated(), []);
 
