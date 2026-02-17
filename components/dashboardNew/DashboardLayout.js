@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Home", iconClass: "fa-solid fa-house" },
   { href: "/dashboard-overview", label: "Dashboard", iconClass: "fa-solid fa-gauge" },
   { href: "/tool-history", label: "Tool History", iconClass: "fa-solid fa-clock-rotate-left" },
+  { href: "/feedback", label: "Feedback", iconClass: "fa-solid fa-comment-dots" },
   {
     href: "/copywriting-assistant",
     label: "Copywriting Tool",
@@ -44,6 +45,7 @@ const NAV_ITEMS = [
 const ADMIN_NAV_ITEMS = [
   { href: "/admin/users/dashboard", label: "Admin Users", iconClass: "fa-solid fa-users" },
   { href: "/admin/subscriptions/plans", label: "Subscription Plans", iconClass: "fa-solid fa-clipboard-list" },
+  { href: "/admin/feedback", label: "Feedback", iconClass: "fa-solid fa-comments" },
 ];
 
 const isActivePath = (pathname, href) => {
