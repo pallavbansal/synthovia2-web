@@ -35,6 +35,9 @@ const SubscriptionPlanPage = () => {
   const [paymentBusy, setPaymentBusy] = useState(false);
 
   const [geoIsIndia, setGeoIsIndia] = useState(null); // null = unknown/denied
+  const [geoPromptOpen, setGeoPromptOpen] = useState(false);
+  const [geoPromptPlanId, setGeoPromptPlanId] = useState(null);
+  const [geoBlockReason, setGeoBlockReason] = useState("");
 
   const fallbackPlans = useMemo(
     () => [
@@ -95,6 +98,36 @@ const SubscriptionPlanPage = () => {
     return detectDefaultPayment();
   };
 
+  const requestGeoIndia = () => {
+    return new Promise((resolve) => {
+      if (typeof window === "undefined") return resolve(null);
+      if (!navigator?.geolocation) return resolve(null);
+
+      const run = () => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const next = isInIndiaByCoords(pos?.coords || {});
+            resolve(next);
+          },
+          () => resolve(null),
+          { enableHighAccuracy: false, timeout: 7000, maximumAge: 5 * 60 * 1000 }
+        );
+      };
+
+      try {
+        if (navigator.permissions?.query) {
+          navigator.permissions
+            .query({ name: "geolocation" })
+            .then(() => run())
+            .catch(() => run());
+          return;
+        }
+      } catch (e) {}
+
+      run();
+    });
+  };
+
   const getPlanPreferredPrice = (plan) => {
     const method = getDefaultPaymentMethod();
     const usd = plan?.price_usd != null ? plan.price_usd : plan?.price;
@@ -105,23 +138,6 @@ const SubscriptionPlanPage = () => {
 
   const fallbackIsIndia = useMemo(() => detectDefaultPayment() === "razorpay", []);
   const isIndia = geoIsIndia != null ? geoIsIndia : fallbackIsIndia;
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!navigator?.geolocation) return;
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const next = isInIndiaByCoords(pos?.coords || {});
-        if (next == null) return;
-        setGeoIsIndia(next);
-      },
-      () => {
-        setGeoIsIndia(null);
-      },
-      { enableHighAccuracy: false, timeout: 7000, maximumAge: 5 * 60 * 1000 }
-    );
-  }, []);
 
   useEffect(() => {
     Sal();
@@ -385,6 +401,12 @@ const SubscriptionPlanPage = () => {
     setPaymentModalOpen(true);
   };
 
+  const openGeoPromptForPlan = (planId) => {
+    setGeoPromptPlanId(planId || null);
+    setGeoBlockReason("");
+    setGeoPromptOpen(true);
+  };
+
   const handleBuyClick = (plan) => {
     const planId = plan?.id;
     if (!isAuthenticated()) {
@@ -402,6 +424,11 @@ const SubscriptionPlanPage = () => {
           })
         );
       } catch (e) {}
+      return;
+    }
+
+    if (geoIsIndia == null) {
+      openGeoPromptForPlan(planId);
       return;
     }
 
@@ -515,6 +542,50 @@ const SubscriptionPlanPage = () => {
                 >
                   Continue browsing
                 </button>
+              </div>
+            </div>
+          ) : null}
+
+          {geoPromptOpen ? (
+            <div
+              className="subscription-auth-modal-overlay"
+              role="dialog"
+              aria-modal="true"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) return;
+              }}
+            >
+              <div className="subscription-auth-modal payment-modal">
+                <div className="subscription-auth-modal-title">Enable location</div>
+                <div className="subscription-auth-modal-subtitle">
+                  Location is required to continue payment. Please allow location access in your browser.
+                </div>
+
+                {geoBlockReason ? (
+                  <div style={{ color: "#ef4444", marginTop: 8, fontSize: 13 }}>{geoBlockReason}</div>
+                ) : null}
+
+                <div className="payment-actions">
+                  <button
+                    type="button"
+                    className="subscription-auth-modal-btn primary"
+                    onClick={async () => {
+                      const next = await requestGeoIndia();
+                      if (next == null) {
+                        setGeoBlockReason(
+                          "Location permission was not granted. Enable it in browser site settings and click 'Retry'."
+                        );
+                        return;
+                      }
+
+                      setGeoIsIndia(next);
+                      setGeoPromptOpen(false);
+                      openPaymentModalForPlan(geoPromptPlanId);
+                    }}
+                  >
+                    Retry location permission
+                  </button>
+                </div>
               </div>
             </div>
           ) : null}
