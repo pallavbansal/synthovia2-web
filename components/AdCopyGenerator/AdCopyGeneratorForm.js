@@ -57,9 +57,9 @@ const mapSelectionToApiObject = (fieldName, selectedLabel, options, isAutoSelect
         return { type: "custom", id: null, value: selectedLabel };
     }
 
-    let optionList = options[fieldName];
+    let optionList = Array.isArray(options) ? options : options?.[fieldName];
     if (fieldName === 'primary_text_length') {
-        optionList = options.primary_text_length;
+        optionList = Array.isArray(options) ? options : options?.primary_text_length;
     }
 
     const selectedOption = optionList?.find(opt =>
@@ -77,9 +77,9 @@ const mapSelectionToApiObject = (fieldName, selectedLabel, options, isAutoSelect
 };
 
 const getLabelFromKey = (selectedKey, fieldName, options) => {
-    let optionList = options[fieldName];
+    let optionList = Array.isArray(options) ? options : options?.[fieldName];
     if (fieldName === 'adTextLength') {
-        optionList = options.primary_text_length;
+        optionList = Array.isArray(options) ? options : options?.primary_text_length;
     }
 
     if (!optionList) return selectedKey;
@@ -838,7 +838,9 @@ const AdCopyGeneratorForm = () => {
             brand_voice: formData.brandVoice,
             offer_pricing_details: formData.offerPricing,
             tone_style: mapSelectionToApiObject('tone_style', formData.tone, fieldOptions.tone_style, true),
-            headline_focus: mapSelectionToApiObject('headline_focus', formData.headlineFocus, fieldOptions.headline_focus, true),
+            headline_focus: headlineFocusMode === 'custom'
+                ? { type: 'custom', id: null, value: (headlineFocusCustom || formData.headlineFocus || '') }
+                : mapSelectionToApiObject('headline_focus', formData.headlineFocus, fieldOptions.headline_focus, true),
             primary_text_length: mapSelectionToApiObject('primary_text_length', formData.adTextLength, fieldOptions, true),
             cta_type: mapSelectionToApiObject('cta_type', formData.ctaType, fieldOptions.cta_type, false),
             emotional_angle: mapSelectionToApiObject('emotional_angle', formData.emotionalAngle, fieldOptions.emotional_angle, false),
