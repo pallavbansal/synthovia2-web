@@ -427,7 +427,8 @@ const AdCopyGeneratorForm = () => {
         const missing = [];
 
         if (!formData.platform) missing.push('Ad Platform');
-        if (!formData.placement) missing.push('Ad Placement');
+        const requirePlacement = Array.isArray(availablePlacements) && availablePlacements.length > 0;
+        if (requirePlacement && !formData.placement) missing.push('Ad Placement');
         if (!formData.campaignObjective) missing.push('Campaign Objective');
         // Only require Custom Objective when user has explicitly chosen custom mode
         if (formData.campaignObjectiveMode === 'custom' && !formData.customObjective.trim()) {
@@ -701,7 +702,7 @@ const AdCopyGeneratorForm = () => {
                 };
 
                 try {
-                    for (;;) {
+                    for (; ;) {
                         const { value, done } = await reader.read();
 
                         if (done) break;
@@ -824,7 +825,9 @@ const AdCopyGeneratorForm = () => {
 
         const payload = {
             platform: mapSelectionToApiObject('platform', formData.platform, fieldOptions.platform, true),
-            placement: mapSelectionToApiObject('placement', formData.placement, fieldOptions.placement, true),
+            ...(formData.placement
+                ? { placement: mapSelectionToApiObject('placement', formData.placement, fieldOptions.placement, true) }
+                : {}),
             campaign_objective: formData.campaignObjective === 'Custom Objective' ?
                 { type: 'custom', id: null, value: formData.customObjective || 'Custom Objective' } :
                 mapSelectionToApiObject('campaign_objective', formData.campaignObjective, fieldOptions.campaign_objective, false),
@@ -1066,7 +1069,7 @@ const AdCopyGeneratorForm = () => {
             };
 
             const drainBuffer = () => {
-                for (;;) {
+                for (; ;) {
                     const jsonText = extractNextJsonObject();
                     if (!jsonText) break;
                     try {
@@ -1080,7 +1083,7 @@ const AdCopyGeneratorForm = () => {
             };
 
             try {
-                for (;;) {
+                for (; ;) {
                     const { value, done } = await reader.read();
                     if (done) break;
                     buffer = stripSsePrefixes(buffer + decoder.decode(value, { stream: true }));
@@ -1695,8 +1698,8 @@ const AdCopyGeneratorForm = () => {
                                                                 borderBottomRightRadius: showAudienceSuggestions ? '0' : '6px',
                                                                 WebkitAppearance: 'none' // Removes inner shadow on iOS
                                                             }}
-                                                            placeholder={formData.targetAudience.length === 0 
-                                                                ? "Type and press Enter to Add audience segments (e.g., 'Women 25-34')" 
+                                                            placeholder={formData.targetAudience.length === 0
+                                                                ? "Type and press Enter to Add audience segments (e.g., 'Women 25-34')"
                                                                 : "Type and press Enter to Add another segment"}
                                                             required={formData.targetAudience.length === 0}
                                                             inputMode="text"
@@ -2216,15 +2219,15 @@ const AdCopyGeneratorForm = () => {
                                                         placeholder="Type and press Enter to add key benefits"
                                                         onKeyPress={(e) => handleArrayChange(e, 'keyBenefits')}
                                                         onBlur={(e) => {
-                                                                const value = e.target.value.trim();
-                                                                if (value && formData.keyBenefits.length < 10) {
-                                                                    setFormData(prev => ({
-                                                                        ...prev,
-                                                                        keyBenefits: [...prev.keyBenefits, value]
-                                                                    }));
-                                                                    e.target.value = '';
-                                                                }
-                                                            }}
+                                                            const value = e.target.value.trim();
+                                                            if (value && formData.keyBenefits.length < 10) {
+                                                                setFormData(prev => ({
+                                                                    ...prev,
+                                                                    keyBenefits: [...prev.keyBenefits, value]
+                                                                }));
+                                                                e.target.value = '';
+                                                            }
+                                                        }}
                                                         disabled={formData.keyBenefits.length >= 10}
                                                         inputMode='text'
                                                     />
@@ -2556,49 +2559,7 @@ const AdCopyGeneratorForm = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Campaign Duration */}
-                                            <div className="col-md-6">
-                                                <div style={styles.formGroup}>
-                                                    <label style={styles.label}>Campaign Start Date (Optional)</label>
-                                                    <input
-                                                        type="date"
-                                                        name="start"
-                                                        value={formData.campaignDuration.start}
-                                                        onChange={handleDateChange}
-                                                        style={styles.input}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="col-md-6">
-                                                <div style={styles.formGroup}>
-                                                    <label style={styles.label}>Campaign End Date (Optional)</label>
-                                                    <input
-                                                        type="date"
-                                                        name="end"
-                                                        value={formData.campaignDuration.end}
-                                                        onChange={handleDateChange}
-                                                        style={styles.input}
-                                                    />
-                                                </div>
-                                            </div>
 
-                                            {/* Geo & Language Targeting */}
-                                            <div className="col-12">
-                                                <div style={styles.formGroup}>
-                                                    <label htmlFor="geoLanguageTarget" style={styles.label}>
-                                                        Geo & Language Targeting (Optional)
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        id="geoLanguageTarget"
-                                                        name="geoLanguageTarget"
-                                                        value={formData.geoLanguageTarget}
-                                                        onChange={handleChange}
-                                                        style={styles.input}
-                                                        placeholder="e.g., United States, English"
-                                                    />
-                                                </div>
-                                            </div>
 
                                             {/* Proof & Credibility */}
                                             <div className="col-12">
