@@ -398,6 +398,12 @@ const SeoKeywordMetaTagGeneratorForm = () => {
         selectedKey: formData.complianceGuidelines,
         customValue: formData.complianceGuidelinesCustom,
       }),
+      primary_text_length: selectionToApiObject({
+        fieldKey: "primary_text_length",
+        mode: formData.textLengthMode,
+        selectedKey: formData.textLength,
+        customValue: formData.textLengthCustom,
+      }),
       number_of_variants: Number(variantCount) || 1,
       model: "gpt-4o-mini",
     };
@@ -778,7 +784,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
         "Email Export",
       ].map(toObj),
       compliance_guidelines: ["None", "General", "Healthcare", "Finance", "Legal", "Education", "E-commerce", "Custom"].map(toObj),
-      text_length: [
+      primary_text_length: [
         { id: null, key: "short", label: "Short" },
         { id: null, key: "medium", label: "Medium" },
         { id: null, key: "long", label: "Long" },
@@ -844,13 +850,13 @@ const SeoKeywordMetaTagGeneratorForm = () => {
           output_depth: normalizeOptionsOnce(data.output_depth) || fallbackFieldOptions.output_depth,
           output_format: normalizeOptionsOnce(data.output_format) || fallbackFieldOptions.output_format,
           compliance_guidelines: normalizeOptionsOnce(data.compliance_guidelines) || fallbackFieldOptions.compliance_guidelines,
-          text_length: normalizeOptionsOnce(data.text_length)?.length
-            ? normalizeOptionsOnce(data.text_length).filter((opt) => {
+          primary_text_length: normalizeOptionsOnce(data.primary_text_length)?.length
+            ? normalizeOptionsOnce(data.primary_text_length).filter((opt) => {
                 const key = String(opt?.key || '').toLowerCase();
                 const label = String(opt?.label || '').toLowerCase();
                 return key !== 'auto' && label !== 'auto' && label !== 'auto-detect';
               })
-            : fallbackFieldOptions.text_length,
+            : fallbackFieldOptions.primary_text_length,
         };
 
         if (!cancelled) {
@@ -868,7 +874,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
             outputDepth: prev.outputDepth || next.output_depth?.[0]?.key || "",
             outputFormat: prev.outputFormat || next.output_format?.[0]?.key || "",
             complianceGuidelines: prev.complianceGuidelines || next.compliance_guidelines?.[0]?.key || "",
-            textLength: prev.textLength || next.text_length?.[0]?.key || "short",
+            textLength: prev.textLength || next.primary_text_length?.[0]?.key || "short",
           }));
         }
       } catch (err) {
@@ -916,7 +922,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
           ? String(formData.complianceGuidelinesCustom || "").trim()
           : getLabelFromOptions("compliance_guidelines", formData.complianceGuidelines),
       textLength:
-        formData.textLengthMode === "custom" ? String(formData.textLengthCustom || "").trim() : getLabelFromOptions("text_length", formData.textLength),
+        formData.textLengthMode === "custom" ? String(formData.textLengthCustom || "").trim() : getLabelFromOptions("primary_text_length", formData.textLength),
       variantsCount: clamp(Number(formData.variantsCount) || 1, 1, 5),
       keywordDifficulty: clamp(Number(formData.keywordDifficulty) || 0, 0, 100),
       pageGoalKey: formData.pageGoal,
@@ -1219,7 +1225,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       complianceGuidelinesCustom: "",
 
       textLengthMode: "predefined",
-      textLength: getDefaultKeyFromOptions("text_length", "short"),
+      textLength: getDefaultKeyFromOptions("primary_text_length", "short"),
       textLengthCustom: "",
 
       variantsCount: 3,
@@ -1724,7 +1730,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                       modeKey="textLengthMode"
                       valueKey="textLength"
                       customKey="textLengthCustom"
-                      options={fieldOptions?.text_length || []}
+                      options={fieldOptions?.primary_text_length || []}
                       placeholder="Enter text length (1-500)"
                       help="Text length preference."
                       customInputProps={{ type: "number", min: 1, max: 500, step: 1 }}
