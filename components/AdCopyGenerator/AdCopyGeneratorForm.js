@@ -691,8 +691,11 @@ const AdCopyGeneratorForm = () => {
                         return;
                     }
 
-                    if (msg.type === 'error' && (msg.code === 'subscription_required' || msg.error_code === 'subscription_required')) {
-                        console.log("susbcription is here 1")
+                    if (
+                        msg.type === 'error' &&
+                        (msg.code === 'subscription_required' || msg.error_code === 'subscription_required' || msg.status_code === 2)
+                    ) {
+                        console.log("susbcription is here 1");
                         if (msg.trial_credits_remaining != null) {
                             const t = Number(msg.trial_credits_remaining);
                             if (!Number.isNaN(t)) setTrialRemaining?.(t);
@@ -700,6 +703,7 @@ const AdCopyGeneratorForm = () => {
                         try { fetchCredits?.(); } catch { }
                         setShowGateModal?.(true);
                         try { controller?.abort?.(); } catch { }
+                        try { setIsGenerating(false); setShowVariantsModal(false); } catch { }
                         return;
                     }
 
@@ -1023,6 +1027,7 @@ const AdCopyGeneratorForm = () => {
                     msg.type === 'error' &&
                     (msg.code === 'subscription_required' || msg.error_code === 'subscription_required' || msg.status_code === 2)
                 ) {
+                    console.log("susbcription is here 1");
                     if (msg.trial_credits_remaining != null) {
                         const t = Number(msg.trial_credits_remaining);
                         if (!Number.isNaN(t)) setTrialRemaining?.(t);
@@ -1030,6 +1035,7 @@ const AdCopyGeneratorForm = () => {
                     try { fetchCredits?.(); } catch { }
                     setShowGateModal?.(true);
                     try { controller?.abort?.(); } catch { }
+                    try { setIsGenerating(false); setShowVariantsModal(false); } catch { }
                     return;
                 }
 
