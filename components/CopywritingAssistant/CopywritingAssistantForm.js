@@ -9,6 +9,7 @@ import RemoveTagButton from '../Form/RemoveTagButton';
 
 import { getAuthHeader } from "@/utils/auth";
 import API from "@/utils/api";
+import { useCredits } from "@/components/CreditsContext";
 
 const createSessionRequestId = () => {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -34,6 +35,7 @@ const createSessionRequestId = () => {
 };
 
 const CopywritingAssistantForm = () => {
+    const { fetchCredits, setTrialRemaining, setShowGateModal } = useCredits() || {};
     // State for all form fields
     const [formData, setFormData] = useState({
         useCaseMode: 'predefined',
@@ -852,6 +854,7 @@ const CopywritingAssistantForm = () => {
         setIsApiLoading(true);
 
         try {
+            try { fetchCredits?.(); } catch { }
             showNotification('Generating copywriting, please wait...', 'info');
 
             const variantCount = Math.max(1, parseInt(payload?.number_of_variants || 1, 10));
@@ -895,9 +898,12 @@ const CopywritingAssistantForm = () => {
 
                 if (!response.ok) {
                     let errorData = {};
-                    try {
-                        errorData = await response.json();
-                    } catch (e) {
+                    try { errorData = await response.json(); } catch { }
+                    if (errorData && (errorData.code === 'subscription_required' || errorData.status_code === 2)) {
+                        setShowGateModal?.(true);
+                        try { controller?.abort?.(); } catch { }
+                        try { setIsGenerating(false); setShowVariantsModal(false); } catch { }
+                        return;
                     }
                     throw new Error(errorData.message || `API call failed with status: ${response.status}`);
                 }
@@ -934,18 +940,33 @@ const CopywritingAssistantForm = () => {
                     if (!msg || typeof msg !== 'object') return;
 
                     if (msg.type === 'meta') {
-                        if (msg.request_id) {
-                            setRequestId((prev) => prev || msg.request_id);
-                        }
+                        if (msg.request_id) { setRequestId((prev) => prev || msg.request_id); }
                         if (msg.variant_id) {
                             setGeneratedVariantsData((prev) => {
                                 const next = [...(prev.variants || [])];
-                                if (next[variantIndex]) {
-                                    next[variantIndex] = { ...next[variantIndex], id: msg.variant_id };
-                                }
+                                if (next[variantIndex]) next[variantIndex] = { ...next[variantIndex], id: msg.variant_id };
                                 return { ...prev, variants: next };
                             });
                         }
+                        if (msg.trial_credits_remaining != null) {
+                            const t = Number(msg.trial_credits_remaining);
+                            if (!Number.isNaN(t)) setTrialRemaining?.(t);
+                            try { fetchCredits?.(); } catch { }
+                        }
+                        return;
+                    }
+                    if (
+                        msg.type === 'error' &&
+                        (msg.code === 'subscription_required' || msg.error_code === 'subscription_required' || msg.status_code === 2)
+                    ) {
+                        if (msg.trial_credits_remaining != null) {
+                            const t = Number(msg.trial_credits_remaining);
+                            if (!Number.isNaN(t)) setTrialRemaining?.(t);
+                        }
+                        try { fetchCredits?.(); } catch { }
+                        setShowGateModal?.(true);
+                        try { controller?.abort?.(); } catch { }
+                        try { setIsGenerating(false); setShowVariantsModal(false); } catch { }
                         return;
                     }
 
@@ -985,7 +1006,7 @@ const CopywritingAssistantForm = () => {
                 };
 
                 try {
-                    for (;;) {
+                    for (; ;) {
                         const { value, done } = await reader.read();
                         if (done) break;
 
@@ -1034,19 +1055,23 @@ const CopywritingAssistantForm = () => {
         } finally {
             setIsApiLoading(false);
             setIsGenerating(false);
+            try { fetchCredits?.(); } catch { }
         }
     };
 
     const handleRegenerateVariant = async (variantId) => {
         if (!variantId) return;
 
+
         const variantIndex = (generatedVariantsData.variants || []).findIndex((v) => v.id === variantId);
         if (variantIndex === -1) return;
 
         showNotification(`Regenerating Variant ${variantIndex + 1}...`, 'info');
+        try { fetchCredits?.(); } catch { }
 
         const controller = new AbortController();
         streamControllersRef.current = [...streamControllersRef.current, controller];
+        try { fetchCredits?.(); } catch { }
 
         setGeneratedVariantsData((prev) => {
             const next = [...(prev.variants || [])];
@@ -1072,9 +1097,19 @@ const CopywritingAssistantForm = () => {
 
             if (!response.ok) {
                 let errorData = {};
-                try {
-                    errorData = await response.json();
-                } catch (e) {
+                try { errorData = await response.json(); } catch { }
+                if (errorData && (errorData.code === 'subscription_required' || errorData.status_code === 2)) {
+                    setShowGateModal?.(true);
+                    try { controller?.abort?.(); } catch { }
+                    try {
+                        setGeneratedVariantsData((prev) => {
+                            const next = [...(prev.variants || [])];
+                            if (next[variantIndex]) next[variantIndex] = { ...next[variantIndex], is_streaming: false };
+                            return { ...prev, variants: next };
+                        });
+                        setShowVariantsModal(false);
+                    } catch { }
+                    return;
                 }
                 throw new Error(errorData.message || `Regeneration failed with status: ${response.status}`);
             }
@@ -1106,21 +1141,34 @@ const CopywritingAssistantForm = () => {
                 if (!msg || typeof msg !== 'object') return;
 
                 if (msg.type === 'meta') {
-                    if (msg.request_id) {
-                        setRequestId((prev) => prev || msg.request_id);
-                    }
+                    if (msg.request_id) { setRequestId((prev) => prev || msg.request_id); }
                     if (msg.variant_id) {
                         setGeneratedVariantsData((prev) => {
                             const next = [...(prev.variants || [])];
-                            if (next[variantIndex]) {
-                                next[variantIndex] = { ...next[variantIndex], id: msg.variant_id };
-                            }
+                            if (next[variantIndex]) next[variantIndex] = { ...next[variantIndex], id: msg.variant_id };
                             return { ...prev, variants: next };
                         });
                     }
+                    if (msg.trial_credits_remaining != null) {
+                        const t = Number(msg.trial_credits_remaining);
+                        if (!Number.isNaN(t)) setTrialRemaining?.(t);
+                        try { fetchCredits?.(); } catch { }
+                    }
                     return;
                 }
-
+                if (
+                    msg.type === 'error' &&
+                    (msg.code === 'subscription_required' || msg.error_code === 'subscription_required' || msg.status_code === 2)
+                ) {
+                    if (msg.trial_credits_remaining != null) {
+                        const t = Number(msg.trial_credits_remaining);
+                        if (!Number.isNaN(t)) setTrialRemaining?.(t);
+                    }
+                    try { fetchCredits?.(); } catch { }
+                    setShowGateModal?.(true);
+                    try { controller?.abort?.(); } catch { }
+                    return;
+                }
                 if (msg.type === 'delta') {
                     const deltaText = msg.content || '';
                     if (!deltaText) return;
@@ -1231,7 +1279,7 @@ const CopywritingAssistantForm = () => {
             };
 
             const drainBuffer = () => {
-                for (;;) {
+                for (; ;) {
                     const jsonText = extractNextJsonObject();
                     if (!jsonText) break;
                     try {
@@ -1245,7 +1293,7 @@ const CopywritingAssistantForm = () => {
             };
 
             try {
-                for (;;) {
+                for (; ;) {
                     const { value, done } = await reader.read();
                     if (done) break;
                     buffer = stripSsePrefixes(buffer + decoder.decode(value, { stream: true }));
@@ -1695,10 +1743,10 @@ const CopywritingAssistantForm = () => {
                                                         }
                                                     }}
                                                     onBlur={(e) => {
-                                                                if (audienceInput.trim()) {
-                                                                    addAudienceChip(audienceInput.trim());
-                                                                }
-                                                            }}
+                                                        if (audienceInput.trim()) {
+                                                            addAudienceChip(audienceInput.trim());
+                                                        }
+                                                    }}
                                                     style={{
                                                         ...styles.input,
                                                         marginBottom: 0,
@@ -1995,10 +2043,10 @@ const CopywritingAssistantForm = () => {
                                                     }
                                                 }}
                                                 onBlur={(e) => {
-                                                                if (keyPointsInput.trim()) {
-                                                                    addKeyPointsChip(keyPointsInput.trim());
-                                                                }
-                                                            }}
+                                                    if (keyPointsInput.trim()) {
+                                                        addKeyPointsChip(keyPointsInput.trim());
+                                                    }
+                                                }}
                                                 style={{
                                                     ...styles.input,
                                                     marginBottom: 0,
@@ -2140,44 +2188,44 @@ const CopywritingAssistantForm = () => {
                                             />
                                         </div>
                                         {/* CTA Style Mode Toggle */}
-                                    {renderModeToggle('ctaStyleMode', 'CTA Style', 'Choose between predefined CTA styles or define your own')}
+                                        {renderModeToggle('ctaStyleMode', 'CTA Style', 'Choose between predefined CTA styles or define your own')}
 
-                                    {/* CTA Style (Predefined/Custom Input) */}
-                                    {formData.ctaStyleMode === 'predefined' && (
-                                        <div className="col-12">
-                                            <div style={styles.formGroup}>
-                                                <select
-                                                    id="ctaStyle"
-                                                    name="ctaStyle"
-                                                    value={formData.ctaStyle || ''}
-                                                    onChange={handleChange}
-                                                    style={styles.select}
-                                                >
-                                                    <option value="">Select CTA Style</option>
-                                                    {ctaStyleOptions.map((style, index) => (
-                                                        <option key={index} value={style.value}>{style.label}</option>
-                                                    ))}
-                                                </select>
+                                        {/* CTA Style (Predefined/Custom Input) */}
+                                        {formData.ctaStyleMode === 'predefined' && (
+                                            <div className="col-12">
+                                                <div style={styles.formGroup}>
+                                                    <select
+                                                        id="ctaStyle"
+                                                        name="ctaStyle"
+                                                        value={formData.ctaStyle || ''}
+                                                        onChange={handleChange}
+                                                        style={styles.select}
+                                                    >
+                                                        <option value="">Select CTA Style</option>
+                                                        {ctaStyleOptions.map((style, index) => (
+                                                            <option key={index} value={style.value}>{style.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
 
-                                    {formData.ctaStyleMode === 'custom' && (
-                                        <div className="col-md-6">
-                                            <div style={styles.formGroup}>
-                                                <input
-                                                    type="text"
-                                                    id="customCtaStyle"
-                                                    name="customCtaStyle"
-                                                    value={formData.customCtaStyle}
-                                                    onChange={handleChange}
-                                                    style={styles.input}
-                                                    placeholder="Describe your CTA style"
-                                                    maxLength={120}
-                                                />
+                                        {formData.ctaStyleMode === 'custom' && (
+                                            <div className="col-md-6">
+                                                <div style={styles.formGroup}>
+                                                    <input
+                                                        type="text"
+                                                        id="customCtaStyle"
+                                                        name="customCtaStyle"
+                                                        value={formData.customCtaStyle}
+                                                        onChange={handleChange}
+                                                        style={styles.input}
+                                                        placeholder="Describe your CTA style"
+                                                        maxLength={120}
+                                                    />
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
 
                                     </div>
 
@@ -2355,13 +2403,13 @@ const CopywritingAssistantForm = () => {
                                                 placeholder="Add a word and press Enter"
                                                 onKeyPress={(e) => handleArrayChange(e, 'includeWords')}
                                                 onBlur={(e) => {
-                                                                const value = e.target.value.trim();
-                                                                    setFormData(prev => ({
-                                                                        ...prev,
-                                                                        includeWords: [...prev.includeWords, value]
-                                                                    }));
-                                                                    e.target.value = '';
-                                                            }}
+                                                    const value = e.target.value.trim();
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        includeWords: [...prev.includeWords, value]
+                                                    }));
+                                                    e.target.value = '';
+                                                }}
                                                 inputMode='text'
                                             />
                                             <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: '8px' }}>
@@ -2574,16 +2622,16 @@ const CopywritingAssistantForm = () => {
                                     {/* Grammar Strictness (shown when proofreading is enabled) */}
                                     <div style={twoColContainerStyle}>
                                         {/* Emotional Intent (Left Half) */}
-                                        <div style={colHalfStyle}>  
+                                        <div style={colHalfStyle}>
 
                                             {formData.proofreading && (
                                                 <>
-                                                {/* --- GRAMMAR STRICTNESS MODE TOGGLE - NEW --- */}
-                                                {renderModeToggle('grammarStrictnessMode', 'Grammar Strictness', 'Select how strictly grammar and style rules should be applied, or describe custom rules')}
+                                                    {/* --- GRAMMAR STRICTNESS MODE TOGGLE - NEW --- */}
+                                                    {renderModeToggle('grammarStrictnessMode', 'Grammar Strictness', 'Select how strictly grammar and style rules should be applied, or describe custom rules')}
 
-                                                {/* Grammar Strictness (Predefined/Custom Input) */}
-                                                {formData.grammarStrictnessMode === 'predefined' && (
-                                                    
+                                                    {/* Grammar Strictness (Predefined/Custom Input) */}
+                                                    {formData.grammarStrictnessMode === 'predefined' && (
+
                                                         <div style={styles.formGroup}>
                                                             {/* <label htmlFor="grammarStrictness" style={styles.label}>
                                                                 Select Grammar Strictness
@@ -2600,9 +2648,9 @@ const CopywritingAssistantForm = () => {
                                                                 ))}
                                                             </select>
                                                         </div>
-                                                )}
+                                                    )}
 
-                                                {formData.grammarStrictnessMode === 'custom' && (
+                                                    {formData.grammarStrictnessMode === 'custom' && (
                                                         <div style={styles.formGroup}>
                                                             {/* <label htmlFor="customGrammarStrictness" style={styles.label}>
                                                                 Custom Grammar Strictness
@@ -2617,8 +2665,8 @@ const CopywritingAssistantForm = () => {
                                                                 placeholder="e.g., Use Oxford comma, avoid passive voice"
                                                                 maxLength={120}
                                                             />
-                                                        </div>                                            
-                                                )}
+                                                        </div>
+                                                    )}
                                                 </>
                                             )}
                                         </div>
@@ -2634,7 +2682,7 @@ const CopywritingAssistantForm = () => {
                             <div className="col-12" style={{ marginTop: '20px', display: 'flex', gap: '12px' }}>
                                 <button
                                     type="button"
-                                    style={{ ...styles.btn, ...styles.btnOutline, marginRight:'10px' }}
+                                    style={{ ...styles.btn, ...styles.btnOutline, marginRight: '10px' }}
                                     onClick={handleReset}
                                     disabled={isGenerating || isApiLoading}
                                 >

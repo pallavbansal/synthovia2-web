@@ -18,6 +18,7 @@ import "react-tooltip/dist/react-tooltip.css";
 // ========= Plugins CSS END =========
 
 import "../public/scss/style.scss";
+import { CreditsProvider } from "@/components/CreditsContext";
 
 export default function App({ Component, pageProps }) {
   const [loading, setLoading] = useState(false);
@@ -93,5 +94,9 @@ export default function App({ Component, pageProps }) {
     }
   }, [router.isReady, router.pathname]);
 
-  return <>{loading ? <Loading /> : <Component {...pageProps} />}</>;
+  return (
+    <CreditsProvider>
+      {loading ? <Loading /> : <Component {...pageProps} />}
+    </CreditsProvider>
+  );
 }

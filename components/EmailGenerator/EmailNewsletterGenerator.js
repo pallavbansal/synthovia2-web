@@ -5,6 +5,7 @@ import VariantModalContent from './VariantModalContent';
 import { getAuthHeader } from '@/utils/auth';
 
 import API from "@/utils/api";
+import { useCredits } from "@/components/CreditsContext";
 
 const createSessionRequestId = () => {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -85,6 +86,7 @@ const defaultFieldOptions = {
 };
 
 const EmailNewsletterGenerator = () => {
+    const { setTrialRemaining, fetchCredits, setShowGateModal } = useCredits() || {};
     const streamControllersRef = useRef([]);
     const sessionRequestIdRef = useRef(null);
     const [fieldOptions, setFieldOptions] = useState(defaultFieldOptions);
@@ -469,7 +471,9 @@ const EmailNewsletterGenerator = () => {
         if (!String(formData.emailGoal || '').trim()) missing.push('Email Goal');
         if (formData.emailGoalMode === 'custom' && !String(formData.customGoal || '').trim()) missing.push('Custom Goal');
 
-        if (!String(formData.keyMessage || '').trim()) missing.push('Key Message');
+        const keyMessageTrimmed = String(formData.keyMessage || '').trim();
+        if (!keyMessageTrimmed) missing.push('Key Message');
+        if (keyMessageTrimmed && keyMessageTrimmed.length < 20) missing.push('Key Message (min 20 characters)');
         if (!String(formData.toneStyle || '').trim()) missing.push('Tone');
         if (formData.lengthPreferenceMode === 'custom') {
             if (!String(formData.lengthPreferenceCustom || '').trim()) missing.push('Text Length');
@@ -644,6 +648,16 @@ const EmailNewsletterGenerator = () => {
                 errorData = await res.json();
             } catch {
             }
+            if (errorData && (errorData.code === 'subscription_required' || errorData.status_code === 2)) {
+                try { setShowGateModal?.(true); } catch {}
+                try { controller?.abort?.(); } catch {}
+                try {
+                    setIsGenerating(false);
+                    setIsApiLoading(false);
+                    setShowVariantsModal(false);
+                } catch {}
+                return;
+            }
             throw new Error(errorData?.message || `API call failed with status: ${res.status}`);
         }
 
@@ -652,6 +666,16 @@ const EmailNewsletterGenerator = () => {
 
         if (looksLikeJson || !res.body) {
             const json = await res.json().catch(() => null);
+            if (json && (json.code === 'subscription_required' || json.status_code === 2)) {
+                try { setShowGateModal?.(true); } catch {}
+                try { controller?.abort?.(); } catch {}
+                try {
+                    setIsGenerating(false);
+                    setIsApiLoading(false);
+                    setShowVariantsModal(false);
+                } catch {}
+                return;
+            }
             const content =
                 json?.content ||
                 json?.email ||
@@ -660,6 +684,13 @@ const EmailNewsletterGenerator = () => {
                 json?.data?.email ||
                 json?.data?.email_content ||
                 (typeof json === 'string' ? json : '');
+            // Update trial credits if present in non-stream JSON
+            try {
+                const t = json?.trial_credits_remaining ?? json?.trial_remaining ?? json?.data?.trial_remaining;
+                if (t != null && !Number.isNaN(Number(t))) {
+                    setTrialRemaining?.(Number(t));
+                }
+            } catch {}
             if (content) appendVariantDelta(variantIndex, content);
             return;
         }
@@ -707,6 +738,12 @@ const EmailNewsletterGenerator = () => {
 
             if (msg.type === 'meta') {
                 setVariantMeta(msg);
+                try {
+                    if (msg.trial_credits_remaining != null) {
+                        const t = Number(msg.trial_credits_remaining);
+                        if (!Number.isNaN(t)) setTrialRemaining?.(t);
+                    }
+                } catch {}
                 return;
             }
 
@@ -728,6 +765,27 @@ const EmailNewsletterGenerator = () => {
             }
 
             if (msg.type === 'error') {
+                if (
+                    msg.code === 'subscription_required' ||
+                    msg.error_code === 'subscription_required' ||
+                    msg.status_code === 2
+                ) {
+                    try {
+                        if (msg.trial_credits_remaining != null) {
+                            const t = Number(msg.trial_credits_remaining);
+                            if (!Number.isNaN(t)) setTrialRemaining?.(t);
+                        }
+                    } catch {}
+                    try { fetchCredits?.(); } catch {}
+                    try { setShowGateModal?.(true); } catch {}
+                    try { controller?.abort?.(); } catch {}
+                    try {
+                        setIsGenerating(false);
+                        setIsApiLoading(false);
+                        setShowVariantsModal(false);
+                    } catch {}
+                    return;
+                }
                 throw new Error(msg.message || 'Stream error');
             }
 
@@ -853,6 +911,7 @@ const EmailNewsletterGenerator = () => {
 
         setShowSummary(false);
         setShowVariantsModal(true);
+        try { fetchCredits?.(); } catch {}
         setIsApiLoading(true);
         setIsGenerating(true);
 
@@ -913,6 +972,7 @@ const EmailNewsletterGenerator = () => {
             setIsApiLoading(false);
             setIsGenerating(false);
             setShowSummary(false);
+            try { fetchCredits?.(); } catch {}
         }
     };
 

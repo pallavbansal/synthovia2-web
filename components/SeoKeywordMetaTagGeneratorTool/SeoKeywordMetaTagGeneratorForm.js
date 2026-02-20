@@ -8,6 +8,7 @@ import ToggleButton from "../Form/ToggleButton";
 import { getAuthHeader } from "@/utils/auth";
 
 import API from "@/utils/api";
+import { useCredits } from "@/components/CreditsContext";
 
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
 
@@ -173,6 +174,7 @@ const PredefinedCustom = ({
 };
 
 const SeoKeywordMetaTagGeneratorForm = () => {
+  const { setTrialRemaining, fetchCredits, setShowGateModal } = useCredits() || {};
   const timersRef = useRef([]);
   const streamAbortMapRef = useRef(new Map());
   const sessionRequestIdRef = useRef(null);
@@ -481,6 +483,15 @@ const SeoKeywordMetaTagGeneratorForm = () => {
 
       if (!res.ok) {
         const errJson = await res.json().catch(() => null);
+        if (errJson && (errJson.code === 'subscription_required' || errJson.status_code === 2)) {
+          try { setShowGateModal?.(true); } catch {}
+          try {
+            setIsGenerating(false);
+            setIsApiLoading(false);
+            setShowVariantsModal(false);
+          } catch {}
+          return;
+        }
         throw new Error(errJson?.message || `Failed to generate (${res.status})`);
       }
 
@@ -524,11 +535,39 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       const handleParsedObject = (obj) => {
         if (!obj || typeof obj !== "object") return;
 
+        // Subscription gating via SSE
+        if (
+          obj.type === 'error' &&
+          (obj.code === 'subscription_required' || obj.error_code === 'subscription_required' || obj.status_code === 2)
+        ) {
+          try {
+            if (obj.trial_credits_remaining != null) {
+              const t = Number(obj.trial_credits_remaining);
+              if (!Number.isNaN(t)) setTrialRemaining?.(t);
+            }
+          } catch {}
+          try { fetchCredits?.(); } catch {}
+          try { setShowGateModal?.(true); } catch {}
+          try { controller?.abort?.(); } catch {}
+          try {
+            setIsGenerating(false);
+            setIsApiLoading(false);
+            setShowVariantsModal(false);
+          } catch {}
+          return;
+        }
+
         const idxRaw = obj.variant_index ?? obj.variantIndex ?? obj.variant_number ?? obj.variantNumber;
         const idx = idxRaw !== undefined && idxRaw !== null ? Number(idxRaw) : activeVariant;
         const safeIdx = Number.isFinite(idx) ? idx : activeVariant;
 
         if (obj.type === "meta") {
+          try {
+            if (obj.trial_credits_remaining != null) {
+              const t = Number(obj.trial_credits_remaining);
+              if (!Number.isNaN(t)) setTrialRemaining?.(t);
+            }
+          } catch {}
           return;
         }
 
@@ -1053,6 +1092,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
   };
 
   const handleGenerate = async () => {
+    try { fetchCredits?.(); } catch {}
     const missing = validateForm();
     if (missing.length > 0) {
       showToast(`Please fill all required fields: ${missing.join(", ")}`, "error");
@@ -1119,6 +1159,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     } finally {
       setIsApiLoading(false);
       setIsGenerating(false);
+      try { fetchCredits?.(); } catch {}
     }
   };
 
