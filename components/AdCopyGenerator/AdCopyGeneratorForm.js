@@ -7,8 +7,10 @@ import SurfingLoading from './SurfingLoading';
 import ToggleButton from '../Form/ToggleButton';
 import RemoveTagButton from '../Form/RemoveTagButton';
 
+
 import { getAuthHeader } from "@/utils/auth";
 import API from "@/utils/api";
+import { useCredits } from "@/components/CreditsContext";
 
 const createSessionRequestId = () => {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -93,6 +95,7 @@ const getLabelFromKey = (selectedKey, fieldName, options) => {
 };
 
 const AdCopyGeneratorForm = () => {
+    const { fetchCredits, setTrialRemaining, setShowGateModal } = useCredits() || {};
     // Hardcoded audience suggestions (moved inside the component function)
     const audienceSuggestions = {
         'Demographics': ['Women 25-34', 'Men 35-44', 'Parents of Toddlers'],
@@ -480,9 +483,9 @@ const AdCopyGeneratorForm = () => {
             return;
         }
 
-        // 1. Instantly open modal and show surfing animation
         setShowSummary(false); // Close summary modal
         setShowVariantsModal(true); // Open the variants modal
+        try { fetchCredits?.(); } catch { }
         setIsHistoryView(false);
         setIsApiLoading(true); // START API LOADING - SHOWS SURFING ANIMATION IN MODAL
 
@@ -549,12 +552,14 @@ const AdCopyGeneratorForm = () => {
         } finally {
             setIsApiLoading(false); // Ensure loading is off even on error
             setIsGenerating(false); // Ensure button state is reset
+            try { fetchCredits?.(); } catch { }
         }
     };
 
     // The handleGenerateFromSummary logic is merged into handleGenerate in this implementation,
     // but the summary step is kept for flow: Form -> Summary (Review) -> Generate (API Call)
     const handleGenerateFromSummary = async () => {
+
         try {
             abortAllStreams();
             setIsGenerating(true); // START GENERATING - SHOWS LOADING SCREEN
@@ -588,6 +593,7 @@ const AdCopyGeneratorForm = () => {
                 inputs: payload,
             });
             setShowVariantsModal(true);
+            try { fetchCredits?.(); } catch { }
             setShowSummary(false);
 
             const streamSingleVariant = async (variantIndex) => {
@@ -614,10 +620,28 @@ const AdCopyGeneratorForm = () => {
                     let errorData = {};
                     try {
                         errorData = await response.json();
+
+                        // Check for Free Trial Exhausted / Subscription Required
+                        if (errorData.code === 'subscription_required' || errorData.status_code === 2) {
+                            // 1. Show the subscription popup
+                            setShowGateModal?.(true);
+
+                            // 2. Clean up UI states
+                            setIsGenerating(false);
+                            setIsApiLoading(false);
+                            setShowVariantsModal(false);
+
+                            // 3. Exit the function so no generic error toast appears
+                            return;
+                        }
                     } catch (e) {
+                        // Fallback if JSON parsing fails
                     }
+
+                    // Throw error for any other status (500, 404, etc.)
                     throw new Error(errorData.message || `API call failed with status: ${response.status}`);
                 }
+
 
                 if (!response.body) {
                     throw new Error('Streaming is not supported in this browser/environment');
@@ -647,22 +671,39 @@ const AdCopyGeneratorForm = () => {
                         buffer = `${line}\n${buffer}`;
                         return;
                     }
-
+                    console.log("susbcription is here 2")
                     if (!msg || typeof msg !== 'object') return;
 
                     if (msg.type === 'meta') {
-                        if (msg.request_id) {
-                            setRequestId((prev) => prev || msg.request_id);
-                        }
+                        if (msg.request_id) { setRequestId((prev) => prev || msg.request_id); }
                         if (msg.variant_id) {
                             setGeneratedVariantsData((prev) => {
                                 const next = [...(prev.variants || [])];
-                                if (next[variantIndex]) {
-                                    next[variantIndex] = { ...next[variantIndex], id: msg.variant_id };
-                                }
+                                if (next[variantIndex]) next[variantIndex] = { ...next[variantIndex], id: msg.variant_id };
                                 return { ...prev, variants: next };
                             });
                         }
+                        if (msg.trial_credits_remaining != null) {
+                            const t = Number(msg.trial_credits_remaining);
+                            if (!Number.isNaN(t)) setTrialRemaining?.(t);
+                            try { fetchCredits?.(); } catch { }
+                        }
+                        return;
+                    }
+
+                    if (
+                        msg.type === 'error' &&
+                        (msg.code === 'subscription_required' || msg.error_code === 'subscription_required' || msg.status_code === 2)
+                    ) {
+                        console.log("susbcription is here 1");
+                        if (msg.trial_credits_remaining != null) {
+                            const t = Number(msg.trial_credits_remaining);
+                            if (!Number.isNaN(t)) setTrialRemaining?.(t);
+                        }
+                        try { fetchCredits?.(); } catch { }
+                        setShowGateModal?.(true);
+                        try { controller?.abort?.(); } catch { }
+                        try { setIsGenerating(false); setShowVariantsModal(false); } catch { }
                         return;
                     }
 
@@ -754,6 +795,7 @@ const AdCopyGeneratorForm = () => {
             setIsGenerating(false); // STOP GENERATING - TRIGGERS TYPING EFFECT
             setIsApiLoading(false);
             setIsStreamingGeneration(false);
+            try { fetchCredits?.(); } catch { }
         }
     };
 
@@ -897,6 +939,7 @@ const AdCopyGeneratorForm = () => {
 
         const controller = new AbortController();
         streamControllersRef.current = [...(streamControllersRef.current || []), controller];
+        try { fetchCredits?.(); } catch { }
 
         setGeneratedVariantsData((prev) => {
             const next = [...(prev.variants || [])];
@@ -970,7 +1013,29 @@ const AdCopyGeneratorForm = () => {
                             }
                             return { ...prev, variants: next };
                         });
+                        try { fetchCredits?.(); } catch { }
                     }
+                    if (msg.trial_credits_remaining != null) {
+                        const t = Number(msg.trial_credits_remaining);
+                        if (!Number.isNaN(t)) setTrialRemaining?.(t);
+                        try { fetchCredits?.(); } catch { }
+                    }
+                    return;
+                }
+
+                if (
+                    msg.type === 'error' &&
+                    (msg.code === 'subscription_required' || msg.error_code === 'subscription_required' || msg.status_code === 2)
+                ) {
+                    console.log("susbcription is here 1");
+                    if (msg.trial_credits_remaining != null) {
+                        const t = Number(msg.trial_credits_remaining);
+                        if (!Number.isNaN(t)) setTrialRemaining?.(t);
+                    }
+                    try { fetchCredits?.(); } catch { }
+                    setShowGateModal?.(true);
+                    try { controller?.abort?.(); } catch { }
+                    try { setIsGenerating(false); setShowVariantsModal(false); } catch { }
                     return;
                 }
 
@@ -988,6 +1053,7 @@ const AdCopyGeneratorForm = () => {
                         }
                         return { ...prev, variants: next };
                     });
+                    try { fetchCredits?.(); } catch { }
                     return;
                 }
 

@@ -11,6 +11,7 @@ import RemoveTagButton from '../Form/RemoveTagButton';
 
 import { getAuthHeader } from "@/utils/auth";
 import API from "@/utils/api";
+import { useCredits } from "@/components/CreditsContext";
 
 const createSessionRequestId = () => {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -36,6 +37,7 @@ const createSessionRequestId = () => {
 };
 
 const Captionandhastaggeneratorform = () => {
+    const { fetchCredits, setTrialRemaining, setShowGateModal } = useCredits() || {};
     // [STATE UPDATED TO SUPPORT CUSTOM/PREDEFINED TOGGLES FOR 5 FIELDS]
     const [formData, setFormData] = useState({
         platformType: 'predefined',
@@ -369,6 +371,7 @@ const Captionandhastaggeneratorform = () => {
             sessionRequestIdRef.current = createSessionRequestId();
             setIsGenerating(true);
             setIsHistoryView(false);
+            try { fetchCredits?.(); } catch {}
             showNotification('Generating captions and hashtags...', 'info');
 
             const customPostLengthInt = formData.postLengthSelection === 'custom' ? parseInt(formData.customPostLength, 10) : null;
@@ -466,6 +469,12 @@ const Captionandhastaggeneratorform = () => {
                             errorData = await response.json();
                         } catch (e) {
                         }
+                        if (errorData && (errorData.code === 'subscription_required' || errorData.status_code === 2)) {
+                            try { setShowGateModal?.(true); } catch {}
+                            try { controller?.abort?.(); } catch {}
+                            try { setIsGenerating(false); setShowVariantsModal(false); } catch {}
+                            return;
+                        }
                         throw new Error(errorData.message || `API call failed with status: ${response.status}`);
                     }
 
@@ -510,6 +519,28 @@ const Captionandhastaggeneratorform = () => {
                                     return { ...prev, variants: next };
                                 });
                             }
+                            if (msg.trial_credits_remaining != null) {
+                                const t = Number(msg.trial_credits_remaining);
+                                if (!Number.isNaN(t)) setTrialRemaining?.(t);
+                                try { fetchCredits?.(); } catch {}
+                            }
+                            return;
+                        }
+
+                        if (
+                            msg.type === 'error' &&
+                            (msg.code === 'subscription_required' || msg.error_code === 'subscription_required' || msg.status_code === 2)
+                        ) {
+                            try {
+                                if (msg.trial_credits_remaining != null) {
+                                    const t = Number(msg.trial_credits_remaining);
+                                    if (!Number.isNaN(t)) setTrialRemaining?.(t);
+                                }
+                            } catch {}
+                            try { fetchCredits?.(); } catch {}
+                            try { setShowGateModal?.(true); } catch {}
+                            try { controller?.abort?.(); } catch {}
+                            try { setIsGenerating(false); setShowVariantsModal(false); } catch {}
                             return;
                         }
 
@@ -605,6 +636,7 @@ const Captionandhastaggeneratorform = () => {
         } finally {
             setIsGenerating(false);
             setIsSubmitting(false);
+            try { fetchCredits?.(); } catch {}
         }
     };
 
@@ -628,6 +660,7 @@ const Captionandhastaggeneratorform = () => {
             }
             return { ...prev, variants: next };
         });
+        try { fetchCredits?.(); } catch {}
 
         try {
             const response = await fetch(API.CAPTION_HASHTAG_REGENERATE_VARIANT(variantId), {
@@ -644,6 +677,19 @@ const Captionandhastaggeneratorform = () => {
                 try {
                     errorData = await response.json();
                 } catch (e) {
+                }
+                if (errorData && (errorData.code === 'subscription_required' || errorData.status_code === 2)) {
+                    try { setShowGateModal?.(true); } catch {}
+                    try { controller?.abort?.(); } catch {}
+                    try {
+                        setGeneratedVariantsData((prev) => {
+                            const next = [...(prev.variants || [])];
+                            if (next[variantIndex]) next[variantIndex] = { ...next[variantIndex], is_streaming: false };
+                            return { ...prev, variants: next };
+                        });
+                        setShowVariantsModal(false);
+                    } catch {}
+                    return;
                 }
                 throw new Error(errorData.message || `Regeneration failed with status: ${response.status}`);
             }
@@ -663,6 +709,7 @@ const Captionandhastaggeneratorform = () => {
                     return { ...prev, variants: next };
                 });
                 showNotification(`Variant ${variantIndex + 1} successfully regenerated!`, 'success');
+                try { fetchCredits?.(); } catch {}
                 return;
             }
 
@@ -691,6 +738,22 @@ const Captionandhastaggeneratorform = () => {
 
                 if (!msg || typeof msg !== 'object') return;
 
+                if (
+                    msg.type === 'error' &&
+                    (msg.code === 'subscription_required' || msg.error_code === 'subscription_required' || msg.status_code === 2)
+                ) {
+                    try {
+                        if (msg.trial_credits_remaining != null) {
+                            const t = Number(msg.trial_credits_remaining);
+                            if (!Number.isNaN(t)) setTrialRemaining?.(t);
+                        }
+                    } catch {}
+                    try { fetchCredits?.(); } catch {}
+                    try { setShowGateModal?.(true); } catch {}
+                    try { controller?.abort?.(); } catch {}
+                    return;
+                }
+
                 if (msg.type === 'meta') {
                     if (msg.request_id) {
                         setRequestId((prev) => prev || msg.request_id);
@@ -704,6 +767,11 @@ const Captionandhastaggeneratorform = () => {
                             }
                             return { ...prev, variants: next };
                         });
+                    }
+                    if (msg.trial_credits_remaining != null) {
+                        const t = Number(msg.trial_credits_remaining);
+                        if (!Number.isNaN(t)) setTrialRemaining?.(t);
+                        try { fetchCredits?.(); } catch {}
                     }
                     return;
                 }
@@ -801,6 +869,7 @@ const Captionandhastaggeneratorform = () => {
             });
         } finally {
             streamControllersRef.current = (streamControllersRef.current || []).filter((c) => c !== controller);
+            try { fetchCredits?.(); } catch {}
         }
     };
 

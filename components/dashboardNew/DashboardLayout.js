@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./DashboardLayout.module.css";
 import { getUser, getUserRole, isAdminRole, logout } from "@/utils/auth";
+import CreditsBadge from "@/components/CreditsBadge";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home", iconClass: "fa-solid fa-house" },
@@ -224,6 +225,10 @@ const DashboardLayout = ({ children, title }) => {
           </div>
           <div className={styles.topbarRight}>
             <div className={styles.datePill}>{dateText}</div>
+            {/* Free Trial / Credits status */}
+            <div style={{ marginLeft: 8 }}>
+              <CreditsBadge />
+            </div>
             <div className={styles.userMenu} ref={userMenuRef}>
               <button
                 className={styles.avatarBtn}

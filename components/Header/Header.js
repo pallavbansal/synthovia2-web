@@ -9,6 +9,8 @@ import { getUser, isAuthenticated, logout } from "@/utils/auth";
 import logo from "../../public/images/logo/logo.png";
 import logoDark from "../../public/images/light/logo/logo-dark.png";
 import Nav from "./Nav";
+import dynamic from "next/dynamic";
+const CreditsBadge = dynamic(() => import("@/components/CreditsBadge"), { ssr: false });
 
 const Header = ({ headerTransparent, headerSticky, btnClass }) => {
   const { activeMobileMenu, setActiveMobileMenu } = useAppContext();
@@ -18,6 +20,7 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
   const [authed, setAuthed] = useState(false);
   const [authedUser, setAuthedUser] = useState(null);
   const [profilePicture, setProfilePicture] = useState("");
+  const onHome = router?.pathname === "/";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -136,7 +139,9 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
             </div>
 
             <div className="col-lg-2 col-md-6 col-6 position-static">
-              <div className="header-right">
+              <div className="header-right d-flex align-items-center justify-content-end" style={{ gap: 10 }}>
+                {/* Desktop credits badge (hidden on home page) */}
+                {!onHome && <CreditsBadge className="me-2" />}
                 {isClient && authed ? (
                   <div className="rbt-admin-panel account-access rbt-user-wrapper right-align-dropdown">
                     <div className="rbt-admin-card grid-style">
@@ -206,7 +211,7 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
                     </div>
                   </div>
                 ) : (
-                  <div className="header-btn">
+                  <div className="header-btn d-flex align-items-center" style={{ gap: 10 }}>
                     <Link className={`${btnClass}`} href="/signin">
                       <span>Get Start</span>
                     </Link>
