@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ToggleButton from '../Form/ToggleButton';
 import SummaryReviewModal from './SummaryReviewModal';
 import VariantModalContent from './VariantModalContent';
@@ -86,7 +86,7 @@ const defaultFieldOptions = {
 };
 
 const EmailNewsletterGenerator = () => {
-    const { setTrialRemaining, fetchCredits, setShowGateModal } = useCredits() || {};
+    const { setTrialRemaining, fetchCredits, setShowGateModal, setGateFromPayload } = useCredits() || {};
     const streamControllersRef = useRef([]);
     const sessionRequestIdRef = useRef(null);
     const [fieldOptions, setFieldOptions] = useState(defaultFieldOptions);
@@ -136,6 +136,21 @@ const EmailNewsletterGenerator = () => {
     const [isApiLoading, setIsApiLoading] = useState(false);
 
     const [generatedVariantsData, setGeneratedVariantsData] = useState({ variants: [], inputs: {} });
+
+    const isGateError = useCallback((payload) => {
+        if (!payload) return false;
+        const dataPayload = payload?.data || payload;
+        const code = dataPayload.code ?? dataPayload.error_code ?? payload?.code ?? payload?.error_code;
+        const statusCode = dataPayload.status_code ?? payload?.status_code;
+        return code === 'subscription_required' || code === 'trial_exhausted' || statusCode === 2;
+    }, []);
+
+    const showGateFromPayload = useCallback((payload) => {
+        const handled = setGateFromPayload?.(payload);
+        if (!handled) {
+            try { setShowGateModal?.(true); } catch {}
+        }
+    }, [setGateFromPayload, setShowGateModal]);
 
     useEffect(() => {
         setMounted(true);
@@ -648,8 +663,8 @@ const EmailNewsletterGenerator = () => {
                 errorData = await res.json();
             } catch {
             }
-            if (errorData && (errorData.code === 'subscription_required' || errorData.status_code === 2)) {
-                try { setShowGateModal?.(true); } catch {}
+            if (errorData && isGateError(errorData)) {
+                try { showGateFromPayload(errorData); } catch {}
                 try { controller?.abort?.(); } catch {}
                 try {
                     setIsGenerating(false);
@@ -666,8 +681,8 @@ const EmailNewsletterGenerator = () => {
 
         if (looksLikeJson || !res.body) {
             const json = await res.json().catch(() => null);
-            if (json && (json.code === 'subscription_required' || json.status_code === 2)) {
-                try { setShowGateModal?.(true); } catch {}
+            if (json && isGateError(json)) {
+                try { showGateFromPayload(json); } catch {}
                 try { controller?.abort?.(); } catch {}
                 try {
                     setIsGenerating(false);
@@ -765,11 +780,7 @@ const EmailNewsletterGenerator = () => {
             }
 
             if (msg.type === 'error') {
-                if (
-                    msg.code === 'subscription_required' ||
-                    msg.error_code === 'subscription_required' ||
-                    msg.status_code === 2
-                ) {
+                if (isGateError(msg)) {
                     try {
                         if (msg.trial_credits_remaining != null) {
                             const t = Number(msg.trial_credits_remaining);
@@ -777,7 +788,7 @@ const EmailNewsletterGenerator = () => {
                         }
                     } catch {}
                     try { fetchCredits?.(); } catch {}
-                    try { setShowGateModal?.(true); } catch {}
+                    try { showGateFromPayload(msg); } catch {}
                     try { controller?.abort?.(); } catch {}
                     try {
                         setIsGenerating(false);

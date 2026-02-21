@@ -11,6 +11,39 @@ export const CreditsProvider = ({ children }) => {
   const [realRemaining, setRealRemaining] = useState(0);
   const [isFreeTrial, setIsFreeTrial] = useState(false);
   const [showGateModal, setShowGateModal] = useState(false);
+  const [gateTitle, setGateTitle] = useState("Free trial exhausted");
+  const [gateMessage, setGateMessage] = useState("Free trial exhausted. Please subscribe to continue.");
+
+  const setGateFromPayload = useCallback((payload) => {
+    console.log("payload:",payload);
+    if (!payload) return false;
+    const dataPayload = payload?.data || payload;
+    const code = dataPayload.code ?? dataPayload.error_code ?? payload?.code ?? payload?.error_code;
+    const message = dataPayload.message ?? payload?.message;
+    const statusCode = dataPayload.status_code ?? payload?.status_code;
+    const type = dataPayload.type ?? payload?.type;
+    if (code === "trial_exhausted") {
+      setGateTitle("Free trial exhausted");
+      setGateMessage(message || "Free trial exhausted. Please subscribe to continue.");
+      setShowGateModal(true);
+      return true;
+    }
+    if (code === "subscription_required") {
+      setGateTitle("Subscription required");
+      setGateMessage(message || "Subscription required. Please subscribe to continue.");
+      setShowGateModal(true);
+      return true;
+    }
+    if (statusCode === 2 && (type === undefined || String(type) === "error")) {
+      const msg = message || "Subscription required. Please subscribe to continue.";
+      const isTrial = /trial/i.test(msg);
+      setGateTitle(isTrial ? "Free trial exhausted" : "Subscription required");
+      setGateMessage(msg);
+      setShowGateModal(true);
+      return true;
+    }
+    return false;
+  }, []);
 
   // Fetch initial credits
   const fetchCredits = useCallback(async () => {
@@ -86,11 +119,11 @@ export const CreditsProvider = ({ children }) => {
         try {
           const cloned = res.clone();
           const data = await cloned.json();
-          if (data && (data.code === "subscription_required" || data.error_code === "subscription_required")) {
-            setShowGateModal(true);
-          }
+          if (setGateFromPayload(data)) return res;
         } catch {
           // If JSON isn't readable (stream), still show modal on 402
+          setGateTitle("Subscription required");
+          setGateMessage("Subscription required. Please subscribe to continue.");
           setShowGateModal(true);
         }
       } else {
@@ -109,12 +142,20 @@ export const CreditsProvider = ({ children }) => {
               }
               if (r != null && !Number.isNaN(Number(r))) setRealRemaining(Number(r));
 
-              // Detect explicit subscription gating in JSON payloads even if status is not 402
-              const code = data.code ?? data.error_code ?? data?.data?.code;
+              // Detect explicit gating in JSON payloads even if status is not 402
               const type = data.type ?? data?.data?.type;
-              if (code === "subscription_required" && (type === undefined || String(type) === "error")) {
-                setShowGateModal(true);
+              if (type === undefined || String(type) === "error") {
+                setGateFromPayload(data);
               }
+            }).catch(() => {});
+          } else if (res.status >= 400 && !contentType.includes("text/event-stream")) {
+            const cloned = res.clone();
+            cloned.text().then((text) => {
+              if (!text) return;
+              try {
+                const data = JSON.parse(text);
+                setGateFromPayload(data);
+              } catch {}
             }).catch(() => {});
           }
         } catch {}
@@ -146,7 +187,8 @@ export const CreditsProvider = ({ children }) => {
     fetchCredits,
     showGateModal,
     setShowGateModal,
-  }), [trialRemaining, realRemaining, isFreeTrial, fetchCredits, showGateModal]);
+    setGateFromPayload,
+  }), [trialRemaining, realRemaining, isFreeTrial, fetchCredits, showGateModal, setGateFromPayload]);
 
   // Auto-fetch on mount if authenticated
   useEffect(() => {
@@ -161,9 +203,31 @@ export const CreditsProvider = ({ children }) => {
       {children}
       {showGateModal ? (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 2147483647, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div role="dialog" aria-modal="true" style={{ background: "#0f172a", color: "#f8fafc", padding: 24, borderRadius: 12, width: "90%", maxWidth: 420, boxShadow: "0 10px 40px rgba(0,0,0,0.5)" }}>
-            <h3 style={{ margin: 0, marginBottom: 8 }}>Free trial exhausted</h3>
-            <p style={{ margin: 0, marginBottom: 16 }}>Please subscribe to continue using tools.</p>
+          <div role="dialog" aria-modal="true" style={{ background: "#0f172a", color: "#f8fafc", padding: 24, borderRadius: 12, width: "90%", maxWidth: 420, boxShadow: "0 10px 40px rgba(0,0,0,0.5)", position: "relative" }}>
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={() => setShowGateModal(false)}
+              style={{
+                position: "absolute",
+                top: 10,
+                right: 10,
+                width: 28,
+                height: 28,
+                borderRadius: "50%",
+                border: 0,
+                background: "rgba(148,163,184,0.2)",
+                color: "#e2e8f0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+              }}
+            >
+              <i className="fa-sharp fa-regular fa-x" />
+            </button>
+            <h3 style={{ margin: 0, marginBottom: 8 }}>{gateTitle}</h3>
+            <p style={{ margin: 0, marginBottom: 16 }}>{gateMessage}</p>
             <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
               <button onClick={() => { setShowGateModal(false); router.push("/subscription-plan"); }} style={{ padding: "8px 14px", borderRadius: 8, border: 0, background: "#0ea5e9", color: "#fff" }}>View Plans</button>
               <button onClick={() => { setShowGateModal(false); router.push("/subscription-plan"); }} style={{ padding: "8px 14px", borderRadius: 8, border: 0, background: "#22c55e", color: "#0b1727", fontWeight: 600 }}>Subscribe</button>

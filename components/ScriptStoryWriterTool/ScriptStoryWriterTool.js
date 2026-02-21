@@ -118,7 +118,7 @@ const defaultFieldOptions = {
 };
 
 const ScriptStoryWriterTool = () => {
-    const { fetchCredits, setTrialRemaining,setShowGateModal  } = useCredits() || {};
+    const { fetchCredits, setTrialRemaining, setShowGateModal, setGateFromPayload } = useCredits() || {};
     const [formData, setFormData] = useState({
         scriptTitle: '',
         platform: '',
@@ -693,6 +693,21 @@ const ScriptStoryWriterTool = () => {
         streamControllersRef.current = [];
     };
 
+    const isGateError = (payload) => {
+        if (!payload) return false;
+        const dataPayload = payload?.data || payload;
+        const code = dataPayload.code ?? dataPayload.error_code ?? payload?.code ?? payload?.error_code;
+        const statusCode = dataPayload.status_code ?? payload?.status_code;
+        return code === 'subscription_required' || code === 'trial_exhausted' || statusCode === 2;
+    };
+
+    const showGateFromPayload = (payload) => {
+        const handled = setGateFromPayload?.(payload);
+        if (!handled) {
+            try { setShowGateModal?.(true); } catch { }
+        }
+    };
+
     const toggleAdvanced = () => {
         setFormData((prev) => ({
             ...prev,
@@ -897,8 +912,8 @@ const ScriptStoryWriterTool = () => {
                         errorData = await response.json();
                     } catch (e) {
                     }
-                    if (errorData && (errorData.code === 'subscription_required' || errorData.status_code === 2)) {
-                        try { setShowGateModal?.(true); } catch { }
+                    if (errorData && isGateError(errorData)) {
+                        try { showGateFromPayload(errorData); } catch { }
                         try { controller?.abort?.(); } catch { }
                         try { setIsGenerating(false); setShowVariantsModal(false); } catch { }
                         return;
@@ -982,17 +997,14 @@ const ScriptStoryWriterTool = () => {
                         return;
                     }
 
-                    if (
-                        msg.type === 'error' &&
-                        (msg.code === 'subscription_required' || msg.error_code === 'subscription_required' || msg.status_code === 2)
-                    ) {
+                    if (msg.type === 'error' && isGateError(msg)) {
                       
                         if (msg.trial_credits_remaining != null) {
                             const t = Number(msg.trial_credits_remaining);
                             if (!Number.isNaN(t)) setTrialRemaining?.(t);
                         }
                         try { fetchCredits?.(); } catch { }
-                        setShowGateModal?.(true);
+                        showGateFromPayload(msg);
                         try { controller?.abort?.(); } catch { }
                         return;
                     }
@@ -1140,8 +1152,8 @@ const ScriptStoryWriterTool = () => {
                     errorData = await response.json();
                 } catch (e) {
                 }
-                if (errorData && (errorData.code === 'subscription_required' || errorData.status_code === 2)) {
-                    try { setShowGateModal?.(true); } catch { }
+                if (errorData && isGateError(errorData)) {
+                    try { showGateFromPayload(errorData); } catch { }
                     try { controller?.abort?.(); } catch { }
                     try {
                         setGeneratedVariantsData((prev) => {
@@ -1222,16 +1234,13 @@ const ScriptStoryWriterTool = () => {
                     return;
                 }
 
-                if (
-                    msg.type === 'error' &&
-                    (msg.code === 'subscription_required' || msg.error_code === 'subscription_required' || msg.status_code === 2)
-                ) {
+                if (msg.type === 'error' && isGateError(msg)) {
                     if (msg.trial_credits_remaining != null) {
                         const t = Number(msg.trial_credits_remaining);
                         if (!Number.isNaN(t)) setTrialRemaining?.(t);
                     }
                     try { fetchCredits?.(); } catch { }
-                    setShowGateModal?.(true);
+                    showGateFromPayload(msg);
                     try { controller?.abort?.(); } catch { }
                     return;
                 }

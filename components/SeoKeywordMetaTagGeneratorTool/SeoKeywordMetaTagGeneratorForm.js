@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Tooltip } from "react-tooltip";
 
 import SummaryReviewModal from "./SummaryReviewModal";
@@ -174,7 +174,7 @@ const PredefinedCustom = ({
 };
 
 const SeoKeywordMetaTagGeneratorForm = () => {
-  const { setTrialRemaining, fetchCredits, setShowGateModal } = useCredits() || {};
+  const { setTrialRemaining, fetchCredits, setShowGateModal, setGateFromPayload } = useCredits() || {};
   const timersRef = useRef([]);
   const streamAbortMapRef = useRef(new Map());
   const sessionRequestIdRef = useRef(null);
@@ -186,6 +186,21 @@ const SeoKeywordMetaTagGeneratorForm = () => {
   const [isApiLoading, setIsApiLoading] = useState(false);
 
   const [generatedVariantsData, setGeneratedVariantsData] = useState({ variants: [], inputs: {} });
+
+  const isGateError = useCallback((payload) => {
+    if (!payload) return false;
+    const dataPayload = payload?.data || payload;
+    const code = dataPayload.code ?? dataPayload.error_code ?? payload?.code ?? payload?.error_code;
+    const statusCode = dataPayload.status_code ?? payload?.status_code;
+    return code === 'subscription_required' || code === 'trial_exhausted' || statusCode === 2;
+  }, []);
+
+  const showGateFromPayload = useCallback((payload) => {
+    const handled = setGateFromPayload?.(payload);
+    if (!handled) {
+      try { setShowGateModal?.(true); } catch {}
+    }
+  }, [setGateFromPayload, setShowGateModal]);
 
   const audienceSuggestions = {
     Demographics: ["Women 25-34", "Men 35-44", "Parents of Toddlers"],
@@ -483,8 +498,8 @@ const SeoKeywordMetaTagGeneratorForm = () => {
 
       if (!res.ok) {
         const errJson = await res.json().catch(() => null);
-        if (errJson && (errJson.code === 'subscription_required' || errJson.status_code === 2)) {
-          try { setShowGateModal?.(true); } catch {}
+        if (errJson && isGateError(errJson)) {
+          try { showGateFromPayload(errJson); } catch {}
           try {
             setIsGenerating(false);
             setIsApiLoading(false);
@@ -536,10 +551,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
         if (!obj || typeof obj !== "object") return;
 
         // Subscription gating via SSE
-        if (
-          obj.type === 'error' &&
-          (obj.code === 'subscription_required' || obj.error_code === 'subscription_required' || obj.status_code === 2)
-        ) {
+        if (obj.type === 'error' && isGateError(obj)) {
           try {
             if (obj.trial_credits_remaining != null) {
               const t = Number(obj.trial_credits_remaining);
@@ -547,7 +559,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
             }
           } catch {}
           try { fetchCredits?.(); } catch {}
-          try { setShowGateModal?.(true); } catch {}
+          try { showGateFromPayload(obj); } catch {}
           try { controller?.abort?.(); } catch {}
           try {
             setIsGenerating(false);
@@ -1877,15 +1889,15 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     styles={styles}
                   />
 
-                  <PredefinedCustom
-                    label="Language"
+<PredefinedCustom
+                    label="Schema / Rich Result Type"
                     required={false}
-                    modeKey="languageMode"
-                    valueKey="language"
-                    customKey="languageCustom"
-                    options={fieldOptions?.language || []}
-                    placeholder="Enter custom language"
-                    help="Language for generated SEO output."
+                    modeKey="schemaTypeMode"
+                    valueKey="schemaType"
+                    customKey="schemaTypeCustom"
+                    options={fieldOptions?.schema_rich_result_type || []}
+                    placeholder="Enter custom schema type"
+                    help="JSON-LD schema for rich results."
                     formData={formData}
                     setFormData={setFormData}
                     styles={styles}
@@ -1947,19 +1959,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     help: "Terms or phrases that AI must avoid.",
                   })}
 
-                  <PredefinedCustom
-                    label="Schema / Rich Result Type"
-                    required={false}
-                    modeKey="schemaTypeMode"
-                    valueKey="schemaType"
-                    customKey="schemaTypeCustom"
-                    options={fieldOptions?.schema_rich_result_type || []}
-                    placeholder="Enter custom schema type"
-                    help="JSON-LD schema for rich results."
-                    formData={formData}
-                    setFormData={setFormData}
-                    styles={styles}
-                  />
+                 
 
                   <PredefinedCustom
                     label="Compliance & Content Guidelines"

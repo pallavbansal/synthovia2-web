@@ -35,7 +35,7 @@ const createSessionRequestId = () => {
 };
 
 const CopywritingAssistantForm = () => {
-    const { fetchCredits, setTrialRemaining, setShowGateModal } = useCredits() || {};
+    const { fetchCredits, setTrialRemaining, setShowGateModal, setGateFromPayload } = useCredits() || {};
     // State for all form fields
     const [formData, setFormData] = useState({
         useCaseMode: 'predefined',
@@ -146,6 +146,21 @@ const CopywritingAssistantForm = () => {
             }
         });
     }, []);
+
+    const isGateError = useCallback((payload) => {
+        if (!payload) return false;
+        const dataPayload = payload?.data || payload;
+        const code = dataPayload.code ?? dataPayload.error_code ?? payload?.code ?? payload?.error_code;
+        const statusCode = dataPayload.status_code ?? payload?.status_code;
+        return code === 'subscription_required' || code === 'trial_exhausted' || statusCode === 2;
+    }, []);
+
+    const showGateFromPayload = useCallback((payload) => {
+        const handled = setGateFromPayload?.(payload);
+        if (!handled) {
+            try { setShowGateModal?.(true); } catch {}
+        }
+    }, [setGateFromPayload, setShowGateModal]);
 
     const showNotification = (message, type) => {
         setNotification({ show: true, message, type });
@@ -899,8 +914,8 @@ const CopywritingAssistantForm = () => {
                 if (!response.ok) {
                     let errorData = {};
                     try { errorData = await response.json(); } catch { }
-                    if (errorData && (errorData.code === 'subscription_required' || errorData.status_code === 2)) {
-                        setShowGateModal?.(true);
+                    if (errorData && isGateError(errorData)) {
+                        showGateFromPayload(errorData);
                         try { controller?.abort?.(); } catch { }
                         try { setIsGenerating(false); setShowVariantsModal(false); } catch { }
                         return;
@@ -955,16 +970,13 @@ const CopywritingAssistantForm = () => {
                         }
                         return;
                     }
-                    if (
-                        msg.type === 'error' &&
-                        (msg.code === 'subscription_required' || msg.error_code === 'subscription_required' || msg.status_code === 2)
-                    ) {
+                    if (msg.type === 'error' && isGateError(msg)) {
                         if (msg.trial_credits_remaining != null) {
                             const t = Number(msg.trial_credits_remaining);
                             if (!Number.isNaN(t)) setTrialRemaining?.(t);
                         }
                         try { fetchCredits?.(); } catch { }
-                        setShowGateModal?.(true);
+                        showGateFromPayload(msg);
                         try { controller?.abort?.(); } catch { }
                         try { setIsGenerating(false); setShowVariantsModal(false); } catch { }
                         return;
@@ -1098,8 +1110,8 @@ const CopywritingAssistantForm = () => {
             if (!response.ok) {
                 let errorData = {};
                 try { errorData = await response.json(); } catch { }
-                if (errorData && (errorData.code === 'subscription_required' || errorData.status_code === 2)) {
-                    setShowGateModal?.(true);
+                if (errorData && isGateError(errorData)) {
+                    showGateFromPayload(errorData);
                     try { controller?.abort?.(); } catch { }
                     try {
                         setGeneratedVariantsData((prev) => {
@@ -1156,16 +1168,13 @@ const CopywritingAssistantForm = () => {
                     }
                     return;
                 }
-                if (
-                    msg.type === 'error' &&
-                    (msg.code === 'subscription_required' || msg.error_code === 'subscription_required' || msg.status_code === 2)
-                ) {
+                if (msg.type === 'error' && isGateError(msg)) {
                     if (msg.trial_credits_remaining != null) {
                         const t = Number(msg.trial_credits_remaining);
                         if (!Number.isNaN(t)) setTrialRemaining?.(t);
                     }
                     try { fetchCredits?.(); } catch { }
-                    setShowGateModal?.(true);
+                    showGateFromPayload(msg);
                     try { controller?.abort?.(); } catch { }
                     return;
                 }

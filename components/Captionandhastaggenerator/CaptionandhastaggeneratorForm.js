@@ -37,7 +37,7 @@ const createSessionRequestId = () => {
 };
 
 const Captionandhastaggeneratorform = () => {
-    const { fetchCredits, setTrialRemaining, setShowGateModal } = useCredits() || {};
+    const { fetchCredits, setTrialRemaining, setShowGateModal, setGateFromPayload } = useCredits() || {};
     // [STATE UPDATED TO SUPPORT CUSTOM/PREDEFINED TOGGLES FOR 5 FIELDS]
     const [formData, setFormData] = useState({
         platformType: 'predefined',
@@ -120,6 +120,21 @@ const Captionandhastaggeneratorform = () => {
             }
         });
     }, []);
+
+    const isGateError = useCallback((payload) => {
+        if (!payload) return false;
+        const dataPayload = payload?.data || payload;
+        const code = dataPayload.code ?? dataPayload.error_code ?? payload?.code ?? payload?.error_code;
+        const statusCode = dataPayload.status_code ?? payload?.status_code;
+        return code === 'subscription_required' || code === 'trial_exhausted';
+    }, []);
+
+    const showGateFromPayload = useCallback((payload) => {
+        const handled = setGateFromPayload?.(payload);
+        if (!handled) {
+            try { setShowGateModal?.(true); } catch {}
+        }
+    }, [setGateFromPayload, setShowGateModal]);
 
     // --- Shared Utility Function ---
     const showNotification = (message, type) => {
@@ -469,8 +484,8 @@ const Captionandhastaggeneratorform = () => {
                             errorData = await response.json();
                         } catch (e) {
                         }
-                        if (errorData && (errorData.code === 'subscription_required' || errorData.status_code === 2)) {
-                            try { setShowGateModal?.(true); } catch {}
+                        if (errorData && isGateError(errorData)) {
+                            try { showGateFromPayload(errorData); } catch {}
                             try { controller?.abort?.(); } catch {}
                             try { setIsGenerating(false); setShowVariantsModal(false); } catch {}
                             return;
@@ -527,10 +542,7 @@ const Captionandhastaggeneratorform = () => {
                             return;
                         }
 
-                        if (
-                            msg.type === 'error' &&
-                            (msg.code === 'subscription_required' || msg.error_code === 'subscription_required' || msg.status_code === 2)
-                        ) {
+                        if (msg.type === 'error' && isGateError(msg)) {
                             try {
                                 if (msg.trial_credits_remaining != null) {
                                     const t = Number(msg.trial_credits_remaining);
@@ -538,7 +550,7 @@ const Captionandhastaggeneratorform = () => {
                                 }
                             } catch {}
                             try { fetchCredits?.(); } catch {}
-                            try { setShowGateModal?.(true); } catch {}
+                            try { showGateFromPayload(msg); } catch {}
                             try { controller?.abort?.(); } catch {}
                             try { setIsGenerating(false); setShowVariantsModal(false); } catch {}
                             return;
@@ -678,8 +690,8 @@ const Captionandhastaggeneratorform = () => {
                     errorData = await response.json();
                 } catch (e) {
                 }
-                if (errorData && (errorData.code === 'subscription_required' || errorData.status_code === 2)) {
-                    try { setShowGateModal?.(true); } catch {}
+                if (errorData && isGateError(errorData)) {
+                    try { showGateFromPayload(errorData); } catch {}
                     try { controller?.abort?.(); } catch {}
                     try {
                         setGeneratedVariantsData((prev) => {
@@ -738,10 +750,7 @@ const Captionandhastaggeneratorform = () => {
 
                 if (!msg || typeof msg !== 'object') return;
 
-                if (
-                    msg.type === 'error' &&
-                    (msg.code === 'subscription_required' || msg.error_code === 'subscription_required' || msg.status_code === 2)
-                ) {
+                if (msg.type === 'error' && isGateError(msg)) {
                     try {
                         if (msg.trial_credits_remaining != null) {
                             const t = Number(msg.trial_credits_remaining);
@@ -749,7 +758,7 @@ const Captionandhastaggeneratorform = () => {
                         }
                     } catch {}
                     try { fetchCredits?.(); } catch {}
-                    try { setShowGateModal?.(true); } catch {}
+                    try { showGateFromPayload(msg); } catch {}
                     try { controller?.abort?.(); } catch {}
                     return;
                 }
@@ -1884,46 +1893,7 @@ const Captionandhastaggeneratorform = () => {
                                         </div>
 
                                         {/* Language/Locale (Right Half) */}
-                                        <div style={colHalfStyle}>
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>Language / Locale</label>
-                                                <div style={styles.radioGroup}>
-                                                    <label style={styles.radioItem}>
-                                                        <input type="radio" name="languageSelection" value="predefined" checked={formData.languageSelection === 'predefined'} onChange={handleChange} style={{ marginRight: '8px' }} />
-                                                        Predefined
-                                                    </label>
-                                                    <label style={styles.radioItem}>
-                                                        <input type="radio" name="languageSelection" value="custom" checked={formData.languageSelection === 'custom'} onChange={handleChange} style={{ marginRight: '8px' }} />
-                                                        Custom
-                                                    </label>
-                                                </div>
-                                                {formData.languageSelection === 'predefined' ? (
-                                                    <select
-                                                        id="language"
-                                                        name="language"
-                                                        value={formData.language}
-                                                        onChange={handleChange}
-                                                        style={styles.select}
-                                                    >
-                                                        <option value="">Select Language/Locale</option>
-                                                        {languageOptions.map((lang) => (
-                                                            <option key={lang.key} value={lang.key}>{lang.label}</option>
-                                                        ))}
-                                                    </select>
-                                                ) : (
-                                                    <input
-                                                        type="text"
-                                                        id="customLanguage"
-                                                        name="customLanguage"
-                                                        value={formData.customLanguage}
-                                                        onChange={handleChange}
-                                                        style={styles.input}
-                                                        maxLength={30}
-                                                        placeholder="e.g., Canadian French, Brazilian Portuguese"
-                                                    />
-                                                )}
-                                            </div>
-                                        </div>
+                                       
                                     </div>
 
                                     {/* ROW 10 (OLD ROW 11): Required Keywords (Full Width Tags) */}
