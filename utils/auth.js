@@ -2,6 +2,16 @@ import API from "@/utils/api";
 
 const AUTH_TOKEN_STORAGE_KEY = "synthovia-auth-token";
 const AUTH_USER_STORAGE_KEY = "synthovia-auth-user";
+const AUTH_CHANGE_EVENT = "synthovia-auth-changed";
+
+const emitAuthChanged = () => {
+  if (typeof window === "undefined") return;
+  try {
+    window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+  } catch {
+    // ignore
+  }
+};
 
 export const getToken = () => {
   if (typeof window === "undefined") return "";
@@ -12,11 +22,13 @@ export const setToken = (token) => {
   if (typeof window === "undefined") return;
   if (!token) return;
   localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+  emitAuthChanged();
 };
 
 export const clearToken = () => {
   if (typeof window === "undefined") return;
   localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+  emitAuthChanged();
 };
 
 export const getUser = () => {
@@ -55,11 +67,13 @@ export const setUser = (user) => {
   if (next.lastName && !next.last_name) next.last_name = next.lastName;
 
   localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(next));
+  emitAuthChanged();
 };
 
 export const clearUser = () => {
   if (typeof window === "undefined") return;
   localStorage.removeItem(AUTH_USER_STORAGE_KEY);
+  emitAuthChanged();
 };
 
 export const isAuthenticated = () => !!getToken();
@@ -88,6 +102,7 @@ export const getAuthHeader = () => {
 export const logout = () => {
   clearToken();
   clearUser();
+  emitAuthChanged();
 
   if (typeof window !== "undefined") {
     try {
