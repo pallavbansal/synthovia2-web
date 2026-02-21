@@ -95,7 +95,7 @@ const getLabelFromKey = (selectedKey, fieldName, options) => {
 };
 
 const AdCopyGeneratorForm = () => {
-    const { fetchCredits, setTrialRemaining, setShowGateModal } = useCredits() || {};
+    const { fetchCredits, setTrialRemaining, setShowGateModal, setGateFromPayload } = useCredits() || {};
     // Hardcoded audience suggestions (moved inside the component function)
     const audienceSuggestions = {
         'Demographics': ['Women 25-34', 'Men 35-44', 'Parents of Toddlers'],
@@ -191,6 +191,21 @@ const AdCopyGeneratorForm = () => {
             }
         });
     }, []);
+
+    const isGateError = useCallback((payload) => {
+        if (!payload) return false;
+        const dataPayload = payload?.data || payload;
+        const code = dataPayload.code ?? dataPayload.error_code ?? payload?.code ?? payload?.error_code;
+        const statusCode = dataPayload.status_code ?? payload?.status_code;
+        return code === 'subscription_required' || code === 'trial_exhausted' || statusCode === 2;
+    }, []);
+
+    const showGateFromPayload = useCallback((payload) => {
+        const handled = setGateFromPayload?.(payload);
+        if (!handled) {
+            try { setShowGateModal?.(true); } catch {}
+        }
+    }, [setGateFromPayload, setShowGateModal]);
 
     useEffect(() => {
         return () => {
@@ -622,9 +637,9 @@ const AdCopyGeneratorForm = () => {
                         errorData = await response.json();
 
                         // Check for Free Trial Exhausted / Subscription Required
-                        if (errorData.code === 'subscription_required' || errorData.status_code === 2) {
+                        if (isGateError(errorData)) {
                             // 1. Show the subscription popup
-                            setShowGateModal?.(true);
+                            showGateFromPayload(errorData);
 
                             // 2. Clean up UI states
                             setIsGenerating(false);
@@ -691,17 +706,14 @@ const AdCopyGeneratorForm = () => {
                         return;
                     }
 
-                    if (
-                        msg.type === 'error' &&
-                        (msg.code === 'subscription_required' || msg.error_code === 'subscription_required' || msg.status_code === 2)
-                    ) {
+                    if (msg.type === 'error' && isGateError(msg)) {
                         console.log("susbcription is here 1");
                         if (msg.trial_credits_remaining != null) {
                             const t = Number(msg.trial_credits_remaining);
                             if (!Number.isNaN(t)) setTrialRemaining?.(t);
                         }
                         try { fetchCredits?.(); } catch { }
-                        setShowGateModal?.(true);
+                        showGateFromPayload(msg);
                         try { controller?.abort?.(); } catch { }
                         try { setIsGenerating(false); setShowVariantsModal(false); } catch { }
                         return;
@@ -1023,17 +1035,14 @@ const AdCopyGeneratorForm = () => {
                     return;
                 }
 
-                if (
-                    msg.type === 'error' &&
-                    (msg.code === 'subscription_required' || msg.error_code === 'subscription_required' || msg.status_code === 2)
-                ) {
+                if (msg.type === 'error' && isGateError(msg)) {
                     console.log("susbcription is here 1");
                     if (msg.trial_credits_remaining != null) {
                         const t = Number(msg.trial_credits_remaining);
                         if (!Number.isNaN(t)) setTrialRemaining?.(t);
                     }
                     try { fetchCredits?.(); } catch { }
-                    setShowGateModal?.(true);
+                    showGateFromPayload(msg);
                     try { controller?.abort?.(); } catch { }
                     try { setIsGenerating(false); setShowVariantsModal(false); } catch { }
                     return;
