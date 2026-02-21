@@ -67,7 +67,7 @@ export const CreditsProvider = ({ children }) => {
         }
       } catch {}
 
-      const res = await originalFetchRef.current(...args);
+      const res = await originalFetchRef.current.call(window, ...args);
 
       try {
         const headerVal = res.headers?.get?.("x-trial-credits-remaining")
