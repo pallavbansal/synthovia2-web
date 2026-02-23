@@ -7,9 +7,23 @@ const CreditsContext = createContext(null);
 
 export const CreditsProvider = ({ children }) => {
   const router = useRouter();
-  const [trialRemaining, setTrialRemaining] = useState(0);
-  const [realRemaining, setRealRemaining] = useState(0);
-  const [isFreeTrial, setIsFreeTrial] = useState(false);
+  const [trialRemaining, setTrialRemaining] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    const v = localStorage.getItem("synthovia_trial_remaining");
+    const n = Number(v);
+    return Number.isNaN(n) ? 0 : n;
+  });
+  const [realRemaining, setRealRemaining] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    const v = localStorage.getItem("synthovia_real_remaining");
+    const n = Number(v);
+    return Number.isNaN(n) ? 0 : n;
+  });
+  const [isFreeTrial, setIsFreeTrial] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const v = localStorage.getItem("synthovia_is_free_trial");
+    return v != null ? v === "true" : false;
+  });
   const [showGateModal, setShowGateModal] = useState(false);
   const [gateTitle, setGateTitle] = useState("Free trial exhausted");
   const [gateMessage, setGateMessage] = useState("Free trial exhausted. Please subscribe to continue.");
@@ -61,8 +75,41 @@ export const CreditsProvider = ({ children }) => {
         const r = Number(json.real_remaining ?? json.data?.real_remaining ?? 0) || 0;
         setTrialRemaining(t);
         setRealRemaining(r);
-        setIsFreeTrial(t > 0);
+        try {
+          localStorage.setItem("synthovia_trial_remaining", String(t));
+          localStorage.setItem("synthovia_real_remaining", String(r));
+        } catch {}
       }
+
+      try {
+        const res2 = await fetch(API.USER_TRIAL_STATUS, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: getAuthHeader(),
+          },
+        });
+        const json2 = await res2.json().catch(() => null);
+        if (res2.ok && json2) {
+          const inFT = json2.in_free_trial ?? json2.data?.in_free_trial;
+          if (inFT != null) {
+            setIsFreeTrial(Boolean(inFT));
+            try { localStorage.setItem("synthovia_is_free_trial", String(Boolean(inFT))); } catch {}
+          }
+          const t2 = json2.trial_remaining ?? json2.data?.trial_remaining;
+          const r2 = json2.real_remaining ?? json2.data?.real_remaining;
+          if (t2 != null && !Number.isNaN(Number(t2))) {
+            const n = Number(t2);
+            setTrialRemaining(n);
+            try { localStorage.setItem("synthovia_trial_remaining", String(n)); } catch {}
+          }
+          if (r2 != null && !Number.isNaN(Number(r2))) {
+            const n = Number(r2);
+            setRealRemaining(n);
+            try { localStorage.setItem("synthovia_real_remaining", String(n)); } catch {}
+          }
+        }
+      } catch {}
     } catch {}
   }, []);
 
@@ -109,7 +156,9 @@ export const CreditsProvider = ({ children }) => {
           const t = Number(headerVal);
           if (!Number.isNaN(t)) {
             setTrialRemaining(t);
-            setIsFreeTrial(t > 0);
+            try {
+              localStorage.setItem("synthovia_trial_remaining", String(t));
+            } catch {}
           }
         }
       } catch {}
@@ -137,10 +186,23 @@ export const CreditsProvider = ({ children }) => {
               const t = data.trial_credits_remaining ?? data.trial_remaining ?? data?.data?.trial_remaining;
               const r = data.real_remaining ?? data?.data?.real_remaining;
               if (t != null && !Number.isNaN(Number(t))) {
-                setTrialRemaining(Number(t));
-                setIsFreeTrial(Number(t) > 0);
+                const tn = Number(t);
+                setTrialRemaining(tn);
+                try {
+                  localStorage.setItem("synthovia_trial_remaining", String(tn));
+                } catch {}
               }
-              if (r != null && !Number.isNaN(Number(r))) setRealRemaining(Number(r));
+              if (r != null && !Number.isNaN(Number(r))) {
+                const rn = Number(r);
+                setRealRemaining(rn);
+                try { localStorage.setItem("synthovia_real_remaining", String(rn)); } catch {}
+              }
+
+              const inFT = data.in_free_trial ?? data?.data?.in_free_trial;
+              if (inFT != null) {
+                setIsFreeTrial(Boolean(inFT));
+                try { localStorage.setItem("synthovia_is_free_trial", String(Boolean(inFT))); } catch {}
+              }
 
               // Detect explicit gating in JSON payloads even if status is not 402
               const type = data.type ?? data?.data?.type;
@@ -196,6 +258,26 @@ export const CreditsProvider = ({ children }) => {
     if (auth && auth.startsWith("Bearer ")) {
       fetchCredits();
     }
+  }, [fetchCredits]);
+
+  // Refresh credits/trial immediately when auth token changes (e.g., after login)
+  useEffect(() => {
+    const onAuthChanged = () => {
+      try {
+        const auth = getAuthHeader();
+        if (auth && auth.startsWith("Bearer ")) {
+          fetchCredits();
+        }
+      } catch {}
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("synthovia-auth-changed", onAuthChanged);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("synthovia-auth-changed", onAuthChanged);
+      }
+    };
   }, [fetchCredits]);
 
   return (

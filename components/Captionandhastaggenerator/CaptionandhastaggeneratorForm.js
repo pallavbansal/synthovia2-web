@@ -37,7 +37,7 @@ const createSessionRequestId = () => {
 };
 
 const Captionandhastaggeneratorform = () => {
-    const { fetchCredits, setTrialRemaining, setShowGateModal, setGateFromPayload } = useCredits() || {};
+    const { fetchCredits, setTrialRemaining, setShowGateModal, setGateFromPayload, isFreeTrial } = useCredits() || {};
     // [STATE UPDATED TO SUPPORT CUSTOM/PREDEFINED TOGGLES FOR 5 FIELDS]
     const [formData, setFormData] = useState({
         platformType: 'predefined',
@@ -280,9 +280,20 @@ const Captionandhastaggeneratorform = () => {
         fetchOptions();
     }, []);
 
+    // Enforce single variant while in free trial
+    useEffect(() => {
+        if (!isFreeTrial) return;
+        setFormData(prev => (prev?.variants !== 1 ? { ...prev, variants: 1 } : prev));
+    }, [isFreeTrial]);
+
     // --- Handlers (Unchanged for generic behavior) ---
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+
+        if (name === 'variants' && isFreeTrial) {
+            setFormData(prev => ({ ...prev, variants: 1 }));
+            return;
+        }
         setFormData(prev => {
             if (name === 'formattingOptions') {
                 if (!checked && value === 'mentions') {
@@ -419,7 +430,7 @@ const Captionandhastaggeneratorform = () => {
                 primary_goal: formData.primaryGoal,
                 tone_of_voice: tonePayload,
                 target_audience: formData.targetAudience,
-                number_of_variants: parseInt(formData.variants, 10),
+                number_of_variants: isFreeTrial ? 1 : parseInt(formData.variants, 10),
                 required_keywords: formData.requiredKeywords,
                 language_locale: languagePayload,
                 emotional_intent: emotionalIntentPayload,
@@ -441,7 +452,7 @@ const Captionandhastaggeneratorform = () => {
                 session_request_id: sessionRequestIdRef.current,
             };
 
-            const variantCount = Math.max(1, parseInt(payload?.number_of_variants || 1, 10));
+            const variantCount = isFreeTrial ? 1 : Math.max(1, parseInt(payload?.number_of_variants || 1, 10));
             const clientRequestKey = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
             setRequestId(null);
@@ -1519,10 +1530,11 @@ const Captionandhastaggeneratorform = () => {
                                                     id="variants"
                                                     name="variants"
                                                     min="1"
-                                                    max="5"
+                                                    max={isFreeTrial ? 1 : 5}
                                                     value={formData.variants}
                                                     onChange={handleChange}
                                                     style={styles.rangeInput}
+                                                    disabled={isFreeTrial}
                                                 />
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
                                                     <span>1</span>

@@ -118,7 +118,7 @@ const defaultFieldOptions = {
 };
 
 const ScriptStoryWriterTool = () => {
-    const { fetchCredits, setTrialRemaining, setShowGateModal, setGateFromPayload } = useCredits() || {};
+    const { fetchCredits, setTrialRemaining, setShowGateModal, setGateFromPayload, isFreeTrial } = useCredits() || {};
     const [formData, setFormData] = useState({
         scriptTitle: '',
         platform: '',
@@ -294,6 +294,12 @@ const ScriptStoryWriterTool = () => {
 
         fetchOptions();
     }, []);
+
+    // Enforce single variant while in free trial
+    useEffect(() => {
+        if (!isFreeTrial) return;
+        setFormData(prev => (prev?.variantsCount !== 1 ? { ...prev, variantsCount: 1 } : prev));
+    }, [isFreeTrial]);
 
     const styles = {
         container: {
@@ -506,6 +512,10 @@ const ScriptStoryWriterTool = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        if (name === 'variantsCount' && isFreeTrial) {
+            setFormData(prev => ({ ...prev, variantsCount: 1 }));
+            return;
+        }
         setFormData(prev => ({
             ...prev,
             [name]: value
@@ -830,7 +840,7 @@ const ScriptStoryWriterTool = () => {
             language_locale: selectedLanguage,
             output_format: outputFormatObj,
             include_metadata: false,
-            variants_count: Math.max(1, parseInt(formData.variantsCount || 1, 10)),
+            variants_count: isFreeTrial ? 1 : Math.max(1, parseInt(formData.variantsCount || 1, 10)),
             custom_ai_instructions: formData.customInstructions,
             instruction_mode: 'strict',
         };
@@ -867,7 +877,7 @@ const ScriptStoryWriterTool = () => {
 
             showNotification('Generating scripts, please wait...', 'info');
 
-            const variantCount = Math.max(1, parseInt(payload?.variants_count || 1, 10));
+            const variantCount = isFreeTrial ? 1 : Math.max(1, parseInt(payload?.variants_count || 1, 10));
             const clientRequestKey = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
             setIsApiLoading(false);
@@ -1999,10 +2009,11 @@ const ScriptStoryWriterTool = () => {
                                                                     id="variantsCount"
                                                                     name="variantsCount"
                                                                     min="1"
-                                                                    max="5"
+                                                                    max={isFreeTrial ? 1 : 5}
                                                                     value={formData.variantsCount}
                                                                     onChange={handleInputChange}
                                                                     style={{ width: '100%' }}
+                                                                    disabled={isFreeTrial}
                                                                 />
                                                                 <div
                                                                     style={{

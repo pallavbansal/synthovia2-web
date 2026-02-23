@@ -146,6 +146,15 @@ export const login = async ({ email, password }) => {
   setToken(data.token);
   setUser(data.user);
 
+  // Immediately refresh trial/credits state after login
+  try {
+    const auth = getAuthHeader();
+    if (auth) {
+      fetch(API.USER_TRIAL_STATUS, { method: "GET", headers: { Accept: "application/json", Authorization: auth } });
+      fetch(API.USER_CREDITS, { method: "GET", headers: { Accept: "application/json", Authorization: auth } });
+    }
+  } catch {}
+
   return data;
 };
 
@@ -193,6 +202,15 @@ export const register = async ({
   setToken(data.token);
   setUser(data.user);
 
+  // Immediately refresh trial/credits state after registration
+  try {
+    const auth = getAuthHeader();
+    if (auth) {
+      fetch(API.USER_TRIAL_STATUS, { method: "GET", headers: { Accept: "application/json", Authorization: auth } });
+      fetch(API.USER_CREDITS, { method: "GET", headers: { Accept: "application/json", Authorization: auth } });
+    }
+  } catch {}
+
   return data;
 };
 
@@ -223,6 +241,15 @@ export const googleLogin = async ({ id_token }) => {
 
   setToken(data.token);
   setUser(data.user);
+
+  // Immediately refresh trial/credits state after Google login
+  try {
+    const auth = getAuthHeader();
+    if (auth) {
+      fetch(API.USER_TRIAL_STATUS, { method: "GET", headers: { Accept: "application/json", Authorization: auth } });
+      fetch(API.USER_CREDITS, { method: "GET", headers: { Accept: "application/json", Authorization: auth } });
+    }
+  } catch {}
 
   return data;
 };

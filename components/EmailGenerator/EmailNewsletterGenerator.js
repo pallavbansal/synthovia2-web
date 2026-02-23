@@ -86,7 +86,7 @@ const defaultFieldOptions = {
 };
 
 const EmailNewsletterGenerator = () => {
-    const { setTrialRemaining, fetchCredits, setShowGateModal, setGateFromPayload } = useCredits() || {};
+    const { setTrialRemaining, fetchCredits, setShowGateModal, setGateFromPayload, isFreeTrial } = useCredits() || {};
     const streamControllersRef = useRef([]);
     const sessionRequestIdRef = useRef(null);
     const [fieldOptions, setFieldOptions] = useState(defaultFieldOptions);
@@ -135,7 +135,18 @@ const EmailNewsletterGenerator = () => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [isApiLoading, setIsApiLoading] = useState(false);
 
+    // Enforce single variant while in free trial
+    useEffect(() => {
+        if (!isFreeTrial) return;
+        setFormData((prev) => (prev.variantsCount !== 1 ? { ...prev, variantsCount: 1 } : prev));
+    }, [isFreeTrial]);
+
     const [generatedVariantsData, setGeneratedVariantsData] = useState({ variants: [], inputs: {} });
+
+    // Ensure latest trial/credits state when this tool mounts (avoid stale isFreeTrial)
+    useEffect(() => {
+        try { fetchCredits?.(); } catch {}
+    }, [fetchCredits]);
 
     const isGateError = useCallback((payload) => {
         if (!payload) return false;
@@ -600,7 +611,7 @@ const EmailNewsletterGenerator = () => {
                             list: fieldOptions.sendFrequencies,
                         })
                         : null,
-            number_of_variants: Number(formData.variantsCount) || 1,
+            number_of_variants: isFreeTrial ? 1 : (Number(formData.variantsCount) || 1),
         };
     };
 
@@ -1761,15 +1772,15 @@ const EmailNewsletterGenerator = () => {
                                                 id="variantsCount"
                                                 name="variantsCount"
                                                 min="1"
-                                                max="5"
+                                                max={isFreeTrial ? 1 : 5}
                                                 value={formData.variantsCount}
                                                 onChange={(e) => {
                                                     const raw = Number(e.target.value);
-                                                    const clamped = Math.max(1, Math.min(5, Number.isFinite(raw) ? raw : 1));
+                                                    const clamped = Math.max(1, Math.min(isFreeTrial ? 1 : 5, Number.isFinite(raw) ? raw : 1));
                                                     setFormData((prev) => ({ ...prev, variantsCount: clamped }));
                                                 }}
                                                 style={styles.rangeInput}
-                                                disabled={isGenerating || isApiLoading}
+                                                disabled={isFreeTrial || isGenerating || isApiLoading}
                                             />
                                             <div
                                                 style={{
