@@ -41,7 +41,6 @@ const AdminSubscriptionPlansPage = () => {
     billing_period: "monthly",
     credits: "",
     description: "",
-    paypal_plan_id: "",
   });
 
   const [saveState, setSaveState] = useState({ loading: false, error: "", success: "" });
@@ -110,7 +109,6 @@ const AdminSubscriptionPlansPage = () => {
       billing_period: "monthly",
       credits: "",
       description: "",
-      paypal_plan_id: "",
     });
     setSaveState({ loading: false, error: "", success: "" });
   };
@@ -125,7 +123,6 @@ const AdminSubscriptionPlansPage = () => {
       billing_period: plan?.billing_period ?? "monthly",
       credits: plan?.credits ?? "",
       description: plan?.description ?? "",
-      paypal_plan_id: plan?.paypal_plan_id ?? "",
     });
   };
 
@@ -135,12 +132,14 @@ const AdminSubscriptionPlansPage = () => {
     const priceUsdNum = Number(form.price_usd);
     const priceInrNum = Number(form.price_inr);
     const creditsNum = Number(form.credits);
+    const description = String(form.description || "").trim();
 
     if (!name) return "Name is required.";
     if (!billingPeriod) return "Billing period is required.";
     if (!Number.isFinite(priceUsdNum) || priceUsdNum < 0) return "USD price must be a valid number >= 0.";
     if (!Number.isFinite(priceInrNum) || priceInrNum < 0) return "INR price must be a valid number >= 0.";
     if (!Number.isFinite(creditsNum) || creditsNum < 0) return "Credits must be a valid number >= 0.";
+    if (!description) return "Description is required.";
 
     return "";
   };
@@ -174,7 +173,6 @@ const AdminSubscriptionPlansPage = () => {
       billing_period: String(form.billing_period || "").trim(),
       credits: Number(form.credits),
       description: String(form.description || "").trim(),
-      paypal_plan_id: String(form.paypal_plan_id || "").trim(),
     };
 
     try {
@@ -355,20 +353,10 @@ const AdminSubscriptionPlansPage = () => {
               <textarea
                 className={baseStyles.textarea}
                 rows={3}
+                required
                 value={form.description}
                 onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                 placeholder="Short description of the plan"
-              />
-            </label>
-
-            <label className={styles.field} style={{ gridColumn: "1 / -1" }}>
-              <span className={baseStyles.muted}>PayPal plan id</span>
-              <input
-                className={baseStyles.input}
-                type="text"
-                value={form.paypal_plan_id}
-                onChange={(e) => setForm((p) => ({ ...p, paypal_plan_id: e.target.value }))}
-                placeholder="P-XXXXXXXX"
               />
             </label>
           </div>

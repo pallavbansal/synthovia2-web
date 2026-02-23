@@ -1054,6 +1054,10 @@ const AdminUserDetailsPage = () => {
                   <div className={styles.v}>{safeText(credits?.credits_remaining)}</div>
                 </div>
                 <div className={styles.kv}>
+                  <div className={styles.k}>Trial (left)</div>
+                  <div className={styles.v}>{safeText(credits?.trial_credits_left ?? credits?.trial_credits_remaining ?? credits?.trial_remaining)}</div>
+                </div>
+                <div className={styles.kv}>
                   <div className={styles.k}>Used (cycle)</div>
                   <div className={styles.v}>{safeText(credits?.used_current_cycle)}</div>
                 </div>
