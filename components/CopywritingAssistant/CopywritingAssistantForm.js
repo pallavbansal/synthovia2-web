@@ -35,7 +35,7 @@ const createSessionRequestId = () => {
 };
 
 const CopywritingAssistantForm = () => {
-    const { fetchCredits, setTrialRemaining, setShowGateModal, setGateFromPayload } = useCredits() || {};
+    const { fetchCredits, setTrialRemaining, setShowGateModal, setGateFromPayload, isFreeTrial } = useCredits() || {};
     // State for all form fields
     const [formData, setFormData] = useState({
         useCaseMode: 'predefined',
@@ -158,7 +158,7 @@ const CopywritingAssistantForm = () => {
     const showGateFromPayload = useCallback((payload) => {
         const handled = setGateFromPayload?.(payload);
         if (!handled) {
-            try { setShowGateModal?.(true); } catch {}
+            try { setShowGateModal?.(true); } catch { }
         }
     }, [setGateFromPayload, setShowGateModal]);
 
@@ -172,6 +172,10 @@ const CopywritingAssistantForm = () => {
             abortAllStreams();
         };
     }, [abortAllStreams]);
+    useEffect(() => {
+        if (!isFreeTrial) return;
+        setFormData(prev => (prev?.variants !== 1 ? { ...prev, variants: 1 } : prev));
+    }, [isFreeTrial]);
 
     // Helper to safely access API options by key
     const getOptions = (key) => apiOptions?.[key] || [];
@@ -393,6 +397,11 @@ const CopywritingAssistantForm = () => {
         }
         if (name === 'useCaseMode' && value !== 'custom') {
             setCustomUseCaseError('');
+        }
+
+        if (name === 'variants' && isFreeTrial) {
+            setFormData(prev => ({ ...prev, variants: 1 }));
+            return;
         }
 
         setFormData((prev) => ({
@@ -838,7 +847,7 @@ const CopywritingAssistantForm = () => {
                     .split('\n')
                     .map((v) => v.trim())
                     .filter(Boolean),
-            number_of_variants: parseInt(formData.variants, 10) || 1,
+            number_of_variants: isFreeTrial ? 1 : (parseInt(formData.variants, 10) || 1),
             show_advanced_features: !!formData.showAdvanced,
             keywords: keywordsArray,
             cta_style: ctaStyleObj,
@@ -2151,10 +2160,11 @@ const CopywritingAssistantForm = () => {
                                                 id="variants"
                                                 name="variants"
                                                 min="1"
-                                                max="2"
+                                                max={isFreeTrial ? 1 : 2}
                                                 value={formData.variants}
                                                 onChange={handleChange}
                                                 style={{ width: '100%' }}
+                                                disabled={isFreeTrial}
                                             />
                                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
                                                 <span>1</span>

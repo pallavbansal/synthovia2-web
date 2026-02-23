@@ -67,6 +67,7 @@ export const API = {
     buildQueryUrl(`${BASE_URL}/seo-keyword/history`, { per_page: perPage, page, from, to }),
 
   USER_CREDITS: `${BASE_URL}/user/me/credits`,
+  USER_TRIAL_STATUS: `${BASE_URL}/user/me/trial-status`,
 
   AUTH_LOGIN: `${BASE_URL}/auth/login`,
   AUTH_GOOGLE: `${BASE_URL}/auth/google`,

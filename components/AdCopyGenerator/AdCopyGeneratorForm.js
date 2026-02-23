@@ -95,7 +95,7 @@ const getLabelFromKey = (selectedKey, fieldName, options) => {
 };
 
 const AdCopyGeneratorForm = () => {
-    const { fetchCredits, setTrialRemaining, setShowGateModal, setGateFromPayload } = useCredits() || {};
+    const { fetchCredits, setTrialRemaining, setShowGateModal, setGateFromPayload, isFreeTrial } = useCredits() || {};
     // Hardcoded audience suggestions (moved inside the component function)
     const audienceSuggestions = {
         'Demographics': ['Women 25-34', 'Men 35-44', 'Parents of Toddlers'],
@@ -203,7 +203,7 @@ const AdCopyGeneratorForm = () => {
     const showGateFromPayload = useCallback((payload) => {
         const handled = setGateFromPayload?.(payload);
         if (!handled) {
-            try { setShowGateModal?.(true); } catch {}
+            try { setShowGateModal?.(true); } catch { }
         }
     }, [setGateFromPayload, setShowGateModal]);
 
@@ -321,6 +321,11 @@ const AdCopyGeneratorForm = () => {
         updatePlacements(formData.platform, fieldOptions.placement);
     }, [formData.platform, fieldOptions.placement, updatePlacements]);
 
+    useEffect(() => {
+        if (!isFreeTrial) return;
+        setFormData(prev => (prev?.variants !== 1 ? { ...prev, variants: 1 } : prev));
+    }, [isFreeTrial]);
+
     const handlePlatformChange = (e) => {
         const selectedKey = e.target.value;
         const platformLabel = getLabelFromKey(selectedKey, 'platform', fieldOptions);
@@ -350,6 +355,10 @@ const AdCopyGeneratorForm = () => {
 
     const handleChange = (e) => {
         const { name, value: selectedKey, type, checked } = e.target;
+        if (name === 'variants' && isFreeTrial) {
+            setFormData(prev => ({ ...prev, variants: 1 }));
+            return;
+        }
 
         if (type === 'checkbox') {
             setFormData(prev => ({ ...prev, [name]: checked }));
@@ -591,7 +600,7 @@ const AdCopyGeneratorForm = () => {
 
             showNotification('Generating ad copy, please wait...', 'info');
 
-            const variantCount = Math.max(1, parseInt(payload?.number_of_variants || 1, 10));
+            const variantCount = isFreeTrial ? 1 : Math.max(1, parseInt(payload?.number_of_variants || 1, 10));
             const clientRequestKey = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
             setRequestId(null);
@@ -890,7 +899,7 @@ const AdCopyGeneratorForm = () => {
             audience_pain_points: formData.audiencePain,
             proof_elements: formData.proofCredibility,
             product_description: formData.productServices,
-            number_of_variants: parseInt(formData.variants, 10),
+            number_of_variants: isFreeTrial ? 1 : parseInt(formData.variants, 10),
             compliance_notes: formData.complianceNote,
             brand_voice: formData.brandVoice,
             offer_pricing_details: formData.offerPricing,
@@ -2322,10 +2331,11 @@ const AdCopyGeneratorForm = () => {
                                                         id="variants"
                                                         name="variants"
                                                         min="1"
-                                                        max="5"
+                                                        max={isFreeTrial ? 1 : 5}
                                                         value={formData.variants}
                                                         onChange={handleChange}
                                                         style={styles.rangeInput}
+                                                        disabled={isFreeTrial}
                                                     />
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
                                                         <span>1</span>

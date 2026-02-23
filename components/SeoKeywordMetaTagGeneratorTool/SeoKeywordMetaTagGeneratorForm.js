@@ -174,7 +174,7 @@ const PredefinedCustom = ({
 };
 
 const SeoKeywordMetaTagGeneratorForm = () => {
-  const { setTrialRemaining, fetchCredits, setShowGateModal, setGateFromPayload } = useCredits() || {};
+  const { setTrialRemaining, fetchCredits, setShowGateModal, setGateFromPayload, isFreeTrial } = useCredits() || {};
   const timersRef = useRef([]);
   const streamAbortMapRef = useRef(new Map());
   const sessionRequestIdRef = useRef(null);
@@ -303,6 +303,12 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     };
   }, []);
 
+  // Enforce a single variant while in free trial
+  useEffect(() => {
+    if (!isFreeTrial) return;
+    setFormData((p) => (p?.variantsCount !== 1 ? { ...p, variantsCount: 1 } : p));
+  }, [isFreeTrial]);
+
   const abortAllStreams = () => {
     const controllers = Array.from(streamAbortMapRef.current.values());
     controllers.forEach((c) => {
@@ -421,7 +427,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
         selectedKey: formData.textLength,
         customValue: formData.textLengthCustom,
       }),
-      number_of_variants: Number(variantCount) || 1,
+      number_of_variants: isFreeTrial ? 1 : (Number(variantCount) || 1),
       model: "gpt-4o-mini",
     };
   };
@@ -974,7 +980,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
           : getLabelFromOptions("compliance_guidelines", formData.complianceGuidelines),
       textLength:
         formData.textLengthMode === "custom" ? String(formData.textLengthCustom || "").trim() : getLabelFromOptions("primary_text_length", formData.textLength),
-      variantsCount: clamp(Number(formData.variantsCount) || 1, 1, 5),
+      variantsCount: isFreeTrial ? 1 : clamp(Number(formData.variantsCount) || 1, 1, 5),
       keywordDifficulty: clamp(Number(formData.keywordDifficulty) || 0, 0, 100),
       pageGoalKey: formData.pageGoal,
       toneKey: formData.tone,
@@ -988,7 +994,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       complianceGuidelinesKey: formData.complianceGuidelines,
       textLengthKey: formData.textLength,
     };
-  }, [formData, fieldOptions]);
+  }, [formData, fieldOptions, isFreeTrial]);
 
   const validateForm = () => {
     const missing = [];
@@ -1113,7 +1119,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
 
     sessionRequestIdRef.current = createSessionRequestId();
 
-    const count = clamp(Number(inputsForReview.variantsCount) || 1, 1, 5);
+    const count = isFreeTrial ? 1 : clamp(Number(inputsForReview.variantsCount) || 1, 1, 5);
 
     setShowVariantsModal(true);
 
@@ -1859,10 +1865,11 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                           id="variants"
                           name="variants"
                           min="1"
-                          max="5"
+                          max={isFreeTrial ? 1 : 5}
                           value={formData.variantsCount}
-                          onChange={(e) => setFormData((p) => ({ ...p, variantsCount: Number(e.target.value) }))}
+                          onChange={(e) => setFormData((p) => ({ ...p, variantsCount: isFreeTrial ? 1 : Number(e.target.value) }))}
                           style={{ width: "100%" }}
+                          disabled={isFreeTrial}
                         />
                       </div>
                     </div>
