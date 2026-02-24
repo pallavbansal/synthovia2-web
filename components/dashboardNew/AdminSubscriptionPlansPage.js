@@ -393,7 +393,7 @@ const AdminSubscriptionPlansPage = () => {
                 </tr>
               ) : (
                 listState.items.map((p) => (
-                  <tr key={p.id ?? `${p.name}-${p.billing_period}`} className={`${baseStyles.tr} ${p.is_active ? styles.activeRow : ""}`.trim()}>
+                  <tr key={p.id ?? `${p.name}-${p.billing_period}`} className={`${baseStyles.tr}`.trim()}>
                     <td className={baseStyles.td}>
                       <div className={styles.planName}>{safeText(p.name)}</div>
                       <div className={styles.muted} style={{ marginTop: 4 }}>
