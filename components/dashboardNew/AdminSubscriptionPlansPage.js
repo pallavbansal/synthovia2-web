@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/router";
 import API from "@/utils/api";
 import { getAuthHeader, isAdminAuthenticated } from "@/utils/auth";
 import baseStyles from "@/pages/settings/SettingsPage.module.css";
@@ -10,24 +11,29 @@ const safeText = (v) => {
   return s.trim() ? s : "—";
 };
 
+const asBool = (v) => {
+  if (typeof v === "boolean") return v;
+  if (typeof v === "number") return v === 1;
+  if (v == null) return false;
+  const s = String(v).trim().toLowerCase();
+  if (!s) return false;
+  return s === "1" || s === "true" || s === "yes" || s === "active";
+};
+
 const normalizePlan = (p) => {
   if (!p || typeof p !== "object") return null;
-  const priceUsd = p.price_usd ?? p.usd_price ?? p.priceUSD ?? null;
-  const priceInr = p.price_inr ?? p.inr_price ?? p.priceINR ?? null;
-  const fallbackPrice = p.price ?? null;
   return {
     id: p.id ?? p.plan_id ?? null,
     name: p.name ?? "",
-    price_usd: priceUsd != null ? priceUsd : fallbackPrice,
-    price_inr: priceInr != null ? priceInr : fallbackPrice,
     billing_period: p.billing_period ?? "",
     credits: p.credits ?? "",
     description: p.description ?? "",
-    paypal_plan_id: p.paypal_plan_id ?? p.paypalPlanId ?? "",
+    is_active: asBool(p.is_active ?? p.active),
   };
 };
 
 const AdminSubscriptionPlansPage = () => {
+  const router = useRouter();
   const [guardError, setGuardError] = useState("");
 
   const [listState, setListState] = useState({ loading: false, error: "", items: [] });
@@ -36,12 +42,9 @@ const AdminSubscriptionPlansPage = () => {
   const [form, setForm] = useState({
     id: null,
     name: "",
-    price_usd: "",
-    price_inr: "",
     billing_period: "monthly",
     credits: "",
     description: "",
-    paypal_plan_id: "",
   });
 
   const [saveState, setSaveState] = useState({ loading: false, error: "", success: "" });
@@ -62,7 +65,7 @@ const AdminSubscriptionPlansPage = () => {
     const seq = ++listFetchSeqRef.current;
 
     try {
-      const res = await fetch(API.SUBSCRIPTION_PLANS, {
+      const res = await fetch(API.ADMIN_SUBSCRIPTION_PLANS_CREATE, {
         method: "GET",
         headers: {
           Accept: "application/json",
@@ -105,12 +108,9 @@ const AdminSubscriptionPlansPage = () => {
     setForm({
       id: null,
       name: "",
-      price_usd: "",
-      price_inr: "",
       billing_period: "monthly",
       credits: "",
       description: "",
-      paypal_plan_id: "",
     });
     setSaveState({ loading: false, error: "", success: "" });
   };
@@ -120,27 +120,22 @@ const AdminSubscriptionPlansPage = () => {
     setForm({
       id: plan?.id ?? null,
       name: plan?.name ?? "",
-      price_usd: plan?.price_usd ?? "",
-      price_inr: plan?.price_inr ?? "",
       billing_period: plan?.billing_period ?? "monthly",
       credits: plan?.credits ?? "",
       description: plan?.description ?? "",
-      paypal_plan_id: plan?.paypal_plan_id ?? "",
     });
   };
 
   const validateForm = () => {
     const name = String(form.name || "").trim();
     const billingPeriod = String(form.billing_period || "").trim();
-    const priceUsdNum = Number(form.price_usd);
-    const priceInrNum = Number(form.price_inr);
     const creditsNum = Number(form.credits);
+    const description = String(form.description || "").trim();
 
     if (!name) return "Name is required.";
     if (!billingPeriod) return "Billing period is required.";
-    if (!Number.isFinite(priceUsdNum) || priceUsdNum < 0) return "USD price must be a valid number >= 0.";
-    if (!Number.isFinite(priceInrNum) || priceInrNum < 0) return "INR price must be a valid number >= 0.";
     if (!Number.isFinite(creditsNum) || creditsNum < 0) return "Credits must be a valid number >= 0.";
+    if (!description) return "Description is required.";
 
     return "";
   };
@@ -169,12 +164,9 @@ const AdminSubscriptionPlansPage = () => {
 
     const body = {
       name: String(form.name || "").trim(),
-      price_usd: Number(form.price_usd),
-      price_inr: Number(form.price_inr),
       billing_period: String(form.billing_period || "").trim(),
       credits: Number(form.credits),
       description: String(form.description || "").trim(),
-      paypal_plan_id: String(form.paypal_plan_id || "").trim(),
     };
 
     try {
@@ -306,36 +298,6 @@ const AdminSubscriptionPlansPage = () => {
             </label>
 
             <label className={styles.field}>
-              <span className={baseStyles.muted}>Price (USD)</span>
-              <input
-                className={baseStyles.input}
-                type="number"
-                inputMode="decimal"
-                step="0.01"
-                min="0"
-                required
-                value={form.price_usd}
-                onChange={(e) => setForm((p) => ({ ...p, price_usd: e.target.value }))}
-                placeholder="9.99"
-              />
-            </label>
-
-            <label className={styles.field}>
-              <span className={baseStyles.muted}>Price (INR)</span>
-              <input
-                className={baseStyles.input}
-                type="number"
-                inputMode="numeric"
-                step="1"
-                min="0"
-                required
-                value={form.price_inr}
-                onChange={(e) => setForm((p) => ({ ...p, price_inr: e.target.value }))}
-                placeholder="499"
-              />
-            </label>
-
-            <label className={styles.field}>
               <span className={baseStyles.muted}>Credits</span>
               <input
                 className={baseStyles.input}
@@ -355,20 +317,10 @@ const AdminSubscriptionPlansPage = () => {
               <textarea
                 className={baseStyles.textarea}
                 rows={3}
+                required
                 value={form.description}
                 onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                 placeholder="Short description of the plan"
-              />
-            </label>
-
-            <label className={styles.field} style={{ gridColumn: "1 / -1" }}>
-              <span className={baseStyles.muted}>PayPal plan id</span>
-              <input
-                className={baseStyles.input}
-                type="text"
-                value={form.paypal_plan_id}
-                onChange={(e) => setForm((p) => ({ ...p, paypal_plan_id: e.target.value }))}
-                placeholder="P-XXXXXXXX"
               />
             </label>
           </div>
@@ -410,24 +362,21 @@ const AdminSubscriptionPlansPage = () => {
             <thead>
               <tr>
                 <th className={baseStyles.th}>Plan</th>
-                <th className={baseStyles.th}>Price (USD)</th>
-                <th className={baseStyles.th}>Price (INR)</th>
                 <th className={baseStyles.th}>Credits</th>
                 <th className={baseStyles.th}>Billing</th>
-                <th className={baseStyles.th}>PayPal</th>
                 <th className={baseStyles.th}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {listState.loading ? (
                 <tr>
-                  <td className={baseStyles.td} colSpan={7}>
+                  <td className={baseStyles.td} colSpan={4}>
                     <span className={baseStyles.muted}>Loading…</span>
                   </td>
                 </tr>
               ) : listState.error ? (
                 <tr>
-                  <td className={baseStyles.td} colSpan={7}>
+                  <td className={baseStyles.td} colSpan={4}>
                     <span className={baseStyles.muted}>{listState.error}</span>
                     <div style={{ marginTop: 10 }}>
                       <button type="button" className={baseStyles.smallBtn} onClick={fetchPlans}>
@@ -438,26 +387,26 @@ const AdminSubscriptionPlansPage = () => {
                 </tr>
               ) : !listState.items.length ? (
                 <tr>
-                  <td className={baseStyles.td} colSpan={7}>
+                  <td className={baseStyles.td} colSpan={4}>
                     <span className={baseStyles.muted}>No plans found.</span>
                   </td>
                 </tr>
               ) : (
                 listState.items.map((p) => (
-                  <tr key={p.id ?? `${p.name}-${p.billing_period}`} className={baseStyles.tr}>
+                  <tr key={p.id ?? `${p.name}-${p.billing_period}`} className={`${baseStyles.tr} ${p.is_active ? styles.activeRow : ""}`.trim()}>
                     <td className={baseStyles.td}>
                       <div className={styles.planName}>{safeText(p.name)}</div>
                       <div className={styles.muted} style={{ marginTop: 4 }}>
                         {safeText(p.description)}
                       </div>
                     </td>
-                    <td className={baseStyles.td}>{safeText(p.price_usd)}</td>
-                    <td className={baseStyles.td}>{safeText(p.price_inr)}</td>
                     <td className={baseStyles.td}>{safeText(p.credits)}</td>
                     <td className={baseStyles.td}>{safeText(p.billing_period)}</td>
-                    <td className={baseStyles.td}>{safeText(p.paypal_plan_id)}</td>
                     <td className={baseStyles.td}>
                       <div className={styles.actionsRow} style={{ marginTop: 0 }}>
+                        <button type="button" className={baseStyles.smallBtn} onClick={() => router.push(`/admin/subscriptions/plans/${p.id}`)}>
+                          View
+                        </button>
                         <button type="button" className={baseStyles.smallBtn} onClick={() => applyPlanToForm(p)}>
                           Edit
                         </button>

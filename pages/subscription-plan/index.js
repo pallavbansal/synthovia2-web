@@ -24,6 +24,12 @@ const SubscriptionPlanPage = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [checkoutLoadingPlanId, setCheckoutLoadingPlanId] = useState(null);
   const [billingMode, setBillingMode] = useState("annual");
+  const [useFallbackPlans, setUseFallbackPlans] = useState(false);
+
+  const [countriesState, setCountriesState] = useState({ loading: false, error: "", items: [] });
+  const [geoCountryCode, setGeoCountryCode] = useState("");
+  const [geoCountryMeta, setGeoCountryMeta] = useState(null);
+  const [pendingPaymentPlanId, setPendingPaymentPlanId] = useState(null);
 
   const autoCheckoutRanRef = useRef(false);
 
@@ -38,6 +44,9 @@ const SubscriptionPlanPage = () => {
   const [geoPromptOpen, setGeoPromptOpen] = useState(false);
   const [geoPromptPlanId, setGeoPromptPlanId] = useState(null);
   const [geoBlockReason, setGeoBlockReason] = useState("");
+
+  const GEO_STORAGE_KEY = "subscription_geo_country_v1";
+  const GEO_STORAGE_TTL_MS = 1000 * 60 * 60 * 24 * 30;
 
   const fallbackPlans = useMemo(
     () => [
@@ -81,6 +90,42 @@ const SubscriptionPlanPage = () => {
       if (tzLower === "asia/kolkata" || tzLower === "asia/calcutta" || hasINLang) return "razorpay";
     } catch (e) {}
     return "paypal";
+  };
+
+  const resolveCountryFromList = (countryCode) => {
+    const code = String(countryCode || "").trim().toUpperCase();
+    const list = Array.isArray(countriesState.items) ? countriesState.items : [];
+    const found = list.find((c) => String(c?.code || "").trim().toUpperCase() === code) || null;
+    if (found) return { code: String(found.code).trim().toUpperCase(), meta: found };
+
+    const fallback = list.find((c) => String(c?.code || "").trim().toUpperCase() === "US") || list[0] || null;
+    if (!fallback) return { code: code || "", meta: null };
+    return { code: String(fallback.code).trim().toUpperCase(), meta: fallback };
+  };
+
+  const loadGeoCountryFromStorage = () => {
+    try {
+      if (typeof window === "undefined") return null;
+      const raw = window.localStorage.getItem(GEO_STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      const code = String(parsed?.code || "").trim().toUpperCase();
+      const ts = Number(parsed?.ts);
+      if (!code || !Number.isFinite(ts)) return null;
+      if (Date.now() - ts > GEO_STORAGE_TTL_MS) return null;
+      return { code, ts };
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const saveGeoCountryToStorage = (code) => {
+    try {
+      if (typeof window === "undefined") return;
+      const next = { code: String(code || "").trim().toUpperCase(), ts: Date.now() };
+      if (!next.code) return;
+      window.localStorage.setItem(GEO_STORAGE_KEY, JSON.stringify(next));
+    } catch (e) {}
   };
 
   const isInIndiaByCoords = ({ latitude, longitude }) => {
@@ -128,12 +173,72 @@ const SubscriptionPlanPage = () => {
     });
   };
 
+  const requestGeoCountryCode = () => {
+    return new Promise((resolve) => {
+      if (typeof window === "undefined") return resolve(null);
+      if (!navigator?.geolocation) return resolve(null);
+
+      const run = () => {
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            try {
+              const latitude = pos?.coords?.latitude;
+              const longitude = pos?.coords?.longitude;
+
+              const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${encodeURIComponent(
+                String(latitude || "")
+              )}&longitude=${encodeURIComponent(String(longitude || ""))}&localityLanguage=en`;
+
+              const res = await fetch(url, { method: "GET" });
+              const json = await res.json().catch(() => null);
+              const code = String(json?.countryCode || "").trim().toUpperCase();
+              resolve(code || null);
+            } catch (e) {
+              resolve(null);
+            }
+          },
+          () => resolve(null),
+          { enableHighAccuracy: false, timeout: 7000, maximumAge: 5 * 60 * 1000 }
+        );
+      };
+
+      try {
+        if (navigator.permissions?.query) {
+          navigator.permissions
+            .query({ name: "geolocation" })
+            .then(() => run())
+            .catch(() => run());
+          return;
+        }
+      } catch (e) {}
+
+      run();
+    });
+  };
+
+  const getCurrencySymbol = (currency) => {
+    const c = String(currency || "").toUpperCase();
+    if (c === "USD") return "$";
+    if (c === "INR") return "₹";
+    if (c === "AUD") return "A$";
+    if (c === "CAD") return "C$";
+    if (c === "EUR") return "€";
+    if (c === "RUB") return "₽";
+    return c ? `${c} ` : "$";
+  };
+
   const getPlanPreferredPrice = (plan) => {
-    const method = getDefaultPaymentMethod();
-    const usd = plan?.price_usd != null ? plan.price_usd : plan?.price;
-    const inr = plan?.price_inr != null ? plan.price_inr : plan?.price;
-    if (method === "razorpay") return { currency: "INR", symbol: "₹", value: inr };
-    return { currency: "USD", symbol: "$", value: usd };
+    const countryCode = String(geoCountryCode || "").trim().toUpperCase();
+
+    if (countryCode === "IN") {
+      const value = plan?.amount_inr ?? plan?.price_inr ?? plan?.price?.amount ?? plan?.price ?? "";
+      return { currency: "INR", symbol: "₹", value };
+    }
+
+    const price = plan?.price || null;
+    const currency = price?.currency || (plan?.amount_usd != null ? "USD" : "USD");
+    const value = price?.amount ?? price?.price ?? plan?.amount_usd ?? plan?.price ?? "";
+    return { currency, symbol: getCurrencySymbol(currency), value };
   };
 
   const fallbackIsIndia = useMemo(() => detectDefaultPayment() === "razorpay", []);
@@ -144,54 +249,119 @@ const SubscriptionPlanPage = () => {
   }, []);
 
   useEffect(() => {
+    const stored = loadGeoCountryFromStorage();
+    if (stored?.code) {
+      setGeoCountryCode(stored.code);
+      setGeoIsIndia(stored.code === "IN");
+    }
+
+    if (stored?.code) return;
+    if (typeof window === "undefined") return;
+    if (!navigator?.permissions?.query) return;
+
+    navigator.permissions
+      .query({ name: "geolocation" })
+      .then(async (perm) => {
+        if (perm?.state !== "granted") return;
+        const detected = await requestGeoCountryCode();
+        if (!detected) return;
+        const resolved = resolveCountryFromList(detected);
+        const code = String(resolved?.code || "").trim().toUpperCase();
+        if (!code) return;
+        setGeoCountryCode(code);
+        setGeoCountryMeta(resolved?.meta || null);
+        setGeoIsIndia(code === "IN");
+        saveGeoCountryToStorage(code);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!geoCountryCode) return;
+    if (geoCountryMeta) return;
+    if (!Array.isArray(countriesState.items) || countriesState.items.length === 0) return;
+    const resolved = resolveCountryFromList(geoCountryCode);
+    if (resolved?.meta) setGeoCountryMeta(resolved.meta);
+  }, [geoCountryCode, geoCountryMeta, countriesState.items]);
+
+  useEffect(() => {
     let cancelled = false;
 
-    const fetchPlans = async () => {
-      setIsLoading(true);
-      setErrorMessage("");
+    const fetchCountries = async () => {
+      setCountriesState({ loading: true, error: "", items: [] });
       try {
-        const authHeader = getAuthHeader();
-        const res = await fetch(API.SUBSCRIPTION_PLANS, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            ...(authHeader ? { Authorization: authHeader } : {}),
-          },
-        });
-
+        const res = await fetch(API.COUNTRIES, { method: "GET", headers: { Accept: "application/json" } });
         const json = await res.json().catch(() => null);
-        if (!res.ok || !json || json.status_code !== 1) {
-          const isUnauth =
-            res.status === 401 ||
-            String(json?.message || "")
-              .toLowerCase()
-              .includes("unauth");
-
-          if (isUnauth) {
-            if (!cancelled) {
-              setPlans(fallbackPlans);
-              setErrorMessage("");
-            }
-            return;
-          }
-
-          throw new Error(json?.message || `Failed to load plans (${res.status})`);
-        }
-
-        const nextPlans = Array.isArray(json?.plans) ? json.plans : [];
-        if (!cancelled) setPlans(nextPlans);
+        if (!res.ok) throw new Error(json?.message || `Failed to load countries (${res.status})`);
+        if (!json || json.status_code !== 1) throw new Error(json?.message || "Failed to load countries");
+        const items = Array.isArray(json?.countries) ? json.countries : [];
+        if (!cancelled) setCountriesState({ loading: false, error: "", items });
       } catch (e) {
-        if (!cancelled) setErrorMessage(e?.message || "Failed to load plans");
-      } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) setCountriesState({ loading: false, error: e?.message || "Failed to load countries", items: [] });
       }
     };
 
-    fetchPlans();
+    fetchCountries();
     return () => {
       cancelled = true;
     };
   }, []);
+
+  const fetchPlansForCountry = async (countryCode) => {
+    setIsLoading(true);
+    setErrorMessage("");
+    setUseFallbackPlans(false);
+
+    try {
+      const authHeader = getAuthHeader();
+      const res = await fetch(API.SUBSCRIPTION_PLANS_BY_COUNTRY(countryCode), {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          ...(authHeader ? { Authorization: authHeader } : {}),
+        },
+      });
+
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json || json.status_code !== 1) {
+        const isUnauth =
+          res.status === 401 ||
+          String(json?.message || "")
+            .toLowerCase()
+            .includes("unauth");
+
+        if (isUnauth) {
+          setPlans(fallbackPlans);
+          setErrorMessage("");
+          setUseFallbackPlans(true);
+          return;
+        }
+
+        throw new Error(json?.message || `Failed to load plans (${res.status})`);
+      }
+
+      const nextPlans = Array.isArray(json?.plans) ? json.plans : [];
+      setPlans(nextPlans);
+    } catch (e) {
+      setErrorMessage(e?.message || "Failed to load plans");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!geoCountryCode) return;
+    fetchPlansForCountry(geoCountryCode);
+  }, [geoCountryCode]);
+
+  useEffect(() => {
+    if (!pendingPaymentPlanId) return;
+    if (isLoading) return;
+    const matched = (Array.isArray(plans) ? plans : []).find((p) => String(p?.id) === String(pendingPaymentPlanId));
+    if (!matched) return;
+    setPendingPaymentPlanId(null);
+    openPaymentModalForPlan(matched?.id);
+  }, [pendingPaymentPlanId, plans, isLoading]);
 
   useEffect(() => {
     if (autoCheckoutRanRef.current) return;
@@ -225,11 +395,17 @@ const SubscriptionPlanPage = () => {
 
       autoCheckoutRanRef.current = true;
       sessionStorage.removeItem("pending_subscription_plan_selection");
+
+      if (!geoCountryCode) {
+        openGeoPromptForPlan(matched?.id);
+        return;
+      }
+
       setPaymentPlanId(matched?.id);
       setPaymentMethod(getDefaultPaymentMethod());
       setPaymentModalOpen(true);
     } catch (e) {}
-  }, [plans, isLoading, geoIsIndia]);
+  }, [plans, isLoading, geoIsIndia, geoCountryCode]);
 
   const handleCheckout = async (planId) => {
     if (!planId) return;
@@ -240,13 +416,14 @@ const SubscriptionPlanPage = () => {
     try {
       const authHeader = getAuthHeader();
       const plan = (Array.isArray(plans) ? plans : []).find((p) => String(p?.id) === String(planId)) || {};
-      const usd = plan?.price_usd != null ? plan.price_usd : plan?.price;
-      const amount = usd != null ? String(usd) : "";
+      const pref = getPlanPreferredPrice(plan);
+      const amount = pref?.value != null ? String(pref.value) : "";
       const body = new URLSearchParams({
         plan_id: String(planId),
         payment_method: "paypal",
         amount,
-        currency: "USD",
+        currency: String(pref?.currency || "USD"),
+        ...(geoCountryCode ? { country_code: String(geoCountryCode) } : {}),
       });
 
       const res = await fetch(API.SUBSCRIPTION_CHECKOUT, {
@@ -301,13 +478,16 @@ const SubscriptionPlanPage = () => {
     try {
       const authHeader = getAuthHeader();
       const plan = (Array.isArray(plans) ? plans : []).find((p) => String(p?.id) === String(planId)) || {};
-      const inr = plan?.price_inr != null ? plan.price_inr : plan?.price;
-      const amount = inr != null ? String(inr) : "";
+      const pref = getPlanPreferredPrice(plan);
+      const currency = String(pref?.currency || "INR");
+      if (currency !== "INR") throw new Error("Razorpay is only available for INR pricing.");
+      const amount = pref?.value != null ? String(pref.value) : "";
       const body = new URLSearchParams({
         plan_id: String(planId),
         payment_method: "razorpay",
         amount,
-        currency: "INR",
+        currency,
+        ...(geoCountryCode ? { country_code: String(geoCountryCode) } : {}),
       });
 
       const res = await fetch(API.SUBSCRIPTION_CHECKOUT, {
@@ -427,7 +607,7 @@ const SubscriptionPlanPage = () => {
       return;
     }
 
-    if (geoIsIndia == null) {
+    if (!geoCountryCode) {
       openGeoPromptForPlan(planId);
       return;
     }
@@ -436,7 +616,7 @@ const SubscriptionPlanPage = () => {
   };
 
   const displayPlans = useMemo(() => {
-    const list = Array.isArray(plans) && plans.length ? plans : fallbackPlans;
+    const list = Array.isArray(plans) && plans.length ? plans : useFallbackPlans ? fallbackPlans : [];
 
     const byPrice = list
       .map((p) => {
@@ -460,7 +640,7 @@ const SubscriptionPlanPage = () => {
 
     const out = filtered.length ? filtered : byPrice;
     return out.slice(0, 3);
-  }, [plans, fallbackPlans, billingMode, geoIsIndia]);
+  }, [plans, fallbackPlans, billingMode, geoIsIndia, useFallbackPlans]);
 
   const authed = useMemo(() => isAuthenticated(), []);
 
@@ -570,17 +750,30 @@ const SubscriptionPlanPage = () => {
                     type="button"
                     className="subscription-auth-modal-btn primary"
                     onClick={async () => {
-                      const next = await requestGeoIndia();
-                      if (next == null) {
+                      const countryCode = await requestGeoCountryCode();
+                      if (!countryCode) {
                         setGeoBlockReason(
                           "Location permission was not granted. Enable it in browser site settings and click 'Retry'."
                         );
                         return;
                       }
 
-                      setGeoIsIndia(next);
+                      const resolved = resolveCountryFromList(countryCode);
+                      const code = String(resolved?.code || "").trim().toUpperCase();
+                      if (!code) {
+                        setGeoBlockReason("Could not detect your country from the provided location.");
+                        return;
+                      }
+
+                      setGeoCountryCode(code);
+                      setGeoCountryMeta(resolved?.meta || null);
+                      setGeoIsIndia(code === "IN");
+                      saveGeoCountryToStorage(code);
                       setGeoPromptOpen(false);
-                      openPaymentModalForPlan(geoPromptPlanId);
+
+                      if (geoPromptPlanId) {
+                        setPendingPaymentPlanId(geoPromptPlanId);
+                      }
                     }}
                   >
                     Retry location permission
@@ -717,6 +910,28 @@ const SubscriptionPlanPage = () => {
                 <div className="row">
                   <div className="col-12">
                     <p style={{ color: "#94a3b8", textAlign: "center", marginTop: 24 }}>Loading plans...</p>
+                  </div>
+                </div>
+              ) : !geoCountryCode && !useFallbackPlans ? (
+                <div className="row">
+                  <div className="col-12">
+                    <div
+                      className="rainbow-card p-4"
+                      style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, textAlign: "center" }}
+                    >
+                      <p className="mb-2" style={{ color: "#cbd5e1" }}>
+                        Enable location to see pricing for your country.
+                      </p>
+                      <button type="button" className="subscription-plan-cta secondary" onClick={() => openGeoPromptForPlan(null)}>
+                        Enable location
+                      </button>
+
+                      {countriesState.loading ? (
+                        <div style={{ marginTop: 10, color: "#94a3b8" }}>Loading countries…</div>
+                      ) : countriesState.error ? (
+                        <div style={{ marginTop: 10, color: "#ef4444" }}>{countriesState.error}</div>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               ) : (

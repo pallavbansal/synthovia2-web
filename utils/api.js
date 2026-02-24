@@ -43,9 +43,12 @@ export const API = {
 
   PROFILE: `${BASE_URL}/profile`,
   SUBSCRIPTION_PLANS: `${BASE_URL}/subscriptions/plans`,
+  SUBSCRIPTION_PLANS_BY_COUNTRY: (countryCode) => buildQueryUrl(`${BASE_URL}/subscriptions/plans`, { country_code: countryCode }),
   ADMIN_SUBSCRIPTION_PLANS_CREATE: `${BASE_URL}/admin/subscriptions/plans`,
   ADMIN_SUBSCRIPTION_PLANS_UPDATE: (id) => `${BASE_URL}/admin/subscriptions/plans/${id}`,
   ADMIN_SUBSCRIPTION_PLANS_DELETE: (id) => `${BASE_URL}/admin/subscriptions/plans/${id}`,
+  ADMIN_SUBSCRIPTION_PLAN_DETAILS: (id) => `${BASE_URL}/admin/subscriptions/plans/${id}`,
+  ADMIN_SUBSCRIPTION_PLAN_SYNC_PRICES: (id) => `${BASE_URL}/admin/subscriptions/plans/${id}/prices`,
   SUBSCRIPTION_CHECKOUT: `${BASE_URL}/subscriptions/checkout`,
   SUBSCRIPTION_CONFIRM: `${BASE_URL}/subscriptions/confirm`,
   SUBSCRIPTION_STATUS: (subscriptionReference) =>
@@ -68,6 +71,8 @@ export const API = {
 
   USER_CREDITS: `${BASE_URL}/user/me/credits`,
   USER_TRIAL_STATUS: `${BASE_URL}/user/me/trial-status`,
+
+  COUNTRIES: `${BASE_URL}/countries`,
 
   AUTH_LOGIN: `${BASE_URL}/auth/login`,
   AUTH_GOOGLE: `${BASE_URL}/auth/google`,
