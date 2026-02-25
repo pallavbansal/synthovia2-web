@@ -71,6 +71,7 @@ export default function AdminFeedbackPage() {
   const [activeTo, setActiveTo] = useState("");
   const listFetchSeqRef = useRef(0);
   const [listState, setListState] = useState({ loading: false, error: "", items: [], pagination: null });
+  const [deleteState, setDeleteState] = useState({ loadingId: null, error: "", success: "" });
 
   useEffect(() => {
     if (!isAdminAuthenticated()) {
@@ -271,6 +272,9 @@ export default function AdminFeedbackPage() {
             >
               Next
             </button>
+
+            {!!deleteState.error && <span className={baseStyles.muted}>{deleteState.error}</span>}
+            {!!deleteState.success && <span className={baseStyles.muted}>{deleteState.success}</span>}
           </div>
 
           {listState.loading ? (
@@ -291,23 +295,61 @@ export default function AdminFeedbackPage() {
               <table className={baseStyles.table}>
                 <thead>
                   <tr>
-                    <th className={baseStyles.th}>ID</th>
                     <th className={baseStyles.th}>User</th>
                     <th className={baseStyles.th}>Email</th>
                     <th className={baseStyles.th}>Message</th>
                     <th className={baseStyles.th}>Created</th>
+                    <th className={baseStyles.th}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {listState.items.map((f) => (
                     <tr key={f?.id || Math.random()} className={baseStyles.tr}>
-                      <td className={baseStyles.td}>{safeText(f?.id)}</td>
                       <td className={baseStyles.td}>{safeText([f?.user?.first_name, f?.user?.last_name].filter(Boolean).join(" ") || f?.user?.name)}</td>
                       <td className={baseStyles.td}>{safeText(f?.user?.email)}</td>
                       <td className={baseStyles.td} style={{ maxWidth: 520 }}>
                         <div style={{ whiteSpace: "pre-wrap" }}>{safeText(f?.message)}</div>
                       </td>
                       <td className={baseStyles.td}>{formatDateTime(f?.created_at)}</td>
+                      <td className={baseStyles.td}>
+                        <button
+                          type="button"
+                          className={baseStyles.smallBtn}
+                          onClick={async () => {
+                            const id = f?.id;
+                            if (!id) return;
+                            if (!window.confirm("Delete this feedback?")) return;
+
+                            const auth = getAuthHeader();
+                            if (!auth) {
+                              setDeleteState({ loadingId: null, error: "Not authenticated.", success: "" });
+                              return;
+                            }
+
+                            setDeleteState({ loadingId: id, error: "", success: "" });
+                            try {
+                              const res = await fetch(API.ADMIN_FEEDBACK_DELETE(id), {
+                                method: "DELETE",
+                                headers: {
+                                  Accept: "application/json",
+                                  Authorization: auth,
+                                },
+                              });
+                              const json = await res.json().catch(() => null);
+                              if (!res.ok) throw new Error(json?.message || `Failed to delete (${res.status})`);
+                              if (!json || json.status_code !== 1) throw new Error(json?.message || "Failed to delete");
+
+                              setDeleteState({ loadingId: null, error: "", success: json?.data?.message || "Feedback deleted." });
+                              await fetchFeedbacks({ nextPage: paging.page, nextPerPage: perPage, nextFrom: activeFrom, nextTo: activeTo });
+                            } catch (err) {
+                              setDeleteState({ loadingId: null, error: err?.message || "Failed to delete", success: "" });
+                            }
+                          }}
+                          disabled={deleteState.loadingId != null}
+                        >
+                          {deleteState.loadingId != null && String(deleteState.loadingId) === String(f?.id) ? "Deleting…" : "Delete"}
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

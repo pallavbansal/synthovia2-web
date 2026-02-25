@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 
 import { useAppContext } from "@/context/Context";
-import { getUser, isAuthenticated, logout } from "@/utils/auth";
+import { getUser, getUserRole, isAuthenticated, isAdminRole, logout } from "@/utils/auth";
 
 import logo from "../../public/images/logo/logo.png";
 import logoDark from "../../public/images/light/logo/logo-dark.png";
@@ -20,6 +20,7 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
   const [authed, setAuthed] = useState(false);
   const [authedUser, setAuthedUser] = useState(null);
   const [profilePicture, setProfilePicture] = useState("");
+  const [adminEnabled, setAdminEnabled] = useState(false);
   const onHome = router?.pathname === "/";
 
   useEffect(() => {
@@ -47,6 +48,8 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
       const pic = (user && (user.profile_picture || user.avatar || user.picture || user.image_url)) || "";
       setProfilePicture(pic ? String(pic) : "");
       setAuthed(isAuthenticated());
+      const role = getUserRole && getUserRole();
+      setAdminEnabled(isAdminRole && isAdminRole(role));
     };
 
     readAuth();
@@ -54,8 +57,13 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
       if (!e || !e.key) return;
       if (e.key === "synthovia-auth-user" || e.key === "synthovia-auth-token") readAuth();
     };
+    const onAuthChanged = () => readAuth();
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    window.addEventListener("synthovia-auth-changed", onAuthChanged);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("synthovia-auth-changed", onAuthChanged);
+    };
   }, []);
 
   const userName = useMemo(() => {
@@ -193,7 +201,7 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
                         </div>
                         <ul className="user-list-wrapper user-nav">
                           <li>
-                            <Link href="/dashboard-overview">
+                            <Link href={adminEnabled ? "/admin/users/dashboard" : "/dashboard-overview"}>
                               <i className="fa-solid fa-gauge"></i>
                               <span>Dashboard Overview</span>
                             </Link>

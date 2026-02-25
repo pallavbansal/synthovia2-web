@@ -44,7 +44,7 @@ const NAV_ITEMS = [
 ];
 
 const ADMIN_NAV_ITEMS = [
-  { href: "/admin/users/dashboard", label: "Admin Users", iconClass: "fa-solid fa-users" },
+  { href: "/admin/users/dashboard", label: "Admin Dashboard", iconClass: "fa-solid fa-users" },
   { href: "/admin/subscriptions/plans", label: "Subscription Plans", iconClass: "fa-solid fa-clipboard-list" },
   { href: "/admin/feedback", label: "Feedback", iconClass: "fa-solid fa-comments" },
   { href: "/admin/settings", label: "Settings", iconClass: "fa-solid fa-comments" },
