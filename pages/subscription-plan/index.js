@@ -229,9 +229,16 @@ const SubscriptionPlanPage = () => {
 
   const getPlanPreferredPrice = (plan) => {
     const countryCode = String(geoCountryCode || "").trim().toUpperCase();
+    const planCountry = String(plan?.price?.country_code || "").trim().toUpperCase();
 
-    if (countryCode === "IN") {
-      const value = plan?.amount_inr ?? plan?.price_inr ?? plan?.price?.amount ?? plan?.price ?? "";
+    if (countryCode === "IN" || planCountry === "IN") {
+      const value =
+        plan?.price?.amount_inr ??
+        plan?.amount_inr ??
+        plan?.price_inr ??
+        plan?.price?.amount ??
+        plan?.price ??
+        "";
       return { currency: "INR", symbol: "₹", value };
     }
 
@@ -416,13 +423,13 @@ const SubscriptionPlanPage = () => {
     try {
       const authHeader = getAuthHeader();
       const plan = (Array.isArray(plans) ? plans : []).find((p) => String(p?.id) === String(planId)) || {};
-      const pref = getPlanPreferredPrice(plan);
-      const amount = pref?.value != null ? String(pref.value) : "";
+      const basePrice = plan?.price || {};
+      const amount = basePrice?.amount != null ? String(basePrice.amount) : String(plan?.price ?? "");
       const body = new URLSearchParams({
         plan_id: String(planId),
         payment_method: "paypal",
         amount,
-        currency: String(pref?.currency || "USD"),
+        currency: String(basePrice?.currency || "USD"),
         ...(geoCountryCode ? { country_code: String(geoCountryCode) } : {}),
       });
 

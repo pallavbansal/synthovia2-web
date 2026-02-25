@@ -85,6 +85,8 @@ const AdminUsersPage = () => {
   const router = useRouter();
   const [guardError, setGuardError] = useState("");
 
+  const [metrics, setMetrics] = useState({ loading: false, error: "", data: null });
+
   const [queryDraft, setQueryDraft] = useState("");
   const [query, setQuery] = useState("");
 
@@ -103,6 +105,39 @@ const AdminUsersPage = () => {
     } else {
       setGuardError("");
     }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchMetrics = async () => {
+      const auth = getAuthHeader();
+      if (!auth) return;
+
+      setMetrics({ loading: true, error: "", data: null });
+      try {
+        const res = await fetch(API.ADMIN_SUBSCRIPTION_METRICS, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: auth,
+          },
+        });
+
+        const json = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(json?.message || `Failed to load metrics (${res.status})`);
+        if (!json || json.status_code !== 1) throw new Error(json?.message || "Failed to load metrics");
+
+        if (!cancelled) setMetrics({ loading: false, error: "", data: json });
+      } catch (err) {
+        if (!cancelled) setMetrics({ loading: false, error: err?.message || "Failed to load metrics", data: null });
+      }
+    };
+
+    fetchMetrics();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const fetchUsers = async ({ nextPage = page, nextQuery = query, nextSortBy = sortBy, nextSortDir = sortDir } = {}) => {
@@ -375,6 +410,41 @@ const AdminUsersPage = () => {
             >
               Manage Subscription Plans
             </button>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 12, marginTop: 12 }}>
+        <div className={baseStyles.card}>
+          <div style={{ fontSize: 12, fontWeight: 900, color: "rgba(255,255,255,0.7)" }}>Total Active Users</div>
+          <div style={{ marginTop: 6, fontSize: 22, fontWeight: 900 }}>
+            {metrics.loading ? "…" : metrics.data?.total_active_users ?? 0}
+          </div>
+          {metrics.error ? (
+            <div className={baseStyles.muted} style={{ marginTop: 6 }}>{metrics.error}</div>
+          ) : null}
+        </div>
+
+        <div className={baseStyles.card}>
+          <div style={{ fontSize: 12, fontWeight: 900, color: "rgba(255,255,255,0.7)" }}>Total Active Paid Users</div>
+          <div style={{ marginTop: 6, fontSize: 22, fontWeight: 900 }}>
+            {metrics.loading ? "…" : metrics.data?.total_active_paid_users ?? 0}
+          </div>
+          {metrics.error ? (
+            <div className={baseStyles.muted} style={{ marginTop: 6 }}>{metrics.error}</div>
+          ) : null}
+        </div>
+
+        <div className={baseStyles.card}>
+          <div style={{ fontSize: 12, fontWeight: 900, color: "rgba(255,255,255,0.7)" }}>Most Bought Plan</div>
+          <div style={{ marginTop: 6, fontSize: 16, fontWeight: 900 }}>
+            {metrics.loading ? "…" : metrics.data?.most_bought_plan?.name || "—"}
+          </div>
+          <div className={baseStyles.muted} style={{ marginTop: 4 }}>
+            {metrics.loading ? "" : (() => {
+              const c = metrics.data?.most_bought_plan?.purchase_count;
+              return c != null ? `${c} purchases` : "";
+            })()}
           </div>
         </div>
       </div>

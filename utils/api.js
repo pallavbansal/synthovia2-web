@@ -44,6 +44,9 @@ export const API = {
   PROFILE: `${BASE_URL}/profile`,
   SUBSCRIPTION_PLANS: `${BASE_URL}/subscriptions/plans`,
   SUBSCRIPTION_PLANS_BY_COUNTRY: (countryCode) => buildQueryUrl(`${BASE_URL}/subscriptions/plans`, { country_code: countryCode }),
+  ADMIN_SUBSCRIPTION_PLANS: ({ perPage = 15, page = 1, countryCode } = {}) =>
+    buildQueryUrl(`${BASE_URL}/admin/subscriptions/plans`, { per_page: perPage, page, country_code: countryCode }),
+  ADMIN_SUBSCRIPTION_METRICS: `${BASE_URL}/admin/subscriptions/metrics`,
   ADMIN_SUBSCRIPTION_PLANS_CREATE: `${BASE_URL}/admin/subscriptions/plans`,
   ADMIN_SUBSCRIPTION_PLANS_UPDATE: (id) => `${BASE_URL}/admin/subscriptions/plans/${id}`,
   ADMIN_SUBSCRIPTION_PLANS_DELETE: (id) => `${BASE_URL}/admin/subscriptions/plans/${id}`,
@@ -117,6 +120,7 @@ export const API = {
   ADMIN_USER_DELETE: (id) => `${BASE_URL}/admin/users/${id}`,
   ADMIN_FEEDBACK: ({ perPage = 15, page = 1, from, to } = {}) =>
     buildQueryUrl(`${BASE_URL}/admin/feedback`, { per_page: perPage, page, from, to }),
+  ADMIN_FEEDBACK_DELETE: (id) => `${BASE_URL}/admin/feedback/${id}`,
   ADMIN_TOOLS_HISTORY: ({ toolName, userId, perPage = 100, page = 1, from, to } = {}) =>
     buildQueryUrl(`${BASE_URL}/admin/tools/history`, {
       tool_name: toolName,

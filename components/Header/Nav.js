@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import Link from "next/link";
 
 import MenuData from "../../data/header.json";
+import { getUserRole, isAdminRole } from "@/utils/auth";
 
 import NavProps from "./NavProps";
 import menuImg from "../../public/images/menu-img/menu-img-2.png";
@@ -15,6 +16,32 @@ const Nav = () => {
     Tools: true,
     Pages: true,
   });
+  const [adminEnabled, setAdminEnabled] = useState(false);
+
+  useEffect(() => {
+    const readRole = () => {
+      try {
+        const role = getUserRole && getUserRole();
+        setAdminEnabled(isAdminRole && isAdminRole(role));
+      } catch (e) {
+        setAdminEnabled(false);
+      }
+    };
+
+    readRole();
+    const onAuthChanged = () => readRole();
+    const onStorage = (e) => {
+      if (!e || !e.key) return;
+      if (e.key === "synthovia-auth-user" || e.key === "synthovia-auth-token") readRole();
+    };
+
+    window.addEventListener("synthovia-auth-changed", onAuthChanged);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("synthovia-auth-changed", onAuthChanged);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
 
   const toggleSection = (subTitle) => {
     setSectionStates((prevState) => ({
@@ -53,7 +80,7 @@ const Nav = () => {
                 </a>
               ) : (
                 <Link
-                  href={data.link}
+                  href={adminEnabled && data.link === "/dashboard-overview" ? "/admin/users/dashboard" : data.link}
                   className={isActive(data.link) ? "active" : ""}
                 >
                   {data.text}
@@ -81,7 +108,13 @@ const Nav = () => {
                           className={`${
                             isActive(innerData.link) ? "active" : ""
                           } ${innerData.isDisable ? "disabled" : ""}`}
-                          href={!innerData.isDisable ? innerData.link : "#"}
+                          href={
+                            !innerData.isDisable
+                              ? adminEnabled && innerData.link === "/dashboard-overview"
+                                ? "/admin/users/dashboard"
+                                : innerData.link
+                              : "#"
+                          }
                         >
                           <span>{innerData.title}</span>
                           {innerData.badge ? (
