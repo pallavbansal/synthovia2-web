@@ -1,5 +1,5 @@
 import { Router } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Loading from "./loading";
 
@@ -23,12 +23,77 @@ import { CreditsProvider } from "@/components/CreditsContext";
 export default function App({ Component, pageProps }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const loadingTimeoutRef = useRef(null);
+
+  const cleanupOverlays = () => {
+    try {
+      const doc = document;
+      // Remove any lingering Bootstrap/third-party backdrops
+      const selectors = [
+        ".modal-backdrop",
+        ".offcanvas-backdrop",
+        ".vbox-overlay",
+        ".venobox",
+        ".mfp-bg",
+        ".mfp-wrap",
+      ];
+      selectors.forEach((sel) => {
+        doc.querySelectorAll(sel).forEach((el) => {
+          if (el && el.parentNode) el.parentNode.removeChild(el);
+        });
+      });
+
+      // Force-close any shown Bootstrap modals/offcanvas that might have been left mounted.
+      try {
+        doc.querySelectorAll(".modal.show, .offcanvas.show").forEach((el) => {
+          el.classList.remove("show");
+          el.setAttribute("aria-hidden", "true");
+          el.removeAttribute("aria-modal");
+          try {
+            el.style.display = "none";
+          } catch {}
+        });
+      } catch {}
+
+      // Unlock body scroll if it was locked by a modal/offcanvas
+      if (doc.body) {
+        doc.body.classList.remove("modal-open", "offcanvas-open");
+        try {
+          doc.body.style.overflow = "";
+          doc.body.style.paddingRight = "";
+        } catch {}
+      }
+    } catch {}
+  };
 
   useEffect(() => {
     require("bootstrap/dist/js/bootstrap.bundle.min.js");
 
-    const handleStart = (url) => url !== Router.asPath && setLoading(true);
-    const handleComplete = () => setLoading(false);
+    const clearLoadingTimeout = () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
+    };
+
+    const handleStart = (url) => {
+      if (url !== Router.asPath) {
+        setLoading(true);
+        clearLoadingTimeout();
+        // Fallback: auto-clear loading if Next.js events don't fire as expected
+        loadingTimeoutRef.current = setTimeout(() => {
+          setLoading(false);
+          cleanupOverlays();
+        }, 10000);
+      }
+    };
+
+    const handleComplete = () => {
+      clearLoadingTimeout();
+      setLoading(false);
+      // Ensure any stuck overlays/backdrops are removed after navigation
+      cleanupOverlays();
+    };
 
     Router.events.on("routeChangeStart", handleStart);
     Router.events.on("routeChangeComplete", handleComplete);
@@ -38,8 +103,19 @@ export default function App({ Component, pageProps }) {
       Router.events.off("routeChangeStart", handleStart);
       Router.events.off("routeChangeComplete", handleComplete);
       Router.events.off("routeChangeError", handleComplete);
+      clearLoadingTimeout();
     };
   }, []);
+
+  // Deterministic recovery: whenever Next.js updates the URL, we should not be stuck behind a loader/backdrop.
+  useEffect(() => {
+    // Defer to allow the new page to mount first.
+    const t = setTimeout(() => {
+      setLoading(false);
+      cleanupOverlays();
+    }, 0);
+    return () => clearTimeout(t);
+  }, [router.asPath]);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -93,6 +169,36 @@ export default function App({ Component, pageProps }) {
       router.replace(isAdminAuthenticated() ? "/admin/users/dashboard" : "/dashboard-overview");
     }
   }, [router.isReady, router.pathname]);
+
+  // When returning to the tab, also run an overlay cleanup in case a third-party backdrop got stuck
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        setLoading(false);
+        cleanupOverlays();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
+
+  // Some browsers/app flows recover only on focus/pageshow; treat those the same as visibility recovery.
+  useEffect(() => {
+    const onFocus = () => {
+      setLoading(false);
+      cleanupOverlays();
+    };
+    const onPageShow = () => {
+      setLoading(false);
+      cleanupOverlays();
+    };
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("pageshow", onPageShow);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("pageshow", onPageShow);
+    };
+  }, []);
 
   return (
     <CreditsProvider>
