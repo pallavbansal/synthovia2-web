@@ -70,6 +70,7 @@ const normalizePlan = (p) => {
     credits: p.credits ?? "",
     description: p.description ?? "",
     is_active: asBool(p.is_active ?? p.active),
+    price: typeof p.price === "object" && p.price ? p.price : null,
   };
 };
 
@@ -521,19 +522,20 @@ const AdminSubscriptionPlansPage = () => {
                 <th className={baseStyles.th}>Plan</th>
                 <th className={baseStyles.th}>Credits</th>
                 <th className={baseStyles.th}>Billing</th>
+                {appliedCountry ? <th className={baseStyles.th}>Price</th> : null}
                 <th className={baseStyles.th}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {listState.loading ? (
                 <tr>
-                  <td className={baseStyles.td} colSpan={4}>
+                  <td className={baseStyles.td} colSpan={4 + (appliedCountry ? 1 : 0)}>
                     <span className={baseStyles.muted}>Loading…</span>
                   </td>
                 </tr>
               ) : listState.error ? (
                 <tr>
-                  <td className={baseStyles.td} colSpan={4}>
+                  <td className={baseStyles.td} colSpan={4 + (appliedCountry ? 1 : 0)}>
                     <span className={baseStyles.muted}>{listState.error}</span>
                     <div style={{ marginTop: 10 }}>
                       <button type="button" className={baseStyles.smallBtn} onClick={fetchPlans}>
@@ -544,7 +546,7 @@ const AdminSubscriptionPlansPage = () => {
                 </tr>
               ) : !listState.items.length ? (
                 <tr>
-                  <td className={baseStyles.td} colSpan={4}>
+                  <td className={baseStyles.td} colSpan={4 + (appliedCountry ? 1 : 0)}>
                     <span className={baseStyles.muted}>No plans found.</span>
                   </td>
                 </tr>
@@ -559,6 +561,16 @@ const AdminSubscriptionPlansPage = () => {
                     </td>
                     <td className={baseStyles.td}>{safeText(p.credits)}</td>
                     <td className={baseStyles.td}>{safeText(p.billing_period)}</td>
+                    {appliedCountry ? (
+                      <td className={baseStyles.td}>
+                        {(() => {
+                          const price = p.price || null;
+                          const isIN = String(appliedCountry || "").trim().toUpperCase() === "IN";
+                          const val = price ? (isIN ? price.amount_inr : price.amount) : null;
+                          return safeText(val);
+                        })()}
+                      </td>
+                    ) : null}
                     <td className={baseStyles.td}>
                       <div className={styles.actionsRow} style={{ marginTop: 0 }}>
                         <button type="button" className={baseStyles.smallBtn} onClick={() => router.push(`/admin/subscriptions/plans/${p.id}`)}>
