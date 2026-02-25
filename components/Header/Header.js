@@ -95,6 +95,8 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
     router.replace("/signin");
   };
 
+  const hideCreditsOnThisPage = router?.pathname === "/subscription-plan" && !authed;
+
   return (
     <>
       {/* <DarkSwitch isLight={isLightTheme} switchTheme={toggleTheme} /> */}
@@ -148,8 +150,7 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
 
             <div className="col-lg-2 col-md-6 col-6 position-static">
               <div className="header-right d-flex align-items-center justify-content-end" style={{ gap: 10 }}>
-                {/* Desktop credits badge (hidden on home page) */}
-                {!onHome && <CreditsBadge className="me-2" />}
+                {!onHome && !hideCreditsOnThisPage && <CreditsBadge className="me-2" />}
                 {isClient && authed ? (
                   <div className="rbt-admin-panel account-access rbt-user-wrapper right-align-dropdown">
                     <div className="rbt-admin-card grid-style">
