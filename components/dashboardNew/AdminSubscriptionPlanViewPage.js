@@ -51,6 +51,15 @@ const AdminSubscriptionPlanViewPage = () => {
   const [countryToAdd, setCountryToAdd] = useState("");
   const countrySelectTouchedRef = useRef(false);
 
+  const countryLabelByCode = (code) => {
+    const raw = String(code || "").trim();
+    if (!raw) return "—";
+    const hit = (countriesState.items || []).find((c) => String(c?.code || "").toUpperCase() === raw.toUpperCase());
+    const name = hit?.name ? safeText(hit.name) : "";
+    const cc = hit?.code ? safeText(hit.code) : safeText(raw);
+    return name ? `${name} (${cc})` : cc;
+  };
+
   const toggleCountryCode = (code) => {
     if (!code) return;
     countrySelectTouchedRef.current = true;
@@ -341,7 +350,7 @@ const AdminSubscriptionPlanViewPage = () => {
                       title="Remove"
                       style={{ cursor: "pointer" }}
                     >
-                      {safeText(code)} ×
+                      {countryLabelByCode(code)} ×
                     </button>
                   ))
                 ) : (
