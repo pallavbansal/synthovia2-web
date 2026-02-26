@@ -473,14 +473,26 @@ const SubscriptionPlanPage = () => {
       const basePrice = plan?.price || {};
       const amount = basePrice?.amount != null ? String(basePrice.amount) : String(plan?.price ?? "");
       const geo = await collectClientGeo();
-      const body = new URLSearchParams({
-        plan_id: String(planId),
-        payment_method: "paypal",
-        amount,
-        currency: String(basePrice?.currency || "USD"),
-        ...(geoCountryCode ? { country_code: String(geoCountryCode) } : {}),
-        geo: JSON.stringify(geo),
-      });
+      const body = new URLSearchParams();
+      body.set("plan_id", String(planId));
+      body.set("payment_method", "paypal");
+      body.set("amount", amount);
+      body.set("currency", String(basePrice?.currency || "USD"));
+      if (geoCountryCode) body.set("country_code", String(geoCountryCode));
+      body.set("geo", JSON.stringify(geo || {}));
+      try {
+        if (geo && typeof geo === "object") {
+          if (geo.ip) body.set("geo_ip", String(geo.ip));
+          if (geo.country_code) body.set("geo_country_code", String(geo.country_code));
+          if (geo.country_name) body.set("geo_country_name", String(geo.country_name));
+          if (geo.region) body.set("geo_region", String(geo.region));
+          if (geo.city) body.set("geo_city", String(geo.city));
+          if (Number.isFinite(geo.lat)) body.set("geo_lat", String(geo.lat));
+          if (Number.isFinite(geo.lon)) body.set("geo_lon", String(geo.lon));
+          if (geo.source) body.set("geo_source", String(geo.source));
+        }
+      } catch {}
+      try { console.log("[checkout] paypal payload:", Object.fromEntries(body)); } catch {}
 
       const res = await fetch(API.SUBSCRIPTION_CHECKOUT, {
         method: "POST",
@@ -539,14 +551,26 @@ const SubscriptionPlanPage = () => {
       if (currency !== "INR") throw new Error("Razorpay is only available for INR pricing.");
       const amount = pref?.value != null ? String(pref.value) : "";
       const geo = await collectClientGeo();
-      const body = new URLSearchParams({
-        plan_id: String(planId),
-        payment_method: "razorpay",
-        amount,
-        currency,
-        ...(geoCountryCode ? { country_code: String(geoCountryCode) } : {}),
-        geo: JSON.stringify(geo),
-      });
+      const body = new URLSearchParams();
+      body.set("plan_id", String(planId));
+      body.set("payment_method", "razorpay");
+      body.set("amount", amount);
+      body.set("currency", currency);
+      if (geoCountryCode) body.set("country_code", String(geoCountryCode));
+      body.set("geo", JSON.stringify(geo || {}));
+      try {
+        if (geo && typeof geo === "object") {
+          if (geo.ip) body.set("geo_ip", String(geo.ip));
+          if (geo.country_code) body.set("geo_country_code", String(geo.country_code));
+          if (geo.country_name) body.set("geo_country_name", String(geo.country_name));
+          if (geo.region) body.set("geo_region", String(geo.region));
+          if (geo.city) body.set("geo_city", String(geo.city));
+          if (Number.isFinite(geo.lat)) body.set("geo_lat", String(geo.lat));
+          if (Number.isFinite(geo.lon)) body.set("geo_lon", String(geo.lon));
+          if (geo.source) body.set("geo_source", String(geo.source));
+        }
+      } catch {}
+      try { console.log("[checkout] razorpay payload:", Object.fromEntries(body)); } catch {}
 
       const res = await fetch(API.SUBSCRIPTION_CHECKOUT, {
         method: "POST",
