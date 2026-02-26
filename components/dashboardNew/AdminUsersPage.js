@@ -605,6 +605,7 @@ const AdminUsersPage = () => {
                   <th className={baseStyles.th}>Status</th>
                   <th className={baseStyles.th}>Credits</th>
                   <th className={baseStyles.th}>Subscription</th>
+                  <th className={baseStyles.th}>Geo</th>
                   <th className={baseStyles.th}>Last activity</th>
                   <th className={baseStyles.th}>Registered at</th>
                   <th className={baseStyles.th}>Actions</th>
@@ -613,13 +614,13 @@ const AdminUsersPage = () => {
               <tbody>
                 {listState.loading ? (
                   <tr>
-                    <td className={baseStyles.td} colSpan={8}>
+                    <td className={baseStyles.td} colSpan={9}>
                       <span className={baseStyles.muted}>Loading…</span>
                     </td>
                   </tr>
                 ) : listState.error ? (
                   <tr>
-                    <td className={baseStyles.td} colSpan={8}>
+                    <td className={baseStyles.td} colSpan={9}>
                       <span className={baseStyles.muted}>{listState.error}</span>
                       <div style={{ marginTop: 10 }}>
                         <button type="button" className={baseStyles.smallBtn} onClick={() => fetchUsers({ nextPage: page })}>
@@ -630,7 +631,7 @@ const AdminUsersPage = () => {
                   </tr>
                 ) : !listState.items.length ? (
                   <tr>
-                    <td className={baseStyles.td} colSpan={8}>
+                    <td className={baseStyles.td} colSpan={9}>
                       <span className={baseStyles.muted}>No users found.</span>
                     </td>
                   </tr>
@@ -645,6 +646,7 @@ const AdminUsersPage = () => {
                         : planRaw || "—";
                     const lastAct = u?.last_activity;
                     const registeredAt = u?.registered_at ?? u?.created_at;
+                    const geo = u?.subscription?.geo || null;
 
                     return (
                       <tr key={u?.id} className={baseStyles.tr}>
@@ -675,6 +677,25 @@ const AdminUsersPage = () => {
                           <div className={baseStyles.muted} style={{ marginTop: 4 }}>
                             {u?.subscription?.active ? "Active" : "Inactive"}
                           </div>
+                        </td>
+                        <td className={baseStyles.td}>
+                          {geo ? (
+                            <div>
+                              <div style={{ fontWeight: 900 }}>
+                                {safeText(geo?.country_name)}{geo?.country_code ? ` (${safeText(geo.country_code)})` : ""}
+                              </div>
+                              <div className={baseStyles.muted} style={{ marginTop: 4 }}>
+                                {(() => {
+                                  const loc = [geo?.city, geo?.region].filter(Boolean).join(", ");
+                                  const ip = geo?.ip ? String(geo.ip) : "";
+                                  if (loc && ip) return `${loc} • ${ip}`;
+                                  return loc || ip || "";
+                                })()}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className={baseStyles.muted}>—</span>
+                          )}
                         </td>
                         <td className={baseStyles.td}>
                           {lastAct ? (
