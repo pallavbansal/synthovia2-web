@@ -90,6 +90,11 @@ const AdminUsersPage = () => {
   const [queryDraft, setQueryDraft] = useState("");
   const [query, setQuery] = useState("");
 
+  const [registeredFromDraft, setRegisteredFromDraft] = useState("");
+  const [registeredToDraft, setRegisteredToDraft] = useState("");
+  const [registeredFrom, setRegisteredFrom] = useState("");
+  const [registeredTo, setRegisteredTo] = useState("");
+
   const [sortBy, setSortBy] = useState("id");
   const [sortDir, setSortDir] = useState("desc");
 
@@ -140,7 +145,14 @@ const AdminUsersPage = () => {
     };
   }, []);
 
-  const fetchUsers = async ({ nextPage = page, nextQuery = query, nextSortBy = sortBy, nextSortDir = sortDir } = {}) => {
+  const fetchUsers = async ({
+    nextPage = page,
+    nextQuery = query,
+    nextSortBy = sortBy,
+    nextSortDir = sortDir,
+    nextRegisteredFrom = registeredFrom,
+    nextRegisteredTo = registeredTo,
+  } = {}) => {
     const auth = getAuthHeader();
     if (!auth) {
       setListState({ loading: false, error: "Not authenticated.", items: [], pagination: null });
@@ -157,6 +169,8 @@ const AdminUsersPage = () => {
         sortBy: nextSortBy,
         sortDir: nextSortDir,
         q: nextQuery || undefined,
+        registeredFrom: nextRegisteredFrom || undefined,
+        registeredTo: nextRegisteredTo || undefined,
       });
 
       const res = await fetch(url, {
@@ -202,7 +216,7 @@ const AdminUsersPage = () => {
 
   useEffect(() => {
     fetchUsers({ nextPage: page });
-  }, [page, sortBy, sortDir, query]);
+  }, [page, sortBy, sortDir, query, registeredFrom, registeredTo]);
 
   const listPaging = listState.pagination || {
     page,
@@ -231,6 +245,20 @@ const AdminUsersPage = () => {
     setQueryDraft("");
     setPage(1);
     setQuery("");
+  };
+
+  const handleApplyDateRange = () => {
+    setPage(1);
+    setRegisteredFrom(registeredFromDraft);
+    setRegisteredTo(registeredToDraft);
+  };
+
+  const handleClearDateRange = () => {
+    setRegisteredFromDraft("");
+    setRegisteredToDraft("");
+    setPage(1);
+    setRegisteredFrom("");
+    setRegisteredTo("");
   };
 
   const doUpdateUser = async () => {
@@ -483,6 +511,40 @@ const AdminUsersPage = () => {
                 </button>
               </div>
 
+              <div className={styles.searchRow}>
+                <label className={baseStyles.muted} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                  From
+                  <input
+                    className={styles.searchInput}
+                    style={{ width: 170 }}
+                    type="date"
+                    value={registeredFromDraft}
+                    onChange={(e) => setRegisteredFromDraft(e.target.value)}
+                  />
+                </label>
+                <label className={baseStyles.muted} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                  To
+                  <input
+                    className={styles.searchInput}
+                    style={{ width: 170 }}
+                    type="date"
+                    value={registeredToDraft}
+                    onChange={(e) => setRegisteredToDraft(e.target.value)}
+                  />
+                </label>
+                <button type="button" className={baseStyles.smallBtn} onClick={handleApplyDateRange} disabled={listState.loading}>
+                  Apply
+                </button>
+                <button
+                  type="button"
+                  className={baseStyles.smallBtn}
+                  onClick={handleClearDateRange}
+                  disabled={listState.loading && !(registeredFrom || registeredTo)}
+                >
+                  Clear
+                </button>
+              </div>
+
               <label className={baseStyles.muted} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                 Sort
                 <select className={baseStyles.select} value={sortBy} onChange={(e) => {
@@ -544,19 +606,20 @@ const AdminUsersPage = () => {
                   <th className={baseStyles.th}>Credits</th>
                   <th className={baseStyles.th}>Subscription</th>
                   <th className={baseStyles.th}>Last activity</th>
+                  <th className={baseStyles.th}>Registered at</th>
                   <th className={baseStyles.th}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {listState.loading ? (
                   <tr>
-                    <td className={baseStyles.td} colSpan={7}>
+                    <td className={baseStyles.td} colSpan={8}>
                       <span className={baseStyles.muted}>Loading…</span>
                     </td>
                   </tr>
                 ) : listState.error ? (
                   <tr>
-                    <td className={baseStyles.td} colSpan={7}>
+                    <td className={baseStyles.td} colSpan={8}>
                       <span className={baseStyles.muted}>{listState.error}</span>
                       <div style={{ marginTop: 10 }}>
                         <button type="button" className={baseStyles.smallBtn} onClick={() => fetchUsers({ nextPage: page })}>
@@ -567,7 +630,7 @@ const AdminUsersPage = () => {
                   </tr>
                 ) : !listState.items.length ? (
                   <tr>
-                    <td className={baseStyles.td} colSpan={7}>
+                    <td className={baseStyles.td} colSpan={8}>
                       <span className={baseStyles.muted}>No users found.</span>
                     </td>
                   </tr>
@@ -581,6 +644,7 @@ const AdminUsersPage = () => {
                         ? planRaw?.name ?? planRaw?.title ?? "—"
                         : planRaw || "—";
                     const lastAct = u?.last_activity;
+                    const registeredAt = u?.registered_at ?? u?.created_at;
 
                     return (
                       <tr key={u?.id} className={baseStyles.tr}>
@@ -624,6 +688,7 @@ const AdminUsersPage = () => {
                             <span className={baseStyles.muted}>—</span>
                           )}
                         </td>
+                        <td className={baseStyles.td}>{formatDateTime(registeredAt)}</td>
                         <td className={baseStyles.td}>
                           <button
                             type="button"
