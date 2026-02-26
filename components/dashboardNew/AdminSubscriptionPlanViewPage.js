@@ -48,6 +48,7 @@ const AdminSubscriptionPlanViewPage = () => {
 
   const [syncForm, setSyncForm] = useState({ countryCodes: [], price: "" });
   const [syncState, setSyncState] = useState({ loading: false, error: "", success: "" });
+  const [countryToAdd, setCountryToAdd] = useState("");
   const countrySelectTouchedRef = useRef(false);
 
   const toggleCountryCode = (code) => {
@@ -297,33 +298,56 @@ const AdminSubscriptionPlanViewPage = () => {
           <div className={planStyles.formGrid}>
             <label className={planStyles.field}>
               <span className={baseStyles.muted}>Countries</span>
-              <select
-                className={baseStyles.select}
-                multiple
-                value={syncForm.countryCodes}
-                onChange={(e) => {
-                  countrySelectTouchedRef.current = true;
-                  setSyncForm((p) => ({
-                    ...p,
-                    countryCodes: Array.from(e.target.selectedOptions).map((o) => o.value),
-                  }));
-                }}
-                style={{ minHeight: 140 }}
-              >
-                {countriesState.items.map((c) => (
-                  <option
-                    key={c.code}
-                    value={c.code}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      toggleCountryCode(c.code);
-                    }}
-                  >
-                    {`${safeText(c.name)} (${safeText(c.code)} - ${safeText(c.currency)})`}
-                  </option>
-                ))}
-              </select>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 10, alignItems: "center" }}>
+                <select
+                  className={baseStyles.select}
+                  value={countryToAdd}
+                  onChange={(e) => setCountryToAdd(e.target.value)}
+                  disabled={countriesState.loading}
+                >
+                  <option value="">Select a country…</option>
+                  {countriesState.items.map((c) => (
+                    <option
+                      key={c.code}
+                      value={c.code}
+                      disabled={(syncForm.countryCodes || []).includes(c.code)}
+                    >
+                      {`${(syncForm.countryCodes || []).includes(c.code) ? "✓ " : ""}${safeText(c.name)} (${safeText(c.code)} - ${safeText(c.currency)})`}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className={baseStyles.smallBtn}
+                  onClick={() => {
+                    if (!countryToAdd) return;
+                    toggleCountryCode(countryToAdd);
+                    setCountryToAdd("");
+                  }}
+                  disabled={!countryToAdd || countriesState.loading || (syncForm.countryCodes || []).includes(countryToAdd)}
+                >
+                  Add
+                </button>
+              </div>
+
+              <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {(Array.isArray(syncForm.countryCodes) ? syncForm.countryCodes : []).length ? (
+                  (syncForm.countryCodes || []).map((code) => (
+                    <button
+                      key={code}
+                      type="button"
+                      className={baseStyles.badge}
+                      onClick={() => toggleCountryCode(code)}
+                      title="Remove"
+                      style={{ cursor: "pointer" }}
+                    >
+                      {safeText(code)} ×
+                    </button>
+                  ))
+                ) : (
+                  <span className={baseStyles.muted}>No countries selected.</span>
+                )}
+              </div>
             </label>
 
             <label className={planStyles.field}>
