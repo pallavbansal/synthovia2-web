@@ -89,7 +89,7 @@ export const API = {
 
   FEEDBACK_SUBMIT: `${BASE_URL}/feedback`,
 
-  ADMIN_USERS: ({ perPage = 15, page = 1, sortBy = "id", sortDir = "desc", role, q } = {}) =>
+  ADMIN_USERS: ({ perPage = 15, page = 1, sortBy = "id", sortDir = "desc", role, q, registeredFrom, registeredTo } = {}) =>
     buildQueryUrl(`${BASE_URL}/admin/users`, {
       per_page: perPage,
       page,
@@ -97,6 +97,8 @@ export const API = {
       sort_dir: sortDir,
       role,
       q,
+      registered_from: registeredFrom,
+      registered_to: registeredTo,
     }),
   ADMIN_USER_DETAILS: (id) => `${BASE_URL}/admin/users/${id}`,
   ADMIN_USER_SUBSCRIPTION_HISTORY: ({ id, perPage = 15, page = 1 } = {}) =>
