@@ -103,13 +103,6 @@ const defaultFieldOptions = {
         { id: 4, key: 'minimal', label: 'Minimal' },
         { id: 5, key: 'colorful', label: 'Colorful' },
     ],
-    languages: [
-        { id: 1, key: 'en', label: 'English' },
-        { id: 2, key: 'hi', label: 'Hindi' },
-        { id: 3, key: 'es', label: 'Spanish' },
-        { id: 4, key: 'fr', label: 'French' },
-        { id: 5, key: 'de', label: 'German' },
-    ],
     textLengths: [
         { id: 1, key: 'short', label: 'Short' },
         { id: 2, key: 'medium', label: 'Medium' },
@@ -172,10 +165,6 @@ const ScriptStoryWriterTool = () => {
         visualToneCustom: '',
 
         complianceMode: '',
-
-        language: '',
-        languageMode: 'predefined',
-        languageCustom: '',
 
         customInstructions: '',
 
@@ -245,7 +234,6 @@ const ScriptStoryWriterTool = () => {
                     hookStyles: normalize(data.hook_style),
                     ctaTypes: normalize(data.cta_type),
                     visualTones: normalize(data.visual_tone),
-                    languages: normalize(data.language_locale),
                     outputFormats: normalize(data.output_format).map((v) => ({
                         ...v,
                         key: v.key || String(v.id),
@@ -261,18 +249,6 @@ const ScriptStoryWriterTool = () => {
 
                 setFormData((prev) => {
                     let next = { ...prev };
-
-                    if (prev.languageMode !== 'custom') {
-                        const currentLanguageId = prev.language;
-                        const hasCurrentLanguage = nextFieldOptions.languages.some(
-                            (opt) => String(opt.id) === String(currentLanguageId)
-                        );
-
-                        if (!hasCurrentLanguage) {
-                            const firstId = nextFieldOptions.languages?.[0]?.id;
-                            next.language = firstId ? String(firstId) : prev.language;
-                        }
-                    }
 
                     if (prev.textLengthMode !== 'custom') {
                         const defaultTextLength = nextFieldOptions.textLengths?.[0]?.key || '';
@@ -670,12 +646,6 @@ const ScriptStoryWriterTool = () => {
             if (!String(formData.tone || '').trim()) missing.push('Tone');
         }
 
-        if (formData.scriptStyleMode === 'custom') {
-            if (!String(formData.scriptStyleCustom || '').trim()) missing.push('Script Style');
-        } else {
-            if (!String(formData.scriptStyle || '').trim()) missing.push('Script Style');
-        }
-
         if (formData.textLengthMode === 'custom') {
             const parsed = parseInt(formData.textLengthCustom, 10);
             if (!Number.isFinite(parsed) || parsed < 1 || parsed > 1000) missing.push('Text Length');
@@ -742,14 +712,6 @@ const ScriptStoryWriterTool = () => {
                 value: opt?.label ?? (valueKey || ''),
             };
         };
-
-        const selectedLanguage =
-            formData.languageMode === 'custom'
-                ? { type: 'custom', id: null, value: formData.languageCustom || '' }
-                : (() => {
-                    const opt = (fieldOptions.languages || []).find((o) => String(o.id) === String(formData.language));
-                    return { type: 'predefined', id: opt?.id ?? null, value: opt?.label ?? '' };
-                })();
 
         const outputFormatObj = buildSelectObject({
             mode: 'predefined',
@@ -837,7 +799,6 @@ const ScriptStoryWriterTool = () => {
                 options: fieldOptions.visualTones,
             }),
             compliance_mode: formData.complianceMode,
-            language_locale: selectedLanguage,
             output_format: outputFormatObj,
             include_metadata: false,
             variants_count: isFreeTrial ? 1 : Math.max(1, parseInt(formData.variantsCount || 1, 10)),
@@ -1396,9 +1357,6 @@ const ScriptStoryWriterTool = () => {
             visualToneMode: 'predefined',
             visualToneCustom: '',
             complianceMode: '',
-            language: '',
-            languageMode: 'predefined',
-            languageCustom: '',
             customInstructions: '',
 
             showAdvanced: false,
@@ -1682,77 +1640,6 @@ const ScriptStoryWriterTool = () => {
                                                             </div>
                                                         </div>
 
-                                                        <div className="col-md-6">
-                                                            <div style={styles.formGroup}>
-                                                                <label style={styles.label}>
-                                                                    Script Style <span style={{ color: '#ef4444' }}>*</span>
-                                                                    <span style={styles.infoIcon} data-tooltip-id="scriptStyle-tooltip" data-tooltip-content="Select the structure/style of the script (or switch to Custom to type your own).">i</span>
-                                                                </label>
-
-                                                                <Tooltip style={styles.toolTip} id="scriptStyle-tooltip" />
-
-                                                                {renderModeToggle('scriptStyleMode', (mode) => {
-                                                                    if (mode === 'custom') {
-                                                                        setFormData((prev) => ({
-                                                                            ...prev,
-                                                                            scriptStyleMode: 'custom',
-                                                                            scriptStyle: '',
-                                                                        }));
-                                                                        return;
-                                                                    }
-
-                                                                    setFormData((prev) => ({
-                                                                        ...prev,
-                                                                        scriptStyleMode: 'predefined',
-                                                                        scriptStyleCustom: '',
-                                                                        scriptStyle: '',
-                                                                    }));
-                                                                })}
-
-                                                                {formData.scriptStyleMode === 'predefined' && (
-                                                                    <select
-                                                                        style={styles.select}
-                                                                        name="scriptStyle"
-                                                                        value={formData.scriptStyle}
-                                                                        onChange={(e) => {
-                                                                            const value = e.target.value;
-                                                                            setFormData((prev) => ({
-                                                                                ...prev,
-                                                                                scriptStyle: value,
-                                                                            }));
-                                                                        }}
-                                                                        required
-                                                                    >
-                                                                        <option value="">Select style</option>
-                                                                        {fieldOptions.scriptStyles.map(option => (
-                                                                            <option key={option.id || option.key} value={option.key}>
-                                                                                {option.label}
-                                                                            </option>
-                                                                        ))}
-                                                                    </select>
-                                                                )}
-
-                                                                {formData.scriptStyleMode === 'custom' && (
-                                                                    <div style={{ marginTop: '10px' }}>
-                                                                        {/* <label style={styles.label}>
-                                                Custom Script Style <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} data-tooltip-id="scriptStyleCustom-tooltip" data-tooltip-content="Describe the script style/structure you want.">i</span>
-                                            </label> */}
-                                                                        <Tooltip style={styles.toolTip} id="scriptStyleCustom-tooltip" />
-                                                                        <input
-                                                                            type="text"
-                                                                            style={styles.input}
-                                                                            name="scriptStyleCustom"
-                                                                            value={formData.scriptStyleCustom}
-                                                                            onChange={handleInputChange}
-                                                                            placeholder="Enter custom script style"
-                                                                            required
-                                                                        />
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-
                                                         {/* Target Audience */}
                                                         <div className="col-md-6">
                                                             <div style={styles.formGroup}>
@@ -1971,29 +1858,7 @@ const ScriptStoryWriterTool = () => {
                                                                     </div>
                                                                 </div>
 
-                                                                <label style={styles.label}>
-                                                                    Custom Duration
-                                                                    <span style={styles.infoIcon} data-tooltip-id="customDuration-tooltip" data-tooltip-content="Optional: specify a custom duration like 45s or 2m 30s.">i</span>
-                                                                </label>
-                                                                <Tooltip style={styles.toolTip} id="customDuration-tooltip" />
-
-                                                                <div style={{ display: 'flex', gap: '10px' }}>
-                                                                    <input
-                                                                        type="text"
-                                                                        style={styles.input}
-                                                                        value={customDurationInput}
-                                                                        onChange={(e) => setCustomDurationInput(e.target.value)}
-                                                                        placeholder="Custom (10s–360s), e.g., 45s or 2m 30s"
-                                                                    />
-                                                                    <button
-                                                                        type="button"
-                                                                        style={{ ...styles.btn, ...styles.btnOutline, whiteSpace: 'nowrap' }}
-                                                                        onClick={applyCustomDuration}
-                                                                        disabled={!customDurationInput.trim()}
-                                                                    >
-                                                                        Apply
-                                                                    </button>
-                                                                </div>
+       
                                                             </div>
                                                         </div>
 
@@ -2061,6 +1926,74 @@ const ScriptStoryWriterTool = () => {
                                                 {/* Advanced fields */}
                                                 {formData.showAdvanced && (
                                                     <>
+                                                        <div className="col-md-6">
+                                                            <div style={styles.formGroup}>
+                                                                <label style={styles.label}>
+                                                                    Script Style
+                                                                    <span style={styles.infoIcon} data-tooltip-id="scriptStyle-tooltip" data-tooltip-content="Select the structure/style of the script (or switch to Custom to type your own).">i</span>
+                                                                </label>
+
+                                                                <Tooltip style={styles.toolTip} id="scriptStyle-tooltip" />
+
+                                                                {renderModeToggle('scriptStyleMode', (mode) => {
+                                                                    if (mode === 'custom') {
+                                                                        setFormData((prev) => ({
+                                                                            ...prev,
+                                                                            scriptStyleMode: 'custom',
+                                                                            scriptStyle: '',
+                                                                        }));
+                                                                        return;
+                                                                    }
+
+                                                                    setFormData((prev) => ({
+                                                                        ...prev,
+                                                                        scriptStyleMode: 'predefined',
+                                                                        scriptStyleCustom: '',
+                                                                        scriptStyle: '',
+                                                                    }));
+                                                                })}
+
+                                                                {formData.scriptStyleMode === 'predefined' && (
+                                                                    <select
+                                                                        style={styles.select}
+                                                                        name="scriptStyle"
+                                                                        value={formData.scriptStyle}
+                                                                        onChange={(e) => {
+                                                                            const value = e.target.value;
+                                                                            setFormData((prev) => ({
+                                                                                ...prev,
+                                                                                scriptStyle: value,
+                                                                            }));
+                                                                        }}
+                                                                    >
+                                                                        <option value="">Select style (optional)</option>
+                                                                        {fieldOptions.scriptStyles.map(option => (
+                                                                            <option key={option.id || option.key} value={option.key}>
+                                                                                {option.label}
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
+                                                                )}
+
+                                                                {formData.scriptStyleMode === 'custom' && (
+                                                                    <div style={{ marginTop: '10px' }}>
+                                                                        {/* <label style={styles.label}>
+                                                Custom Script Style
+                                                <span style={styles.infoIcon} data-tooltip-id="scriptStyleCustom-tooltip" data-tooltip-content="Describe the script style/structure you want.">i</span>
+                                            </label> */}
+                                                                        <Tooltip style={styles.toolTip} id="scriptStyleCustom-tooltip" />
+                                                                        <input
+                                                                            type="text"
+                                                                            style={styles.input}
+                                                                            name="scriptStyleCustom"
+                                                                            value={formData.scriptStyleCustom}
+                                                                            onChange={handleInputChange}
+                                                                            placeholder="Enter custom script style (optional)"
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
 
                                                         {/* <div className="col-md-6">
                                 <div style={styles.formGroup}>
@@ -2316,97 +2249,6 @@ const ScriptStoryWriterTool = () => {
                                                                         />
                                                                     </div>
                                                                 )}
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="col-md-6">
-                                                            <div style={styles.formGroup}>
-                                                                <label style={styles.label}>
-                                                                    Language & Localization
-                                                                    <span style={styles.infoIcon} data-tooltip-id="language-tooltip" data-tooltip-content="Choose output language (or switch to Custom to type your own locale).">i</span>
-                                                                </label>
-
-                                                                <Tooltip style={styles.toolTip} id="language-tooltip" />
-
-                                                                {renderModeToggle('languageMode', (mode) => {
-                                                                    if (mode === 'custom') {
-                                                                        setFormData((prev) => ({
-                                                                            ...prev,
-                                                                            languageMode: 'custom',
-                                                                        }));
-                                                                        return;
-                                                                    }
-
-                                                                    setFormData((prev) => ({
-                                                                        ...prev,
-                                                                        languageMode: 'predefined',
-                                                                        languageCustom: '',
-                                                                        language: prev.language || (fieldOptions.languages?.[0]?.id ? String(fieldOptions.languages[0].id) : ''),
-                                                                    }));
-                                                                })}
-
-                                                                {formData.languageMode === 'predefined' && (
-                                                                    <select
-                                                                        style={styles.select}
-                                                                        name="language"
-                                                                        value={formData.language}
-                                                                        onChange={(e) => {
-                                                                            const value = e.target.value;
-                                                                            setFormData((prev) => ({
-                                                                                ...prev,
-                                                                                language: value,
-                                                                            }));
-                                                                        }}
-                                                                    >
-                                                                        {fieldOptions.languages.map(option => (
-                                                                            <option key={option.id || option.key} value={String(option.id)}>
-                                                                                {option.label}
-                                                                            </option>
-                                                                        ))}
-                                                                    </select>
-                                                                )}
-
-                                                                {formData.languageMode === 'custom' && (
-                                                                    <div style={{ marginTop: '10px' }}>
-                                                                        {/* <label style={styles.label}>
-                                                Custom Language / Locale
-                                                <span style={styles.infoIcon} data-tooltip-id="languageCustom-tooltip" data-tooltip-content="Type a custom language/locale (e.g., English (US), Hinglish).">i</span>
-                                            </label> */}
-                                                                        <Tooltip style={styles.toolTip} id="languageCustom-tooltip" />
-                                                                        <input
-                                                                            type="text"
-                                                                            style={styles.input}
-                                                                            name="languageCustom"
-                                                                            value={formData.languageCustom}
-                                                                            onChange={handleInputChange}
-                                                                            placeholder="Enter custom language / locale (e.g., English (US))"
-                                                                        />
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="col-12">
-                                                            <div style={styles.formGroup}>
-                                                                <label style={styles.label}>
-                                                                    Script Structure Depth (Level of Detail)
-                                                                    <span style={styles.infoIcon} data-tooltip-id="structureDepth-tooltip" data-tooltip-content="How detailed the script structure should be.">i</span>
-                                                                </label>
-                                                                <Tooltip style={styles.toolTip} id="structureDepth-tooltip" />
-                                                                <div style={styles.radioGroup}>
-                                                                    {fieldOptions.structureDepths.map((opt) => (
-                                                                        <label key={opt.key} style={styles.radioItem}>
-                                                                            <input
-                                                                                type="radio"
-                                                                                name="structureDepth"
-                                                                                value={opt.key}
-                                                                                checked={formData.structureDepth === opt.key}
-                                                                                onChange={handleInputChange}
-                                                                            />
-                                                                            <span>{opt.label}</span>
-                                                                        </label>
-                                                                    ))}
-                                                                </div>
                                                             </div>
                                                         </div>
 

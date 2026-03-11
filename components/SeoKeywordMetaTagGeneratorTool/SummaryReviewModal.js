@@ -211,11 +211,6 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, onClose, isGeneratin
           <h3 style={styles.sectionTitle}>Meta + Output Settings</h3>
 
           <div style={styles.item}>
-            <span style={styles.itemLabel}>Tone:</span>
-            <div style={styles.valueBox}>{renderValue(formData.tone) || "Not specified"}</div>
-          </div>
-
-          <div style={styles.item}>
             <span style={styles.itemLabel}>Meta Title Style:</span>
             <div style={styles.valueBox}>{renderValue(formData.metaTitleStyle) || "Not specified"}</div>
           </div>
@@ -223,11 +218,6 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, onClose, isGeneratin
           <div style={styles.item}>
             <span style={styles.itemLabel}>Schema / Rich Result Type:</span>
             <div style={styles.valueBox}>{renderValue(formData.schemaType) || "Not specified"}</div>
-          </div>
-
-          <div style={styles.item}>
-            <span style={styles.itemLabel}>Language:</span>
-            <div style={styles.valueBox}>{renderValue(formData.language) || "Not specified"}</div>
           </div>
 
           <div style={styles.item}>
@@ -260,10 +250,13 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, onClose, isGeneratin
             <div style={styles.valueBox}>{renderValue(formData.competitorUrl) || "Not specified"}</div>
           </div>
 
-          <div style={{ ...styles.item, gridColumn: "1 / -1" }}>
-            <span style={styles.itemLabel}>Compliance & Content Guidelines:</span>
-            <div style={styles.valueBox}>{renderValue(formData.complianceGuidelines) || "Not specified"}</div>
-          </div>
+          {String(formData.customInstructions || "").trim() && (
+            <div style={{ ...styles.item, gridColumn: "1 / -1" }}>
+              <span style={styles.itemLabel}>Custom Instructions / AI Guidance:</span>
+              <div style={styles.valueBox}>{renderValue(formData.customInstructions)}</div>
+            </div>
+          )}
+
         </div>
 
         <div style={styles.actionContainer}>

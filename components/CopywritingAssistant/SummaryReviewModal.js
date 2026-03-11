@@ -138,7 +138,6 @@ const SummaryReviewModal = ({
   formData,
   useCaseOptions,
   toneOptions,
-  languageOptions,
   lengthTargetOptions,
   ctaStyleOptions,
   readingLevelOptions,
@@ -146,7 +145,6 @@ const SummaryReviewModal = ({
   contentStyleOptions,
   emotionalIntentOptions,
   writingFrameworkOptions,
-  outputStructureOptions,
   grammarStrictnessOptions,
   formattingOptionsList,
   onGenerate,
@@ -250,23 +248,6 @@ const SummaryReviewModal = ({
           </div>
 
           <h3 style={styles.sectionTitle}>⚙️ Advanced Customization</h3>
-
-          {/* Language */}
-          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
-            <span style={styles.itemLabel}>Language Mode:</span>
-            <div style={styles.valueBox}>
-              {formData.languageMode === 'custom' ? 'Custom' : 'Predefined'}
-            </div>
-          </div>
-
-          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
-            <span style={styles.itemLabel}>Language / Locale:</span>
-            <div style={styles.valueBox}>
-              {formData.languageMode === 'custom'
-                ? formData.customLanguage || 'N/A'
-                : findLabel(languageOptions, formData.language)}
-            </div>
-          </div>
 
           {/* Length Target */}
           <div style={{ ...styles.item, gridColumn: 'span 1' }}>
@@ -444,27 +425,10 @@ const SummaryReviewModal = ({
             </div>
           </div>
 
-          {/* Output Structure */}
-          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
-            <span style={styles.itemLabel}>Output Structure:</span>
-            <div style={styles.valueBox}>
-              {findLabel(outputStructureOptions, formData.outputStructure)}
-            </div>
-          </div>
-
-          {/* Formatting & Proofreading */}
+          {/* Formatting Options */}
           <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
-            <span style={styles.itemLabel}>Formatting & Proofreading:</span>
+            <span style={styles.itemLabel}>Formatting Options:</span>
             <div style={styles.tagContainer}>
-              <span
-                style={{
-                  ...styles.badge,
-                  backgroundColor: formData.proofreading ? '#10b981' : '#f87171',
-                  color: 'white',
-                }}
-              >
-                Proofreading: {formData.proofreading ? 'Enabled' : 'Disabled'}
-              </span>
               {getFormattingLabels().map((label, index) => (
                 <span
                   key={index}
@@ -507,13 +471,13 @@ const SummaryReviewModal = ({
             <div style={styles.valueBox}>{formData.referenceUrl || 'N/A'}</div>
           </div>
 
-          {/* Compliance Notes */}
-          {formData.complianceNotes && (
+          {String(formData.customInstructions || '').trim() && (
             <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
-              <span style={styles.itemLabel}>Compliance Notes:</span>
-              <div style={styles.valueBox}>{formData.complianceNotes}</div>
+              <span style={styles.itemLabel}>Custom Instructions / AI Guidance:</span>
+              <div style={styles.valueBox}>{formData.customInstructions}</div>
             </div>
           )}
+
         </div>
 
         <div style={styles.actionContainer}>

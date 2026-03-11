@@ -137,12 +137,8 @@ const styles = {
 };
 
 const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onViewLog }) => {
-    const getValueDisplay = (value) => {
-        if (Array.isArray(value)) {
-            return value.length > 0 ? value.join(', ') : 'None';
-        }
-        return value || 'Not specified';
-    };
+    const hasText = (value) => String(value || '').trim().length > 0;
+    const hasItems = (value) => Array.isArray(value) && value.length > 0;
 
     return (
         <div style={styles.overlay} onClick={onEdit}>
@@ -175,44 +171,42 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                         </div>
                     </div>
                     
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
-                        <span style={styles.itemLabel}>Target Audience:</span>
-                        <div style={styles.tagContainer}>
-                            {formData.targetAudience && formData.targetAudience.length > 0 ? (
-                                formData.targetAudience.map((item, index) => (
+                    {hasItems(formData.targetAudience) && (
+                        <div style={{...styles.item, gridColumn: 'span 1'}}>
+                            <span style={styles.itemLabel}>Target Audience:</span>
+                            <div style={styles.tagContainer}>
+                                {formData.targetAudience.map((item, index) => (
                                     <span key={index} style={{ ...styles.badge, ...styles.badgePrimary }}>
                                         {item}
                                     </span>
-                                ))
-                            ) : (
-                                <span style={{ color: '#6b7280' }}>None specified</span>
-                            )}
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <h3 style={styles.sectionTitle}>📝 Ad Content</h3>
                     
-                    <div style={{...styles.item, gridColumn: '1 / -1'}}>
-                        <span style={styles.itemLabel}>Product/Services:</span>
-                        <div style={styles.valueBox}>
-                            {formData.productServices || 'Not specified'}
+                    {hasText(formData.productServices) && (
+                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                            <span style={styles.itemLabel}>Product/Services:</span>
+                            <div style={styles.valueBox}>
+                                {formData.productServices}
+                            </div>
                         </div>
-                    </div>
+                    )}
                     
-                    <div style={{...styles.item, gridColumn: '1 / -1'}}>
-                        <span style={styles.itemLabel}>Key Benefits/Features:</span>
-                        <div style={styles.tagContainer}>
-                            {formData.keyBenefits && formData.keyBenefits.length > 0 ? (
-                                formData.keyBenefits.map((benefit, index) => (
+                    {hasItems(formData.keyBenefits) && (
+                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                            <span style={styles.itemLabel}>Key Benefits/Features:</span>
+                            <div style={styles.tagContainer}>
+                                {formData.keyBenefits.map((benefit, index) => (
                                     <span key={index} style={{ ...styles.badge, ...styles.badgeSuccess }}>
                                         {benefit}
                                     </span>
-                                ))
-                            ) : (
-                                <span style={{ color: '#6b7280' }}>None specified</span>
-                            )}
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Emotional Angle & Variants just above Advanced Settings */}
                     <div style={{...styles.item, gridColumn: 'span 1'}}>
@@ -361,6 +355,15 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                             <span style={styles.itemLabel}>Feature Highlight:</span>
                             <div style={styles.valueBox}>
                                 {formData.featureHighlight}
+                            </div>
+                        </div>
+                    )}
+
+                    {hasText(formData.customInstructions) && (
+                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                            <span style={styles.itemLabel}>Custom Instructions / AI Guidance:</span>
+                            <div style={styles.valueBox}>
+                                {formData.customInstructions}
                             </div>
                         </div>
                     )}

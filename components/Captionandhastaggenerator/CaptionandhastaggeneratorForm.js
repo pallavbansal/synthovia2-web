@@ -72,6 +72,10 @@ const Captionandhastaggeneratorform = () => {
         customCta: '', // <--- NEW STATE (Already present, now used with toggle)
         numberOfCtaSelection: 'predefined',
         numberOfCta: 1,
+        // CTA style selection - NEW FIELD
+        ctaStyleSelection: 'predefined',
+        ctaStyle: '',
+        customCtaStyle: '',
         // Caption & hashtag style selection - NEW LOGIC TOGGLES ADDED
         captionStyleSelection: 'predefined', // <--- NEW STATE
         captionStyle: '', // key from API options
@@ -83,7 +87,8 @@ const Captionandhastaggeneratorform = () => {
         creativityLevel: 5,
         proofread: true,
         hashtagLimit: '', // Changed to empty string to be set by API default key
-        complianceNotes: ''
+        complianceNotes: '',
+        customInstructions: '',
     });
 
     const [apiOptions, setApiOptions] = useState(null);
@@ -159,6 +164,7 @@ const Captionandhastaggeneratorform = () => {
         if (fieldKey === 'caption_style' && formData.captionStyleSelection === 'custom') isCustomMode = true;
         if (fieldKey === 'caption_hashtag_style' && formData.hashtagStyleSelection === 'custom') isCustomMode = true;
         if (fieldKey === 'caption_post_length' && formData.postLengthSelection === 'custom') isCustomMode = true;
+        if (fieldKey === 'caption_cta_style' && formData.ctaStyleSelection === 'custom') isCustomMode = true;
 
         const type = typeOverride || (isCustomMode ? 'custom' : 'predefined');
 
@@ -180,6 +186,8 @@ const Captionandhastaggeneratorform = () => {
                 finalCustomValue = formData.customCaptionStyle;
             } else if (fieldKey === 'caption_hashtag_style') {
                 finalCustomValue = formData.customHashtagStyle;
+            } else if (fieldKey === 'caption_cta_style') {
+                finalCustomValue = formData.customCtaStyle;
             }
 
             return {
@@ -209,13 +217,14 @@ const Captionandhastaggeneratorform = () => {
     const postLengthOptions = getOptions('caption_post_length');
     // Including 'custom' manually for the dropdown for consistent UX
     const ctaTypeOptions = [...getOptions('caption_cta_type'), { key: 'custom', label: 'Custom CTA' }];
+    const ctaStyleOptions = getOptions('caption_cta_style');
     const captionStyleOptions = getOptions('caption_style');
     const hashtagStyleOptions = getOptions('caption_hashtag_style');
     const hashtagLimitOptions = getOptions('caption_hashtag_limit');
 
     // Static Formatting Options (used for rendering and mapping values)
     const formattingOptionsList = [
-        { value: 'emoji', label: 'Add Emojis', apiValue: 'minimal_emojis' },
+        // { value: 'emoji', label: 'Add Emojis', apiValue: 'minimal_emojis' },
         { value: 'hashtags', label: 'Include Hashtags', apiValue: 'include_hashtags' },
         { value: 'mentions', label: 'Add Mentions', apiValue: 'include_mentions' },
         { value: 'linebreaks', label: 'Use Line Breaks', apiValue: 'line_breaks' }
@@ -249,6 +258,7 @@ const Captionandhastaggeneratorform = () => {
                     const defaultLanguage = result.data.caption_language_locale.find(o => o.key === 'en_global')?.key || result.data.caption_language_locale[0]?.key || 'en_global';
                     const defaultEmotionalIntent = result.data.caption_emotional_intent[0]?.key || '';
                     const defaultCta = result.data.caption_cta_type.find(o => o.key === 'caption_cta_1')?.key || result.data.caption_cta_type[0]?.key || '';
+                    const defaultCtaStyle = result.data.caption_cta_style?.[0]?.key || '';
                     const defaultCaptionStyle = result.data.caption_style[0]?.key || '';
                     const defaultHashtagStyle = result.data.caption_hashtag_style[0]?.key || '';
                     const defaultPostLength = result.data.caption_post_length[0]?.key || '';
@@ -263,6 +273,7 @@ const Captionandhastaggeneratorform = () => {
                         emotionalIntent: defaultEmotionalIntent,
                         postLength: defaultPostLength,
                         includeCtaType: defaultCta,
+                        ctaStyle: defaultCtaStyle,
                         captionStyle: defaultCaptionStyle,
                         hashtagStyle: defaultHashtagStyle,
                         hashtagLimit: defaultHashtagLimit,
@@ -412,11 +423,11 @@ const Captionandhastaggeneratorform = () => {
             const tonePayload = getOptionDetails('caption_tone_of_voice', formData.toneOfVoice, formData.customTone, formData.toneSelection);
             const ctaPayload = getOptionDetails('caption_cta_type', formData.includeCtaType, formData.customCta, formData.ctaSelection);
             const languagePayload = getOptionDetails('caption_language_locale', formData.language, formData.customLanguage, formData.languageSelection);
-            const emotionalIntentPayload = getOptionDetails('caption_emotional_intent', formData.emotionalIntent, formData.customEmotionalIntent, formData.emotionalIntentSelection);
             const postLengthPayload = getOptionDetails('caption_post_length', formData.postLength, formData.customPostLength, formData.postLengthSelection);
             const captionStylePayload = getOptionDetails('caption_style', formData.captionStyle, formData.customCaptionStyle, formData.captionStyleSelection);
             const hashtagStylePayload = getOptionDetails('caption_hashtag_style', formData.hashtagStyle, formData.customHashtagStyle, formData.hashtagStyleSelection);
             const hashtagLimitDetails = getOptionDetails('caption_hashtag_limit', formData.hashtagLimit, null, 'predefined');
+            const ctaStyleDetails = getOptionDetails('caption_cta_style', formData.ctaStyle, formData.customCtaStyle, formData.ctaStyleSelection);
 
             const formattedOptions = formData.formattingOptions.map(key => {
                 const detail = formattingOptionsList.find(opt => opt.value === key);
@@ -433,12 +444,23 @@ const Captionandhastaggeneratorform = () => {
                 number_of_variants: isFreeTrial ? 1 : parseInt(formData.variants, 10),
                 required_keywords: formData.requiredKeywords,
                 language_locale: languagePayload,
-                emotional_intent: emotionalIntentPayload,
                 post_length: formData.postLengthSelection === 'custom'
                     ? { type: 'custom', id: null, value: String(customPostLengthInt) }
                     : { type: 'predefined', id: postLengthPayload.id, value: postLengthPayload.value },
                 caption_style: captionStylePayload,
                 cta_type: ctaPayload,
+                cta_style:
+                    ctaStyleDetails.type === 'custom'
+                        ? {
+                            type: 'custom',
+                            value: String(formData.customCtaStyle || '').trim() || null,
+                        }
+                        : (ctaStyleDetails.id
+                            ? {
+                                type: 'predefined',
+                                id: ctaStyleDetails.id,
+                            }
+                            : null),
                 custom_cta_text: ctaPayload.type === 'custom' ? formData.customCta : null,
                 number_of_ctas: formData.includeCtaType !== ctaTypeOptions.find(o => o.label === 'No CTA')?.key ? parseInt(formData.numberOfCta, 10) : 0,
                 formatting_options: formattedOptions,
@@ -447,8 +469,7 @@ const Captionandhastaggeneratorform = () => {
                 hashtag_limit: { type: 'predefined', id: hashtagLimitDetails.id },
                 exclude_words: formData.excludeWords,
                 creativity_level: parseInt(formData.creativityLevel, 10),
-                proofread_optimize: formData.proofread,
-                compliance_notes: formData.complianceNotes,
+                custom_ai_instructions: String(formData.customInstructions || '').trim() || null,
                 session_request_id: sessionRequestIdRef.current,
             };
 
@@ -979,6 +1000,7 @@ const Captionandhastaggeneratorform = () => {
         const defaultLanguage = languageOptions.find(o => o.key === 'en_global')?.key || languageOptions[0]?.key || 'en_global';
         const defaultEmotionalIntent = emotionalIntentOptions[0]?.key || ''; // Default Emotional Intent
         const defaultCta = ctaTypeOptions.find(o => o.key === 'caption_cta_1')?.key || ctaTypeOptions[0]?.key || '';
+        const defaultCtaStyle = ctaStyleOptions[0]?.key || '';
         const defaultCaptionStyle = captionStyleOptions[0]?.key || '';
         const defaultHashtagStyle = hashtagStyleOptions[0]?.key || '';
         const defaultPostLength = postLengthOptions[0]?.key || '';
@@ -1014,6 +1036,9 @@ const Captionandhastaggeneratorform = () => {
             customCta: '',
             numberOfCtaSelection: 'predefined',
             numberOfCta: 1,
+            ctaStyleSelection: 'predefined',
+            ctaStyle: defaultCtaStyle,
+            customCtaStyle: '',
             captionStyleSelection: 'predefined', // Reset Caption Style toggle
             captionStyle: defaultCaptionStyle,
             customCaptionStyle: '',
@@ -1025,7 +1050,8 @@ const Captionandhastaggeneratorform = () => {
             creativityLevel: 5,
             proofread: true,
             hashtagLimit: defaultHashtagLimit, // <--- RESET DEFAULT
-            complianceNotes: ''
+            complianceNotes: '',
+            customInstructions: '',
         });
         setShowSummary(false); // Hide summary on reset
         showNotification('Form has been reset', 'info');
@@ -1769,6 +1795,62 @@ const Captionandhastaggeneratorform = () => {
                                         </div>
                                     </div>
 
+                                    {/* CTA Style (Full Width, Predefined/Custom) */}
+                                    <div style={colFullStyle}>
+                                        <div style={styles.formGroup}>
+                                            <label style={styles.label}>CTA Style</label>
+                                            <div style={styles.radioGroup}>
+                                                <label style={styles.radioItem}>
+                                                    <input
+                                                        type="radio"
+                                                        name="ctaStyleSelection"
+                                                        value="predefined"
+                                                        checked={formData.ctaStyleSelection === 'predefined'}
+                                                        onChange={handleChange}
+                                                        style={{ marginRight: '8px' }}
+                                                    />
+                                                    Predefined
+                                                </label>
+                                                <label style={styles.radioItem}>
+                                                    <input
+                                                        type="radio"
+                                                        name="ctaStyleSelection"
+                                                        value="custom"
+                                                        checked={formData.ctaStyleSelection === 'custom'}
+                                                        onChange={handleChange}
+                                                        style={{ marginRight: '8px' }}
+                                                    />
+                                                    Custom
+                                                </label>
+                                            </div>
+                                            {formData.ctaStyleSelection === 'predefined' ? (
+                                                <select
+                                                    id="ctaStyle"
+                                                    name="ctaStyle"
+                                                    value={formData.ctaStyle}
+                                                    onChange={handleChange}
+                                                    style={styles.select}
+                                                >
+                                                    <option value="">Select CTA Style (optional)</option>
+                                                    {ctaStyleOptions.map((style) => (
+                                                        <option key={style.key} value={style.key}>{style.label}</option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                <input
+                                                    type="text"
+                                                    id="customCtaStyle"
+                                                    name="customCtaStyle"
+                                                    value={formData.customCtaStyle}
+                                                    onChange={handleChange}
+                                                    style={styles.input}
+                                                    maxLength={100}
+                                                    placeholder="e.g., Ask a question in the CTA"
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+
                                     {/* ROW 8 (OLD ROW 9): Caption Style + Hashtag Style (2 Columns) - UPDATED WITH TOGGLES */}
                                     <div style={twoColContainerStyle}>
                                         {/* Caption Style (Left Half) */}
@@ -1856,57 +1938,7 @@ const Captionandhastaggeneratorform = () => {
                                         </div>
                                     </div>
 
-                                    {/* ROW 9 (OLD ROW 10): Emotional Intent + Language/Locale (2 Columns) - UPDATED WITH TOGGLES */}
-                                    <div style={twoColContainerStyle}>
-                                        {/* Emotional Intent (Left Half) */}
-                                        <div style={colHalfStyle}>
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>
-                                                    Emotional Intent
-                                                    <span style={styles.infoIcon} data-tooltip-id="emotionalIntent-tooltip" data-tooltip-content="Select the emotional tone for your caption">i</span>
-                                                </label>
-                                                <Tooltip style={styles.toolTip} id="emotionalIntent-tooltip" />
-                                                <div style={styles.radioGroup}>
-                                                    <label style={styles.radioItem}>
-                                                        <input type="radio" name="emotionalIntentSelection" value="predefined" checked={formData.emotionalIntentSelection === 'predefined'} onChange={handleChange} style={{ marginRight: '8px' }} />
-                                                        Predefined
-                                                    </label>
-                                                    <label style={styles.radioItem}>
-                                                        <input type="radio" name="emotionalIntentSelection" value="custom" checked={formData.emotionalIntentSelection === 'custom'} onChange={handleChange} style={{ marginRight: '8px' }} />
-                                                        Custom
-                                                    </label>
-                                                </div>
-                                                {formData.emotionalIntentSelection === 'predefined' ? (
-                                                    <select
-                                                        id="emotionalIntent"
-                                                        name="emotionalIntent"
-                                                        value={formData.emotionalIntent}
-                                                        onChange={handleChange}
-                                                        style={styles.select}
-                                                    >
-                                                        <option value="">Select Emotional Intent</option>
-                                                        {emotionalIntentOptions.map((emotion) => (
-                                                            <option key={emotion.key} value={emotion.key}>{emotion.label}</option>
-                                                        ))}
-                                                    </select>
-                                                ) : (
-                                                    <input
-                                                        type="text"
-                                                        id="customEmotionalIntent"
-                                                        name="customEmotionalIntent"
-                                                        value={formData.customEmotionalIntent}
-                                                        onChange={handleChange}
-                                                        style={styles.input}
-                                                        maxLength={60}
-                                                        placeholder="e.g., Nostalgia, Awe, Urgency"
-                                                    />
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Language/Locale (Right Half) */}
-                                       
-                                    </div>
+                                    {/* ROW 9 (OLD ROW 10): (Emotional Intent removed) */}
 
                                     {/* ROW 10 (OLD ROW 11): Required Keywords (Full Width Tags) */}
                                     <div style={colFullStyle}>
@@ -2040,50 +2072,32 @@ const Captionandhastaggeneratorform = () => {
                                         </div>
                                     </div>
 
-                                    {/* ROW 13 (OLD ROW 14): Proofread Toggle + Compliance Notes (Full Width) */}
-                                    <div style={twoColContainerStyle}>
-                                        {/* Proofread & Optimize (Left Half - Toggle) */}
-                                        <div style={colHalfStyle}>
-                                            <div style={styles.formGroup}>
-                                                <label style={{ ...styles.label, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                                                    <input
-                                                        type="checkbox"
-                                                        id="proofread"
-                                                        name="proofread"
-                                                        checked={formData.proofread}
-                                                        onChange={handleChange}
-                                                        style={{ width: '16px', height: '16px' }}
-                                                    />
-                                                    <span>Proofread & Optimize</span>
-                                                    <span style={styles.infoIcon} data-tooltip-id="proofread-tooltip" data-tooltip-content="Automatically proofread and optimize the generated captions">i</span>
-                                                </label>
-                                                <Tooltip style={styles.toolTip} id="proofread-tooltip" />
-                                            </div>
-                                        </div>
-
-                                        {/* Spacer to align Compliance Notes below */}
-                                        <div style={colHalfStyle}></div>
-                                    </div>
-
-                                    {/* Compliance Notes (Full Width) */}
+                                    {/* Custom Instructions / AI Guidance */}
                                     <div style={colFullStyle}>
                                         <div style={styles.formGroup}>
-                                            <label htmlFor="complianceNotes" style={styles.label}>
-                                                Compliance Notes
-                                                <span style={styles.infoIcon} data-tooltip-id="complianceNotes-tooltip" data-tooltip-content="Add any compliance requirements or legal disclaimers (max 1500 characters)">i</span>
+                                            <label htmlFor="customInstructions" style={styles.label}>
+                                                Custom Instructions / AI Guidance (optional)
+                                                <span
+                                                    style={styles.infoIcon}
+                                                    data-tooltip-id="customInstructions-tooltip"
+                                                    data-tooltip-content="Optional: extra instructions for pacing, format, do/don'ts, audience voice, etc."
+                                                >
+                                                    i
+                                                </span>
                                             </label>
-                                            <Tooltip style={styles.toolTip} id="complianceNotes-tooltip" />
+                                            <Tooltip style={styles.toolTip} id="customInstructions-tooltip" />
                                             <textarea
-                                                id="complianceNotes"
-                                                name="complianceNotes"
-                                                value={formData.complianceNotes}
+                                                id="customInstructions"
+                                                name="customInstructions"
+                                                value={formData.customInstructions}
                                                 onChange={handleChange}
-                                                style={{ ...styles.textarea, minHeight: '80px' }}
-                                                maxLength={1500}
-                                                placeholder="Any compliance requirements or legal disclaimers"
+                                                style={{ ...styles.textarea, minHeight: '120px' }}
+                                                placeholder="Any specific guidance for the AI (format, pacing, forbidden phrases, etc.)"
                                             />
                                         </div>
                                     </div>
+
+                                    {/* ROW 13 (OLD ROW 14): (Proofread & Optimize and Compliance Notes removed) */}
                                 </div>
                             )}
 

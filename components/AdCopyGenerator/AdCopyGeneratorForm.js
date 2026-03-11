@@ -136,7 +136,9 @@ const AdCopyGeneratorForm = () => {
         problemScenario: '',
         brandVoicePersonalityMode: 'predefined',
         brandVoicePersonalityOption: '',
-        brandVoicePersonalityCustom: ''
+        brandVoicePersonalityCustom: '',
+
+        customInstructions: ''
     });
 
     const [audienceInput, setAudienceInput] = useState('');
@@ -473,11 +475,11 @@ const AdCopyGeneratorForm = () => {
         // Ad Text Length is optional; default Auto-Length can be sent without validation
         if (!formData.ctaType) missing.push('Call to Action (CTA)');
         if (!formData.variants) missing.push('Number of Variants');
-        if (!formData.emotionalAngle) missing.push('Emotional Angle');
+     
 
-        if (!formData.keyBenefits || formData.keyBenefits.length === 0) {
-            missing.push('Key Benefits');
-        }
+        // if (!formData.keyBenefits || formData.keyBenefits.length === 0) {
+        //     missing.push('Key Benefits');
+        // }
 
         // All advanced fields are optional and therefore not validated here.
 
@@ -763,22 +765,155 @@ const AdCopyGeneratorForm = () => {
                     }
                 };
 
+                const processMessage = (msg) => {
+                    if (!msg || typeof msg !== 'object') return;
+
+                    if (msg.type === 'meta') {
+                        if (msg.request_id) { setRequestId((prev) => prev || msg.request_id); }
+                        if (msg.variant_id) {
+                            setGeneratedVariantsData((prev) => {
+                                const next = [...(prev.variants || [])];
+                                if (next[variantIndex]) next[variantIndex] = { ...next[variantIndex], id: msg.variant_id };
+                                return { ...prev, variants: next };
+                            });
+                        }
+                        if (msg.trial_credits_remaining != null) {
+                            const t = Number(msg.trial_credits_remaining);
+                            if (!Number.isNaN(t)) setTrialRemaining?.(t);
+                            try { fetchCredits?.(); } catch { }
+                        }
+                        return;
+                    }
+
+                    if (msg.type === 'error' && isGateError(msg)) {
+                        console.log("susbcription is here 1");
+                        if (msg.trial_credits_remaining != null) {
+                            const t = Number(msg.trial_credits_remaining);
+                            if (!Number.isNaN(t)) setTrialRemaining?.(t);
+                        }
+                        try { fetchCredits?.(); } catch { }
+                        showGateFromPayload(msg);
+                        try { controller?.abort?.(); } catch { }
+                        try { setIsGenerating(false); setShowVariantsModal(false); } catch { }
+                        return;
+                    }
+
+                    if (msg.type === 'delta') {
+                        const deltaText = msg.content || '';
+                        if (!deltaText) return;
+                        setGeneratedVariantsData((prev) => {
+                            const next = [...(prev.variants || [])];
+                            if (next[variantIndex]) {
+                                next[variantIndex] = {
+                                    ...next[variantIndex],
+                                    content: `${next[variantIndex].content || ''}${deltaText}`,
+                                };
+                            }
+                            return { ...prev, variants: next };
+                        });
+                        return;
+                    }
+
+                    if (msg.type === 'done') {
+                        if (msg.request_id) {
+                            setRequestId((prev) => prev || msg.request_id);
+                        }
+                        setGeneratedVariantsData((prev) => {
+                            const next = [...(prev.variants || [])];
+                            if (next[variantIndex]) {
+                                next[variantIndex] = {
+                                    ...next[variantIndex],
+                                    id: next[variantIndex].id || msg.variant_id || null,
+                                    content: msg.content || next[variantIndex].content || '',
+                                    is_streaming: false,
+                                };
+                            }
+                            return { ...prev, variants: next };
+                        });
+                    }
+                };
+
+                const stripSsePrefixes = (text) => text.replace(/^data:\s*/gm, '');
+
+                const extractNextJsonObject = () => {
+                    let i = 0;
+                    while (i < buffer.length && /[\s,]/.test(buffer[i])) i++;
+                    if (i > 0) buffer = buffer.slice(i);
+                    if (!buffer) return null;
+
+                    if (buffer[0] !== '{') {
+                        const nextObj = buffer.indexOf('{');
+                        if (nextObj === -1) {
+                            buffer = '';
+                            return null;
+                        }
+                        buffer = buffer.slice(nextObj);
+                    }
+
+                    let depth = 0;
+                    let inString = false;
+                    let escape = false;
+                    for (let idx = 0; idx < buffer.length; idx++) {
+                        const ch = buffer[idx];
+
+                        if (inString) {
+                            if (escape) {
+                                escape = false;
+                            } else if (ch === '\\') {
+                                escape = true;
+                            } else if (ch === '"') {
+                                inString = false;
+                            }
+                            continue;
+                        }
+
+                        if (ch === '"') {
+                            inString = true;
+                            continue;
+                        }
+
+                        if (ch === '{') {
+                            depth += 1;
+                            continue;
+                        }
+
+                        if (ch === '}') {
+                            depth -= 1;
+                            if (depth === 0) {
+                                const jsonText = buffer.slice(0, idx + 1);
+                                buffer = buffer.slice(idx + 1);
+                                return jsonText;
+                            }
+                        }
+                    }
+
+                    return null;
+                };
+
+                const drainBuffer = () => {
+                    for (; ;) {
+                        const jsonText = extractNextJsonObject();
+                        if (!jsonText) break;
+                        try {
+                            const msg = JSON.parse(jsonText);
+                            processMessage(msg);
+                        } catch (e) {
+                            buffer = `${jsonText}${buffer}`;
+                            break;
+                        }
+                    }
+                };
+
                 try {
                     for (; ;) {
                         const { value, done } = await reader.read();
 
                         if (done) break;
 
-                        buffer += decoder.decode(value, { stream: true });
-                        const parts = buffer.split(/\r?\n/);
-                        buffer = parts.pop() || '';
-                        parts.forEach(processLine);
+                        buffer = stripSsePrefixes(buffer + decoder.decode(value, { stream: true }));
+                        drainBuffer();
                     }
-
-                    const final = buffer.trim();
-                    if (final) {
-                        processLine(final);
-                    }
+                    drainBuffer();
                 } finally {
                     try {
                         reader.releaseLock();
@@ -891,6 +1026,7 @@ const AdCopyGeneratorForm = () => {
             ...(formData.placement
                 ? { placement: mapSelectionToApiObject('placement', formData.placement, fieldOptions.placement, true) }
                 : {}),
+
             campaign_objective: formData.campaignObjective === 'Custom Objective' ?
                 { type: 'custom', id: null, value: formData.customObjective || 'Custom Objective' } :
                 mapSelectionToApiObject('campaign_objective', formData.campaignObjective, fieldOptions.campaign_objective, false),
@@ -903,49 +1039,20 @@ const AdCopyGeneratorForm = () => {
             compliance_notes: formData.complianceNote,
             brand_voice: formData.brandVoice,
             offer_pricing_details: formData.offerPricing,
+
             tone_style: mapSelectionToApiObject('tone_style', formData.tone, fieldOptions.tone_style, true),
             headline_focus: headlineFocusMode === 'custom'
                 ? { type: 'custom', id: null, value: (headlineFocusCustom || formData.headlineFocus || '') }
                 : mapSelectionToApiObject('headline_focus', formData.headlineFocus, fieldOptions.headline_focus, true),
             primary_text_length: mapSelectionToApiObject('primary_text_length', formData.adTextLength, fieldOptions, true),
             cta_type: mapSelectionToApiObject('cta_type', formData.ctaType, fieldOptions.cta_type, false),
-            emotional_angle: mapSelectionToApiObject('emotional_angle', formData.emotionalAngle, fieldOptions.emotional_angle, false),
-            asset_reuse_strategy: mapSelectionToApiObject('asset_reuse_strategy', formData.assetReuseStrategy, fieldOptions.asset_reuse_strategy, true),
             campaign_duration: formData.campaignDuration,
             geographic_language_target: parseGeoLanguage(formData.geoLanguageTarget),
             usp: formData.usp,
             feature_highlight: formData.featureHighlight,
             problem_scenario: formData.problemScenario,
-            brand_voice_personality: (() => {
-                const mode = formData.brandVoicePersonalityMode;
-                const customValue = formData.brandVoicePersonalityCustom;
 
-                if (mode === 'custom') {
-                    return {
-                        type: 'custom',
-                        id: null,
-                        value: customValue || ''
-                    };
-                }
-
-                // Predefined option: find matching option by label from API options
-                const options = fieldOptions.brand_voice_personality || [];
-                const selected = options.find(opt => opt.label === formData.brandVoicePersonalityOption);
-
-                if (selected) {
-                    return {
-                        type: 'predefined',
-                        id: selected.id ?? null,
-                        value: selected.label,
-                    };
-                }
-
-                return {
-                    type: 'predefined',
-                    id: null,
-                    value: formData.brandVoicePersonalityOption || ''
-                };
-            })(),
+            custom_ai_instructions: formData.customInstructions,
         };
 
         return payload;
@@ -1244,7 +1351,6 @@ const AdCopyGeneratorForm = () => {
             adTextLength: defaultAdTextLength,
             adTextLengthCustom: '',
             ctaType: 'Learn More',
-            emotionalAngle: 'Pain → Solution',
             complianceNote: '',
             brandVoice: '',
             assetReuseStrategy: 'Auto-Detect (Recommended)',
@@ -1260,7 +1366,9 @@ const AdCopyGeneratorForm = () => {
             problemScenario: '',
             brandVoicePersonalityMode: 'predefined',
             brandVoicePersonalityOption: '',
-            brandVoicePersonalityCustom: ''
+            brandVoicePersonalityCustom: '',
+
+            customInstructions: ''
         });
         setPlacementMode('predefined');
         setPlacementCustom('');
@@ -2347,79 +2455,7 @@ const AdCopyGeneratorForm = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Emotional Angle */}
-                                            <div className="col-md-6">
-                                                <div style={styles.formGroup}>
-                                                    <label htmlFor="emotionalAngle" style={styles.label}>
-                                                        Emotional Angle
-                                                    </label>
-                                                    <div style={styles.radioGroup}>
-                                                        <label style={styles.radioItem}>
-                                                            <input
-                                                                type="radio"
-                                                                name="emotionalAngleMode"
-                                                                value="predefined"
-                                                                checked={emotionalAngleMode === 'predefined'}
-                                                                onChange={() => {
-                                                                    setEmotionalAngleMode('predefined');
-                                                                    setFormData(prev => ({ ...prev, emotionalAngle: 'Pain → Solution' }));
-                                                                }}
-                                                            />
-                                                            <span>Predefined</span>
-                                                        </label>
-                                                        <label style={styles.radioItem}>
-                                                            <input
-                                                                type="radio"
-                                                                name="emotionalAngleMode"
-                                                                value="custom"
-                                                                checked={emotionalAngleMode === 'custom'}
-                                                                onChange={() => {
-                                                                    setEmotionalAngleMode('custom');
-                                                                    setFormData(prev => ({ ...prev, emotionalAngle: emotionalAngleCustom || '' }));
-                                                                }}
-                                                            />
-                                                            <span>Custom</span>
-                                                        </label>
-                                                    </div>
-
-                                                    {emotionalAngleMode === 'predefined' && (
-                                                        <select
-                                                            id="emotionalAngle"
-                                                            name="emotionalAngle"
-                                                            // Use key for value attribute, label for display
-                                                            value={fieldOptions.emotional_angle.find(opt => opt.label.replace('\t', '→') === formData.emotionalAngle)?.key || formData.emotionalAngle}
-                                                            onChange={handleChange}
-                                                            style={{ ...styles.select, marginTop: '8px' }}
-                                                        >
-                                                            <option value="">Select Emotional Angle</option>
-                                                            {fieldOptions.emotional_angle && fieldOptions.emotional_angle.map((option) => (
-                                                                <option
-                                                                    key={option.key || option.id}
-                                                                    value={option.key}
-                                                                >
-                                                                    {option.label.replace('\t', '→')}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    )}
-
-                                                    {emotionalAngleMode === 'custom' && (
-                                                        <input
-                                                            type="text"
-                                                            id="emotionalAngleCustom"
-                                                            value={emotionalAngleCustom}
-                                                            onChange={(e) => {
-                                                                const val = e.target.value;
-                                                                setEmotionalAngleCustom(val);
-                                                                setFormData(prev => ({ ...prev, emotionalAngle: val }));
-                                                            }}
-                                                            style={{ ...styles.input, marginTop: '8px' }}
-                                                            placeholder="Enter custom emotional angle"
-                                                            required
-                                                        />
-                                                    )}
-                                                </div>
-                                            </div>
+                       
 
                                             <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #e5e7eb', margin: '5px 0' }} />
                                         </>
@@ -2503,7 +2539,7 @@ const AdCopyGeneratorForm = () => {
                                             </div>
 
                                             {/* Offer & Pricing */}
-                                            <div className="col-md-6">
+                                            <div className="col-md-12">
                                                 <div style={styles.formGroup}>
                                                     <label htmlFor="offerPricing" style={styles.label}>
                                                         Offer & Pricing (Optional)
@@ -2520,95 +2556,7 @@ const AdCopyGeneratorForm = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Asset Reuse Strategy */}
-                                            <div className="col-md-6">
-                                                <div style={styles.formGroup}>
-                                                    <label htmlFor="assetReuseStrategy" style={styles.label}>
-                                                        Asset Reuse Strategy (Optional)
-                                                    </label>
-
-                                                    {/* Mode toggle */}
-                                                    <div style={styles.radioGroup}>
-                                                        <label style={styles.radioItem}>
-                                                            <input
-                                                                type="radio"
-                                                                name="assetReuseMode"
-                                                                value="predefined"
-                                                                checked={assetReuseMode === 'predefined'}
-                                                                onChange={() => {
-                                                                    setAssetReuseMode('predefined');
-                                                                    setFormData(prev => ({
-                                                                        ...prev,
-                                                                        assetReuseStrategy: prev.assetReuseStrategy || 'Auto-Detect (Recommended)',
-                                                                    }));
-                                                                }}
-                                                            />
-                                                            <span>Predefined</span>
-                                                        </label>
-                                                        <label style={styles.radioItem}>
-                                                            <input
-                                                                type="radio"
-                                                                name="assetReuseMode"
-                                                                value="custom"
-                                                                checked={assetReuseMode === 'custom'}
-                                                                onChange={() => {
-                                                                    setAssetReuseMode('custom');
-                                                                    setFormData(prev => ({
-                                                                        ...prev,
-                                                                        assetReuseStrategy: assetReuseCustom || prev.assetReuseStrategy,
-                                                                    }));
-                                                                }}
-                                                            />
-                                                            <span>Custom</span>
-                                                        </label>
-                                                    </div>
-
-                                                    {/* Predefined select */}
-                                                    {assetReuseMode === 'predefined' && (
-                                                        <select
-                                                            id="assetReuseStrategy"
-                                                            name="assetReuseStrategy"
-                                                            // Use key for value attribute, label for display
-                                                            value={fieldOptions.asset_reuse_strategy.find(opt => opt.label === formData.assetReuseStrategy)?.key || formData.assetReuseStrategy}
-                                                            onChange={handleChange}
-                                                            style={{ ...styles.select, marginTop: '8px' }}
-                                                        >
-                                                            <option value="">Select Strategy</option>
-                                                            <option value="Auto-Detect (Recommended)">Auto-Detect (Recommended)</option>
-                                                            {fieldOptions.asset_reuse_strategy && fieldOptions.asset_reuse_strategy.map((option) => (
-                                                                <option
-                                                                    key={option.key || option.id}
-                                                                    value={option.key}
-                                                                >
-                                                                    {option.label}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    )}
-
-                                                    {/* Custom input */}
-                                                    {assetReuseMode === 'custom' && (
-                                                        <div style={{ marginTop: '8px' }}>
-                                                            <input
-                                                                type="text"
-                                                                id="assetReuseCustom"
-                                                                name="assetReuseCustom"
-                                                                value={assetReuseCustom}
-                                                                onChange={(e) => {
-                                                                    const val = e.target.value;
-                                                                    setAssetReuseCustom(val);
-                                                                    setFormData(prev => ({
-                                                                        ...prev,
-                                                                        assetReuseStrategy: val,
-                                                                    }));
-                                                                }}
-                                                                style={styles.input}
-                                                                placeholder="Describe how existing assets should be reused"
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
+             
 
                                             {/* Audience Pain Points */}
                                             <div className="col-12">
@@ -2697,67 +2645,31 @@ const AdCopyGeneratorForm = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Brand Voice Personality */}
-                                            <div className="col-md-6">
+                                            {/* Custom Instructions / AI Guidance */}
+                                            <div className="col-12">
                                                 <div style={styles.formGroup}>
-                                                    <label htmlFor="brandVoicePersonality" style={styles.label}>
-                                                        Brand Voice Personality (Optional)
-                                                    </label>
-                                                    <div style={{ ...styles.radioGroup, marginBottom: '8px' }}>
-                                                        <label style={styles.radioItem}>
-                                                            <input
-                                                                type="radio"
-                                                                name="brandVoicePersonalityMode"
-                                                                value="predefined"
-                                                                checked={formData.brandVoicePersonalityMode === 'predefined'}
-                                                                onChange={handleChange}
-                                                            />
-                                                            <span>Predefined</span>
-                                                        </label>
-                                                        <label style={styles.radioItem}>
-                                                            <input
-                                                                type="radio"
-                                                                name="brandVoicePersonalityMode"
-                                                                value="custom"
-                                                                checked={formData.brandVoicePersonalityMode === 'custom'}
-                                                                onChange={handleChange}
-                                                            />
-                                                            <span>Custom</span>
-                                                        </label>
-                                                    </div>
-
-                                                    {formData.brandVoicePersonalityMode === 'predefined' && (
-                                                        <select
-                                                            name="brandVoicePersonalityOption"
-                                                            // Use key from API as value, map to label in handleChange
-                                                            value={(fieldOptions.brand_voice_personality || []).find(opt => opt.label === formData.brandVoicePersonalityOption)?.key || ''}
-                                                            onChange={handleChange}
-                                                            style={styles.select}
+                                                    <label style={styles.label}>
+                                                        Custom Instructions / AI Guidance
+                                                        <span
+                                                            style={styles.infoIcon}
+                                                            data-tooltip-id="customInstructions-tooltip"
+                                                            data-tooltip-content="Optional: extra instructions for pacing, format, do/don'ts, audience voice, etc."
                                                         >
-                                                            <option value="">Select Brand Voice Personality</option>
-                                                            {(fieldOptions.brand_voice_personality || []).map((option) => (
-                                                                <option
-                                                                    key={option.key || option.id}
-                                                                    value={option.key}
-                                                                >
-                                                                    {option.label}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    )}
-
-                                                    {formData.brandVoicePersonalityMode === 'custom' && (
-                                                        <input
-                                                            type="text"
-                                                            name="brandVoicePersonalityCustom"
-                                                            value={formData.brandVoicePersonalityCustom}
-                                                            onChange={handleChange}
-                                                            style={styles.input}
-                                                            placeholder="Describe your brand voice personality (e.g., Calm, Educational, Bold)"
-                                                        />
-                                                    )}
+                                                            i
+                                                        </span>
+                                                    </label>
+                                                    <Tooltip style={styles.toolTip} id="customInstructions-tooltip" />
+                                                    <textarea
+                                                        style={{ ...styles.textarea, minHeight: '120px' }}
+                                                        name="customInstructions"
+                                                        value={formData.customInstructions}
+                                                        onChange={handleChange}
+                                                        placeholder="Any specific guidance for the AI (format, pacing, forbidden phrases, etc.)"
+                                                    />
                                                 </div>
                                             </div>
+
+                
                                         </>
                                     )}
 
@@ -2849,20 +2761,13 @@ const AdCopyGeneratorForm = () => {
                                 <p><strong>Headline Focus:</strong> {formData.headlineFocus}</p>
                                 <p><strong>Ad Text Length:</strong> {formData.adTextLength}</p>
                                 <p><strong>CTA:</strong> {formData.ctaType}</p>
-                                <p><strong>Emotional Angle:</strong> {formData.emotionalAngle}</p>
+                       
                             </div>
                             {formData.showAdvanced && (
                                 <div style={styles.summarySection}>
                                     <h5 style={styles.summarySectionTitle}>Advanced Settings</h5>
                                     {formData.brandVoice && <p><strong>Brand Voice:</strong> {formData.brandVoice}</p>}
-                                    {(formData.brandVoicePersonalityMode === 'predefined' && formData.brandVoicePersonalityOption) && (
-                                        <p><strong>Brand Voice Personality:</strong> {formData.brandVoicePersonalityOption}</p>
-                                    )}
-                                    {(formData.brandVoicePersonalityMode === 'custom' && formData.brandVoicePersonalityCustom) && (
-                                        <p><strong>Brand Voice Personality (Custom):</strong> {formData.brandVoicePersonalityCustom}</p>
-                                    )}
                                     {formData.offerPricing && <p><strong>Offer & Pricing:</strong> {formData.offerPricing}</p>}
-                                    {formData.assetReuseStrategy && <p><strong>Asset Reuse:</strong> {formData.assetReuseStrategy}</p>}
                                     {formData.complianceNote && (
                                         <div>
                                             <p><strong>Compliance Note:</strong></p>
