@@ -115,12 +115,13 @@ const EmailNewsletterGenerator = () => {
         variantsCount: 1,
         personalizationTags: [],
         keyHighlights: [],
-        socialProof: '',
         complianceNotes: '',
         sendFrequency: '',
         sendFrequencyMode: 'predefined',
         customFrequency: '',
         showAdvanced: false,
+
+        customInstructions: '',
     });
 
     const [audienceInput, setAudienceInput] = useState('');
@@ -492,7 +493,6 @@ const EmailNewsletterGenerator = () => {
         if (!String(formData.emailType || '').trim()) missing.push('Email Type');
         if (!Array.isArray(formData.targetAudience) || formData.targetAudience.length < 1) missing.push('Target Audience');
         if (!String(formData.brandContext || '').trim()) missing.push('Brand Context');
-        if (!String(formData.subjectLineFocus || '').trim()) missing.push('Subject Line Focus');
 
         if (!String(formData.emailGoal || '').trim()) missing.push('Email Goal');
         if (formData.emailGoalMode === 'custom' && !String(formData.customGoal || '').trim()) missing.push('Custom Goal');
@@ -550,11 +550,6 @@ const EmailNewsletterGenerator = () => {
             };
         })();
 
-        const proofSocial = String(formData.socialProof || '')
-            .split(/\r?\n/)
-            .map((s) => s.trim())
-            .filter(Boolean);
-
         return {
             email_type: buildSelectObject({
                 mode: formData.emailTypeMode,
@@ -598,7 +593,6 @@ const EmailNewsletterGenerator = () => {
                     }),
             personalization_tags: formData.personalizationTags,
             key_highlights: formData.keyHighlights,
-            proof_social_validation: proofSocial,
             compliance_restrictions: String(formData.complianceNotes || '').trim() || null,
             send_frequency_cadence:
                 formData.sendFrequencyMode === 'custom'
@@ -611,6 +605,7 @@ const EmailNewsletterGenerator = () => {
                             list: fieldOptions.sendFrequencies,
                         })
                         : null,
+            custom_ai_instructions: String(formData.customInstructions || '').trim() || null,
             number_of_variants: isFreeTrial ? 1 : (Number(formData.variantsCount) || 1),
         };
     };
@@ -1079,12 +1074,13 @@ const EmailNewsletterGenerator = () => {
             variantsCount: 1,
             personalizationTags: [],
             keyHighlights: [],
-            socialProof: '',
             complianceNotes: '',
             sendFrequency: '',
             sendFrequencyMode: 'predefined',
             customFrequency: '',
             showAdvanced: false,
+
+            customInstructions: '',
         });
         setAudienceInput('');
         setPersonalizationInput('');
@@ -1237,88 +1233,6 @@ const EmailNewsletterGenerator = () => {
                                                         }));
                                                     }}
                                                     placeholder="Enter custom email type"
-                                                    required
-                                                />
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="col-md-6">
-                                        <div style={styles.formGroup}>
-                                            <label htmlFor="subjectLineFocus" style={styles.label}>
-                                                Email Subject Line Focus <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} title="Choose the approach for your email subject line">
-                                                    i
-                                                </span>
-                                            </label>
-
-                                            <div style={styles.radioGroup}>
-                                                <label style={styles.radioItem}>
-                                                    <input
-                                                        type="radio"
-                                                        name="subjectLineFocusMode"
-                                                        value="predefined"
-                                                        checked={formData.subjectLineFocusMode === 'predefined'}
-                                                        onChange={(e) => {
-                                                            setFormData((prev) => ({
-                                                                ...prev,
-                                                                subjectLineFocusMode: e.target.value,
-                                                            }));
-                                                        }}
-                                                    />
-                                                    <span>Predefined</span>
-                                                </label>
-                                                <label style={styles.radioItem}>
-                                                    <input
-                                                        type="radio"
-                                                        name="subjectLineFocusMode"
-                                                        value="custom"
-                                                        checked={formData.subjectLineFocusMode === 'custom'}
-                                                        onChange={(e) => {
-                                                            setFormData((prev) => ({
-                                                                ...prev,
-                                                                subjectLineFocusMode: e.target.value,
-                                                                subjectLineFocus: prev.subjectLineFocusCustom || '',
-                                                            }));
-                                                        }}
-                                                    />
-                                                    <span>Custom</span>
-                                                </label>
-                                            </div>
-
-                                            {formData.subjectLineFocusMode === 'predefined' && (
-                                                <select
-                                                    style={styles.select}
-                                                    id="subjectLineFocus"
-                                                    name="subjectLineFocus"
-                                                    value={formData.subjectLineFocus}
-                                                    onChange={handleInputChange}
-                                                    required
-                                                >
-                                                    <option value="">Select subject line focus</option>
-                                                    {fieldOptions.subjectLineFocus.map((option) => (
-                                                        <option key={option.key} value={option.key}>
-                                                            {option.label}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            )}
-
-                                            {formData.subjectLineFocusMode === 'custom' && (
-                                                <input
-                                                    type="text"
-                                                    style={styles.input}
-                                                    name="subjectLineFocusCustom"
-                                                    value={formData.subjectLineFocusCustom}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value;
-                                                        setFormData((prev) => ({
-                                                            ...prev,
-                                                            subjectLineFocusCustom: val,
-                                                            subjectLineFocus: val,
-                                                        }));
-                                                    }}
-                                                    placeholder="Enter custom subject line focus"
                                                     required
                                                 />
                                             )}
@@ -1812,6 +1726,86 @@ const EmailNewsletterGenerator = () => {
                                 <>
                                     <div className="col-md-6">
                                         <div style={styles.formGroup}>
+                                            <label htmlFor="subjectLineFocus" style={styles.label}>
+                                                 Subject Line Style
+                                                <span style={styles.infoIcon} title="Choose the approach for your email subject line">
+                                                    i
+                                                </span>
+                                            </label>
+
+                                            <div style={styles.radioGroup}>
+                                                <label style={styles.radioItem}>
+                                                    <input
+                                                        type="radio"
+                                                        name="subjectLineFocusMode"
+                                                        value="predefined"
+                                                        checked={formData.subjectLineFocusMode === 'predefined'}
+                                                        onChange={(e) => {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                subjectLineFocusMode: e.target.value,
+                                                            }));
+                                                        }}
+                                                    />
+                                                    <span>Predefined</span>
+                                                </label>
+                                                <label style={styles.radioItem}>
+                                                    <input
+                                                        type="radio"
+                                                        name="subjectLineFocusMode"
+                                                        value="custom"
+                                                        checked={formData.subjectLineFocusMode === 'custom'}
+                                                        onChange={(e) => {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                subjectLineFocusMode: e.target.value,
+                                                                subjectLineFocus: prev.subjectLineFocusCustom || '',
+                                                            }));
+                                                        }}
+                                                    />
+                                                    <span>Custom</span>
+                                                </label>
+                                            </div>
+
+                                            {formData.subjectLineFocusMode === 'predefined' && (
+                                                <select
+                                                    style={styles.select}
+                                                    id="subjectLineFocus"
+                                                    name="subjectLineFocus"
+                                                    value={formData.subjectLineFocus}
+                                                    onChange={handleInputChange}
+                                                >
+                                                    <option value="">Select subject line style (optional)</option>
+                                                    {fieldOptions.subjectLineFocus.map((option) => (
+                                                        <option key={option.key} value={option.key}>
+                                                            {option.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            )}
+
+                                            {formData.subjectLineFocusMode === 'custom' && (
+                                                <input
+                                                    type="text"
+                                                    style={styles.input}
+                                                    name="subjectLineFocusCustom"
+                                                    value={formData.subjectLineFocusCustom}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            subjectLineFocusCustom: val,
+                                                            subjectLineFocus: val,
+                                                        }));
+                                                    }}
+                                                    placeholder="Enter custom subject line focus (optional)"
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="col-md-6">
+                                        <div style={styles.formGroup}>
                                             <label style={styles.label}>
                                                 Personalization Tags (Optional)
                                                 <span style={styles.infoIcon} title="Add personalization tokens like {first_name}, {company}">
@@ -1930,25 +1924,6 @@ const EmailNewsletterGenerator = () => {
 
                                     <div className="col-12">
                                         <div style={styles.formGroup}>
-                                            <label htmlFor="socialProof" style={styles.label}>
-                                                Social Proof / Testimonials (Optional)
-                                                <span style={styles.infoIcon} title="Add testimonials or social proof to include in your email">
-                                                    i
-                                                </span>
-                                            </label>
-                                            <textarea
-                                                style={styles.textarea}
-                                                id="socialProof"
-                                                name="socialProof"
-                                                value={formData.socialProof}
-                                                onChange={handleInputChange}
-                                                placeholder="Add social proof or testimonials to include"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="col-12">
-                                        <div style={styles.formGroup}>
                                             <label htmlFor="complianceNotes" style={styles.label}>
                                                 Compliance / Restrictions (Optional)
                                                 <span style={styles.infoIcon} title="Any compliance requirements or restrictions to consider">
@@ -1962,6 +1937,28 @@ const EmailNewsletterGenerator = () => {
                                                 value={formData.complianceNotes}
                                                 onChange={handleInputChange}
                                                 placeholder="Any compliance requirements or restrictions to consider"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="col-12">
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="customInstructions" style={styles.label}>
+                                                Custom Instructions / AI Guidance (Optional)
+                                                <span
+                                                    style={styles.infoIcon}
+                                                    title="Optional: extra instructions for pacing, format, do/don'ts, audience voice, etc."
+                                                >
+                                                    i
+                                                </span>
+                                            </label>
+                                            <textarea
+                                                style={styles.textarea}
+                                                id="customInstructions"
+                                                name="customInstructions"
+                                                value={formData.customInstructions}
+                                                onChange={handleInputChange}
+                                                placeholder="Any specific guidance for the AI (format, pacing, forbidden phrases, etc.)"
                                             />
                                         </div>
                                     </div>

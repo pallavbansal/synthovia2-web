@@ -148,7 +148,6 @@ const SummaryReviewModal = ({ formData, apiOptions, onGenerate, onEdit, onViewLo
     const ctaDetails = getOptionDetails('caption_cta_type', formData.includeCtaType);
     const captionStyleDetails = getOptionDetails('caption_style', formData.captionStyle);
     const hashtagStyleDetails = getOptionDetails('caption_hashtag_style', formData.hashtagStyle);
-    const emotionalIntentDetails = getOptionDetails('caption_emotional_intent', formData.emotionalIntent);
     const hashtagLimitDetails = getOptionDetails('caption_hashtag_limit', formData.hashtagLimit);
 
     const getFormattingLabels = () => {
@@ -214,10 +213,7 @@ const SummaryReviewModal = ({ formData, apiOptions, onGenerate, onEdit, onViewLo
                         <span style={styles.itemLabel}>Language / Locale:</span>
                         <div style={styles.valueBox}>{languageDetails.value || 'N/A'}</div>
                     </div>
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
-                        <span style={styles.itemLabel}>Emotional Intent:</span>
-                        <div style={styles.valueBox}>{emotionalIntentDetails.value || 'N/A'}</div>
-                    </div>
+
                     <div style={{...styles.item, gridColumn: 'span 1'}}>
                         <span style={styles.itemLabel}>Caption Style:</span>
                         <div style={styles.valueBox}>{captionStyleDetails.value || 'N/A'}</div>
@@ -247,11 +243,8 @@ const SummaryReviewModal = ({ formData, apiOptions, onGenerate, onEdit, onViewLo
 
                     {/* Full Width Tags/Options */}
                     <div style={{...styles.item, gridColumn: '1 / -1'}}>
-                        <span style={styles.itemLabel}>Proofread &amp; Formatting:</span>
+                        <span style={styles.itemLabel}>Formatting Options:</span>
                         <div style={styles.tagContainer}>
-                            <span style={{...styles.badge, backgroundColor: formData.proofread ? '#10b981' : '#f87171', color: 'white'}}>
-                                Proofread &amp; Optimize: {formData.proofread ? 'Yes' : 'No'}
-                            </span>
                             {getFormattingLabels().map((l, i) => <span key={i} style={{ ...styles.badge, ...styles.badgeSecondary }}>{l}</span>)}
                         </div>
                     </div>
@@ -270,6 +263,13 @@ const SummaryReviewModal = ({ formData, apiOptions, onGenerate, onEdit, onViewLo
                         <div style={{...styles.item, gridColumn: '1 / -1'}}>
                             <span style={styles.itemLabel}>Compliance Notes:</span>
                             <div style={styles.valueBox}>{formData.complianceNotes}</div>
+                        </div>
+                    )}
+
+                    {String(formData.customInstructions || '').trim() && (
+                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                            <span style={styles.itemLabel}>Custom Instructions / AI Guidance:</span>
+                            <div style={styles.valueBox}>{formData.customInstructions}</div>
                         </div>
                     )}
                 </div>

@@ -48,9 +48,6 @@ const CopywritingAssistantForm = () => {
         toneMode: 'predefined',
         toneOfVoice: '',
         customTone: '',
-        languageMode: 'predefined',
-        language: 'English',
-        customLanguage: '',
         lengthTargetMode: 'predefined',
         lengthTarget: 'short',
         customWordCount: 180,
@@ -85,6 +82,7 @@ const CopywritingAssistantForm = () => {
         grammarStrictnessMode: 'predefined',
         grammarStrictness: 'medium',
         customGrammarStrictness: '',
+
         formattingOptions: ['structured_layout'],
         includeWords: [],
         excludeWords: [],
@@ -218,21 +216,6 @@ const CopywritingAssistantForm = () => {
                 { key: 'persuasive', label: 'Persuasive' },
                 { key: 'informative', label: 'Informative' },
                 { key: 'humorous', label: 'Humorous' },
-            ]
-    );
-
-    const languageOptions = normalizeOptions(
-        getOptions('language').length
-            ? getOptions('language')
-            : [
-                { key: 'en_us', label: 'English (US)' },
-                { key: 'en_uk', label: 'English (UK)' },
-                { key: 'hi', label: 'Hindi' },
-                { key: 'ar', label: 'Arabic' },
-                { key: 'es', label: 'Spanish' },
-                { key: 'fr', label: 'French' },
-                { key: 'de', label: 'German' },
-                { key: 'bn', label: 'Bengali' },
             ]
     );
 
@@ -510,9 +493,6 @@ const CopywritingAssistantForm = () => {
             toneMode: 'predefined',
             toneOfVoice: '',
             customTone: '',
-            languageMode: 'predefined',
-            language: 'English',
-            customLanguage: '',
             lengthTargetMode: 'predefined',
             lengthTarget: 'short',
             customWordCount: 180,
@@ -585,9 +565,9 @@ const CopywritingAssistantForm = () => {
         if (
             !formData.primaryGoal ||
             !formData.targetAudience ||
-            formData.targetAudience.length === 0 ||
-            !formData.keyPoints ||
-            (Array.isArray(formData.keyPoints) && formData.keyPoints.length === 0)
+            formData.targetAudience.length === 0 
+            // !formData.keyPoints ||
+            // (Array.isArray(formData.keyPoints) && formData.keyPoints.length === 0)
         ) {
             alert('Please fill in all required fields (marked with *)');
             return;
@@ -646,11 +626,6 @@ const CopywritingAssistantForm = () => {
         }
         if (formData.toneMode === 'custom' && !formData.customTone) {
             alert('Please enter a Custom Tone.');
-            return;
-        }
-
-        if (formData.languageMode === 'custom' && !formData.customLanguage) {
-            alert('Please enter a Custom Language.');
             return;
         }
 
@@ -739,10 +714,6 @@ const CopywritingAssistantForm = () => {
         const toneType = formData.toneMode === 'custom' ? 'custom' : 'predefined';
         const toneValue = formData.toneMode === 'custom' ? formData.customTone : formData.toneOfVoice;
         const toneObj = buildOptionObject('tone_of_voice', toneValue, toneType) || { id: null, value: toneValue, type: toneType };
-
-        const languageType = formData.languageMode === 'custom' ? 'custom' : 'predefined';
-        const languageValue = formData.languageMode === 'custom' ? formData.customLanguage : formData.language;
-        const languageObj = buildOptionObject('language', languageValue, languageType) || { id: null, value: languageValue, type: languageType };
 
         let lengthTargetObj;
         if (formData.lengthTargetMode === 'custom') {
@@ -839,7 +810,6 @@ const CopywritingAssistantForm = () => {
                     .map((v) => v.trim())
                     .filter(Boolean),
             tone_of_voice: toneObj,
-            language: languageObj,
             length_target: lengthTargetObj,
             key_points: Array.isArray(formData.keyPoints)
                 ? formData.keyPoints
@@ -869,6 +839,7 @@ const CopywritingAssistantForm = () => {
             proofreading_optimization: !!formData.proofreading,
             grammar_strictness: grammarStrictnessObj,
             session_request_id: sessionRequestIdRef.current,
+            custom_ai_instructions: String(formData.customInstructions || '').trim() || null,
         };
 
         abortAllStreams();
@@ -1855,144 +1826,73 @@ const CopywritingAssistantForm = () => {
                                         </div>
                                     </div>
 
-                                    {/* Tone Selection + Language (two columns) */}
-                                    <div style={twoColContainerStyle}>
-                                        {/* Tone (Left Half) */}
-                                        <div style={colHalfStyle}>
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>
-                                                    Tone Selection <span style={{ color: '#ef4444' }}>*</span>
-                                                    <span style={styles.infoIcon} data-tooltip-id="toneMode-tooltip" data-tooltip-content="Choose between predefined tones or define a custom tone">i</span>
+                                    {/* Tone Selection */}
+                                    <div className="col-12">
+                                        <div style={styles.formGroup}>
+                                            <label style={styles.label}>
+                                                Tone Selection <span style={{ color: '#ef4444' }}>*</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="toneMode-tooltip" data-tooltip-content="Choose between predefined tones or define a custom tone">i</span>
+                                            </label>
+                                            <Tooltip style={styles.toolTip} id="toneMode-tooltip" />
+                                            <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
+                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="radio"
+                                                        name="toneMode"
+                                                        value="predefined"
+                                                        checked={formData.toneMode === 'predefined'}
+                                                        onChange={handleChange}
+                                                        style={{ marginRight: '8px' }}
+                                                    />
+                                                    Predefined
                                                 </label>
-                                                <Tooltip style={styles.toolTip} id="toneMode-tooltip" />
-                                                <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
-                                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                                        <input
-                                                            type="radio"
-                                                            name="toneMode"
-                                                            value="predefined"
-                                                            checked={formData.toneMode === 'predefined'}
-                                                            onChange={handleChange}
-                                                            style={{ marginRight: '8px' }}
-                                                        />
-                                                        Predefined
-                                                    </label>
-                                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                                        <input
-                                                            type="radio"
-                                                            name="toneMode"
-                                                            value="custom"
-                                                            checked={formData.toneMode === 'custom'}
-                                                            onChange={handleChange}
-                                                            style={{ marginRight: '8px' }}
-                                                        />
-                                                        Custom
-                                                    </label>
-                                                </div>
-
-                                                {formData.toneMode === 'predefined' && (
-                                                    <div style={{ marginTop: '8px' }}>
-                                                        <Tooltip style={styles.toolTip} id="tone-tooltip" />
-                                                        <select
-                                                            id="toneOfVoice"
-                                                            name="toneOfVoice"
-                                                            value={formData.toneOfVoice}
-                                                            onChange={handleChange}
-                                                            style={styles.select}
-                                                            required={formData.toneMode === 'predefined'}
-                                                        >
-                                                            <option value="">Select a tone</option>
-                                                            {toneOptions.map((tone, index) => (
-                                                                <option key={index} value={tone.value}>{tone.label}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                )}
-
-                                                {formData.toneMode === 'custom' && (
-                                                    <div style={{ marginTop: '8px' }}>
-                                                        <input
-                                                            type="text"
-                                                            id="customTone"
-                                                            name="customTone"
-                                                            value={formData.customTone}
-                                                            onChange={handleChange}
-                                                            style={styles.input}
-                                                            placeholder="Describe your desired tone in a few words (max 12 words)"
-                                                            maxLength={100}
-                                                            required={formData.toneMode === 'custom'}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Language (Right Half) */}
-                                        <div style={colHalfStyle}>
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>
-                                                    Language <span style={{ color: '#ef4444' }}>*</span>
-                                                    <span style={styles.infoIcon} data-tooltip-id="language-tooltip" data-tooltip-content="Select the language for your content or define a custom language">i</span>
+                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="radio"
+                                                        name="toneMode"
+                                                        value="custom"
+                                                        checked={formData.toneMode === 'custom'}
+                                                        onChange={handleChange}
+                                                        style={{ marginRight: '8px' }}
+                                                    />
+                                                    Custom
                                                 </label>
-                                                <Tooltip style={styles.toolTip} id="language-tooltip" />
-                                                <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
-                                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                                        <input
-                                                            type="radio"
-                                                            name="languageMode"
-                                                            value="predefined"
-                                                            checked={formData.languageMode === 'predefined'}
-                                                            onChange={handleChange}
-                                                            style={{ marginRight: '8px' }}
-                                                        />
-                                                        Predefined
-                                                    </label>
-                                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                                        <input
-                                                            type="radio"
-                                                            name="languageMode"
-                                                            value="custom"
-                                                            checked={formData.languageMode === 'custom'}
-                                                            onChange={handleChange}
-                                                            style={{ marginRight: '8px' }}
-                                                        />
-                                                        Custom
-                                                    </label>
-                                                </div>
-
-                                                {formData.languageMode === 'predefined' && (
-                                                    <div style={{ marginTop: '8px' }}>
-                                                        <select
-                                                            id="language"
-                                                            name="language"
-                                                            value={formData.language}
-                                                            onChange={handleChange}
-                                                            style={styles.select}
-                                                            required={formData.languageMode === 'predefined'}
-                                                        >
-                                                            {languageOptions.map((lang, index) => (
-                                                                <option key={index} value={lang.value}>{lang.label}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                )}
-
-                                                {formData.languageMode === 'custom' && (
-                                                    <div style={{ marginTop: '8px' }}>
-                                                        <input
-                                                            type="text"
-                                                            id="customLanguage"
-                                                            name="customLanguage"
-                                                            value={formData.customLanguage}
-                                                            onChange={handleChange}
-                                                            style={styles.input}
-                                                            placeholder="e.g., English (Canada), Hinglish"
-                                                            maxLength={100}
-                                                            required={formData.languageMode === 'custom'}
-                                                        />
-                                                    </div>
-                                                )}
                                             </div>
+
+                                            {formData.toneMode === 'predefined' && (
+                                                <div style={{ marginTop: '8px' }}>
+                                                    <Tooltip style={styles.toolTip} id="tone-tooltip" />
+                                                    <select
+                                                        id="toneOfVoice"
+                                                        name="toneOfVoice"
+                                                        value={formData.toneOfVoice}
+                                                        onChange={handleChange}
+                                                        style={styles.select}
+                                                        required={formData.toneMode === 'predefined'}
+                                                    >
+                                                        <option value="">Select a tone</option>
+                                                        {toneOptions.map((tone, index) => (
+                                                            <option key={index} value={tone.value}>{tone.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+
+                                            {formData.toneMode === 'custom' && (
+                                                <div style={{ marginTop: '8px' }}>
+                                                    <input
+                                                        type="text"
+                                                        id="customTone"
+                                                        name="customTone"
+                                                        value={formData.customTone}
+                                                        onChange={handleChange}
+                                                        style={styles.input}
+                                                        placeholder="Describe your desired tone in a few words (max 12 words)"
+                                                        maxLength={100}
+                                                        required={formData.toneMode === 'custom'}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
@@ -2070,7 +1970,7 @@ const CopywritingAssistantForm = () => {
                                                     marginBottom: 0,
                                                 }}
                                                 placeholder="Type a key point and press Enter to add"
-                                                required={formData.keyPoints.length === 0}
+                                                
                                                 inputMode='text'
                                             />
                                         </div>
@@ -2266,27 +2166,6 @@ const CopywritingAssistantForm = () => {
                                                 maxLength={5000}
                                             />
                                         </div>
-                                    </div>
-
-                                    {/* Rewrite Mode */}
-                                    <div style={twoColContainerStyle}>
-                                        <div style={colHalfStyle}>
-                                            <div style={styles.formGroup}>
-                                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                                                    <input
-                                                        type="checkbox"
-                                                        name="rewriteMode"
-                                                        checked={formData.rewriteMode}
-                                                        onChange={handleChange}
-                                                        style={{ width: '16px', height: '16px' }}
-                                                    />
-                                                    <span>Rewrite Mode (optional)</span>
-                                                    <span style={{ ...styles.infoIcon, marginLeft: '8px' }} data-tooltip-id="rewrite-tooltip" data-tooltip-content="Enable to rewrite the reference text in a different style">i</span>
-                                                </label>
-                                                <Tooltip style={styles.toolTip} id="rewrite-tooltip" />
-                                            </div>
-                                        </div>
-                                        <div style={colHalfStyle}></div>
                                     </div>
 
                                     {/* Reading Level + Target Platform (two-column row) */}
@@ -2530,48 +2409,6 @@ const CopywritingAssistantForm = () => {
                                         </div>
                                     </div>
 
-                                    {/* Compliance Notes */}
-                                    <div className="col-12">
-                                        <div style={styles.formGroup}>
-                                            <label htmlFor="complianceNotes" style={styles.label}>
-                                                Compliance Notes (optional)
-                                                <span style={styles.infoIcon} data-tooltip-id="compliance-tooltip" data-tooltip-content="Any legal or compliance requirements (max 200 words)">i</span>
-                                            </label>
-                                            <Tooltip style={styles.toolTip} id="compliance-tooltip" />
-                                            <textarea
-                                                id="complianceNotes"
-                                                name="complianceNotes"
-                                                value={formData.complianceNotes}
-                                                onChange={handleChange}
-                                                style={{ ...styles.textarea, minHeight: '80px' }}
-                                                placeholder="Add any compliance requirements or legal disclaimers"
-                                                maxLength={1000} // ~200 words
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Output Structure */}
-                                    <div className="col-12">
-                                        <div style={styles.formGroup}>
-                                            <label htmlFor="outputStructure" style={styles.label}>
-                                                Output Structure
-                                                <span style={styles.infoIcon} data-tooltip-id="output-structure-tooltip" data-tooltip-content="Select the desired output structure">i</span>
-                                            </label>
-                                            <Tooltip style={styles.toolTip} id="output-structure-tooltip" />
-                                            <select
-                                                id="outputStructure"
-                                                name="outputStructure"
-                                                value={formData.outputStructure}
-                                                onChange={handleChange}
-                                                style={styles.select}
-                                            >
-                                                {outputStructureOptions.map((opt, index) => (
-                                                    <option key={index} value={opt.value}>{opt.label}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
-
                                     {/* Creativity Level */}
                                     <div className="col-12">
                                         <div style={styles.formGroup}>
@@ -2615,27 +2452,6 @@ const CopywritingAssistantForm = () => {
                                                 placeholder="https://example.com"
                                             />
                                         </div>
-                                    </div>
-
-                                    {/* Proofreading & Optimization */}
-                                    <div style={twoColContainerStyle}>
-                                        <div style={colHalfStyle}>
-                                            <div style={styles.formGroup}>
-                                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                                                    <input
-                                                        type="checkbox"
-                                                        name="proofreading"
-                                                        checked={formData.proofreading}
-                                                        onChange={handleChange}
-                                                        style={{ width: '16px', height: '16px' }}
-                                                    />
-                                                    <span>Enable Proofreading & Optimization (optional)</span>
-                                                    <span style={{ ...styles.infoIcon, marginLeft: '8px' }} data-tooltip-id="proofreading-tooltip" data-tooltip-content="Automatically check for grammar, readability, and SEO optimization">i</span>
-                                                </label>
-                                                <Tooltip style={styles.toolTip} id="proofreading-tooltip" />
-                                            </div>
-                                        </div>
-                                        <div style={colHalfStyle}></div>
                                     </div>
 
                                     {/* Grammar Strictness (shown when proofreading is enabled) */}
@@ -2690,8 +2506,30 @@ const CopywritingAssistantForm = () => {
                                             )}
                                         </div>
 
-                                        {/* Writing Framework (Right Half) */}
-                                        <div style={colHalfStyle}></div>
+                                        {/* Custom Instructions / AI Guidance */}
+                                        <div className="col-12">
+                                            <div style={styles.formGroup}>
+                                                <label htmlFor="customInstructions" style={styles.label}>
+                                                    Custom Instructions / AI Guidance (optional)
+                                                    <span
+                                                        style={styles.infoIcon}
+                                                        data-tooltip-id="customInstructions-tooltip"
+                                                        data-tooltip-content="Optional: extra instructions for pacing, format, do/don'ts, audience voice, etc."
+                                                    >
+                                                        i
+                                                    </span>
+                                                </label>
+                                                <Tooltip style={styles.toolTip} id="customInstructions-tooltip" />
+                                                <textarea
+                                                    id="customInstructions"
+                                                    name="customInstructions"
+                                                    value={formData.customInstructions}
+                                                    onChange={handleChange}
+                                                    style={{ ...styles.textarea, minHeight: '120px' }}
+                                                    placeholder="Any specific guidance for the AI (format, pacing, forbidden phrases, etc.)"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
                                 </>
@@ -2731,7 +2569,6 @@ const CopywritingAssistantForm = () => {
                     formData={formData}
                     useCaseOptions={useCaseOptions}
                     toneOptions={toneOptions}
-                    languageOptions={languageOptions}
                     lengthTargetOptions={lengthTargetOptions}
                     ctaStyleOptions={ctaStyleOptions}
                     readingLevelOptions={readingLevelOptions}

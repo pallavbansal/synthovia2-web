@@ -57,12 +57,12 @@ const makeTooltipId = (value) => {
   return `${base || "field"}-tooltip`;
 };
 
-const Labeled = ({ label, required, children, help, tooltipId, tooltipContent, styles }) => {
+const Labeled = ({ label, required, children, help, tooltipId, tooltipContent, styles, colClass }) => {
   const tooltipText = tooltipContent ?? help;
   const resolvedTooltipId = tooltipId || makeTooltipId(label);
 
   return (
-    <div className="col-12 col-md-6">
+    <div className={colClass || "col-12 col-md-6"}>
       <div style={styles.formGroup}>
         <label style={styles.label}>
           {label} {required ? <span style={{ color: "#ef4444" }}>*</span> : null}
@@ -276,6 +276,8 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     textLengthCustom: "",
 
     variantsCount: 3,
+
+    customInstructions: "",
   });
 
   useEffect(() => {
@@ -389,12 +391,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       }),
       brand_website_name: String(formData.brandName || "").trim(),
       competitor_url: String(formData.competitorUrl || "").trim(),
-      language: selectionToApiObject({
-        fieldKey: "language",
-        mode: formData.languageMode,
-        selectedKey: formData.language,
-        customValue: formData.languageCustom,
-      }),
       schema_rich_result_type: selectionToApiObject({
         fieldKey: "schema_rich_result_type",
         mode: formData.schemaTypeMode,
@@ -415,18 +411,13 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       }),
       include_keywords: Array.isArray(formData.includeKeywords) ? formData.includeKeywords : [],
       exclude_keywords: Array.isArray(formData.excludeKeywords) ? formData.excludeKeywords : [],
-      compliance_guidelines: selectionToApiObject({
-        fieldKey: "compliance_guidelines",
-        mode: formData.complianceGuidelinesMode,
-        selectedKey: formData.complianceGuidelines,
-        customValue: formData.complianceGuidelinesCustom,
-      }),
       primary_text_length: selectionToApiObject({
         fieldKey: "primary_text_length",
         mode: formData.textLengthMode,
         selectedKey: formData.textLength,
         customValue: formData.textLengthCustom,
       }),
+      custom_ai_instructions: String(formData.customInstructions || "").trim() || null,
       number_of_variants: isFreeTrial ? 1 : (Number(variantCount) || 1),
       model: "gpt-4o-mini",
     };
@@ -1001,7 +992,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     if (!String(formData.pageTopicSummary || "").trim()) missing.push("Page Topic / Content Summary");
     if (!String(inputsForReview.pageGoal || "").trim()) missing.push("Page Goal / Intent");
     if (!Array.isArray(formData.targetAudience) || formData.targetAudience.length === 0) missing.push("Target Audience / Region");
-    if (!inputsForReview.tone) missing.push("Tone");
     if (!inputsForReview.keywordFocusType) missing.push("Keyword Focus Type");
     if (Number.isNaN(Number(inputsForReview.keywordDifficulty))) missing.push("Keyword Difficulty Preference");
     if (!String(formData.searchVolumePriority || "").trim()) missing.push("Search Volume Priority");
@@ -1040,7 +1030,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       `- Keyword focus: ${inputs.keywordFocusType}\n` +
       `- Difficulty preference: ${inputs.keywordDifficulty}/100\n` +
       `- Search volume priority: ${inputs.searchVolumePriority}\n` +
-      `- Language: ${inputs.language || "English"}\n` +
       `- Schema type: ${inputs.schemaType || "None"}\n\n` +
       `META TAGS\n` +
       `- Meta title: ${metaTitle}\n` +
@@ -1288,6 +1277,8 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       textLengthCustom: "",
 
       variantsCount: 3,
+
+      customInstructions: "",
     });
 
     showToast("Form has been reset", "info");
@@ -1487,13 +1478,14 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     suggestions,
     showSuggestions,
     setShowSuggestions,
+    colClass,
   }) => {
     const tags = Array.isArray(formData[valueKey]) ? formData[valueKey] : [];
     const suggestionMap = suggestions && typeof suggestions === "object" ? suggestions : {};
     const flatSuggestions = Object.values(suggestionMap).flat();
 
     return (
-      <div className="col-12 col-md-6">
+      <div className={colClass || "col-12 col-md-6"}>
         <div style={styles.formGroup}>
           <label style={styles.label}>
             {label} {required ? <span style={{ color: "#ef4444" }}>*</span> : null}
@@ -1756,20 +1748,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     </Labeled>
 
                     <PredefinedCustom
-                      label="Tone"
-                      required
-                      modeKey="toneMode"
-                      valueKey="tone"
-                      customKey="toneCustom"
-                      options={fieldOptions?.tone || []}
-                      placeholder="Enter custom tone"
-                      help="Narration/writing style for meta & keyword strategy."
-                      formData={formData}
-                      setFormData={setFormData}
-                      styles={styles}
-                    />
-
-                    <PredefinedCustom
                       label="Keyword Focus Type"
                       required
                       modeKey="keywordFocusTypeMode"
@@ -1819,7 +1797,13 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                       </div>
                     </Labeled>
 
-                    <Labeled label="Search Volume Priority" required help="Traffic potential bias for keyword mix." styles={styles}>
+                    <Labeled
+                      label="Search Volume Priority"
+                      required
+                      help="Traffic potential bias for keyword mix."
+                      styles={styles}
+                      colClass="col-12"
+                    >
                       <select
                         style={styles.select}
                         value={formData.searchVolumePriority}
@@ -1845,9 +1829,10 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                       showSuggestions: showAudienceSuggestions,
                       setShowSuggestions: setShowAudienceSuggestions,
                       help: "Audience segments & regions added as tags.",
+                      colClass: "col-12",
                     })}
 
-                    <div className="col-12 col-md-6">
+                    <div className="col-12">
                       <div style={styles.formGroup}>
                         <label htmlFor="variants" style={styles.label}>
                           Number of Variants: {formData.variantsCount}
@@ -1966,35 +1951,19 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     help: "Terms or phrases that AI must avoid.",
                   })}
 
-                 
-
-                  <PredefinedCustom
-                    label="Compliance & Content Guidelines"
-                    required={false}
-                    modeKey="complianceGuidelinesMode"
-                    valueKey="complianceGuidelines"
-                    customKey="complianceGuidelinesCustom"
-                    options={fieldOptions?.compliance_guidelines || []}
-                    placeholder="Enter custom compliance guidelines"
-                    help="Regulatory/brand safety constraints preset."
-                    formData={formData}
-                    setFormData={setFormData}
-                    styles={styles}
-                  />
-
-                  <Labeled label="Output Depth" required={false} help="Defines verbosity of generated SEO assets." styles={styles}>
-                    <select
-                      style={styles.select}
-                      value={formData.outputDepth}
-                      onChange={(e) => setFormData((p) => ({ ...p, outputDepth: e.target.value }))}
-                    >
-                      {(fieldOptions?.output_depth || []).map((opt) => (
-                        <option key={opt.key} value={opt.key}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </Labeled>
+                 <Labeled
+  label="Custom Instructions / AI Guidance"
+  required={false}
+  help="Optional: extra instructions for pacing, format, do/don'ts, SERP focus, etc."
+  styles={styles}
+>
+  <textarea
+    style={{ ...styles.textarea, minHeight: "100px" }}
+    value={formData.customInstructions || ""}
+    onChange={(e) => setFormData((p) => ({ ...p, customInstructions: e.target.value }))}
+    placeholder="Any specific guidance for the AI (format, focus, forbidden phrases, etc.)"
+  />
+</Labeled>
                 </>
               )}
 
