@@ -209,6 +209,42 @@ const AdCopyGeneratorForm = () => {
         }
     }, [setGateFromPayload, setShowGateModal]);
 
+    const checkCreditsBeforeGenerate = useCallback(async ({ toolKey, variantCount }) => {
+        try {
+            const res = await fetch(API.USER_CREDITS, {
+                method: 'GET',
+                headers: {
+                    Accept: 'application/json',
+                    Authorization: getAuthHeader(),
+                },
+            });
+
+            const json = await res.json().catch(() => null);
+            const data = json?.data || json;
+            const realRemaining = Number(data?.real_remaining ?? 0);
+            const perGeneration = Number(data?.tools_per_generation?.[toolKey]?.per_generation ?? 0);
+
+            const needed = Math.max(0, Number(variantCount) || 0) * Math.max(0, perGeneration || 0);
+
+            if (!Number.isFinite(realRemaining) || !Number.isFinite(needed) || needed <= 0) {
+                return { ok: true };
+            }
+
+            if (realRemaining < needed) {
+                showGateFromPayload({
+                    code: 'insufficient_credits',
+                    title: 'Insufficient credits',
+                    message: `You need ${needed} credits to generate ${variantCount} variant(s) (cost: ${perGeneration} per generation), but you only have ${realRemaining} credits remaining.`,
+                });
+                return { ok: false, needed, realRemaining, perGeneration };
+            }
+
+            return { ok: true, needed, realRemaining, perGeneration };
+        } catch {
+            return { ok: true };
+        }
+    }, [showGateFromPayload]);
+
     useEffect(() => {
         return () => {
             abortAllStreams();
@@ -524,6 +560,15 @@ const AdCopyGeneratorForm = () => {
                 session_request_id: sessionRequestIdRef.current,
             };
 
+            const variantCountToCheck = isFreeTrial ? 1 : Math.max(1, parseInt(payload?.number_of_variants || 1, 10));
+            const creditCheck = await checkCreditsBeforeGenerate({ toolKey: 'ad_copy', variantCount: variantCountToCheck });
+            if (!creditCheck.ok) {
+                setIsGenerating(false);
+                setIsApiLoading(false);
+                setShowVariantsModal(false);
+                return;
+            }
+
             const response = await fetch(API.GENERATE_AD_COPY, {
                 method: 'POST',
                 headers: {
@@ -598,11 +643,18 @@ const AdCopyGeneratorForm = () => {
             };
             console.log("payload:payload", payload);
 
+            const variantCountToCheck = isFreeTrial ? 1 : Math.max(1, parseInt(payload?.number_of_variants || 1, 10));
+            const creditCheck = await checkCreditsBeforeGenerate({ toolKey: 'ad_copy', variantCount: variantCountToCheck });
+            if (!creditCheck.ok) {
+                setIsGenerating(false);
+                return;
+            }
+
             // ... (validation remains the same) ...
 
             showNotification('Generating ad copy, please wait...', 'info');
 
-            const variantCount = isFreeTrial ? 1 : Math.max(1, parseInt(payload?.number_of_variants || 1, 10));
+            const variantCount = variantCountToCheck;
             const clientRequestKey = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
             setRequestId(null);

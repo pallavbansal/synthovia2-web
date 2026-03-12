@@ -160,6 +160,42 @@ const CopywritingAssistantForm = () => {
         }
     }, [setGateFromPayload, setShowGateModal]);
 
+    const checkCreditsBeforeGenerate = useCallback(async ({ toolKey, variantCount }) => {
+        try {
+            const res = await fetch(API.USER_CREDITS, {
+                method: 'GET',
+                headers: {
+                    Accept: 'application/json',
+                    Authorization: getAuthHeader(),
+                },
+            });
+
+            const json = await res.json().catch(() => null);
+            const data = json?.data || json;
+            const realRemaining = Number(data?.real_remaining ?? 0);
+            const perGeneration = Number(data?.tools_per_generation?.[toolKey]?.per_generation ?? 0);
+
+            const needed = Math.max(0, Number(variantCount) || 0) * Math.max(0, perGeneration || 0);
+
+            if (!Number.isFinite(realRemaining) || !Number.isFinite(needed) || needed <= 0) {
+                return { ok: true };
+            }
+
+            if (realRemaining < needed) {
+                showGateFromPayload({
+                    code: 'insufficient_credits',
+                    title: 'Insufficient credits',
+                    message: `You need ${needed} credits to generate ${variantCount} variant(s) (cost: ${perGeneration} per generation), but you only have ${realRemaining} credits remaining.`,
+                });
+                return { ok: false, needed, realRemaining, perGeneration };
+            }
+
+            return { ok: true, needed, realRemaining, perGeneration };
+        } catch {
+            return { ok: true };
+        }
+    }, [showGateFromPayload]);
+
     const showNotification = (message, type) => {
         setNotification({ show: true, message, type });
         setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
@@ -842,7 +878,6 @@ const CopywritingAssistantForm = () => {
             custom_ai_instructions: String(formData.customInstructions || '').trim() || null,
         };
 
-        abortAllStreams();
         setIsGenerating(true);
         setModalTitle("Generated Variants");
         setIsHistoryView(false);
@@ -853,6 +888,12 @@ const CopywritingAssistantForm = () => {
             showNotification('Generating copywriting, please wait...', 'info');
 
             const variantCount = Math.max(1, parseInt(payload?.number_of_variants || 1, 10));
+            const creditCheck = await checkCreditsBeforeGenerate({ toolKey: 'copy_writing', variantCount });
+            if (!creditCheck.ok) {
+                setIsApiLoading(false);
+                setIsGenerating(false);
+                return;
+            }
             const clientRequestKey = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
             setRequestId(null);

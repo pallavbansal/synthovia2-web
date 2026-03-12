@@ -34,8 +34,35 @@ export const CreditsProvider = ({ children }) => {
     const dataPayload = payload?.data || payload;
     const code = dataPayload.code ?? dataPayload.error_code ?? payload?.code ?? payload?.error_code;
     const message = dataPayload.message ?? payload?.message;
+    const title = dataPayload.title ?? payload?.title;
     const statusCode = dataPayload.status_code ?? payload?.status_code;
     const type = dataPayload.type ?? payload?.type;
+    const userCurrentStatus = String(dataPayload.user_current_status ?? payload?.user_current_status ?? "").toLowerCase();
+
+    if (code === "insufficient_credits") {
+      setGateTitle(title || "Insufficient credits");
+      setGateMessage(message || "You do not have enough credits to run this generation.");
+      setShowGateModal(true);
+      return true;
+    }
+
+    const showCreditsExhaustedGate = () => {
+      if (userCurrentStatus === "subscription") {
+        setGateTitle("Subscription plan expired");
+        setGateMessage(message || "Subscription plan expired as credits exhausted");
+        setShowGateModal(true);
+        return true;
+      }
+
+      if (userCurrentStatus === "free") {
+        setGateTitle("Free trial exhausted");
+        setGateMessage(message || "Free trial exhausted. Please subscribe to continue.");
+        setShowGateModal(true);
+        return true;
+      }
+
+      return false;
+    };
     if (code === "trial_exhausted") {
       setGateTitle("Free trial exhausted");
       setGateMessage(message || "Free trial exhausted. Please subscribe to continue.");
@@ -43,12 +70,15 @@ export const CreditsProvider = ({ children }) => {
       return true;
     }
     if (code === "subscription_required") {
-      setGateTitle("Subscription required");
-      setGateMessage(message || "Subscription required. Please subscribe to continue.");
-      setShowGateModal(true);
-      return true;
+      return showCreditsExhaustedGate() || (() => {
+        setGateTitle("Subscription required");
+        setGateMessage(message || "Subscription required. Please subscribe to continue.");
+        setShowGateModal(true);
+        return true;
+      })();
     }
     if (statusCode === 2 && (type === undefined || String(type) === "error")) {
+      if (showCreditsExhaustedGate()) return true;
       const msg = message || "Subscription required. Please subscribe to continue.";
       const isTrial = /trial/i.test(msg);
       setGateTitle(isTrial ? "Free trial exhausted" : "Subscription required");
@@ -311,6 +341,7 @@ export const CreditsProvider = ({ children }) => {
             <h3 style={{ margin: 0, marginBottom: 8 }}>{gateTitle}</h3>
             <p style={{ margin: 0, marginBottom: 16 }}>{gateMessage}</p>
             <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+              <button onClick={() => { setShowGateModal(false); }} style={{ padding: "8px 14px", borderRadius: 8, border: 0, background: "rgba(148,163,184,0.2)", color: "#e2e8f0" }}>Cancel</button>
               <button onClick={() => { setShowGateModal(false); router.push("/subscription-plan"); }} style={{ padding: "8px 14px", borderRadius: 8, border: 0, background: "#0ea5e9", color: "#fff" }}>View Plans</button>
               <button onClick={() => { setShowGateModal(false); router.push("/subscription-plan"); }} style={{ padding: "8px 14px", borderRadius: 8, border: 0, background: "#22c55e", color: "#0b1727", fontWeight: 600 }}>Subscribe</button>
             </div>

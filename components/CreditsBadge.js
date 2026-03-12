@@ -36,11 +36,13 @@ const CreditsBadge = ({ className = "", style = {} }) => {
       style={{ gap: 8, ...style }}
       aria-label="User credits"
     >
-      <div style={pillStyle} title="Trial credits remaining">
-        <span style={{ opacity: 0.85 }}>Trial:</span>
-        <strong>{trialRemaining}</strong>
-        {isFreeTrial ? <span style={freeStyle}>Free Trial</span> : null}
-      </div>
+      {isFreeTrial ? (
+        <div style={pillStyle} title="Trial credits remaining">
+          <span style={{ opacity: 0.85 }}>Trial:</span>
+          <strong>{trialRemaining}</strong>
+          <span style={freeStyle}>Free Trial</span>
+        </div>
+      ) : null}
       <div style={pillStyle} title="Paid credits remaining">
         <span style={{ opacity: 0.85 }}>Credits:</span>
         <strong>{realRemaining}</strong>

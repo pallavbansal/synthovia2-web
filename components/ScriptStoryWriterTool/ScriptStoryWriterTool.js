@@ -688,6 +688,42 @@ const ScriptStoryWriterTool = () => {
         }
     };
 
+    const checkCreditsBeforeGenerate = useCallback(async ({ toolKey, variantCount }) => {
+        try {
+            const res = await fetch(API.USER_CREDITS, {
+                method: 'GET',
+                headers: {
+                    Accept: 'application/json',
+                    Authorization: getAuthHeader(),
+                },
+            });
+
+            const json = await res.json().catch(() => null);
+            const data = json?.data || json;
+            const realRemaining = Number(data?.real_remaining ?? 0);
+            const perGeneration = Number(data?.tools_per_generation?.[toolKey]?.per_generation ?? 0);
+
+            const needed = Math.max(0, Number(variantCount) || 0) * Math.max(0, perGeneration || 0);
+
+            if (!Number.isFinite(realRemaining) || !Number.isFinite(needed) || needed <= 0) {
+                return { ok: true };
+            }
+
+            if (realRemaining < needed) {
+                showGateFromPayload({
+                    code: 'insufficient_credits',
+                    title: 'Insufficient credits',
+                    message: `You need ${needed} credits to generate ${variantCount} variant(s) (cost: ${perGeneration} per generation), but you only have ${realRemaining} credits remaining.`,
+                });
+                return { ok: false, needed, realRemaining, perGeneration };
+            }
+
+            return { ok: true, needed, realRemaining, perGeneration };
+        } catch {
+            return { ok: true };
+        }
+    }, []);
+
     const toggleAdvanced = () => {
         setFormData((prev) => ({
             ...prev,
@@ -839,6 +875,11 @@ const ScriptStoryWriterTool = () => {
             showNotification('Generating scripts, please wait...', 'info');
 
             const variantCount = isFreeTrial ? 1 : Math.max(1, parseInt(payload?.variants_count || 1, 10));
+            const creditCheck = await checkCreditsBeforeGenerate({ toolKey: 'script_writer', variantCount });
+            if (!creditCheck.ok) {
+                setIsGenerating(false);
+                return;
+            }
             const clientRequestKey = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
             setIsApiLoading(false);
