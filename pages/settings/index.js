@@ -10,6 +10,8 @@ import API from "@/utils/api";
 
 import { getAuthHeader, setUser } from "@/utils/auth";
 
+import { useCredits } from "@/components/CreditsContext";
+
 
 
 import styles from "./SettingsPage.module.css";
@@ -17,6 +19,8 @@ import styles from "./SettingsPage.module.css";
 
 
 const SettingsPage = () => {
+
+  const { fetchCredits } = useCredits() || {};
 
   const [profileState, setProfileState] = useState({
 
@@ -240,9 +244,11 @@ const SettingsPage = () => {
 
   useEffect(() => {
 
+    try { fetchCredits?.({ force: true }); } catch {}
+
     fetchProfile();
 
-  }, []);
+  }, [fetchCredits]);
 
 
 
