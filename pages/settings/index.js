@@ -348,11 +348,13 @@ const SettingsPage = () => {
               <div className={styles.v}>{sub?.next_billing_at || "—"}</div>
             </div>
 
-            <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end" }}>
-              <a href="/subscription-plan" className={styles.smallBtn}>
-                Buy Plan
-              </a>
-            </div>
+            {showBuyPlanCta ? (
+              <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end" }}>
+                <a href="/subscription-plan" className={styles.smallBtn}>
+                  Buy Plan
+                </a>
+              </div>
+            ) : null}
           </div>
         </div>
 
