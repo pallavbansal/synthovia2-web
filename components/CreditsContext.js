@@ -28,6 +28,11 @@ export const CreditsProvider = ({ children }) => {
   const [gateTitle, setGateTitle] = useState("Free trial exhausted");
   const [gateMessage, setGateMessage] = useState("Free trial exhausted. Please subscribe to continue.");
 
+  // Single-flight + cooldown guards for credits/trial fetching
+  const fetchInFlightRef = useRef(null);
+  const lastFetchAtRef = useRef(0);
+  const lastTrialStatusFetchRef = useRef(0);
+
   const setGateFromPayload = useCallback((payload) => {
     console.log("payload:",payload);
     if (!payload) return false;
@@ -90,57 +95,83 @@ export const CreditsProvider = ({ children }) => {
   }, []);
 
   // Fetch initial credits
-  const fetchCredits = useCallback(async () => {
-    try {
-      const res = await fetch(API.USER_CREDITS, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: getAuthHeader(),
-        },
-      });
-      const json = await res.json().catch(() => null);
-      if (res.ok && json) {
-        const t = Number(json.trial_remaining ?? json.data?.trial_remaining ?? 0) || 0;
-        const r = Number(json.real_remaining ?? json.data?.real_remaining ?? 0) || 0;
-        setTrialRemaining(t);
-        setRealRemaining(r);
-        try {
-          localStorage.setItem("synthovia_trial_remaining", String(t));
-          localStorage.setItem("synthovia_real_remaining", String(r));
-        } catch {}
-      }
+  const fetchCredits = useCallback(async (opts = {}) => {
+    const force = !!opts.force;
+    const now = Date.now();
 
+    if (!force) {
+      if (fetchInFlightRef.current) {
+        return fetchInFlightRef.current;
+      }
+      const COOLDOWN_MS = 4000;
+      if (now - (lastFetchAtRef.current || 0) < COOLDOWN_MS) {
+        return Promise.resolve();
+      }
+    }
+
+    const run = (async () => {
       try {
-        const res2 = await fetch(API.USER_TRIAL_STATUS, {
+        const res = await fetch(API.USER_CREDITS, {
           method: "GET",
           headers: {
             Accept: "application/json",
             Authorization: getAuthHeader(),
           },
         });
-        const json2 = await res2.json().catch(() => null);
-        if (res2.ok && json2) {
-          const inFT = json2.in_free_trial ?? json2.data?.in_free_trial;
-          if (inFT != null) {
-            setIsFreeTrial(Boolean(inFT));
-            try { localStorage.setItem("synthovia_is_free_trial", String(Boolean(inFT))); } catch {}
-          }
-          const t2 = json2.trial_remaining ?? json2.data?.trial_remaining;
-          const r2 = json2.real_remaining ?? json2.data?.real_remaining;
-          if (t2 != null && !Number.isNaN(Number(t2))) {
-            const n = Number(t2);
-            setTrialRemaining(n);
-            try { localStorage.setItem("synthovia_trial_remaining", String(n)); } catch {}
-          }
-          if (r2 != null && !Number.isNaN(Number(r2))) {
-            const n = Number(r2);
-            setRealRemaining(n);
-            try { localStorage.setItem("synthovia_real_remaining", String(n)); } catch {}
-          }
+        const json = await res.json().catch(() => null);
+        if (res.ok && json) {
+          const t = Number(json.trial_remaining ?? json.data?.trial_remaining ?? 0) || 0;
+          const r = Number(json.real_remaining ?? json.data?.real_remaining ?? 0) || 0;
+          setTrialRemaining(t);
+          setRealRemaining(r);
+          try {
+            localStorage.setItem("synthovia_trial_remaining", String(t));
+            localStorage.setItem("synthovia_real_remaining", String(r));
+          } catch {}
+        }
+
+        const TRIAL_STATUS_COOLDOWN_MS = 60000;
+        if (force || now - (lastTrialStatusFetchRef.current || 0) > TRIAL_STATUS_COOLDOWN_MS) {
+          try {
+            const res2 = await fetch(API.USER_TRIAL_STATUS, {
+              method: "GET",
+              headers: {
+                Accept: "application/json",
+                Authorization: getAuthHeader(),
+              },
+            });
+            const json2 = await res2.json().catch(() => null);
+            if (res2.ok && json2) {
+              const inFT = json2.in_free_trial ?? json2.data?.in_free_trial;
+              if (inFT != null) {
+                setIsFreeTrial(Boolean(inFT));
+                try { localStorage.setItem("synthovia_is_free_trial", String(Boolean(inFT))); } catch {}
+              }
+              const t2 = json2.trial_remaining ?? json2.data?.trial_remaining;
+              const r2 = json2.real_remaining ?? json2.data?.real_remaining;
+              if (t2 != null && !Number.isNaN(Number(t2))) {
+                const n = Number(t2);
+                setTrialRemaining(n);
+                try { localStorage.setItem("synthovia_trial_remaining", String(n)); } catch {}
+              }
+              if (r2 != null && !Number.isNaN(Number(r2))) {
+                const n = Number(r2);
+                setRealRemaining(n);
+                try { localStorage.setItem("synthovia_real_remaining", String(n)); } catch {}
+              }
+            }
+          } catch {}
+          lastTrialStatusFetchRef.current = Date.now();
         }
       } catch {}
-    } catch {}
+      finally {
+        lastFetchAtRef.current = Date.now();
+        fetchInFlightRef.current = null;
+      }
+    })();
+
+    fetchInFlightRef.current = run;
+    return run;
   }, []);
 
   // Global fetch interceptor to update credits and handle 402 gating
@@ -171,7 +202,8 @@ export const CreditsProvider = ({ children }) => {
 
       // Pre-call refresh on tool submissions/regenerations
       try {
-        if (!isCreditsEndpoint && looksLikeToolAction()) {
+        const ENABLE_PRE_REFRESH = false;
+        if (!isCreditsEndpoint && looksLikeToolAction() && ENABLE_PRE_REFRESH) {
           // Fire-and-forget
           fetchCredits?.();
         }
