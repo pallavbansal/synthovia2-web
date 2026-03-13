@@ -143,6 +143,25 @@ const Captionandhastaggeneratorform = () => {
 
     const checkCreditsBeforeGenerate = useCallback(async ({ toolKey, variantCount }) => {
         try {
+            let statusStr = null;
+            try {
+                const rs = await fetch(API.USER_TRIAL_STATUS, {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'application/json',
+                        Authorization: getAuthHeader(),
+                    },
+                });
+                const js = await rs.json().catch(() => null);
+                const userStatus = js?.user_current_status ?? js?.data?.user_current_status;
+                if (userStatus) {
+                    statusStr = String(userStatus).toLowerCase();
+                } else {
+                    const inFT = js?.in_free_trial ?? js?.data?.in_free_trial;
+                    if (inFT != null) statusStr = inFT ? 'free' : 'subscription';
+                }
+            } catch {}
+
             const res = await fetch(API.USER_CREDITS, {
                 method: 'GET',
                 headers: {
@@ -153,25 +172,27 @@ const Captionandhastaggeneratorform = () => {
 
             const json = await res.json().catch(() => null);
             const data = json?.data || json;
+            const trialRemaining = Number(data?.trial_remaining ?? 0);
             const realRemaining = Number(data?.real_remaining ?? 0);
             const perGeneration = Number(data?.tools_per_generation?.[toolKey]?.per_generation ?? 0);
 
             const needed = Math.max(0, Number(variantCount) || 0) * Math.max(0, perGeneration || 0);
+            const effectiveRemaining = statusStr === 'free' ? trialRemaining : realRemaining;
 
-            if (!Number.isFinite(realRemaining) || !Number.isFinite(needed) || needed <= 0) {
+            if (!Number.isFinite(effectiveRemaining) || !Number.isFinite(needed) || needed <= 0) {
                 return { ok: true };
             }
 
-            if (realRemaining < needed) {
+            if (effectiveRemaining < needed) {
                 showGateFromPayload({
                     code: 'insufficient_credits',
                     title: 'Insufficient credits',
-                    message: `You need ${needed} credits to generate ${variantCount} variant(s) (cost: ${perGeneration} per generation), but you only have ${realRemaining} credits remaining.`,
+                    message: `You need ${needed} credits to generate ${variantCount} variant(s) (cost: ${perGeneration} per generation), but you only have ${effectiveRemaining} credits remaining.`,
                 });
-                return { ok: false, needed, realRemaining, perGeneration };
+                return { ok: false, needed, realRemaining: effectiveRemaining, perGeneration };
             }
 
-            return { ok: true, needed, realRemaining, perGeneration };
+            return { ok: true, needed, realRemaining: effectiveRemaining, perGeneration };
         } catch {
             return { ok: true };
         }
