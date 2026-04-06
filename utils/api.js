@@ -74,6 +74,7 @@ export const API = {
 
   USER_CREDITS: `${BASE_URL}/user/me/credits`,
   USER_TRIAL_STATUS: `${BASE_URL}/user/me/trial-status`,
+  ADMIN_CLAUDE_STATUS: `${BASE_URL}/admin/providers/claude/status`,
 
   COUNTRIES: `${BASE_URL}/countries`,
 

@@ -51,10 +51,12 @@ export const CreditsProvider = ({ children }) => {
   });
 
   const [showGateModal, setShowGateModal] = useState(false);
-
   const [gateTitle, setGateTitle] = useState("Free trial exhausted");
-
   const [gateMessage, setGateMessage] = useState("Free trial exhausted. Please subscribe to continue.");
+
+  const [showQuotaExhaustedModal, setShowQuotaExhaustedModal] = useState(false);
+  const [quotaExhaustedMessage, setQuotaExhaustedMessage] = useState("");
+
 
 
 
@@ -283,6 +285,48 @@ export const CreditsProvider = ({ children }) => {
       } catch {}
 
     } catch {}
+
+  }, []);
+
+
+
+  const checkClaudeStatus = useCallback(async () => {
+
+    try {
+
+      const res = await fetch(API.ADMIN_CLAUDE_STATUS, {
+
+        method: "GET",
+
+        headers: {
+
+          Accept: "application/json",
+
+          Authorization: getAuthHeader(),
+
+        },
+
+      });
+
+      const json = await res.json().catch(() => null);
+
+      if (json && (json.status_code === 1 || json.status === "quota_exhausted")) {
+
+        setQuotaExhaustedMessage("Our AI processing system has reached its credit limit. Administrators have already been notified to restore service. We apologize for the interruption.");
+
+        setShowQuotaExhaustedModal(true);
+
+      } else {
+
+        setShowQuotaExhaustedModal(false);
+
+      }
+
+    } catch (err) {
+
+      console.error("Failed to check Claude status:", err);
+
+    }
 
   }, []);
 
@@ -562,7 +606,59 @@ export const CreditsProvider = ({ children }) => {
 
     setGateFromPayload,
 
-  }), [trialRemaining, realRemaining, isFreeTrial, fetchCredits, showGateModal, setGateFromPayload]);
+    checkClaudeStatus,
+
+  }), [trialRemaining, realRemaining, isFreeTrial, fetchCredits, showGateModal, setGateFromPayload, checkClaudeStatus]);
+
+
+
+  useEffect(() => {
+
+    const toolPrefixes = [
+
+      "/ad-copy-generator",
+
+      "/caption-and-hastag-generator",
+
+      "/code-generator",
+
+      "/copywriting-assistant",
+
+      "/email-generator",
+
+      "/image-editor",
+
+      "/image-generator",
+
+      "/seo-keyword-meta-tag-generator",
+
+      "/script-story-writer-tool",
+
+      "/script-writing-generator",
+
+      "/text-generator",
+
+      "/vedio-generator",
+
+    ];
+
+    const isToolPage = toolPrefixes.some(
+
+      (prefix) => router.pathname === prefix || router.pathname.startsWith(`${prefix}/`)
+
+    );
+
+    if (isToolPage) {
+
+      checkClaudeStatus();
+
+    } else {
+
+      setShowQuotaExhaustedModal(false);
+
+    }
+
+  }, [router.pathname, checkClaudeStatus]);
 
 
 
@@ -689,6 +785,46 @@ export const CreditsProvider = ({ children }) => {
               <button onClick={() => { setShowGateModal(false); router.push("/subscription-plan"); }} style={{ padding: "8px 14px", borderRadius: 8, border: 0, background: "#0ea5e9", color: "#fff" }}>View Plans</button>
 
               <button onClick={() => { setShowGateModal(false); router.push("/subscription-plan"); }} style={{ padding: "8px 14px", borderRadius: 8, border: 0, background: "#22c55e", color: "#0b1727", fontWeight: 600 }}>Subscribe</button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      ) : null}
+
+
+
+      {showQuotaExhaustedModal ? (
+
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 2147483647, display: "flex", alignItems: "center", justifyContent: "center" }}>
+
+          <div role="dialog" aria-modal="true" style={{ background: "#0f172a", color: "#f8fafc", padding: 32, borderRadius: 16, width: "90%", maxWidth: 450, boxShadow: "0 20px 50px rgba(0,0,0,0.6)", textAlign: "center" }}>
+
+            <div style={{ marginBottom: 20 }}>
+
+              <i className="fa-sharp fa-solid fa-circle-exclamation" style={{ fontSize: 48, color: "#ef4444" }} />
+
+            </div>
+
+            <h3 style={{ margin: 0, marginBottom: 12, fontSize: 24, fontWeight: 700 }}>Service Unavailable</h3>
+
+            <p style={{ margin: 0, marginBottom: 24, color: "#94a3b8", lineHeight: 1.6 }}>{quotaExhaustedMessage}</p>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center" }}>
+
+               <button 
+
+                onClick={() => router.push("/dashboard-overview")} 
+
+                style={{ cursor: "pointer", padding: "10px 20px", borderRadius: 8, border: "1px solid rgba(148,163,184,0.3)", background: "transparent", color: "#f8fafc" }}
+
+              >
+
+                Go to Dashboard
+
+              </button>
 
             </div>
 
