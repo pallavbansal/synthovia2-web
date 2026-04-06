@@ -28,9 +28,8 @@ const TabStyleOne = () => {
                     key={index}
                   >
                     <button
-                      className={`nav-link rainbow-gradient-btn without-shape-circle ${
-                        data.isSelect ? "active" : ""
-                      }`}
+                      className={`nav-link rainbow-gradient-btn without-shape-circle ${data.isSelect ? "active" : ""
+                        }`}
                       id={`${data.menuId}-tab`}
                       data-bs-toggle="tab"
                       data-bs-target={`#${data.target}`}
@@ -46,7 +45,7 @@ const TabStyleOne = () => {
                           height={24}
                           alt="Vedio Generator Icon"
                         /> */}
-                        <div className="credits-tool-icon" style={{fontSize:"15px !important", width:"40px !important",height:"40px !important", marginBottom:"0px !important"}}>
+                        <div className="credits-tool-icon" style={{ fontSize: "15px !important", width: "40px !important", height: "40px !important", marginBottom: "0px !important" }}>
                           <i className={data.iconClass}></i>
                         </div>
                         {data.text}
@@ -61,16 +60,15 @@ const TabStyleOne = () => {
               {TabData &&
                 TabData.TabStyleOne.map((tab, index) => (
                   <div
-                    className={`tab-pane fade ${
-                      tab.isSelect ? "show active" : ""
-                    }`}
+                    className={`tab-pane fade ${tab.isSelect ? "show active" : ""
+                      }`}
                     id={tab.target}
                     role="tabpanel"
                     aria-labelledby={`${tab.menuId}-tab`}
                     key={index}
                   >
                     <div className="inner">
-                      <div className="row">
+                      <div className="row align-items-center">
                         <div className="col-xl-6">
                           <div className="section-title">
                             <h2 className="title">{tab.title}</h2>
@@ -99,12 +97,18 @@ const TabStyleOne = () => {
                           <div className="export-img">
                             <div className="inner-without-padding">
                               <div className="export-img img-bg-shape">
-                                <Link href={getToolHref(tab)} aria-label={`Open ${tab.text || "tool"}`}>
+                                <Link className="w-100 d-block" href={getToolHref(tab)} aria-label={`Open ${tab.text || "tool"}`}>
                                   <Image
                                     src={isLightTheme ? tab.img : tab.imgLight}
                                     width={569}
                                     height={483}
                                     alt="Chat example Image"
+                                    style={{
+                                      width: '100%',
+                                      height: 'auto',
+                                      objectFit: 'cover',
+                                      borderRadius: '14px'
+                                    }}
                                   />
                                 </Link>
                                 <div className="image-shape"></div>

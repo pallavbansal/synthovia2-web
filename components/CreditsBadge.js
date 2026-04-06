@@ -6,7 +6,6 @@ const CreditsBadge = ({ className = "", style = {} }) => {
   const { trialRemaining = 0, realRemaining = 0, isFreeTrial = false } = useCredits() || {};
 
   if (isAdminAuthenticated?.()) return null;
-
   const pillStyle = {
     background: "#0f172a",
     color: "#e2e8f0",

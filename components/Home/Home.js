@@ -43,8 +43,8 @@ const Home = () => {
       setVisibleIndex((prevIndex) => (prevIndex + 1) % 3);
     }, 2000);
 
-    
-   // Scroll-to-hash support for #pricing and #features
+
+    // Scroll-to-hash support for #pricing and #features
     const scrollToHash = () => {
       if (typeof window === "undefined") return;
       const hash = window.location.hash;
@@ -78,7 +78,7 @@ const Home = () => {
       background: "linear-gradient(90deg,#c77dff,#9d4edd,#7b2cbf)",
       "-webkit-background-clip": "text",
       "-webkit-text-fill-color": "transparent",
-       position: "relative",
+      position: "relative",
     },
     fontLarge: {
       fontSize: "xxx-large",
@@ -95,7 +95,7 @@ const Home = () => {
           <div className="row justify-content-center">
             <div className="col-lg-12">
               <div className="inner text-center mt--140">
-                <h1 className="title display-one" style={{...styles.glasstext,...styles.fontLarge}}>
+                <h1 className="title display-one" style={{ ...styles.glasstext, ...styles.fontLarge }}>
                   One Platform to Plan, Structure, and Write Content — <span style={styles.gradientText}>Powered by AI</span>
                   {/* <br /> */}
                   {/* {" "}
@@ -134,7 +134,7 @@ const Home = () => {
                   </span>{" "}
                   AI Hack */}
                 </h1>
-                <p className="description" style={{...styles.glasstext}}>
+                <p className="description" style={{ ...styles.glasstext }}>
                   Generate ads, emails, SEO, and social content with AI  <br />{" "}
                   that works from your inputs and helps shape content for practical use.
                 </p>
@@ -183,15 +183,21 @@ const Home = () => {
               </div>
             </div>
             <div className="col-lg-11 col-xl-11 justify-content-center">
-              <div className="slider-frame">
-                <Image
-                  className="slider-image-effect"
-                  src={isLightTheme ? bannerImg : bannerWhiteImg}
-                  width={1055}
-                  height={898}
-                  alt="Banner Images"
-                />
-              </div>
+              <Image
+                className="slider-image-effect"
+                src={isLightTheme ? bannerImg : bannerWhiteImg}
+                width={1055}
+                height={898}
+                alt="Banner Images"
+                priority
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                  objectFit: 'contain',
+                  borderRadius: '15px'
+                }}
+              />
+
             </div>
           </div>
         </div>
@@ -333,16 +339,7 @@ const Home = () => {
                   height={712}
                   alt="collabration-image"
                 />
-                <div className="logo-section">
-                  <div className="center-logo">
-                    <Image
-                      src={isLightTheme ? SplitLogo : DarkSplitLogo}
-                      width={104}
-                      height={143}
-                      alt="Small Logo"
-                    />
-                  </div>
-                </div>
+
               </div>
             </div>
           </div>
