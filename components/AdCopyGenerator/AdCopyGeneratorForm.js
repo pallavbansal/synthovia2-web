@@ -996,14 +996,21 @@ const AdCopyGeneratorForm = () => {
                 }
             };
 
-            const results = await Promise.allSettled(
-                Array.from({ length: variantCount }).map((_, index) => streamSingleVariant(index))
-            );
+            const results = [];
+            for (let index = 0; index < variantCount; index++) {
+                try {
+                    await streamSingleVariant(index);
+                    results.push({ status: 'fulfilled', value: true });
+                } catch (e) {
+                    results.push({ status: 'rejected', reason: e });
+                }
+            }
 
             const hasError = results.some(r => r.status === 'rejected');
             if (hasError) {
                 setGeneratedVariantsData((prev) => {
                     const next = (prev.variants || []).map((v, i) => {
+
                         const r = results[i];
                         if (r && r.status === 'rejected') {
                             return {

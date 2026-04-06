@@ -721,7 +721,7 @@ const SubscriptionPlanPage = () => {
     });
 
     const out = filtered.length ? filtered : byPrice;
-    return out.slice(0, 3);
+    return out;
   }, [plans, fallbackPlans, billingMode, geoIsIndia, useFallbackPlans]);
 
   const authed = useMemo(() => isAuthenticated(), []);
