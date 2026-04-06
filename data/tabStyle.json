@@ -2,8 +2,8 @@
   "TabStyleOne": [
     {
       "title": "Video generating AI refers to artificial intelligence.",
-      "img": "/images/generator-img/chat-export-vedio.png",
-      "imgLight": "/images/light/generator-img/chat-export-audio.png",
+      "img": "/images/light/generator-img/add-copy.png",
+      "imgLight": "/images/light/generator-img/add-copy.png",
       "menuId": "ad-copy-generator",
       "text": "Add Copy Generator",
       "target": "ad-copy-generator",
@@ -27,8 +27,8 @@
     },
     {
       "title": "Audio generating AI refers to artificial intelligence.",
-      "img": "/images/generator-img/chat-export-audio.png",
-      "imgLight": "/images/light/generator-img/chat-export-audio.png",
+      "img": "/images/light/generator-img/caption-hashtag.png",
+      "imgLight": "/images/light/generator-img/caption-hashtag.png",
       "menuId": "caption-and-hastag-generator",
       "text": "Caption Hashtag Generator",
       "target": "caption-and-hastag-generator",
@@ -52,8 +52,8 @@
     },
     {
       "title": "Photo generating AI refers to artificial intelligence.",
-      "img": "/images/generator-img/chat-export-photo.png",
-      "imgLight": "/images/light/generator-img/chat-export-audio.png",
+      "img": "/images/light/generator-img/copy-writing.png",
+      "imgLight": "/images/light/generator-img/copy-writing.png",
       "menuId": "copywriting-assistant",
       "text": "Copy Writing Generator",
       "target": "copywriting-assistant",
@@ -77,8 +77,8 @@
     },
     {
       "title": "Text generating AI refers to artificial intelligence.",
-      "img": "/images/generator-img/chat-export.png",
-      "imgLight": "/images/light/generator-img/chat-export-audio.png",
+      "img": "/images/light/generator-img/script-writer.png",
+      "imgLight": "/images/light/generator-img/script-writer.png",
       "menuId": "script-writing-generator",
       "text": "Scripting Writing Generator",
       "target": "script-writing-generator",
@@ -102,8 +102,8 @@
     },
     {
       "title": "Code generating AI refers to artificial intelligence.",
-      "img": "/images/generator-img/chat-export-code.png",
-      "imgLight": "/images/light/generator-img/chat-export-audio.png",
+      "img": "/images/light/generator-img/email-newsletter.png",
+      "imgLight": "/images/light/generator-img/email-newsletter.png",
       "menuId": "email-generator",
       "text": "Email & Newsletter Generator",
       "target": "email-generator",
@@ -127,8 +127,8 @@
     },
     {
       "title": "Code generating AI refers to artificial intelligence.",
-      "img": "/images/generator-img/chat-export-code.png",
-      "imgLight": "/images/light/generator-img/chat-export-audio.png",
+      "img": "/images/light/generator-img/seo-generator.png",
+      "imgLight": "/images/light/generator-img/seo-generator.png",
       "menuId": "seo-keyword-meta-tag-generator",
       "text": "Seo Keyword Generator",
       "target": "seo-keyword-meta-tag-generator",
@@ -177,7 +177,7 @@
       "target": "contact-tab",
       "isSelect": false,
       "menuText": "Generate & Review Content",
-      "img": "/images/split/split-3.png",
+      "img": "/images/split/split-5.png",
       "subTitle": "Navigating Cybersecurity",
       "title": "Generate & Review Content",
       "desc": "The AI generates content based on your inputs. Review the output, regenerate variations, or adjust inputs until it fits your needs."
@@ -187,7 +187,7 @@
       "target": "contact-tab",
       "isSelect": false,
       "menuText": "Download & Use Your Content",
-      "img": "/images/split/split-5.png",
+      "img": "/images/split/split-3.png",
       "subTitle": "Mastering Data Analysis",
       "title": "Download & Use Your Content",
       "desc": "Download the generated content and use it directly in your campaigns, platforms, or workflows based on your needs."
