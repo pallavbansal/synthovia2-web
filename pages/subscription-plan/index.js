@@ -301,7 +301,6 @@ const SubscriptionPlanPage = () => {
   useEffect(() => {
     Sal();
   }, []);
-
   useEffect(() => {
     const stored = loadGeoCountryFromStorage();
     if (stored?.code) {
