@@ -32,7 +32,7 @@ const CreditsBadge = ({ className = "", style = {} }) => {
 
   return (
     <div
-      className={`d-none d-lg-flex align-items-center ${className}`}
+      className={`d-inline-flex align-items-center ${className}`}
       style={{ gap: 8, ...style }}
       aria-label="User credits"
     >
