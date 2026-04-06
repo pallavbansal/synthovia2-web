@@ -310,16 +310,11 @@ export const CreditsProvider = ({ children }) => {
 
       const json = await res.json().catch(() => null);
 
-      if (json && (json.status_code === 1 || json.status === "quota_exhausted")) {
-
+      if (json && json.status === "quota_exhausted") {
         setQuotaExhaustedMessage("Our AI processing system has reached its credit limit. Administrators have already been notified to restore service. We apologize for the interruption.");
-
         setShowQuotaExhaustedModal(true);
-
       } else {
-
         setShowQuotaExhaustedModal(false);
-
       }
 
     } catch (err) {
