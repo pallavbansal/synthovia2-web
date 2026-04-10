@@ -89,10 +89,6 @@ const defaultFieldOptions = {
         { id: 4, key: 'voiceover', label: 'Voiceover' },
         { id: 5, key: 'dialogue', label: 'Dialogue' },
     ],
-    outputFormats: [
-        { id: 1, key: 'plain_text', label: 'Plain Text (.txt)' },
-        { id: 2, key: 'html', label: 'HTML Export (.html)' },
-    ],
     structureDepths: [
         { id: 1, key: 'basic', label: 'Basic' },
         { id: 2, key: 'standard', label: 'Standard' },
@@ -181,175 +177,175 @@ const ScriptWritingGeneratorForm = () => {
     }, []);
 
     const styles = {
-        container: { 
-            maxWidth: '1100px', 
-            margin: '0 auto', 
-            padding: '24px', 
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', 
-            backgroundColor: '#0a0e1a', 
-            minHeight: '100vh' 
+        container: {
+            maxWidth: '1100px',
+            margin: '0 auto',
+            padding: '24px',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+            backgroundColor: '#0a0e1a',
+            minHeight: '100vh'
         },
-        card: { 
-            backgroundColor: '#141b2d', 
-            borderRadius: '12px', 
-            boxShadow: '0 4px 6px rgba(0,0,0,0.3)', 
-            overflow: 'hidden', 
-            border: '1px solid #1e293b' 
+        card: {
+            backgroundColor: '#141b2d',
+            borderRadius: '12px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+            overflow: 'hidden',
+            border: '1px solid #1e293b'
         },
-        header: { 
-            padding: '24px 32px', 
-            borderBottom: '1px solid #1e293b', 
+        header: {
+            padding: '24px 32px',
+            borderBottom: '1px solid #1e293b',
         },
-        title: { 
-            margin: 0, 
-            fontSize: '24px', 
-            fontWeight: '600', 
-            color: '#f8fafc' 
+        title: {
+            margin: 0,
+            fontSize: '24px',
+            fontWeight: '600',
+            color: '#f8fafc'
         },
-        subtitle: { 
-            margin: '6px 0 0', 
-            fontSize: '14px', 
-            color: '#94a3b8' 
+        subtitle: {
+            margin: '6px 0 0',
+            fontSize: '14px',
+            color: '#94a3b8'
         },
-        formGroup: { 
-            marginBottom: '20px' 
+        formGroup: {
+            marginBottom: '20px'
         },
-        label: { 
-            display: 'block', 
-            marginBottom: '6px', 
-            fontSize: '16px', 
-            fontWeight: '500', 
-            color: '#e2e8f0' 
+        label: {
+            display: 'block',
+            marginBottom: '6px',
+            fontSize: '16px',
+            fontWeight: '500',
+            color: '#e2e8f0'
         },
-        input: { 
-            width: '100%', 
-            padding: '10px 14px', 
-            fontSize: '14px', 
-            lineHeight: '1.5', 
-            color: '#e2e8f0', 
-            backgroundColor: '#1e293b', 
-            border: '1px solid #334155', 
-            borderRadius: '6px', 
-            transition: 'all 0.15s ease-in-out', 
-            boxSizing: 'border-box' 
+        input: {
+            width: '100%',
+            padding: '10px 14px',
+            fontSize: '14px',
+            lineHeight: '1.5',
+            color: '#e2e8f0',
+            backgroundColor: '#1e293b',
+            border: '1px solid #334155',
+            borderRadius: '6px',
+            transition: 'all 0.15s ease-in-out',
+            boxSizing: 'border-box'
         },
-        select: { 
-            width: '100%', 
-            height: '42px', 
-            padding: '10px 14px', 
-            fontSize: '14px', 
-            lineHeight: '1.5', 
-            color: '#e2e8f0', 
-            backgroundColor: '#1e293b', 
-            border: '1px solid #334155', 
-            borderRadius: '6px', 
-            transition: 'all 0.15s ease-in-out', 
-            boxSizing: 'border-box', 
-            appearance: 'none', 
-            backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")', 
-            backgroundRepeat: 'no-repeat', 
-            backgroundPosition: 'right 10px center', 
-            backgroundSize: '20px', 
-            paddingRight: '40px', 
-            cursor: 'pointer' 
+        select: {
+            width: '100%',
+            height: '42px',
+            padding: '10px 14px',
+            fontSize: '14px',
+            lineHeight: '1.5',
+            color: '#e2e8f0',
+            backgroundColor: '#1e293b',
+            border: '1px solid #334155',
+            borderRadius: '6px',
+            transition: 'all 0.15s ease-in-out',
+            boxSizing: 'border-box',
+            appearance: 'none',
+            backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 10px center',
+            backgroundSize: '20px',
+            paddingRight: '40px',
+            cursor: 'pointer'
         },
-        textarea: { 
-            width: '100%', 
-            padding: '10px 14px', 
-            fontSize: '14px', 
-            lineHeight: '1.5', 
-            color: '#e2e8f0', 
-            backgroundColor: '#1e293b', 
-            border: '1px solid #334155', 
-            borderRadius: '6px', 
-            transition: 'all 0.15s ease-in-out', 
-            boxSizing: 'border-box', 
-            resize: 'vertical', 
-            minHeight: '80px' 
+        textarea: {
+            width: '100%',
+            padding: '10px 14px',
+            fontSize: '14px',
+            lineHeight: '1.5',
+            color: '#e2e8f0',
+            backgroundColor: '#1e293b',
+            border: '1px solid #334155',
+            borderRadius: '6px',
+            transition: 'all 0.15s ease-in-out',
+            boxSizing: 'border-box',
+            resize: 'vertical',
+            minHeight: '80px'
         },
-        badge: { 
-            display: 'inline-flex', 
-            alignItems: 'center', 
-            padding: '6px 12px', 
-            fontSize: '13px', 
-            fontWeight: '500', 
-            borderRadius: '6px', 
-            gap: '6px' 
+        badge: {
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: '6px 12px',
+            fontSize: '13px',
+            fontWeight: '500',
+            borderRadius: '6px',
+            gap: '6px'
         },
-        badgePrimary: { 
-            backgroundColor: '#3b82f6', 
-            color: 'white' 
+        badgePrimary: {
+            backgroundColor: '#3b82f6',
+            color: 'white'
         },
-        btn: { 
-            padding: '10px 20px', 
-            fontSize: '14px', 
-            fontWeight: '500', 
-            borderRadius: '6px', 
-            border: 'none', 
-            cursor: 'pointer', 
-            transition: 'all 0.15s ease-in-out', 
-            display: 'inline-flex', 
-            alignItems: 'center', 
-            gap: '8px' 
+        btn: {
+            padding: '10px 20px',
+            fontSize: '14px',
+            fontWeight: '500',
+            borderRadius: '6px',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease-in-out',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px'
         },
         btnPrimary: {
             backgroundColor: '#3b82f6',
             color: 'white',
         },
-        btnOutline: { 
-            backgroundColor: 'transparent', 
-            color: '#94a3b8', 
-            border: '1px solid #334155' 
+        btnOutline: {
+            backgroundColor: 'transparent',
+            color: '#94a3b8',
+            border: '1px solid #334155'
         },
-        infoIcon: { 
-            display: 'inline-block', 
-            width: '16px', 
-            height: '16px', 
-            borderRadius: '50%', 
-            backgroundColor: '#3b82f6', 
-            color: 'white', 
-            textAlign: 'center', 
-            lineHeight: '16px', 
-            fontSize: '11px', 
-            cursor: 'help', 
-            marginLeft: '6px' 
+        infoIcon: {
+            display: 'inline-block',
+            width: '16px',
+            height: '16px',
+            borderRadius: '50%',
+            backgroundColor: '#3b82f6',
+            color: 'white',
+            textAlign: 'center',
+            lineHeight: '16px',
+            fontSize: '11px',
+            cursor: 'help',
+            marginLeft: '6px'
         },
-        removeBtn: { 
-            background: 'rgba(255,255,255,0.2)', 
-            border: 'none', 
-            color: 'white', 
-            width: '18px', 
-            height: '18px', 
-            borderRadius: '50%', 
-            cursor: 'pointer', 
-            fontSize: '12px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            padding: 0 
+        removeBtn: {
+            background: 'rgba(255,255,255,0.2)',
+            border: 'none',
+            color: 'white',
+            width: '18px',
+            height: '18px',
+            borderRadius: '50%',
+            cursor: 'pointer',
+            fontSize: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0
         },
-        toast: { 
-            position: 'fixed', 
-            top: '20px', 
-            right: '20px', 
-            padding: '16px 24px', 
-            color: 'white', 
-            borderRadius: '8px', 
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)', 
-            zIndex: 9999 
+        toast: {
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            padding: '16px 24px',
+            color: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            zIndex: 9999
         },
-        toolTip: { 
-            width: '40%' 
+        toolTip: {
+            width: '40%'
         },
-        radioGroup: { 
-            display: 'flex', 
-            gap: '16px', 
+        radioGroup: {
+            display: 'flex',
+            gap: '16px',
             marginTop: '8px',
             marginBottom: '8px'
         },
-        radioItem: { 
-            display: 'flex', 
-            alignItems: 'center', 
+        radioItem: {
+            display: 'flex',
+            alignItems: 'center',
             gap: '8px',
             color: '#e2e8f0',
             fontSize: '14px'
@@ -487,7 +483,7 @@ const ScriptWritingGeneratorForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
-        
+
         try {
             sessionRequestIdRef.current = createSessionRequestId();
             const payload = {
@@ -528,7 +524,7 @@ const ScriptWritingGeneratorForm = () => {
 
             const data = await response.json();
             showNotification('Script generated successfully!', 'success');
-            
+
         } catch (error) {
             console.error('Error generating script:', error);
             showNotification('Failed to generate script. Please try again.', 'error');
@@ -763,8 +759,8 @@ const ScriptWritingGeneratorForm = () => {
                             <div className="col-12">
                                 <div style={styles.formGroup}>
                                     <label style={styles.label}>
-                                    Target Audience <span style={{ color: '#ef4444' }}>*</span>
-                                    <span style={styles.infoIcon} data-tooltip-id="targetAudience-tooltip" data-tooltip-content="Add one or more audience tags (press Enter to add).">i</span>
+                                        Target Audience <span style={{ color: '#ef4444' }}>*</span>
+                                        <span style={styles.infoIcon} data-tooltip-id="targetAudience-tooltip" data-tooltip-content="Add one or more audience tags (press Enter to add).">i</span>
                                     </label>
 
                                     <Tooltip style={styles.toolTip} id="targetAudience-tooltip" />
@@ -1233,27 +1229,6 @@ const ScriptWritingGeneratorForm = () => {
                                 </div>
                             </div>
 
-                            <div className="col-md-6">
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>
-                                        Output Format (Export Type)
-                                        <span style={styles.infoIcon} data-tooltip-id="outputFormat-tooltip" data-tooltip-content="Choose how you want the output formatted/exported.">i</span>
-                                    </label>
-                                    <Tooltip style={styles.toolTip} id="outputFormat-tooltip" />
-                                    <select
-                                        style={styles.select}
-                                        name="outputFormat"
-                                        value={formData.outputFormat}
-                                        onChange={handleInputChange}
-                                    >
-                                        {defaultFieldOptions.outputFormats.map(option => (
-                                            <option key={option.key} value={option.key}>
-                                                {option.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
 
                             <div className="col-12">
                                 <div style={styles.formGroup}>

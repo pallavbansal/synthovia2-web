@@ -139,9 +139,7 @@ const SummaryReviewModal = ({
   useCaseOptions,
   toneOptions,
   lengthTargetOptions,
-  ctaStyleOptions,
   readingLevelOptions,
-  targetPlatformOptions,
   contentStyleOptions,
   emotionalIntentOptions,
   writingFrameworkOptions,
@@ -220,6 +218,11 @@ const SummaryReviewModal = ({
           </div>
 
           <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>Topic:</span>
+            <div style={styles.valueBox}>{formData.topic || 'N/A'}</div>
+          </div>
+
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
             <span style={styles.itemLabel}>Primary Goal:</span>
             <div style={styles.valueBox}>{formData.primaryGoal || 'N/A'}</div>
           </div>
@@ -274,24 +277,6 @@ const SummaryReviewModal = ({
             <div style={styles.valueBox}>{formData.keywords || 'N/A'}</div>
           </div>
 
-          {/* CTA Style */}
-          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
-            <span style={styles.itemLabel}>CTA Style Mode:</span>
-            <div style={styles.valueBox}>
-              {formData.ctaStyleMode === 'custom' ? 'Custom' : 'Predefined'}
-            </div>
-          </div>
-
-          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
-            <span style={styles.itemLabel}>CTA Style:</span>
-            <div style={styles.valueBox}>
-              {formData.ctaStyleMode === 'custom'
-                ? formData.customCtaStyle || 'N/A'
-                : (formData.ctaStyle
-                    ? findLabel(ctaStyleOptions, formData.ctaStyle)
-                    : 'N/A')}
-            </div>
-          </div>
 
           {/* Reference Text / Rewrite */}
           <div style={{ ...styles.item, gridColumn: 'span 1' }}>
@@ -321,24 +306,6 @@ const SummaryReviewModal = ({
             </div>
           </div>
 
-          {/* Target Platform */}
-          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
-            <span style={styles.itemLabel}>Platform Mode:</span>
-            <div style={styles.valueBox}>
-              {formData.targetPlatformMode === 'custom' ? 'Custom' : 'Predefined'}
-            </div>
-          </div>
-
-          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
-            <span style={styles.itemLabel}>Target Platform:</span>
-            <div style={styles.valueBox}>
-              {formData.targetPlatformMode === 'custom'
-                ? formData.customTargetPlatform || 'N/A'
-                : (formData.targetPlatform
-                    ? findLabel(targetPlatformOptions, formData.targetPlatform)
-                    : 'Any Platform')}
-            </div>
-          </div>
 
           {/* Brand Voice */}
           <div style={{ ...styles.item, gridColumn: 'span 1' }}>
@@ -395,13 +362,8 @@ const SummaryReviewModal = ({
             </div>
           </div>
 
-          {/* Include / Exclude Words */}
-          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
-            <span style={styles.itemLabel}>Include Words:</span>
-            <div style={styles.valueBox}>{renderListValue(formData.includeWords)}</div>
-          </div>
-
-          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+          {/* Exclude Words */}
+          <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
             <span style={styles.itemLabel}>Exclude Words:</span>
             <div style={styles.valueBox}>{renderListValue(formData.excludeWords)}</div>
           </div>

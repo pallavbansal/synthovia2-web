@@ -159,11 +159,6 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                     </div>
                     
                     <div style={{...styles.item, gridColumn: 'span 1'}}>
-                        <span style={styles.itemLabel}>Placement:</span>
-                        <div style={styles.valueBox}>{formData.placement}</div>
-                    </div>
-                    
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
                         <span style={styles.itemLabel}>Campaign Objective:</span>
                         <div style={styles.valueBox}>
                             {formData.campaignObjective}
@@ -229,13 +224,6 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                         <span style={styles.itemLabel}>Tone:</span>
                         <div style={styles.valueBox}>
                             {formData.tone}
-                        </div>
-                    </div>
-                    
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
-                        <span style={styles.itemLabel}>Headline Focus:</span>
-                        <div style={styles.valueBox}>
-                            {formData.headlineFocus}
                         </div>
                     </div>
                     
