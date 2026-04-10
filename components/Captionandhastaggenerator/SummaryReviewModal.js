@@ -115,38 +115,38 @@ const styles = {
         justifyContent: 'flex-end',
         gap: '12px',
     },
-    btn: { 
-        padding: '10px 20px', 
-        fontSize: '14px', 
-        fontWeight: '500', 
-        borderRadius: '6px', 
-        border: 'none', 
-        cursor: 'pointer', 
-        transition: 'all 0.15s ease-in-out', 
-        display: 'inline-flex', 
-        alignItems: 'center', 
-        gap: '8px' 
+    btn: {
+        padding: '10px 20px',
+        fontSize: '14px',
+        fontWeight: '500',
+        borderRadius: '6px',
+        border: 'none',
+        cursor: 'pointer',
+        transition: 'all 0.15s ease-in-out',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '8px'
     },
-    btnGenerate: { 
-        backgroundColor: '#10b981', 
-        color: 'white' 
+    btnGenerate: {
+        backgroundColor: '#10b981',
+        color: 'white'
     },
-    btnOutline: { 
-        backgroundColor: 'white', 
-        color: '#6b7280', 
-        border: '1px solid #d1d5db' 
+    btnOutline: {
+        backgroundColor: 'white',
+        color: '#6b7280',
+        border: '1px solid #d1d5db'
     },
 };
 
 const SummaryReviewModal = ({ formData, apiOptions, onGenerate, onEdit, onViewLog, formattingOptionsList, getOptionDetails, isGenerating }) => {
-    
+
     // Map predefined keys to labels for display (using the utility function passed from parent)
     const platformDetails = getOptionDetails('caption_platform', formData.platform, formData.customPlatform, formData.platformType);
     const toneDetails = getOptionDetails('caption_tone_of_voice', formData.toneOfVoice, formData.customTone, formData.toneSelection);
     const languageDetails = getOptionDetails('caption_language_locale', formData.language);
     const postLengthDetails = getOptionDetails('caption_post_length', formData.postLength);
-    const ctaDetails = getOptionDetails('caption_cta_type', formData.includeCtaType);
     const captionStyleDetails = getOptionDetails('caption_style', formData.captionStyle);
+
     const hashtagStyleDetails = getOptionDetails('caption_hashtag_style', formData.hashtagStyle);
     const hashtagLimitDetails = getOptionDetails('caption_hashtag_limit', formData.hashtagLimit);
 
@@ -176,22 +176,22 @@ const SummaryReviewModal = ({ formData, apiOptions, onGenerate, onEdit, onViewLo
 
                 <div style={styles.body}>
                     <h3 style={styles.sectionTitle}>🎯 Core Request Details</h3>
-                    
+
                     {/* Column 1: Core Fields */}
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+                    <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                         <span style={styles.itemLabel}>Platform & Post Type:</span>
                         <div style={styles.valueBox}>{getValueDisplay(platformDetails, formData.customPlatform)}</div>
                     </div>
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+                    <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                         <span style={styles.itemLabel}>Tone of Voice:</span>
                         <div style={styles.valueBox}>{getValueDisplay(toneDetails, formData.customTone)}</div>
                     </div>
 
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+                    <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                         <span style={styles.itemLabel}>Primary Goal:</span>
                         <div style={styles.valueBox}>{formData.primaryGoal || 'N/A'}</div>
                     </div>
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+                    <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                         <span style={styles.itemLabel}>Target Audience:</span>
                         <div style={styles.tagContainer}>
                             {formData.targetAudience.map((a, i) => <span key={i} style={{ ...styles.badge, ...styles.badgePrimary }}>{a}</span>)}
@@ -199,50 +199,44 @@ const SummaryReviewModal = ({ formData, apiOptions, onGenerate, onEdit, onViewLo
                         </div>
                     </div>
 
-                    <div style={{...styles.item, gridColumn: '1 / -1'}}>
-                        <span style={styles.itemLabel}>Post Theme/Topic:</span> 
+                    <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
+                        <span style={styles.itemLabel}>Post Theme/Topic:</span>
                         <div style={styles.valueBox}>
                             {formData.postTheme || 'No topic provided.'}
                         </div>
                     </div>
 
                     <h3 style={styles.sectionTitle}>⚙️ Advanced Customization</h3>
-                    
+
                     {/* Column 2: Advanced Style/Settings */}
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+                    <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                         <span style={styles.itemLabel}>Language / Locale:</span>
                         <div style={styles.valueBox}>{languageDetails.value || 'N/A'}</div>
                     </div>
 
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+                    <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                         <span style={styles.itemLabel}>Caption Style:</span>
                         <div style={styles.valueBox}>{captionStyleDetails.value || 'N/A'}</div>
                     </div>
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+                    <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                         <span style={styles.itemLabel}>Hashtag Style:</span>
                         <div style={styles.valueBox}>{hashtagStyleDetails.value || 'N/A'}</div>
                     </div>
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
-                        <span style={styles.itemLabel}>CTA Type:</span>
-                        <div style={styles.valueBox}>{ctaDetails.value === 'Custom CTA' ? `Custom: ${formData.customCta}` : ctaDetails.value || 'N/A'}</div>
-                    </div>
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
-                        <span style={styles.itemLabel}>Number of CTAs:</span>
-                        <div style={styles.valueBox}>{formData.numberOfCta ?? 'N/A'}</div>
-                    </div>
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+
+
+                    <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                         <span style={styles.itemLabel}>Post Length / Variants / Creativity:</span>
                         <div style={styles.valueBox}>
                             Length: {postLengthDetails.value} | Variants: {formData.variants} | Creativity: {formData.creativityLevel}/10
                         </div>
                     </div>
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+                    <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                         <span style={styles.itemLabel}>Hashtag Limit:</span>
                         <div style={styles.valueBox}>{hashtagLimitDetails.value || 'N/A'}</div>
                     </div>
 
                     {/* Full Width Tags/Options */}
-                    <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                    <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
                         <span style={styles.itemLabel}>Formatting Options:</span>
                         <div style={styles.tagContainer}>
                             {getFormattingLabels().map((l, i) => <span key={i} style={{ ...styles.badge, ...styles.badgeSecondary }}>{l}</span>)}
@@ -250,7 +244,7 @@ const SummaryReviewModal = ({ formData, apiOptions, onGenerate, onEdit, onViewLo
                     </div>
 
                     {(formData.requiredKeywords.length > 0 || formData.excludeWords.length > 0) && (
-                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                        <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
                             <span style={styles.itemLabel}>Required Keywords / Hashtags &amp; Exclude Words/Topics:</span>
                             <div style={styles.tagContainer}>
                                 {formData.requiredKeywords.map((k, i) => <span key={`req-${i}`} style={{ ...styles.badge, ...styles.badgeSuccess }}>Required: {k}</span>)}
@@ -260,14 +254,14 @@ const SummaryReviewModal = ({ formData, apiOptions, onGenerate, onEdit, onViewLo
                     )}
 
                     {formData.complianceNotes && (
-                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                        <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
                             <span style={styles.itemLabel}>Compliance Notes:</span>
                             <div style={styles.valueBox}>{formData.complianceNotes}</div>
                         </div>
                     )}
 
                     {String(formData.customInstructions || '').trim() && (
-                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                        <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
                             <span style={styles.itemLabel}>Custom Instructions / AI Guidance:</span>
                             <div style={styles.valueBox}>{formData.customInstructions}</div>
                         </div>

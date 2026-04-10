@@ -87,10 +87,6 @@ const defaultFieldOptions = {
         { id: 4, key: 'voiceover', label: 'Voiceover' },
         { id: 5, key: 'dialogue', label: 'Dialogue' },
     ],
-    outputFormats: [
-        { id: 1, key: 'plain_text', label: 'Plain Text (.txt)' },
-        { id: 2, key: 'html', label: 'HTML Export (.html)' },
-    ],
     structureDepths: [
         { id: 1, key: 'simple', label: 'Simple (25 – 35 %)' },
         { id: 2, key: 'medium', label: 'Medium (50 – 70 %)' },
@@ -1065,7 +1061,9 @@ const ScriptStoryWriterTool = () => {
                                 next[variantIndex] = {
                                     ...next[variantIndex],
                                     id: next[variantIndex].id || msg.variant_id || null,
-                                    content: msg.content || next[variantIndex].content || '',
+                                    content: (next[variantIndex].content?.length > (msg.content?.length || 0)) 
+                                        ? next[variantIndex].content 
+                                        : (msg.content || next[variantIndex].content || ''),
                                     is_streaming: false,
                                 };
                             }
@@ -1302,7 +1300,9 @@ const ScriptStoryWriterTool = () => {
                             next[variantIndex] = {
                                 ...next[variantIndex],
                                 id: next[variantIndex].id || msg.variant_id || null,
-                                content: msg.content || next[variantIndex].content || '',
+                                content: (next[variantIndex].content?.length > (msg.content?.length || 0)) 
+                                    ? next[variantIndex].content 
+                                    : (msg.content || next[variantIndex].content || ''),
                                 is_streaming: false,
                             };
                         }
@@ -2384,27 +2384,6 @@ const ScriptStoryWriterTool = () => {
                                                             </div>
                                                         </div>
 
-                                                        <div className="col-12">
-                                                            <div style={styles.formGroup}>
-                                                                <label style={styles.label}>
-                                                                    Output Format (Export Type)
-                                                                    <span style={styles.infoIcon} data-tooltip-id="outputFormat-tooltip" data-tooltip-content="Choose how you want the output formatted/exported.">i</span>
-                                                                </label>
-                                                                <Tooltip style={styles.toolTip} id="outputFormat-tooltip" />
-                                                                <select
-                                                                    style={styles.select}
-                                                                    name="outputFormat"
-                                                                    value={formData.outputFormat}
-                                                                    onChange={handleInputChange}
-                                                                >
-                                                                    {fieldOptions.outputFormats.map(option => (
-                                                                        <option key={option.key} value={option.key}>
-                                                                            {option.label}
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
-                                                            </div>
-                                                        </div>
 
                                                         <div className="col-12">
                                                             <div style={styles.formGroup}>

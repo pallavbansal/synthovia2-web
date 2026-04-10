@@ -107,28 +107,28 @@ const styles = {
         justifyContent: 'flex-end',
         gap: '12px',
     },
-    btn: { 
-        padding: '10px 20px', 
-        fontSize: '14px', 
-        fontWeight: '500', 
-        borderRadius: '6px', 
-        border: 'none', 
-        cursor: 'pointer', 
-        transition: 'all 0.15s ease-in-out', 
-        display: 'inline-flex', 
-        alignItems: 'center', 
-        gap: '8px' 
+    btn: {
+        padding: '10px 20px',
+        fontSize: '14px',
+        fontWeight: '500',
+        borderRadius: '6px',
+        border: 'none',
+        cursor: 'pointer',
+        transition: 'all 0.15s ease-in-out',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '8px'
     },
-    btnPrimary: { 
-        backgroundColor: '#3b82f6', 
+    btnPrimary: {
+        backgroundColor: '#3b82f6',
         color: 'white',
         '&:hover': {
             backgroundColor: '#2563eb',
         }
     },
-    btnOutline: { 
-        backgroundColor: 'white', 
-        color: '#6b7280', 
+    btnOutline: {
+        backgroundColor: 'white',
+        color: '#6b7280',
         border: '1px solid #d1d5db',
         '&:hover': {
             backgroundColor: '#f9fafb',
@@ -152,27 +152,22 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
 
                 <div style={styles.body}>
                     <h3 style={styles.sectionTitle}>🎯 Campaign Details</h3>
-                    
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+
+                    <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                         <span style={styles.itemLabel}>Platform:</span>
                         <div style={styles.valueBox}>{formData.platform}</div>
                     </div>
-                    
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
-                        <span style={styles.itemLabel}>Placement:</span>
-                        <div style={styles.valueBox}>{formData.placement}</div>
-                    </div>
-                    
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+
+                    <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                         <span style={styles.itemLabel}>Campaign Objective:</span>
                         <div style={styles.valueBox}>
                             {formData.campaignObjective}
                             {formData.customObjective && ` (${formData.customObjective})`}
                         </div>
                     </div>
-                    
+
                     {hasItems(formData.targetAudience) && (
-                        <div style={{...styles.item, gridColumn: 'span 1'}}>
+                        <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                             <span style={styles.itemLabel}>Target Audience:</span>
                             <div style={styles.tagContainer}>
                                 {formData.targetAudience.map((item, index) => (
@@ -185,18 +180,18 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                     )}
 
                     <h3 style={styles.sectionTitle}>📝 Ad Content</h3>
-                    
+
                     {hasText(formData.productServices) && (
-                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                        <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
                             <span style={styles.itemLabel}>Product/Services:</span>
                             <div style={styles.valueBox}>
                                 {formData.productServices}
                             </div>
                         </div>
                     )}
-                    
+
                     {hasItems(formData.keyBenefits) && (
-                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                        <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
                             <span style={styles.itemLabel}>Key Benefits/Features:</span>
                             <div style={styles.tagContainer}>
                                 {formData.keyBenefits.map((benefit, index) => (
@@ -209,14 +204,14 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                     )}
 
                     {/* Emotional Angle & Variants just above Advanced Settings */}
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+                    <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                         <span style={styles.itemLabel}>Emotional Angle:</span>
                         <div style={styles.valueBox}>
                             {formData.emotionalAngle}
                         </div>
                     </div>
-                    
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+
+                    <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                         <span style={styles.itemLabel}>Number of Variants:</span>
                         <div style={styles.valueBox}>
                             {formData.variants}
@@ -224,29 +219,21 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                     </div>
 
                     <h3 style={styles.sectionTitle}>⚙️ Advanced Settings</h3>
-                    
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+
+                    <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                         <span style={styles.itemLabel}>Tone:</span>
                         <div style={styles.valueBox}>
                             {formData.tone}
                         </div>
                     </div>
-                    
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
-                        <span style={styles.itemLabel}>Headline Focus:</span>
-                        <div style={styles.valueBox}>
-                            {formData.headlineFocus}
-                        </div>
-                    </div>
-                    
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+
+                    <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                         <span style={styles.itemLabel}>Text Length:</span>
                         <div style={styles.valueBox}>
                             {formData.adTextLength}
                         </div>
                     </div>
-                    
-                    <div style={{...styles.item, gridColumn: 'span 1'}}>
+                    <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                         <span style={styles.itemLabel}>CTA Type:</span>
                         <div style={styles.valueBox}>
                             {formData.ctaType}
@@ -255,7 +242,7 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
 
                     {/* Brand Voice & Personality */}
                     {formData.brandVoice && (
-                        <div style={{...styles.item, gridColumn: 'span 1'}}>
+                        <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                             <span style={styles.itemLabel}>Brand Voice:</span>
                             <div style={styles.valueBox}>
                                 {formData.brandVoice}
@@ -264,7 +251,7 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                     )}
 
                     {formData.brandVoicePersonalityMode === 'predefined' && formData.brandVoicePersonalityOption && (
-                        <div style={{...styles.item, gridColumn: 'span 1'}}>
+                        <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                             <span style={styles.itemLabel}>Brand Voice Personality:</span>
                             <div style={styles.valueBox}>
                                 {formData.brandVoicePersonalityOption}
@@ -273,7 +260,7 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                     )}
 
                     {formData.brandVoicePersonalityMode === 'custom' && formData.brandVoicePersonalityCustom && (
-                        <div style={{...styles.item, gridColumn: 'span 1'}}>
+                        <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                             <span style={styles.itemLabel}>Brand Voice Personality (Custom):</span>
                             <div style={styles.valueBox}>
                                 {formData.brandVoicePersonalityCustom}
@@ -283,7 +270,7 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
 
                     {/* Geo & Language Targeting and Dates */}
                     {formData.geoLanguageTarget && (
-                        <div style={{...styles.item, gridColumn: 'span 1'}}>
+                        <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                             <span style={styles.itemLabel}>Geo &amp; Language Targeting:</span>
                             <div style={styles.valueBox}>
                                 {formData.geoLanguageTarget}
@@ -292,7 +279,7 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                     )}
 
                     {(formData.campaignDuration?.start || formData.campaignDuration?.end) && (
-                        <div style={{...styles.item, gridColumn: 'span 1'}}>
+                        <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                             <span style={styles.itemLabel}>Campaign Dates:</span>
                             <div style={styles.valueBox}>
                                 {formData.campaignDuration?.start || 'Not set'}
@@ -304,7 +291,7 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
 
                     {/* Audience Pain Points */}
                     {formData.audiencePain && formData.audiencePain.length > 0 && (
-                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                        <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
                             <span style={styles.itemLabel}>Audience Pain Points:</span>
                             <div style={styles.tagContainer}>
                                 {formData.audiencePain.map((item, index) => (
@@ -318,7 +305,7 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
 
                     {/* Proof & Credibility Elements */}
                     {formData.proofCredibility && formData.proofCredibility.length > 0 && (
-                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                        <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
                             <span style={styles.itemLabel}>Proof & Credibility Elements:</span>
                             <div style={styles.tagContainer}>
                                 {formData.proofCredibility.map((item, index) => (
@@ -332,7 +319,7 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
 
                     {/* Offer & Pricing */}
                     {formData.offerPricing && (
-                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                        <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
                             <span style={styles.itemLabel}>Offer &amp; Pricing:</span>
                             <div style={styles.valueBox}>
                                 {formData.offerPricing}
@@ -342,7 +329,7 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
 
                     {/* Problem Scenario & Feature Highlight */}
                     {formData.problemScenario && (
-                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                        <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
                             <span style={styles.itemLabel}>Problem Scenario:</span>
                             <div style={styles.valueBox}>
                                 {formData.problemScenario}
@@ -351,7 +338,7 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                     )}
 
                     {formData.featureHighlight && (
-                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                        <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
                             <span style={styles.itemLabel}>Feature Highlight:</span>
                             <div style={styles.valueBox}>
                                 {formData.featureHighlight}
@@ -360,7 +347,7 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                     )}
 
                     {hasText(formData.customInstructions) && (
-                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                        <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
                             <span style={styles.itemLabel}>Custom Instructions / AI Guidance:</span>
                             <div style={styles.valueBox}>
                                 {formData.customInstructions}
@@ -370,16 +357,16 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
 
                     {/* USP & Compliance Note */}
                     {formData.usp && (
-                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                        <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
                             <span style={styles.itemLabel}>Unique Selling Proposition (USP):</span>
                             <div style={styles.valueBox}>
                                 {formData.usp}
                             </div>
                         </div>
                     )}
-                    
+
                     {formData.complianceNote && (
-                        <div style={{...styles.item, gridColumn: '1 / -1'}}>
+                        <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
                             <span style={styles.itemLabel}>Compliance Note:</span>
                             <div style={styles.valueBox}>
                                 {formData.complianceNote}

@@ -39,10 +39,8 @@ const createSessionRequestId = () => {
 
 const defaultFieldOptions = {
     platform: [],
-    placement: [],
     campaign_objective: [],
     tone_style: [],
-    headline_focus: [],
     primary_text_length: [],
     cta_type: [],
     emotional_angle: [],
@@ -109,7 +107,6 @@ const AdCopyGeneratorForm = () => {
         platformMode: 'predefined',
         platformCustom: '',
 
-        placement: 'Facebook Feed',
         campaignObjective: 'Brand Awareness',
         customObjective: '',
         targetAudience: [],
@@ -117,7 +114,6 @@ const AdCopyGeneratorForm = () => {
         keyBenefits: [],
         variants: 1,
         tone: 'Auto-Detect (Based on Platform)',
-        headlineFocus: 'Auto-Select (Recommended)',
         adTextLength: '',
         ctaType: 'Learn More',
         emotionalAngle: 'Pain → Solution',
@@ -143,13 +139,9 @@ const AdCopyGeneratorForm = () => {
 
     const [audienceInput, setAudienceInput] = useState('');
     const [showAudienceSuggestions, setShowAudienceSuggestions] = useState(false);
-    const [placementMode, setPlacementMode] = useState('predefined');
-    const [placementCustom, setPlacementCustom] = useState('');
     const [campaignObjectiveMode, setCampaignObjectiveMode] = useState('predefined');
     const [toneMode, setToneMode] = useState('predefined');
     const [toneCustom, setToneCustom] = useState('');
-    const [headlineFocusMode, setHeadlineFocusMode] = useState('predefined');
-    const [headlineFocusCustom, setHeadlineFocusCustom] = useState('');
     const [adTextLengthMode, setAdTextLengthMode] = useState('predefined');
     const [adTextLengthCustom, setAdTextLengthCustom] = useState('');
     const [ctaTypeMode, setCtaTypeMode] = useState('predefined');
@@ -161,7 +153,6 @@ const AdCopyGeneratorForm = () => {
 
     const [notification, setNotification] = useState({ show: false, message: '', type: '' });
     const [mounted, setMounted] = useState(false);
-    const [availablePlacements, setAvailablePlacements] = useState([]);
     const [fieldOptions, setFieldOptions] = useState(defaultFieldOptions);
     const [loadingOptions, setLoadingOptions] = useState(false);
     const [optionsError, setOptionsError] = useState('');
@@ -278,23 +269,7 @@ const AdCopyGeneratorForm = () => {
         setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
     }, []);
 
-    // REFACTORED: updatePlacements now accepts and uses the options list directly
-    const updatePlacements = useCallback((platformLabel, allPlacements) => {
-        if (!allPlacements) return;
 
-        const filteredPlacements = allPlacements.filter(opt =>
-            opt.parent_label === platformLabel
-        );
-
-        setAvailablePlacements(filteredPlacements);
-
-        // Set the new default placement to the first available option
-        const newPlacement = filteredPlacements.length > 0 ? filteredPlacements[0].label : '';
-        setFormData(prev => ({
-            ...prev,
-            placement: newPlacement || ''
-        }));
-    }, []); // Empty dependency array, relies on caller to pass data
 
     // Initial Data Load (Retained)
     useEffect(() => {
@@ -337,17 +312,12 @@ const AdCopyGeneratorForm = () => {
 
                         const defaultPlatform = loadedOptions.platform.find(opt => opt.label === formData.platform)?.label || formData.platform;
 
-                        // Pass loaded placement data directly
-                        updatePlacements(defaultPlatform, loadedOptions.placement);
-
                         // Update other defaults
                         setFormData(prev => ({
                             ...prev,
                             platform: defaultPlatform,
-                            // placement is handled by updatePlacements
                             campaignObjective: loadedOptions.campaign_objective.find(opt => opt.label === prev.campaignObjective)?.label || prev.campaignObjective,
                             tone: loadedOptions.tone_style.find(opt => opt.label === prev.tone || prev.tone.includes('Auto'))?.label || prev.tone,
-                            headlineFocus: loadedOptions.headline_focus.find(opt => opt.label === prev.headlineFocus || prev.headlineFocus.includes('Auto'))?.label || prev.headlineFocus,
                             adTextLength: loadedOptions.primary_text_length.find(opt => opt.label === prev.adTextLength)?.label || loadedOptions.primary_text_length?.[0]?.label || prev.adTextLength,
                             ctaType: loadedOptions.cta_type.find(opt => opt.label === prev.ctaType)?.label || prev.ctaType,
                             emotionalAngle: loadedOptions.emotional_angle.find(opt => opt.label.replace('\t', '→') === prev.emotionalAngle)?.label.replace('\t', '→') || prev.emotionalAngle,
@@ -374,12 +344,7 @@ const AdCopyGeneratorForm = () => {
 
     }, []); // Initial load only
 
-    // FIXED: Runtime Platform Change Effect
-    useEffect(() => {
-        // This effect runs whenever formData.platform or fieldOptions.placement (master list) changes.
-        // It explicitly passes the current, updated options list to updatePlacements.
-        updatePlacements(formData.platform, fieldOptions.placement);
-    }, [formData.platform, fieldOptions.placement, updatePlacements]);
+
 
     useEffect(() => {
         if (!isFreeTrial) return;
@@ -390,8 +355,6 @@ const AdCopyGeneratorForm = () => {
         const selectedKey = e.target.value;
         const platformLabel = getLabelFromKey(selectedKey, 'platform', fieldOptions);
 
-        // This simply updates the platform label in state.
-        // The useEffect hook above handles calling updatePlacements to filter based on this new label.
         setFormData(prev => ({ ...prev, platform: platformLabel }));
     };
 
@@ -460,7 +423,6 @@ const AdCopyGeneratorForm = () => {
             let fieldOptionsKey = name;
             if (name === 'adTextLength') fieldOptionsKey = 'primary_text_length';
             if (name === 'tone') fieldOptionsKey = 'tone_style';
-            if (name === 'headlineFocus') fieldOptionsKey = 'headline_focus';
             if (name === 'ctaType') fieldOptionsKey = 'cta_type';
             if (name === 'emotionalAngle') fieldOptionsKey = 'emotional_angle';
             if (name === 'assetReuseStrategy') fieldOptionsKey = 'asset_reuse_strategy';
@@ -514,8 +476,6 @@ const AdCopyGeneratorForm = () => {
         const missing = [];
 
         if (!formData.platform) missing.push('Ad Platform');
-        const requirePlacement = Array.isArray(availablePlacements) && availablePlacements.length > 0;
-        if (requirePlacement && !formData.placement) missing.push('Ad Placement');
         if (!formData.campaignObjective) missing.push('Campaign Objective');
         // Only require Custom Objective when user has explicitly chosen custom mode
         if (formData.campaignObjectiveMode === 'custom' && !formData.customObjective.trim()) {
@@ -529,7 +489,6 @@ const AdCopyGeneratorForm = () => {
         if (!formData.productServices.trim()) missing.push('Product/Services');
 
         if (!formData.tone) missing.push('Tone');
-        if (!formData.headlineFocus) missing.push('Headline Focus');
         // Ad Text Length is optional; default Auto-Length can be sent without validation
         if (!formData.ctaType) missing.push('Call to Action (CTA)');
         if (!formData.variants) missing.push('Number of Variants');
@@ -830,7 +789,9 @@ const AdCopyGeneratorForm = () => {
                                 next[variantIndex] = {
                                     ...next[variantIndex],
                                     id: next[variantIndex].id || msg.variant_id || null,
-                                    content: msg.content || next[variantIndex].content || '',
+                                    content: (next[variantIndex].content?.length > (msg.content?.length || 0)) 
+                                        ? next[variantIndex].content 
+                                        : (msg.content || next[variantIndex].content || ''),
                                     is_streaming: false,
                                 };
                             }
@@ -898,7 +859,9 @@ const AdCopyGeneratorForm = () => {
                                 next[variantIndex] = {
                                     ...next[variantIndex],
                                     id: next[variantIndex].id || msg.variant_id || null,
-                                    content: msg.content || next[variantIndex].content || '',
+                                    content: (next[variantIndex].content?.length > (msg.content?.length || 0)) 
+                                        ? next[variantIndex].content 
+                                        : (msg.content || next[variantIndex].content || ''),
                                     is_streaming: false,
                                 };
                             }
@@ -1104,9 +1067,6 @@ const AdCopyGeneratorForm = () => {
 
         const payload = {
             platform: mapSelectionToApiObject('platform', formData.platform, fieldOptions.platform, true),
-            ...(formData.placement
-                ? { placement: mapSelectionToApiObject('placement', formData.placement, fieldOptions.placement, true) }
-                : {}),
 
             campaign_objective: formData.campaignObjective === 'Custom Objective' ?
                 { type: 'custom', id: null, value: formData.customObjective || 'Custom Objective' } :
@@ -1122,9 +1082,6 @@ const AdCopyGeneratorForm = () => {
             offer_pricing_details: formData.offerPricing,
 
             tone_style: mapSelectionToApiObject('tone_style', formData.tone, fieldOptions.tone_style, true),
-            headline_focus: headlineFocusMode === 'custom'
-                ? { type: 'custom', id: null, value: (headlineFocusCustom || formData.headlineFocus || '') }
-                : mapSelectionToApiObject('headline_focus', formData.headlineFocus, fieldOptions.headline_focus, true),
             primary_text_length: mapSelectionToApiObject('primary_text_length', formData.adTextLength, fieldOptions, true),
             cta_type: mapSelectionToApiObject('cta_type', formData.ctaType, fieldOptions.cta_type, false),
             campaign_duration: formData.campaignDuration,
@@ -1274,7 +1231,9 @@ const AdCopyGeneratorForm = () => {
                             next[variantIndex] = {
                                 ...next[variantIndex],
                                 id: next[variantIndex].id || msg.variant_id || null,
-                                content: msg.content || next[variantIndex].content || '',
+                                content: (next[variantIndex].content?.length > (msg.content?.length || 0)) 
+                                    ? next[variantIndex].content 
+                                    : (msg.content || next[variantIndex].content || ''),
                                 is_streaming: false,
                             };
                         }
@@ -1419,7 +1378,6 @@ const AdCopyGeneratorForm = () => {
             platformMode: 'predefined',
             platformCustom: '',
 
-            placement: 'Facebook Feed',
             campaignObjective: 'Brand Awareness',
             customObjective: '',
             targetAudience: [],
@@ -1427,7 +1385,6 @@ const AdCopyGeneratorForm = () => {
             keyBenefits: [],
             variants: 1,
             tone: 'Auto-Detect (Based on Platform)',
-            headlineFocus: 'Auto-Select (Recommended)',
             adTextLengthMode: 'predefined',
             adTextLength: defaultAdTextLength,
             adTextLengthCustom: '',
@@ -1451,14 +1408,8 @@ const AdCopyGeneratorForm = () => {
 
             customInstructions: ''
         });
-        setPlacementMode('predefined');
-        setPlacementCustom('');
         setCampaignObjectiveMode('predefined');
-        setCampaignObjectiveMode('predefined');
-        setToneMode('predefined');
         setToneCustom('');
-        setHeadlineFocusMode('predefined');
-        setHeadlineFocusCustom('');
         setAdTextLengthMode('predefined');
         setAdTextLengthCustom('');
         setCtaTypeMode('predefined');
@@ -1715,98 +1666,7 @@ const AdCopyGeneratorForm = () => {
                                                 </div>
                                             </div>
 
-                                            <div className="col-md-6">
-                                                <div style={styles.formGroup}>
-                                                    <label htmlFor="placement" style={styles.label}>
-                                                        Ad Placement <span style={{ color: '#ef4444' }}>*</span>
-                                                        <span
-                                                            style={styles.infoIcon}
-                                                            data-tooltip-id="placement-tooltip"
-                                                            data-tooltip-content="Select where the ad will appear (example: feed, story, search results, sidebar). Placement affects length, tone, and visual structure of the generated ad, so choosing correctly helps improve conversion and readability."
-                                                        >
-                                                            i
-                                                        </span>
-                                                    </label>
-                                                    <Tooltip style={styles.toolTip} id="placement-tooltip" />
-                                                    <div style={styles.radioGroup}>
-                                                        <label style={styles.radioItem}>
-                                                            <input
-                                                                type="radio"
-                                                                name="placementMode"
-                                                                value="predefined"
-                                                                checked={placementMode === 'predefined'}
-                                                                onChange={() => {
-                                                                    setPlacementMode('predefined');
-                                                                    setFormData(prev => {
-                                                                        const labels = availablePlacements.map(p => p.label);
-                                                                        let nextPlacement = prev.placement;
-                                                                        if (!labels.includes(nextPlacement) && availablePlacements[0]) {
-                                                                            nextPlacement = availablePlacements[0].label;
-                                                                        }
-                                                                        return { ...prev, placement: nextPlacement };
-                                                                    });
-                                                                }}
-                                                            />
-                                                            <span>Predefined</span>
-                                                        </label>
-                                                        <label style={styles.radioItem}>
-                                                            <input
-                                                                type="radio"
-                                                                name="placementMode"
-                                                                value="custom"
-                                                                checked={placementMode === 'custom'}
-                                                                onChange={() => {
-                                                                    setPlacementMode('custom');
-                                                                    setFormData(prev => ({
-                                                                        ...prev,
-                                                                        placement: placementCustom || '',
-                                                                    }));
-                                                                }}
-                                                            />
-                                                            <span>Custom</span>
-                                                        </label>
-                                                    </div>
 
-                                                    {placementMode === 'predefined' && (
-                                                        <select
-                                                            id="placement"
-                                                            name="placement"
-                                                            // Use key for value attribute, label for display
-                                                            value={fieldOptions.placement.find(opt => opt.label === formData.placement)?.key || formData.placement}
-                                                            onChange={handleChange}
-                                                            style={{ ...styles.select, marginTop: '8px' }}
-                                                            required
-                                                            disabled={!formData.platform || availablePlacements.length === 0}
-                                                        >
-                                                            <option value="">Select Placement</option>
-                                                            {availablePlacements.map((option) => (
-                                                                <option
-                                                                    key={option.key || option.id}
-                                                                    value={option.key}
-                                                                >
-                                                                    {option.label}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    )}
-
-                                                    {placementMode === 'custom' && (
-                                                        <input
-                                                            type="text"
-                                                            id="placementCustom"
-                                                            value={placementCustom}
-                                                            onChange={(e) => {
-                                                                const val = e.target.value;
-                                                                setPlacementCustom(val);
-                                                                setFormData(prev => ({ ...prev, placement: val }));
-                                                            }}
-                                                            style={{ ...styles.input, marginTop: '8px' }}
-                                                            placeholder="Enter custom ad placement"
-                                                            required
-                                                        />
-                                                    )}
-                                                </div>
-                                            </div>
 
                                             {/* Campaign Objective */}
                                             <div className="col-12">
@@ -2159,87 +2019,6 @@ const AdCopyGeneratorForm = () => {
                                                             }}
                                                             style={{ ...styles.input, marginTop: '8px' }}
                                                             placeholder="Enter custom tone"
-                                                        />
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* Headline Focus */}
-                                            <div className="col-md-6">
-                                                <div style={styles.formGroup}>
-                                                    <label htmlFor="headlineFocus" style={styles.label}>
-                                                        Headline Focus
-                                                        <span
-                                                            style={styles.infoIcon}
-                                                            data-tooltip-id="headlineFocus-tooltip"
-                                                            data-tooltip-html="Choose what you want the headline to highlight, such as problem-solution, transformation, discount, or urgency. A good hook catches immediate attention and improves click-through rates."
-                                                        >
-                                                            i
-                                                        </span>
-                                                    </label>
-                                                    <Tooltip style={styles.toolTip} id="headlineFocus-tooltip" />
-                                                    <div style={styles.radioGroup}>
-                                                        <label style={styles.radioItem}>
-                                                            <input
-                                                                type="radio"
-                                                                name="headlineFocusMode"
-                                                                value="predefined"
-                                                                checked={headlineFocusMode === 'predefined'}
-                                                                onChange={() => {
-                                                                    setHeadlineFocusMode('predefined');
-                                                                    setFormData(prev => ({ ...prev, headlineFocus: 'Auto-Select (Recommended)' }));
-                                                                }}
-                                                            />
-                                                            <span>Predefined</span>
-                                                        </label>
-                                                        <label style={styles.radioItem}>
-                                                            <input
-                                                                type="radio"
-                                                                name="headlineFocusMode"
-                                                                value="custom"
-                                                                checked={headlineFocusMode === 'custom'}
-                                                                onChange={() => {
-                                                                    setHeadlineFocusMode('custom');
-                                                                    setFormData(prev => ({ ...prev, headlineFocus: headlineFocusCustom || '' }));
-                                                                }}
-                                                            />
-                                                            <span>Custom</span>
-                                                        </label>
-                                                    </div>
-
-                                                    {headlineFocusMode === 'predefined' && (
-                                                        <select
-                                                            id="headlineFocus"
-                                                            name="headlineFocus"
-                                                            // Use key for value attribute, label for display
-                                                            value={fieldOptions.headline_focus.find(opt => opt.label === formData.headlineFocus)?.key || formData.headlineFocus}
-                                                            onChange={handleChange}
-                                                            style={{ ...styles.select, marginTop: '8px' }}
-                                                        >
-                                                            <option value="Auto-Select (Recommended)">Auto-Select (Recommended)</option>
-                                                            {fieldOptions.headline_focus && fieldOptions.headline_focus.map((option) => (
-                                                                <option
-                                                                    key={option.key || option.id}
-                                                                    value={option.key}
-                                                                >
-                                                                    {option.label}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    )}
-
-                                                    {headlineFocusMode === 'custom' && (
-                                                        <input
-                                                            type="text"
-                                                            id="headlineFocusCustom"
-                                                            value={headlineFocusCustom}
-                                                            onChange={(e) => {
-                                                                const val = e.target.value;
-                                                                setHeadlineFocusCustom(val);
-                                                                setFormData(prev => ({ ...prev, headlineFocus: val }));
-                                                            }}
-                                                            style={{ ...styles.input, marginTop: '8px' }}
-                                                            placeholder="Enter custom headline focus"
                                                         />
                                                     )}
                                                 </div>
@@ -2839,7 +2618,6 @@ const AdCopyGeneratorForm = () => {
                             <div style={styles.summarySection}>
                                 <h5 style={styles.summarySectionTitle}>Content Style</h5>
                                 <p><strong>Tone:</strong> {formData.tone}</p>
-                                <p><strong>Headline Focus:</strong> {formData.headlineFocus}</p>
                                 <p><strong>Ad Text Length:</strong> {formData.adTextLength}</p>
                                 <p><strong>CTA:</strong> {formData.ctaType}</p>
                        

@@ -66,12 +66,6 @@ const Captionandhastaggeneratorform = () => {
         postLength: '', // default to Auto-Detect (Platform Optimized)
         customPostLength: '',
         formattingOptions: [], // Multi-select checkbox array (e.g., ['emoji', 'linebreaks'])
-        // CTA selection - NEW LOGIC TOGGLES ADDED
-        ctaSelection: 'predefined', // <--- NEW STATE
-        includeCtaType: '', // key from API options, can be 'custom'
-        customCta: '', // <--- NEW STATE (Already present, now used with toggle)
-        numberOfCtaSelection: 'predefined',
-        numberOfCta: 1,
         // CTA style selection - NEW FIELD
         ctaStyleSelection: 'predefined',
         ctaStyle: '',
@@ -137,7 +131,7 @@ const Captionandhastaggeneratorform = () => {
     const showGateFromPayload = useCallback((payload) => {
         const handled = setGateFromPayload?.(payload);
         if (!handled) {
-            try { setShowGateModal?.(true); } catch {}
+            try { setShowGateModal?.(true); } catch { }
         }
     }, [setGateFromPayload, setShowGateModal]);
 
@@ -160,7 +154,7 @@ const Captionandhastaggeneratorform = () => {
                     const inFT = js?.in_free_trial ?? js?.data?.in_free_trial;
                     if (inFT != null) statusStr = inFT ? 'free' : 'subscription';
                 }
-            } catch {}
+            } catch { }
 
             const res = await fetch(API.USER_CREDITS, {
                 method: 'GET',
@@ -215,7 +209,6 @@ const Captionandhastaggeneratorform = () => {
         let isCustomMode = false;
         if (fieldKey === 'caption_platform' && formData.platformType === 'custom') isCustomMode = true;
         if (fieldKey === 'caption_tone_of_voice' && formData.toneSelection === 'custom') isCustomMode = true;
-        if (fieldKey === 'caption_cta_type' && formData.ctaSelection === 'custom') isCustomMode = true;
         if (fieldKey === 'caption_language_locale' && formData.languageSelection === 'custom') isCustomMode = true;
         if (fieldKey === 'caption_emotional_intent' && formData.emotionalIntentSelection === 'custom') isCustomMode = true;
         if (fieldKey === 'caption_style' && formData.captionStyleSelection === 'custom') isCustomMode = true;
@@ -231,8 +224,6 @@ const Captionandhastaggeneratorform = () => {
                 finalCustomValue = formData.customPlatform;
             } else if (fieldKey === 'caption_tone_of_voice') {
                 finalCustomValue = formData.customTone;
-            } else if (fieldKey === 'caption_cta_type') {
-                finalCustomValue = formData.customCta;
             } else if (fieldKey === 'caption_language_locale') {
                 finalCustomValue = formData.customLanguage;
             } else if (fieldKey === 'caption_emotional_intent') {
@@ -272,9 +263,8 @@ const Captionandhastaggeneratorform = () => {
     const languageOptions = getOptions('caption_language_locale');
     const emotionalIntentOptions = getOptions('caption_emotional_intent');
     const postLengthOptions = getOptions('caption_post_length');
-    // Including 'custom' manually for the dropdown for consistent UX
-    const ctaTypeOptions = [...getOptions('caption_cta_type'), { key: 'custom', label: 'Custom CTA' }];
     const ctaStyleOptions = getOptions('caption_cta_style');
+
     const captionStyleOptions = getOptions('caption_style');
     const hashtagStyleOptions = getOptions('caption_hashtag_style');
     const hashtagLimitOptions = getOptions('caption_hashtag_limit');
@@ -314,7 +304,6 @@ const Captionandhastaggeneratorform = () => {
                     const defaultTone = result.data.caption_tone_of_voice[0]?.key || '';
                     const defaultLanguage = result.data.caption_language_locale.find(o => o.key === 'en_global')?.key || result.data.caption_language_locale[0]?.key || 'en_global';
                     const defaultEmotionalIntent = result.data.caption_emotional_intent[0]?.key || '';
-                    const defaultCta = result.data.caption_cta_type.find(o => o.key === 'caption_cta_1')?.key || result.data.caption_cta_type[0]?.key || '';
                     const defaultCtaStyle = result.data.caption_cta_style?.[0]?.key || '';
                     const defaultCaptionStyle = result.data.caption_style[0]?.key || '';
                     const defaultHashtagStyle = result.data.caption_hashtag_style[0]?.key || '';
@@ -329,7 +318,6 @@ const Captionandhastaggeneratorform = () => {
                         language: defaultLanguage,
                         emotionalIntent: defaultEmotionalIntent,
                         postLength: defaultPostLength,
-                        includeCtaType: defaultCta,
                         ctaStyle: defaultCtaStyle,
                         captionStyle: defaultCaptionStyle,
                         hashtagStyle: defaultHashtagStyle,
@@ -465,7 +453,7 @@ const Captionandhastaggeneratorform = () => {
             sessionRequestIdRef.current = createSessionRequestId();
             setIsGenerating(true);
             setIsHistoryView(false);
-            try { fetchCredits?.(); } catch {}
+            try { fetchCredits?.(); } catch { }
             showNotification('Generating captions and hashtags...', 'info');
 
             const customPostLengthInt = formData.postLengthSelection === 'custom' ? parseInt(formData.customPostLength, 10) : null;
@@ -478,7 +466,6 @@ const Captionandhastaggeneratorform = () => {
             // 1. Construct the API Payload
             const platformPayload = getOptionDetails('caption_platform', formData.platform, formData.customPlatform, formData.platformType);
             const tonePayload = getOptionDetails('caption_tone_of_voice', formData.toneOfVoice, formData.customTone, formData.toneSelection);
-            const ctaPayload = getOptionDetails('caption_cta_type', formData.includeCtaType, formData.customCta, formData.ctaSelection);
             const languagePayload = getOptionDetails('caption_language_locale', formData.language, formData.customLanguage, formData.languageSelection);
             const postLengthPayload = getOptionDetails('caption_post_length', formData.postLength, formData.customPostLength, formData.postLengthSelection);
             const captionStylePayload = getOptionDetails('caption_style', formData.captionStyle, formData.customCaptionStyle, formData.captionStyleSelection);
@@ -505,7 +492,6 @@ const Captionandhastaggeneratorform = () => {
                     ? { type: 'custom', id: null, value: String(customPostLengthInt) }
                     : { type: 'predefined', id: postLengthPayload.id, value: postLengthPayload.value },
                 caption_style: captionStylePayload,
-                cta_type: ctaPayload,
                 cta_style:
                     ctaStyleDetails.type === 'custom'
                         ? {
@@ -518,8 +504,7 @@ const Captionandhastaggeneratorform = () => {
                                 id: ctaStyleDetails.id,
                             }
                             : null),
-                custom_cta_text: ctaPayload.type === 'custom' ? formData.customCta : null,
-                number_of_ctas: formData.includeCtaType !== ctaTypeOptions.find(o => o.label === 'No CTA')?.key ? parseInt(formData.numberOfCta, 10) : 0,
+
                 formatting_options: formattedOptions,
                 mentions: formData.formattingOptions.includes('mentions') ? (formData.mentionHandles || []) : [],
                 hashtag_style: hashtagStylePayload,
@@ -579,9 +564,9 @@ const Captionandhastaggeneratorform = () => {
                         } catch (e) {
                         }
                         if (errorData && isGateError(errorData)) {
-                            try { showGateFromPayload(errorData); } catch {}
-                            try { controller?.abort?.(); } catch {}
-                            try { setIsGenerating(false); setShowVariantsModal(false); } catch {}
+                            try { showGateFromPayload(errorData); } catch { }
+                            try { controller?.abort?.(); } catch { }
+                            try { setIsGenerating(false); setShowVariantsModal(false); } catch { }
                             return;
                         }
                         throw new Error(errorData.message || `API call failed with status: ${response.status}`);
@@ -631,7 +616,7 @@ const Captionandhastaggeneratorform = () => {
                             if (msg.trial_credits_remaining != null) {
                                 const t = Number(msg.trial_credits_remaining);
                                 if (!Number.isNaN(t)) setTrialRemaining?.(t);
-                                try { fetchCredits?.(); } catch {}
+                                try { fetchCredits?.(); } catch { }
                             }
                             return;
                         }
@@ -642,11 +627,11 @@ const Captionandhastaggeneratorform = () => {
                                     const t = Number(msg.trial_credits_remaining);
                                     if (!Number.isNaN(t)) setTrialRemaining?.(t);
                                 }
-                            } catch {}
-                            try { fetchCredits?.(); } catch {}
-                            try { showGateFromPayload(msg); } catch {}
-                            try { controller?.abort?.(); } catch {}
-                            try { setIsGenerating(false); setShowVariantsModal(false); } catch {}
+                            } catch { }
+                            try { fetchCredits?.(); } catch { }
+                            try { showGateFromPayload(msg); } catch { }
+                            try { controller?.abort?.(); } catch { }
+                            try { setIsGenerating(false); setShowVariantsModal(false); } catch { }
                             return;
                         }
 
@@ -677,7 +662,9 @@ const Captionandhastaggeneratorform = () => {
                                     next[variantIndex] = {
                                         ...next[variantIndex],
                                         id: next[variantIndex].id || msg.variant_id || null,
-                                        content: msg.content || next[variantIndex].content || '',
+                                        content: (next[variantIndex].content?.length > (msg.content?.length || 0)) 
+                                            ? next[variantIndex].content 
+                                            : (msg.content || next[variantIndex].content || ''),
                                         is_streaming: false,
                                     };
                                 }
@@ -687,7 +674,7 @@ const Captionandhastaggeneratorform = () => {
                     };
 
                     try {
-                        for (;;) {
+                        for (; ;) {
                             const { value, done } = await reader.read();
                             if (done) break;
 
@@ -742,7 +729,7 @@ const Captionandhastaggeneratorform = () => {
         } finally {
             setIsGenerating(false);
             setIsSubmitting(false);
-            try { fetchCredits?.(); } catch {}
+            try { fetchCredits?.(); } catch { }
         }
     };
 
@@ -766,7 +753,7 @@ const Captionandhastaggeneratorform = () => {
             }
             return { ...prev, variants: next };
         });
-        try { fetchCredits?.(); } catch {}
+        try { fetchCredits?.(); } catch { }
 
         try {
             const response = await fetch(API.CAPTION_HASHTAG_REGENERATE_VARIANT(variantId), {
@@ -785,8 +772,8 @@ const Captionandhastaggeneratorform = () => {
                 } catch (e) {
                 }
                 if (errorData && isGateError(errorData)) {
-                    try { showGateFromPayload(errorData); } catch {}
-                    try { controller?.abort?.(); } catch {}
+                    try { showGateFromPayload(errorData); } catch { }
+                    try { controller?.abort?.(); } catch { }
                     try {
                         setGeneratedVariantsData((prev) => {
                             const next = [...(prev.variants || [])];
@@ -794,7 +781,7 @@ const Captionandhastaggeneratorform = () => {
                             return { ...prev, variants: next };
                         });
                         setShowVariantsModal(false);
-                    } catch {}
+                    } catch { }
                     return;
                 }
                 throw new Error(errorData.message || `Regeneration failed with status: ${response.status}`);
@@ -815,7 +802,7 @@ const Captionandhastaggeneratorform = () => {
                     return { ...prev, variants: next };
                 });
                 showNotification(`Variant ${variantIndex + 1} successfully regenerated!`, 'success');
-                try { fetchCredits?.(); } catch {}
+                try { fetchCredits?.(); } catch { }
                 return;
             }
 
@@ -850,10 +837,10 @@ const Captionandhastaggeneratorform = () => {
                             const t = Number(msg.trial_credits_remaining);
                             if (!Number.isNaN(t)) setTrialRemaining?.(t);
                         }
-                    } catch {}
-                    try { fetchCredits?.(); } catch {}
-                    try { showGateFromPayload(msg); } catch {}
-                    try { controller?.abort?.(); } catch {}
+                    } catch { }
+                    try { fetchCredits?.(); } catch { }
+                    try { showGateFromPayload(msg); } catch { }
+                    try { controller?.abort?.(); } catch { }
                     return;
                 }
 
@@ -874,7 +861,7 @@ const Captionandhastaggeneratorform = () => {
                     if (msg.trial_credits_remaining != null) {
                         const t = Number(msg.trial_credits_remaining);
                         if (!Number.isNaN(t)) setTrialRemaining?.(t);
-                        try { fetchCredits?.(); } catch {}
+                        try { fetchCredits?.(); } catch { }
                     }
                     return;
                 }
@@ -909,7 +896,9 @@ const Captionandhastaggeneratorform = () => {
                             next[variantIndex] = {
                                 ...next[variantIndex],
                                 id: next[variantIndex].id || msg.variant_id || null,
-                                content: msg.content || next[variantIndex].content || '',
+                                content: (next[variantIndex].content?.length > (msg.content?.length || 0)) 
+                                    ? next[variantIndex].content 
+                                    : (msg.content || next[variantIndex].content || ''),
                                 is_streaming: false,
                             };
                         }
@@ -919,7 +908,7 @@ const Captionandhastaggeneratorform = () => {
             };
 
             try {
-                for (;;) {
+                for (; ;) {
                     const { value, done } = await reader.read();
                     if (done) break;
 
@@ -972,7 +961,7 @@ const Captionandhastaggeneratorform = () => {
             });
         } finally {
             streamControllersRef.current = (streamControllersRef.current || []).filter((c) => c !== controller);
-            try { fetchCredits?.(); } catch {}
+            try { fetchCredits?.(); } catch { }
         }
     };
 
@@ -1061,13 +1050,13 @@ const Captionandhastaggeneratorform = () => {
         const defaultTone = toneOptions[0]?.key || '';
         const defaultLanguage = languageOptions.find(o => o.key === 'en_global')?.key || languageOptions[0]?.key || 'en_global';
         const defaultEmotionalIntent = emotionalIntentOptions[0]?.key || ''; // Default Emotional Intent
-        const defaultCta = ctaTypeOptions.find(o => o.key === 'caption_cta_1')?.key || ctaTypeOptions[0]?.key || '';
         const defaultCtaStyle = ctaStyleOptions[0]?.key || '';
         const defaultCaptionStyle = captionStyleOptions[0]?.key || '';
         const defaultHashtagStyle = hashtagStyleOptions[0]?.key || '';
         const defaultPostLength = postLengthOptions[0]?.key || '';
         // Reset Hashtag Limit to its new default
         const defaultHashtagLimit = hashtagLimitOptions?.find(o => o.key === '15')?.key || hashtagLimitOptions?.[0]?.key || '15';
+
 
 
         setFormData({
@@ -1093,25 +1082,19 @@ const Captionandhastaggeneratorform = () => {
             customEmotionalIntent: '',
             postLength: defaultPostLength,
             formattingOptions: [],
-            ctaSelection: 'predefined', // Reset CTA toggle
-            includeCtaType: defaultCta,
-            customCta: '',
-            numberOfCtaSelection: 'predefined',
-            numberOfCta: 1,
             ctaStyleSelection: 'predefined',
             ctaStyle: defaultCtaStyle,
             customCtaStyle: '',
             captionStyleSelection: 'predefined', // Reset Caption Style toggle
             captionStyle: defaultCaptionStyle,
             customCaptionStyle: '',
-            hashtagStyleSelection: 'predefined', // Reset Hashtag Style toggle
+            hashtagStyleSelection: 'predefined',
             hashtagStyle: defaultHashtagStyle,
             customHashtagStyle: '',
-            // End of new field resets
             excludeWords: [],
             creativityLevel: 5,
             proofread: true,
-            hashtagLimit: defaultHashtagLimit, // <--- RESET DEFAULT
+            hashtagLimit: defaultHashtagLimit,
             complianceNotes: '',
             customInstructions: '',
         });
@@ -1226,10 +1209,10 @@ const Captionandhastaggeneratorform = () => {
                 </div>
             )}
             {/* Header */}
-                <div style={styles.header} id="caption-form-top">
-                    <h1 style={styles.title}>Caption & Hashtag Generator</h1>
-                    <p style={styles.subtitle}>Create engaging captions and hashtags for your social media posts</p>
-                </div>
+            <div style={styles.header} id="caption-form-top">
+                <h1 style={styles.title}>Caption & Hashtag Generator</h1>
+                <p style={styles.subtitle}>Create engaging captions and hashtags for your social media posts</p>
+            </div>
 
             <div style={styles.card}>
 
@@ -1351,10 +1334,10 @@ const Captionandhastaggeneratorform = () => {
                                                         }
                                                     }}
                                                     onBlur={(e) => {
-                                                                if (audienceInput.trim()) {
-                                                                    addAudienceChip(audienceInput.trim());
-                                                                }
-                                                            }}
+                                                        if (audienceInput.trim()) {
+                                                            addAudienceChip(audienceInput.trim());
+                                                        }
+                                                    }}
                                                     style={{
                                                         ...styles.input,
                                                         marginBottom: 0,
@@ -1703,10 +1686,10 @@ const Captionandhastaggeneratorform = () => {
                                                             placeholder="Enter desired post length (1-500 characters)"
                                                         />
                                                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
-                                                                <span style={{ color: '#9ca3af', fontSize: '14px' }}>
-                                                                    Custom post  length must be an integer between 1 and 500 characters.
-                                                                </span>
-                                                            </div>
+                                                            <span style={{ color: '#9ca3af', fontSize: '14px' }}>
+                                                                Custom post  length must be an integer between 1 and 500 characters.
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
@@ -1788,74 +1771,7 @@ const Captionandhastaggeneratorform = () => {
                             {formData.showAdvanced && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: COLUMN_GAP, width: '100%' }}>
 
-                                    {/* ROW 7 (OLD ROW 8): CTA Type (Full Width) */}
-                                    <div style={colFullStyle}>
-                                        {/* CTA Type - UPDATED WITH TOGGLE */}
-                                        <div>
 
-                                            <div style={styles.formGroup}>
-                                                <label style={styles.label}>CTA Type</label>
-                                                <div style={styles.radioGroup}>
-                                                    <label style={styles.radioItem}>
-                                                        <input type="radio" name="ctaSelection" value="predefined" checked={formData.ctaSelection === 'predefined'} onChange={handleChange} style={{ marginRight: '8px' }} />
-                                                        Predefined
-                                                    </label>
-                                                    <label style={styles.radioItem}>
-                                                        <input type="radio" name="ctaSelection" value="custom" checked={formData.ctaSelection === 'custom'} onChange={handleChange} style={{ marginRight: '8px' }} />
-                                                        Custom
-                                                    </label>
-                                                </div>
-                                                {formData.ctaSelection === 'predefined' ? (
-                                                    <select
-                                                        id="includeCtaType"
-                                                        name="includeCtaType"
-                                                        value={formData.includeCtaType}
-                                                        onChange={handleChange}
-                                                        style={styles.select}
-                                                    >
-                                                        <option value="">Select CTA Type</option>
-                                                        {ctaTypeOptions.filter(cta => cta.key !== 'custom').map((cta) => (
-                                                            <option key={cta.key} value={cta.key}>{cta.label}</option>
-                                                        ))}
-                                                    </select>
-                                                ) : (
-                                                    <input
-                                                        type="text"
-                                                        id="customCta"
-                                                        name="customCta"
-                                                        value={formData.customCta}
-                                                        onChange={handleChange}
-                                                        style={styles.input}
-                                                        maxLength={100}
-                                                        placeholder="e.g., Tap to explore the full eco-collection now."
-                                                        required={formData.ctaSelection === 'custom'}
-                                                    />
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* ROW 8: Number of CTAs (Full Width) */}
-                                    <div style={colFullStyle}>
-                                        <div style={styles.formGroup}>
-                                            <label htmlFor="numberOfCta" style={styles.label}>
-                                                Number of CTAs
-                                                <span style={styles.infoIcon} data-tooltip-id="numberOfCta-tooltip" data-tooltip-content="Number of Call-to-Actions to include (max 3)">i</span>
-                                            </label>
-                                            <Tooltip style={styles.toolTip} id="numberOfCta-tooltip" />
-                                            <input
-                                                type="number"
-                                                id="numberOfCta"
-                                                name="numberOfCta"
-                                                min="0"
-                                                max="3"
-                                                value={formData.numberOfCta}
-                                                onChange={handleChange}
-                                                style={styles.input}
-                                                disabled={formData.ctaSelection === 'predefined' && formData.includeCtaType === ctaTypeOptions.find(o => o.label === 'No CTA')?.key}
-                                            />
-                                        </div>
-                                    </div>
 
                                     {/* CTA Style (Full Width, Predefined/Custom) */}
                                     <div style={colFullStyle}>
@@ -2016,15 +1932,15 @@ const Captionandhastaggeneratorform = () => {
                                                 placeholder="Add a keyword or hashtag and press Enter"
                                                 onKeyPress={(e) => handleArrayChange(e, 'requiredKeywords')}
                                                 onBlur={(e) => {
-                                                                const value = e.target.value.trim();
-                                                                if (value && formData.requiredKeywords.length <30) {
-                                                                    setFormData(prev => ({
-                                                                        ...prev,
-                                                                        requiredKeywords: [...prev.requiredKeywords, value]
-                                                                    }));
-                                                                    e.target.value = '';
-                                                                }
-                                                            }}
+                                                    const value = e.target.value.trim();
+                                                    if (value && formData.requiredKeywords.length < 30) {
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            requiredKeywords: [...prev.requiredKeywords, value]
+                                                        }));
+                                                        e.target.value = '';
+                                                    }
+                                                }}
                                                 disabled={formData.requiredKeywords.length >= 30}
                                                 inputMode='text'
                                             />
@@ -2056,15 +1972,15 @@ const Captionandhastaggeneratorform = () => {
                                                 placeholder="Add a word or topic to exclude and press Enter"
                                                 onKeyPress={(e) => handleArrayChange(e, 'excludeWords')}
                                                 onBlur={(e) => {
-                                                                const value = e.target.value.trim();
-                                                                if (value && formData.excludeWords.length < 30) {
-                                                                    setFormData(prev => ({
-                                                                        ...prev,
-                                                                        excludeWords: [...prev.excludeWords, value]
-                                                                    }));
-                                                                    e.target.value = '';
-                                                                }
-                                                            }}
+                                                    const value = e.target.value.trim();
+                                                    if (value && formData.excludeWords.length < 30) {
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            excludeWords: [...prev.excludeWords, value]
+                                                        }));
+                                                        e.target.value = '';
+                                                    }
+                                                }}
                                                 disabled={formData.excludeWords.length >= 30}
                                                 inputMode='text'
                                             />
