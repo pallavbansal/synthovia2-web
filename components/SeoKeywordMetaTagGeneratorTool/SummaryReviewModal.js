@@ -189,11 +189,6 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, onClose, isGeneratin
           </div>
 
           <div style={styles.item}>
-            <span style={styles.itemLabel}>Keyword Difficulty Preference:</span>
-            <div style={styles.valueBox}>{renderValue(formData.keywordDifficulty)}</div>
-          </div>
-
-          <div style={styles.item}>
             <span style={styles.itemLabel}>Search Volume Priority:</span>
             <div style={styles.valueBox}>{renderValue(formData.searchVolumePriority) || "Not specified"}</div>
           </div>
@@ -213,11 +208,6 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, onClose, isGeneratin
           <div style={styles.item}>
             <span style={styles.itemLabel}>Meta Title Style:</span>
             <div style={styles.valueBox}>{renderValue(formData.metaTitleStyle) || "Not specified"}</div>
-          </div>
-
-          <div style={styles.item}>
-            <span style={styles.itemLabel}>Schema / Rich Result Type:</span>
-            <div style={styles.valueBox}>{renderValue(formData.schemaType) || "Not specified"}</div>
           </div>
 
           <div style={styles.item}>

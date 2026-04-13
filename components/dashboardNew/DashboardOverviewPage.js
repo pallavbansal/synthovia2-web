@@ -57,9 +57,9 @@ const CHART_TOOLS = [
     matches: ["Email & Newsletter Writer", "Email & Newsletter Generator"],
   },
   {
-    label: "Script & Story Writer",
+    label: "Script Writer",
     displayLines: ["Script &", "Story"],
-    matches: ["Script & Story Writer", "Script Writer", "Script & Story Writer Tool"],
+    matches: ["Script  Writer", "Script Writer", "Script Writer Tool"],
   },
   {
     label: "SEO Keyword & Meta Tag Generator",
@@ -629,11 +629,11 @@ const DashboardOverviewPage = () => {
                       <div className={styles.barLabel} key={`${t.label}-label`} title={t.label}>
                         {t.displayLines && t.displayLines.length
                           ? t.displayLines.map((line, idx) => (
-                              <span key={`${t.label}-line-${idx}`}>
-                                {line}
-                                {idx < t.displayLines.length - 1 ? <br /> : null}
-                              </span>
-                            ))
+                            <span key={`${t.label}-line-${idx}`}>
+                              {line}
+                              {idx < t.displayLines.length - 1 ? <br /> : null}
+                            </span>
+                          ))
                           : t.label}
                       </div>
                     ))}

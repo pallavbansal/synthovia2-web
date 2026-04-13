@@ -300,7 +300,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     keywordFocusType: "",
     keywordFocusTypeCustom: "",
 
-    keywordDifficulty: 40,
     searchVolumePriority: "",
 
     metaTitleStyleMode: "predefined",
@@ -313,10 +312,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     languageMode: "predefined",
     language: "",
     languageCustom: "",
-
-    schemaTypeMode: "predefined",
-    schemaType: "",
-    schemaTypeCustom: "",
 
     outputDepth: "",
     outputFormat: "",
@@ -433,7 +428,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
         selectedKey: formData.keywordFocusType,
         customValue: formData.keywordFocusTypeCustom,
       }),
-      keyword_difficulty_preference: clamp(Number(formData.keywordDifficulty) || 0, 0, 100),
       search_volume_priority: selectionToApiObject({
         fieldKey: "search_volume_priority",
         mode: "predefined",
@@ -448,12 +442,8 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       }),
       brand_website_name: String(formData.brandName || "").trim(),
       competitor_url: String(formData.competitorUrl || "").trim(),
-      schema_rich_result_type: selectionToApiObject({
-        fieldKey: "schema_rich_result_type",
-        mode: formData.schemaTypeMode,
-        selectedKey: formData.schemaType,
-        customValue: formData.schemaTypeCustom,
-      }),
+      keyword_difficulty_preference: null,
+      schema_rich_result_type: null,
       output_depth: selectionToApiObject({
         fieldKey: "output_depth",
         mode: "predefined",
@@ -865,20 +855,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
         "Auto-Detect",
       ].map(toObj),
       language: ["English", "Hindi", "Spanish", "French", "German", "Italian", "Portuguese", "Japanese", "Arabic", "Other (Custom Input)"].map(toObj),
-      schema_rich_result_type: [
-        "None",
-        "Article / BlogPosting",
-        "Product",
-        "SoftwareApplication",
-        "Organization / LocalBusiness",
-        "FAQPage",
-        "HowTo",
-        "Event",
-        "Review",
-        "BreadcrumbList",
-        "VideoObject",
-        "WebPage (CollectionPage)",
-      ].map(toObj),
       output_depth: ["Basic", "Extended", "Professional"].map(toObj),
       output_format: [
         "On-Screen Preview",
@@ -975,7 +951,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
             searchVolumePriority: prev.searchVolumePriority || next.search_volume_priority?.[0]?.key || "",
             metaTitleStyle: prev.metaTitleStyle || next.meta_title_style?.[0]?.key || "",
             language: prev.language || next.language?.[0]?.key || "",
-            schemaType: prev.schemaType || next.schema_rich_result_type?.[0]?.key || "",
             outputDepth: prev.outputDepth || next.output_depth?.[0]?.key || "",
             outputFormat: prev.outputFormat || next.output_format?.[0]?.key || "",
             complianceGuidelines: prev.complianceGuidelines || next.compliance_guidelines?.[0]?.key || "",
@@ -1016,10 +991,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       searchVolumePriority: getLabelFromOptions("search_volume_priority", formData.searchVolumePriority),
       language:
         formData.languageMode === "custom" ? String(formData.languageCustom || "").trim() : getLabelFromOptions("language", formData.language),
-      schemaType:
-        formData.schemaTypeMode === "custom"
-          ? String(formData.schemaTypeCustom || "").trim()
-          : getLabelFromOptions("schema_rich_result_type", formData.schemaType),
       outputDepth: getLabelFromOptions("output_depth", formData.outputDepth),
       outputFormat: getLabelFromOptions("output_format", formData.outputFormat),
       complianceGuidelines:
@@ -1029,18 +1000,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       textLength:
         formData.textLengthMode === "custom" ? String(formData.textLengthCustom || "").trim() : getLabelFromOptions("primary_text_length", formData.textLength),
       variantsCount: isFreeTrial ? 1 : clamp(Number(formData.variantsCount) || 1, 1, 5),
-      keywordDifficulty: clamp(Number(formData.keywordDifficulty) || 0, 0, 100),
-      pageGoalKey: formData.pageGoal,
-      toneKey: formData.tone,
-      keywordFocusTypeKey: formData.keywordFocusType,
-      searchVolumePriorityKey: formData.searchVolumePriority,
-      metaTitleStyleKey: formData.metaTitleStyle,
-      languageKey: formData.language,
-      schemaTypeKey: formData.schemaType,
-      outputDepthKey: formData.outputDepth,
-      outputFormatKey: formData.outputFormat,
-      complianceGuidelinesKey: formData.complianceGuidelines,
-      textLengthKey: formData.textLength,
     };
   }, [formData, fieldOptions, isFreeTrial]);
 
@@ -1050,7 +1009,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     if (!String(inputsForReview.pageGoal || "").trim()) missing.push("Page Goal / Intent");
     if (!Array.isArray(formData.targetAudience) || formData.targetAudience.length === 0) missing.push("Target Audience / Region");
     if (!inputsForReview.keywordFocusType) missing.push("Keyword Focus Type");
-    if (Number.isNaN(Number(inputsForReview.keywordDifficulty))) missing.push("Keyword Difficulty Preference");
     if (!String(formData.searchVolumePriority || "").trim()) missing.push("Search Volume Priority");
     if (!String(inputsForReview.textLength || "").trim()) missing.push("Text Length");
     if (Number.isNaN(Number(inputsForReview.variantsCount)) || Number(inputsForReview.variantsCount) < 1) missing.push("Number of Variants");
@@ -1085,9 +1043,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       `STRATEGY\n` +
       `- Tone: ${inputs.tone}\n` +
       `- Keyword focus: ${inputs.keywordFocusType}\n` +
-      `- Difficulty preference: ${inputs.keywordDifficulty}/100\n` +
-      `- Search volume priority: ${inputs.searchVolumePriority}\n` +
-      `- Schema type: ${inputs.schemaType || "None"}\n\n` +
+      `- Search volume priority: ${inputs.searchVolumePriority}\n\n` +
       `META TAGS\n` +
       `- Meta title: ${metaTitle}\n` +
       `- Meta description: ${metaDescription}\n\n` +
@@ -1309,7 +1265,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       keywordFocusType: getDefaultKeyFromOptions("keyword_focus_type", ""),
       keywordFocusTypeCustom: "",
 
-      keywordDifficulty: 40,
       searchVolumePriority: getDefaultKeyFromOptions("search_volume_priority", ""),
 
       metaTitleStyleMode: "predefined",
@@ -1322,10 +1277,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       languageMode: "predefined",
       language: getDefaultKeyFromOptions("language", ""),
       languageCustom: "",
-
-      schemaTypeMode: "predefined",
-      schemaType: getDefaultKeyFromOptions("schema_rich_result_type", ""),
-      schemaTypeCustom: "",
 
       outputDepth: getDefaultKeyFromOptions("output_depth", ""),
       outputFormat: getDefaultKeyFromOptions("output_format", ""),
@@ -1841,26 +1792,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                       styles={styles}
                     />
 
-                    <Labeled
-                      label="Keyword Difficulty Preference (0–100)"
-                      required
-                      help="Competitiveness of keyword suggestions (0–100)."
-                      styles={styles}
-                    >
-                      <input
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={formData.keywordDifficulty}
-                        onChange={(e) => setFormData((p) => ({ ...p, keywordDifficulty: Number(e.target.value) }))}
-                        style={styles.rangeInput}
-                      />
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#94a3b8" }}>
-                        <span>0</span>
-                        <span>{formData.keywordDifficulty}</span>
-                        <span>100</span>
-                      </div>
-                    </Labeled>
 
                     <Labeled
                       label="Search Volume Priority"
@@ -1946,19 +1877,6 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     styles={styles}
                   />
 
-<PredefinedCustom
-                    label="Schema / Rich Result Type"
-                    required={false}
-                    modeKey="schemaTypeMode"
-                    valueKey="schemaType"
-                    customKey="schemaTypeCustom"
-                    options={fieldOptions?.schema_rich_result_type || []}
-                    placeholder="Enter custom schema type"
-                    help="JSON-LD schema for rich results."
-                    formData={formData}
-                    setFormData={setFormData}
-                    styles={styles}
-                  />
 
                   <Labeled label="Brand / Website Name" required={false} help="Used for branded keywords and SERP trust signals." styles={styles}>
                     <input
