@@ -239,7 +239,6 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                             {formData.ctaType}
                         </div>
                     </div>
-
                     {/* Brand Voice & Personality */}
                     {formData.brandVoice && (
                         <div style={{ ...styles.item, gridColumn: 'span 1' }}>
