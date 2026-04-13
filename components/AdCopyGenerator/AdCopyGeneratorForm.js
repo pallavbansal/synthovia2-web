@@ -220,7 +220,7 @@ const AdCopyGeneratorForm = () => {
                     const inFT = js?.in_free_trial ?? js?.data?.in_free_trial;
                     if (inFT != null) statusStr = inFT ? 'free' : 'subscription';
                 }
-            } catch {}
+            } catch { }
 
             const res = await fetch(API.USER_CREDITS, {
                 method: 'GET',
@@ -492,7 +492,7 @@ const AdCopyGeneratorForm = () => {
         // Ad Text Length is optional; default Auto-Length can be sent without validation
         if (!formData.ctaType) missing.push('Call to Action (CTA)');
         if (!formData.variants) missing.push('Number of Variants');
-     
+
 
         // if (!formData.keyBenefits || formData.keyBenefits.length === 0) {
         //     missing.push('Key Benefits');
@@ -789,8 +789,8 @@ const AdCopyGeneratorForm = () => {
                                 next[variantIndex] = {
                                     ...next[variantIndex],
                                     id: next[variantIndex].id || msg.variant_id || null,
-                                    content: (next[variantIndex].content?.length > (msg.content?.length || 0)) 
-                                        ? next[variantIndex].content 
+                                    content: (next[variantIndex].content?.length > (msg.content?.length || 0))
+                                        ? next[variantIndex].content
                                         : (msg.content || next[variantIndex].content || ''),
                                     is_streaming: false,
                                 };
@@ -859,8 +859,8 @@ const AdCopyGeneratorForm = () => {
                                 next[variantIndex] = {
                                     ...next[variantIndex],
                                     id: next[variantIndex].id || msg.variant_id || null,
-                                    content: (next[variantIndex].content?.length > (msg.content?.length || 0)) 
-                                        ? next[variantIndex].content 
+                                    content: (next[variantIndex].content?.length > (msg.content?.length || 0))
+                                        ? next[variantIndex].content
                                         : (msg.content || next[variantIndex].content || ''),
                                     is_streaming: false,
                                 };
@@ -1231,8 +1231,8 @@ const AdCopyGeneratorForm = () => {
                             next[variantIndex] = {
                                 ...next[variantIndex],
                                 id: next[variantIndex].id || msg.variant_id || null,
-                                content: (next[variantIndex].content?.length > (msg.content?.length || 0)) 
-                                    ? next[variantIndex].content 
+                                content: (next[variantIndex].content?.length > (msg.content?.length || 0))
+                                    ? next[variantIndex].content
                                     : (msg.content || next[variantIndex].content || ''),
                                 is_streaming: false,
                             };
@@ -2315,7 +2315,7 @@ const AdCopyGeneratorForm = () => {
                                                 </div>
                                             </div>
 
-                       
+
 
                                             <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #e5e7eb', margin: '5px 0' }} />
                                         </>
@@ -2416,7 +2416,7 @@ const AdCopyGeneratorForm = () => {
                                                 </div>
                                             </div>
 
-             
+
 
                                             {/* Audience Pain Points */}
                                             <div className="col-12">
@@ -2529,7 +2529,7 @@ const AdCopyGeneratorForm = () => {
                                                 </div>
                                             </div>
 
-                
+
                                         </>
                                     )}
 
@@ -2588,7 +2588,6 @@ const AdCopyGeneratorForm = () => {
                             onViewLog={handleViewHistory}
                             isGenerating={isGenerating || isApiLoading}
                         />
-
                         {/* Rendering basic summary content inline for completeness */}
                         <div style={styles.summaryGrid}>
                             <div style={styles.summarySection}>
@@ -2620,7 +2619,7 @@ const AdCopyGeneratorForm = () => {
                                 <p><strong>Tone:</strong> {formData.tone}</p>
                                 <p><strong>Ad Text Length:</strong> {formData.adTextLength}</p>
                                 <p><strong>CTA:</strong> {formData.ctaType}</p>
-                       
+
                             </div>
                             {formData.showAdvanced && (
                                 <div style={styles.summarySection}>
