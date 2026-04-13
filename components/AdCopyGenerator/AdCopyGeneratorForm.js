@@ -1649,7 +1649,7 @@ const AdCopyGeneratorForm = () => {
 
 
                                             {/* Campaign Objective */}
-                                            <div className="col-12">
+                                            <div className="col-md-6">
                                                 <div style={styles.formGroup}>
                                                     <label htmlFor="campaignObjective" style={styles.label}>
                                                         Campaign Objective <span style={{ color: '#ef4444' }}>*</span>
