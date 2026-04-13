@@ -37,7 +37,7 @@ const NAV_ITEMS = [
   },
   {
     href: "/script-story-writer-tool",
-    label: "Script & Story Writer Tool",
+    label: "Script Writer Tool",
     iconClass: "fa-solid fa-clapperboard",
   },
   { href: "/settings", label: "Settings", iconClass: "fa-solid fa-gear" },

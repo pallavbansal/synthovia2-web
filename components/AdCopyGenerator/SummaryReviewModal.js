@@ -227,12 +227,7 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                         </div>
                     </div>
 
-                    <div style={{ ...styles.item, gridColumn: 'span 1' }}>
-                        <span style={styles.itemLabel}>Text Length:</span>
-                        <div style={styles.valueBox}>
-                            {formData.adTextLength}
-                        </div>
-                    </div>
+
                     <div style={{ ...styles.item, gridColumn: 'span 1' }}>
                         <span style={styles.itemLabel}>CTA Type:</span>
                         <div style={styles.valueBox}>

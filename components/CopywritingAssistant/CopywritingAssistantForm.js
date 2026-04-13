@@ -58,25 +58,15 @@ const CopywritingAssistantForm = () => {
         keywords: '',
         referenceText: '',
         rewriteMode: false,
-        readingLevelMode: 'predefined',
-        readingLevel: 'standard',
-        customReadingLevel: '',
         brandVoiceMode: 'predefined',
         brandVoice: '',
         customBrandVoice: '',
         contentStyleMode: 'predefined',
         contentStyle: '',
         customContentStyle: '',
-        emotionalIntentMode: 'predefined',
-        emotionalIntent: '',
-        customEmotionalIntent: '',
         writingFrameworkMode: 'predefined',
         writingFramework: '',
         customWritingFramework: '',
-        grammarStrictnessMode: 'predefined',
-        grammarStrictness: 'medium',
-        customGrammarStrictness: '',
-
         formattingOptions: ['structured_layout'],
         excludeWords: [],
         complianceNotes: '',
@@ -286,16 +276,7 @@ const CopywritingAssistantForm = () => {
     const lengthTargetOptions = normalizeOptions([...rawLengthTargets]);
 
 
-    const readingLevelOptions = normalizeOptions(
-        getOptions('reading_level').length
-            ? getOptions('reading_level')
-            : [
-                { key: 'basic', label: 'Basic' },
-                { key: 'intermediate', label: 'Intermediate' },
-                { key: 'professional', label: 'Professional' },
-                { key: 'academic', label: 'Academic' },
-            ]
-    );
+
 
 
     // Brand Voice - Using placeholders since API Options are not explicitly listed
@@ -319,19 +300,7 @@ const CopywritingAssistantForm = () => {
             ]
     );
 
-    const emotionalIntentOptions = normalizeOptions(
-        getOptions('emotional_intent').length
-            ? getOptions('emotional_intent')
-            : [
-                { key: 'motivation', label: 'Motivation' },
-                { key: 'trust', label: 'Trust' },
-                { key: 'curiosity', label: 'Curiosity' },
-                { key: 'desire', label: 'Desire' },
-                { key: 'urgency', label: 'Urgency' },
-                { key: 'empathy', label: 'Empathy' },
-                { key: 'fomo', label: 'FOMO' },
-            ]
-    );
+
 
     const writingFrameworkOptions = normalizeOptions(
         getOptions('writing_framework').length
@@ -353,15 +322,7 @@ const CopywritingAssistantForm = () => {
             ]
     );
 
-    const grammarStrictnessOptions = normalizeOptions(
-        getOptions('grammar_strictness').length
-            ? getOptions('grammar_strictness')
-            : [
-                { key: 'low', label: 'Low' },
-                { key: 'standard', label: 'Standard' },
-                { key: 'strict', label: 'Strict' },
-            ]
-    );
+
 
     // Formatting options: prefer API structure, fallback to existing labels
     const formattingOptionsList = getOptions('formatting_options').length
@@ -527,24 +488,15 @@ const CopywritingAssistantForm = () => {
             keywords: '',
             referenceText: '',
             rewriteMode: false,
-            readingLevelMode: 'predefined',
-            readingLevel: 'standard',
-            customReadingLevel: '',
             brandVoiceMode: 'predefined',
             brandVoice: '',
             customBrandVoice: '',
             contentStyleMode: 'predefined',
             contentStyle: '',
             customContentStyle: '',
-            emotionalIntentMode: 'predefined',
-            emotionalIntent: '',
-            customEmotionalIntent: '',
             writingFrameworkMode: 'predefined',
             writingFramework: '',
             customWritingFramework: '',
-            grammarStrictnessMode: 'predefined',
-            grammarStrictness: 'medium',
-            customGrammarStrictness: '',
             formattingOptions: ['structured_layout'],
             excludeWords: [],
             complianceNotes: '',
@@ -657,22 +609,12 @@ const CopywritingAssistantForm = () => {
                 alert('Please enter a Custom Content Style Preference.');
                 return;
             }
-            if (formData.emotionalIntentMode === 'custom' && !formData.customEmotionalIntent) {
-                alert('Please enter a Custom Emotional Intent.');
-                return;
-            }
+
             if (formData.writingFrameworkMode === 'custom' && !formData.customWritingFramework) {
                 alert('Please enter a Custom Writing Framework.');
                 return;
             }
-            if (
-                formData.proofreading &&
-                formData.grammarStrictnessMode === 'custom' &&
-                !formData.customGrammarStrictness
-            ) {
-                alert('Please enter a Custom Grammar Strictness.');
-                return;
-            }
+
         }
 
         setShowSummary(true);
@@ -749,12 +691,7 @@ const CopywritingAssistantForm = () => {
             lengthTargetObj = { ...lengthTargetObj, value: String(lengthTargetObj.value) };
         }
 
-        let readingLevelObj = null;
-        if (formData.readingLevelMode === 'custom' && formData.customReadingLevel) {
-            readingLevelObj = { id: null, value: formData.customReadingLevel, type: 'custom' };
-        } else if (formData.readingLevelMode === 'predefined' && formData.readingLevel) {
-            readingLevelObj = buildOptionObject('reading_level', formData.readingLevel, formData.readingLevelMode) || { id: null, value: formData.readingLevel, type: 'predefined' };
-        }
+
 
         let brandVoiceObj = null;
         if (formData.brandVoiceMode === 'custom' && formData.customBrandVoice) {
@@ -770,12 +707,7 @@ const CopywritingAssistantForm = () => {
             contentStyleObj = buildOptionObject('content_style_preference', formData.contentStyle) || { id: null, value: formData.contentStyle, type: 'predefined' };
         }
 
-        let emotionalIntentObj = null;
-        if (formData.emotionalIntentMode === 'custom' && formData.customEmotionalIntent) {
-            emotionalIntentObj = { id: null, value: formData.customEmotionalIntent, type: 'custom' };
-        } else if (formData.emotionalIntentMode === 'predefined' && formData.emotionalIntent) {
-            emotionalIntentObj = buildOptionObject('emotional_intent', formData.emotionalIntent) || { id: null, value: formData.emotionalIntent, type: 'predefined' };
-        }
+
 
         let writingFrameworkObj = null;
         if (formData.writingFrameworkMode === 'custom' && formData.customWritingFramework) {
@@ -784,14 +716,7 @@ const CopywritingAssistantForm = () => {
             writingFrameworkObj = buildOptionObject('writing_framework', formData.writingFramework) || { id: null, value: formData.writingFramework, type: 'predefined' };
         }
 
-        let grammarStrictnessObj = null;
-        if (formData.proofreading) {
-            if (formData.grammarStrictnessMode === 'custom' && formData.customGrammarStrictness) {
-                grammarStrictnessObj = { id: null, value: formData.customGrammarStrictness, type: 'custom' };
-            } else if (formData.grammarStrictnessMode === 'predefined' && formData.grammarStrictness) {
-                grammarStrictnessObj = buildOptionObject('grammar_strictness', formData.grammarStrictness) || { id: null, value: formData.grammarStrictness, type: 'predefined' };
-            }
-        }
+
 
         const outputStructureObj = formData.outputStructure
             ? buildOptionObject('output_structure_type', formData.outputStructure) || { id: null, value: formData.outputStructure, type: 'predefined' }
@@ -827,19 +752,19 @@ const CopywritingAssistantForm = () => {
             keywords: keywordsArray,
             rewrite_mode: !!formData.rewriteMode,
             reference_text: formData.referenceText || null,
-            reading_level: readingLevelObj,
+            reading_level: null,
             brand_voice_reference: brandVoiceObj,
             content_style_preference: contentStyleObj,
             formatting_options: formData.formattingOptions || [],
             exclude_words: formData.excludeWords || [],
-            emotional_intent: emotionalIntentObj,
+            emotional_intent: null,
             compliance_notes: formData.complianceNotes || '',
             writing_framework: writingFrameworkObj,
             output_structure_type: outputStructureObj,
             creativity_level: Number(formData.creativityLevel) / 10,
             reference_url: formData.referenceUrl || null,
             proofreading_optimization: !!formData.proofreading,
-            grammar_strictness: grammarStrictnessObj,
+            grammar_strictness: null,
             session_request_id: sessionRequestIdRef.current,
             custom_ai_instructions: String(formData.customInstructions || '').trim() || null,
         };
@@ -2161,41 +2086,7 @@ const CopywritingAssistantForm = () => {
                                         </div>
                                     </div>
 
-                                    {/* Reading Level (Full Width now) */}
-                                    <div style={colFullStyle}>
-                                        {renderModeToggle('readingLevelMode', 'Reading Level', 'Select the reading level for your content or describe a custom level')}
 
-                                        {formData.readingLevelMode === 'predefined' && (
-                                            <div style={styles.formGroup}>
-                                                <select
-                                                    id="readingLevel"
-                                                    name="readingLevel"
-                                                    value={formData.readingLevel}
-                                                    onChange={handleChange}
-                                                    style={styles.select}
-                                                >
-                                                    {readingLevelOptions.map((opt, index) => (
-                                                        <option key={index} value={opt.value}>{opt.label}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        )}
-
-                                        {formData.readingLevelMode === 'custom' && (
-                                            <div style={styles.formGroup}>
-                                                <input
-                                                    type="text"
-                                                    id="customReadingLevel"
-                                                    name="customReadingLevel"
-                                                    value={formData.customReadingLevel}
-                                                    onChange={handleChange}
-                                                    style={styles.input}
-                                                    placeholder="Describe the reading level"
-                                                    maxLength={120}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
 
                                     {/* Formatting Options */}
                                     {/* Formatting Options (Full Width now) */}
@@ -2243,46 +2134,7 @@ const CopywritingAssistantForm = () => {
 
                                     {/* --- EMOTIONAL INTENT + WRITING FRAMEWORK (two-column row) --- */}
                                     <div style={twoColContainerStyle}>
-                                        {/* Emotional Intent (Left Half) */}
-                                        <div style={colHalfStyle}>
-                                            {renderModeToggle(
-                                                'emotionalIntentMode',
-                                                'Emotional Intent (optional)',
-                                                'Select the emotional tone for your content or describe a custom one'
-                                            )}
 
-                                            {formData.emotionalIntentMode === 'predefined' && (
-                                                <div style={styles.formGroup}>
-                                                    <select
-                                                        id="emotionalIntent"
-                                                        name="emotionalIntent"
-                                                        value={formData.emotionalIntent}
-                                                        onChange={handleChange}
-                                                        style={styles.select}
-                                                    >
-                                                        <option value="">None (Neutral)</option>
-                                                        {emotionalIntentOptions.map((opt, index) => (
-                                                            <option key={index} value={opt.value}>{opt.label}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            )}
-
-                                            {formData.emotionalIntentMode === 'custom' && (
-                                                <div style={styles.formGroup}>
-                                                    <input
-                                                        type="text"
-                                                        id="customEmotionalIntent"
-                                                        name="customEmotionalIntent"
-                                                        value={formData.customEmotionalIntent}
-                                                        onChange={handleChange}
-                                                        style={styles.input}
-                                                        placeholder="e.g., Inspire hope and joy"
-                                                        maxLength={120}
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
 
                                         {/* Writing Framework (Right Half) */}
                                         <div style={colHalfStyle}>
@@ -2371,57 +2223,7 @@ const CopywritingAssistantForm = () => {
                                         </div>
                                     </div>
 
-                                    {/* Grammar Strictness (shown when proofreading is enabled) */}
-                                    <div style={twoColContainerStyle}>
-                                        {/* Emotional Intent (Left Half) */}
-                                        <div style={colHalfStyle}>
 
-                                            {formData.proofreading && (
-                                                <>
-                                                    {/* --- GRAMMAR STRICTNESS MODE TOGGLE - NEW --- */}
-                                                    {renderModeToggle('grammarStrictnessMode', 'Grammar Strictness', 'Select how strictly grammar and style rules should be applied, or describe custom rules')}
-
-                                                    {/* Grammar Strictness (Predefined/Custom Input) */}
-                                                    {formData.grammarStrictnessMode === 'predefined' && (
-
-                                                        <div style={styles.formGroup}>
-                                                            {/* <label htmlFor="grammarStrictness" style={styles.label}>
-                                                                Select Grammar Strictness
-                                                            </label> */}
-                                                            <select
-                                                                id="grammarStrictness"
-                                                                name="grammarStrictness"
-                                                                value={formData.grammarStrictness}
-                                                                onChange={handleChange}
-                                                                style={styles.select}
-                                                            >
-                                                                {grammarStrictnessOptions.map((opt, index) => (
-                                                                    <option key={index} value={opt.value}>{opt.label}</option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
-                                                    )}
-
-                                                    {formData.grammarStrictnessMode === 'custom' && (
-                                                        <div style={styles.formGroup}>
-                                                            {/* <label htmlFor="customGrammarStrictness" style={styles.label}>
-                                                                Custom Grammar Strictness
-                                                            </label> */}
-                                                            <input
-                                                                type="text"
-                                                                id="customGrammarStrictness"
-                                                                name="customGrammarStrictness"
-                                                                value={formData.customGrammarStrictness}
-                                                                onChange={handleChange}
-                                                                style={styles.input}
-                                                                placeholder="e.g., Use Oxford comma, avoid passive voice"
-                                                                maxLength={120}
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </>
-                                            )}
-                                        </div>
 
                                         {/* Custom Instructions / AI Guidance */}
                                         <div className="col-12">
@@ -2447,7 +2249,7 @@ const CopywritingAssistantForm = () => {
                                                 />
                                             </div>
                                         </div>
-                                    </div>
+
 
                                 </>
                             )}
@@ -2487,12 +2289,9 @@ const CopywritingAssistantForm = () => {
                     useCaseOptions={useCaseOptions}
                     toneOptions={toneOptions}
                     lengthTargetOptions={lengthTargetOptions}
-                    readingLevelOptions={readingLevelOptions}
                     contentStyleOptions={contentStyleOptions}
-                    emotionalIntentOptions={emotionalIntentOptions}
                     writingFrameworkOptions={writingFrameworkOptions}
                     outputStructureOptions={outputStructureOptions}
-                    grammarStrictnessOptions={grammarStrictnessOptions}
                     formattingOptionsList={formattingOptionsList}
                     onGenerate={handleGenerate}
                     onEdit={handleEdit}

@@ -139,11 +139,8 @@ const SummaryReviewModal = ({
   useCaseOptions,
   toneOptions,
   lengthTargetOptions,
-  readingLevelOptions,
   contentStyleOptions,
-  emotionalIntentOptions,
   writingFrameworkOptions,
-  grammarStrictnessOptions,
   formattingOptionsList,
   onGenerate,
   onEdit,
@@ -289,22 +286,7 @@ const SummaryReviewModal = ({
             <div style={styles.valueBox}>{formData.rewriteMode ? 'Enabled' : 'Disabled'}</div>
           </div>
 
-          {/* Reading Level */}
-          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
-            <span style={styles.itemLabel}>Reading Level Mode:</span>
-            <div style={styles.valueBox}>
-              {formData.readingLevelMode === 'custom' ? 'Custom' : 'Predefined'}
-            </div>
-          </div>
 
-          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
-            <span style={styles.itemLabel}>Reading Level:</span>
-            <div style={styles.valueBox}>
-              {formData.readingLevelMode === 'custom'
-                ? formData.customReadingLevel || 'N/A'
-                : findLabel(readingLevelOptions, formData.readingLevel)}
-            </div>
-          </div>
 
 
           {/* Brand Voice */}
@@ -343,24 +325,7 @@ const SummaryReviewModal = ({
             </div>
           </div>
 
-          {/* Emotional Intent */}
-          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
-            <span style={styles.itemLabel}>Emotional Intent Mode:</span>
-            <div style={styles.valueBox}>
-              {formData.emotionalIntentMode === 'custom' ? 'Custom' : 'Predefined'}
-            </div>
-          </div>
 
-          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
-            <span style={styles.itemLabel}>Emotional Intent:</span>
-            <div style={styles.valueBox}>
-              {formData.emotionalIntentMode === 'custom'
-                ? formData.customEmotionalIntent || 'N/A'
-                : (formData.emotionalIntent
-                    ? findLabel(emotionalIntentOptions, formData.emotionalIntent)
-                    : 'Neutral')}
-            </div>
-          </div>
 
           {/* Exclude Words */}
           <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
@@ -402,30 +367,7 @@ const SummaryReviewModal = ({
             </div>
           </div>
 
-          {/* Grammar Strictness */}
-          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
-            <span style={styles.itemLabel}>Grammar Strictness Mode:</span>
-            <div style={styles.valueBox}>
-              {!formData.proofreading
-                ? 'N/A (Proofreading disabled)'
-                : formData.grammarStrictnessMode === 'custom'
-                  ? 'Custom'
-                  : 'Predefined'}
-            </div>
-          </div>
 
-          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
-            <span style={styles.itemLabel}>Grammar Strictness:</span>
-            <div style={styles.valueBox}>
-              {!formData.proofreading
-                ? 'N/A (Proofreading disabled)'
-                : formData.grammarStrictnessMode === 'custom'
-                  ? formData.customGrammarStrictness || 'N/A'
-                  : (formData.grammarStrictness
-                      ? findLabel(grammarStrictnessOptions, formData.grammarStrictness)
-                      : 'N/A')}
-            </div>
-          </div>
 
           {/* Reference URL */}
           <div style={{ ...styles.item, gridColumn: 'span 1' }}>

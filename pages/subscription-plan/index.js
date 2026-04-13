@@ -88,7 +88,7 @@ const SubscriptionPlanPage = () => {
       const hasINLang = (langs || []).some((l) => String(l || "").toUpperCase().endsWith("-IN"));
       const tzLower = String(tz).toLowerCase();
       if (tzLower === "asia/kolkata" || tzLower === "asia/calcutta" || hasINLang) return "razorpay";
-    } catch (e) {}
+    } catch (e) { }
     return "paypal";
   };
 
@@ -120,7 +120,7 @@ const SubscriptionPlanPage = () => {
             out.city = String(rg.city || rg.locality || rg.localityInfo?.administrative?.[0]?.name || out.city || "");
             out.region = String(rg.principalSubdivision || rg.localityInfo?.administrative?.[1]?.name || out.region || "");
           }
-        } catch {}
+        } catch { }
       }
 
       // Fallbacks from known geo selection in UI
@@ -133,8 +133,8 @@ const SubscriptionPlanPage = () => {
         const ipJson = await ipRes.json().catch(() => null);
         const ipStr = ipJson?.ip || ipJson?.ipAddress || "";
         if (ipStr) out.ip = String(ipStr);
-      } catch {}
-    } catch {}
+      } catch { }
+    } catch { }
 
     return out;
   };
@@ -172,7 +172,7 @@ const SubscriptionPlanPage = () => {
       const next = { code: String(code || "").trim().toUpperCase(), ts: Date.now() };
       if (!next.code) return;
       window.localStorage.setItem(GEO_STORAGE_KEY, JSON.stringify(next));
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const isInIndiaByCoords = ({ latitude, longitude }) => {
@@ -214,7 +214,7 @@ const SubscriptionPlanPage = () => {
             .catch(() => run());
           return;
         }
-      } catch (e) {}
+      } catch (e) { }
 
       run();
     });
@@ -257,7 +257,7 @@ const SubscriptionPlanPage = () => {
             .catch(() => run());
           return;
         }
-      } catch (e) {}
+      } catch (e) { }
 
       run();
     });
@@ -326,7 +326,7 @@ const SubscriptionPlanPage = () => {
         setGeoIsIndia(code === "IN");
         saveGeoCountryToStorage(code);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -457,7 +457,7 @@ const SubscriptionPlanPage = () => {
       setPaymentPlanId(matched?.id);
       setPaymentMethod(getDefaultPaymentMethod());
       setPaymentModalOpen(true);
-    } catch (e) {}
+    } catch (e) { }
   }, [plans, isLoading, geoIsIndia, geoCountryCode]);
 
   const handleCheckout = async (planId) => {
@@ -490,8 +490,8 @@ const SubscriptionPlanPage = () => {
           if (Number.isFinite(geo.lon)) body.set("geo_lon", String(geo.lon));
           if (geo.source) body.set("geo_source", String(geo.source));
         }
-      } catch {}
-      try { console.log("[checkout] paypal payload:", Object.fromEntries(body)); } catch {}
+      } catch { }
+      try { console.log("[checkout] paypal payload:", Object.fromEntries(body)); } catch { }
 
       const res = await fetch(API.SUBSCRIPTION_CHECKOUT, {
         method: "POST",
@@ -512,7 +512,7 @@ const SubscriptionPlanPage = () => {
       if (subscriptionReference) {
         try {
           sessionStorage.setItem("subscription_reference", String(subscriptionReference));
-        } catch (e) {}
+        } catch (e) { }
       }
 
       if (!redirectUrl) throw new Error("Missing PayPal redirect URL");
@@ -568,8 +568,8 @@ const SubscriptionPlanPage = () => {
           if (Number.isFinite(geo.lon)) body.set("geo_lon", String(geo.lon));
           if (geo.source) body.set("geo_source", String(geo.source));
         }
-      } catch {}
-      try { console.log("[checkout] razorpay payload:", Object.fromEntries(body)); } catch {}
+      } catch { }
+      try { console.log("[checkout] razorpay payload:", Object.fromEntries(body)); } catch { }
 
       const res = await fetch(API.SUBSCRIPTION_CHECKOUT, {
         method: "POST",
@@ -591,7 +591,7 @@ const SubscriptionPlanPage = () => {
 
       try {
         sessionStorage.setItem("subscription_reference", String(subscriptionReference || ""));
-      } catch (e) {}
+      } catch (e) { }
 
       await ensureRazorpayLoaded();
 
@@ -684,7 +684,7 @@ const SubscriptionPlanPage = () => {
             price: plan?.price,
           })
         );
-      } catch (e) {}
+      } catch (e) { }
       return;
     }
 
@@ -774,7 +774,7 @@ const SubscriptionPlanPage = () => {
               }}
             >
               <div className="subscription-auth-modal">
-              
+
 
                 <div className="subscription-auth-modal-title">Sign in to buy a plan</div>
                 <div className="subscription-auth-modal-subtitle">
@@ -975,110 +975,110 @@ const SubscriptionPlanPage = () => {
                   </div>
                 </div>
 
-              {errorMessage ? (
-                <div className="row">
-                  <div className="col-12">
-                    <div className="rainbow-card p-4" style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12 }}>
-                      <p className="mb-0" style={{ color: "#ef4444" }}>
-                        {errorMessage}
-                      </p>
+                {errorMessage ? (
+                  <div className="row">
+                    <div className="col-12">
+                      <div className="rainbow-card p-4" style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12 }}>
+                        <p className="mb-0" style={{ color: "#ef4444" }}>
+                          {errorMessage}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : null}
+                ) : null}
 
-              {isLoading ? (
-                <div className="row">
-                  <div className="col-12">
-                    <p style={{ color: "#94a3b8", textAlign: "center", marginTop: 24 }}>Loading plans...</p>
-                  </div>
-                </div>
-              ) : !geoCountryCode && !useFallbackPlans ? (
-                <div className="row">
-                  <div className="col-12">
-                    <div
-                      className="rainbow-card p-4"
-                      style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, textAlign: "center" }}
-                    >
-                      <p className="mb-2" style={{ color: "#cbd5e1" }}>
-                        Enable location to see pricing for your country.
-                      </p>
-                      <button type="button" className="subscription-plan-cta secondary" onClick={() => openGeoPromptForPlan(null)}>
-                        Enable location
-                      </button>
-
-                      {countriesState.loading ? (
-                        <div style={{ marginTop: 10, color: "#94a3b8" }}>Loading countries…</div>
-                      ) : countriesState.error ? (
-                        <div style={{ marginTop: 10, color: "#ef4444" }}>{countriesState.error}</div>
-                      ) : null}
+                {isLoading ? (
+                  <div className="row">
+                    <div className="col-12">
+                      <p style={{ color: "#94a3b8", textAlign: "center", marginTop: 24 }}>Loading plans...</p>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="subscription-plan-grid">
-                  {(displayPlans || []).map((plan, index) => {
-                    const name = String(plan?.name || "");
-                    const description = String(plan?.description || "");
-                    const pref = getPlanPreferredPrice(plan);
-                    const price = String((pref?.value != null ? pref.value : plan?.price) || "");
-                    const billing = String(plan?.billing_period || "");
-                    const planId = plan?.id;
-                    const isCheckoutLoading =
-                      checkoutLoadingPlanId != null && String(checkoutLoadingPlanId) === String(planId);
-
-                    const isPopular = index === 1;
-                    const features = getPlanFeatures(plan);
-
-                    const billingLabel = billing || (billingMode === "annual" ? "year" : "month");
-
-                    return (
+                ) : !geoCountryCode && !useFallbackPlans ? (
+                  <div className="row">
+                    <div className="col-12">
                       <div
-                        className={`subscription-plan-card ${isPopular ? "is-popular" : ""}`}
-                        key={plan?.id ?? name ?? index}
+                        className="rainbow-card p-4"
+                        style={{ background: "rgba(255,255,255,0.03)", borderRadius: 12, textAlign: "center" }}
                       >
-                        <div className="subscription-plan-card-inner">
-                          <div className="subscription-plan-card-head">
-                            <div className="subscription-plan-card-title-row">
-                              <h3 className="subscription-plan-card-title">{name || "Plan"}</h3>
-                              {isPopular ? <span className="subscription-plan-badge">Popular</span> : null}
+                        <p className="mb-2" style={{ color: "#cbd5e1" }}>
+                          Enable location to see pricing for your country.
+                        </p>
+                        <button type="button" className="subscription-plan-cta secondary" onClick={() => openGeoPromptForPlan(null)}>
+                          Enable location
+                        </button>
+
+                        {countriesState.loading ? (
+                          <div style={{ marginTop: 10, color: "#94a3b8" }}>Loading countries…</div>
+                        ) : countriesState.error ? (
+                          <div style={{ marginTop: 10, color: "#ef4444" }}>{countriesState.error}</div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="subscription-plan-grid">
+                    {(displayPlans || []).map((plan, index) => {
+                      const name = String(plan?.name || "");
+                      const description = String(plan?.description || "");
+                      const pref = getPlanPreferredPrice(plan);
+                      const price = String((pref?.value != null ? pref.value : plan?.price) || "");
+                      const billing = String(plan?.billing_period || "");
+                      const planId = plan?.id;
+                      const isCheckoutLoading =
+                        checkoutLoadingPlanId != null && String(checkoutLoadingPlanId) === String(planId);
+
+                      const isPopular = index === 1;
+                      const features = getPlanFeatures(plan);
+
+                      const billingLabel = billing || (billingMode === "annual" ? "year" : "month");
+
+                      return (
+                        <div
+                          className={`subscription-plan-card ${isPopular ? "is-popular" : ""}`}
+                          key={plan?.id ?? name ?? index}
+                        >
+                          <div className="subscription-plan-card-inner">
+                            <div className="subscription-plan-card-head">
+                              <div className="subscription-plan-card-title-row">
+                                <h3 className="subscription-plan-card-title">{name || "Plan"}</h3>
+                                {isPopular ? <span className="subscription-plan-badge">Popular</span> : null}
+                              </div>
+
+                              <div className="subscription-plan-price-row">
+                                <span className="subscription-plan-price">{pref?.symbol}{price}</span>
+                                <span className="subscription-plan-period">/ {billingLabel}</span>
+                              </div>
+
+                              <p className="subscription-plan-card-desc">{description}</p>
+
+                              <button
+                                type="button"
+                                className={`subscription-plan-cta ${isPopular ? "personal-info-button" : "secondary"}`}
+                                onClick={() => handleBuyClick(plan)}
+                                disabled={isCheckoutLoading || isLoading || (authed && !planId)}
+                              >
+                                {isCheckoutLoading ? "Redirecting..." : "Get Started"}
+                              </button>
                             </div>
 
-                            <div className="subscription-plan-price-row">
-                              <span className="subscription-plan-price">{pref?.symbol}{price}</span>
-                              <span className="subscription-plan-period">/ {billingLabel}</span>
+                            <div className="subscription-plan-features">
+                              <ul className="subscription-plan-feature-list">
+                                {(features || []).map((item, i) => (
+                                  <li key={`${planId}-${i}`}>
+                                    <i className="fa-regular fa-circle-check"></i>
+                                    <span>{item}</span>
+                                  </li>
+                                ))}
+                              </ul>
                             </div>
-
-                            <p className="subscription-plan-card-desc">{description}</p>
-
-                            <button
-                              type="button"
-                              className={`subscription-plan-cta ${isPopular ? "personal-info-button" : "secondary"}`}
-                              onClick={() => handleBuyClick(plan)}
-                              disabled={isCheckoutLoading || isLoading || (authed && !planId)}
-                            >
-                              {isCheckoutLoading ? "Redirecting..." : "Get Started"}
-                            </button>
-                          </div>
-
-                          <div className="subscription-plan-features">
-                            <ul className="subscription-plan-feature-list">
-                              {(features || []).map((item, i) => (
-                                <li key={`${planId}-${i}`}>
-                                  <i className="fa-regular fa-circle-check"></i>
-                                  <span>{item}</span>
-                                </li>
-                              ))}
-                            </ul>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
           </div>
 
           {/* Credits Information Section */}
@@ -1094,7 +1094,7 @@ const SubscriptionPlanPage = () => {
                   >
                     <h2 className="title glasstext">How Credits Work</h2>
                     <p className="subscription-plan-subtitle">
-                      Credits are simple - each AI tool uses a specific number of credits per generation, 
+                      Credits are simple - each AI tool uses a specific number of credits per generation,
                       multiplied by the number of variants you create.
                     </p>
                   </div>
@@ -1192,7 +1192,7 @@ const SubscriptionPlanPage = () => {
                       <i className="fa-solid fa-lightbulb"></i>
                       <h3>Example Calculation</h3>
                     </div>
-                    
+
                     <div className="credits-example-content">
                       <div className="credits-example-scenario">
                         <div className="scenario-item">
@@ -1409,31 +1409,6 @@ const SubscriptionPlanPage = () => {
                         </div>
                       </div>
 
-                      {/* FAQ Item 5 */}
-                      <div className="accordion-item">
-                        <h3 className="accordion-header" id="faqHeading5">
-                          <button
-                            className="accordion-button collapsed"
-                            type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#faqCollapse5"
-                            aria-expanded="false"
-                            aria-controls="faqCollapse5"
-                          >
-                            Do you offer refunds?
-                          </button>
-                        </h3>
-                        <div
-                          id="faqCollapse5"
-                          className="accordion-collapse collapse"
-                          aria-labelledby="faqHeading5"
-                          data-bs-parent="#faqAccordion"
-                        >
-                          <div className="accordion-body">
-                            We offer a 7-day money-back guarantee on all plans. If you're not satisfied with our service within the first 7 days of your subscription, contact our support team for a full refund.
-                          </div>
-                        </div>
-                      </div>
 
                       {/* FAQ Item 6 */}
                       <div className="accordion-item">

@@ -8,9 +8,9 @@ import DashboardLayout from "@/components/dashboardNew/DashboardLayout";
 const ScriptStoryWriterToolPage = () => {
   return (
     <>
-      <PageHead title="Script & Story Writer Tool" />
+      <PageHead title="Script Writer Tool" />
 
-      <DashboardLayout title="Script & Story Writer Tool">
+      <DashboardLayout title="Script Writer Tool">
         <main className="page-wrapper rbt-dashboard-page">
           <Context>
             <div className="rbt-panel-wrapper">

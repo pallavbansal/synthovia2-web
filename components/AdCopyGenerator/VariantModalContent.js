@@ -70,10 +70,9 @@ const VariantModalContent = ({
             const link = document.createElement('a');
 
             const platform = inputs?.platform?.value || 'Platform';
-            const textLength = inputs?.adTextLength?.value || 'TextLength'; 
 
             link.href = url;
-            link.download = `adcopy_variant_${index + 1}_${platform}_${textLength}.txt`.replace(/\s+/g, '_');
+            link.download = `adcopy_variant_${index + 1}_${platform}.txt`.replace(/\s+/g, '_');
 
             document.body.appendChild(link);
             link.click();
