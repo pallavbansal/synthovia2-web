@@ -12,7 +12,6 @@
     margin-bottom: -1px;
 
     &.bg-image1 {
-        background-image: url(../../images/header-top/top-banner.png);
         background-repeat: no-repeat;
         background-size: cover;
         background-position: center center;
@@ -92,6 +91,11 @@
 
     &.deactive {
         display: none;
+    }
+
+    .rainbow-badge.bg-none {
+        background: transparent !important;
+        background-image: none !important;
     }
 }
 
