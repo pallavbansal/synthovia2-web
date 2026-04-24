@@ -1778,14 +1778,14 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     />
 
                     <PredefinedCustom
-                      label="Text Length"
+                      label="Meta Description Length"
                       required
                       modeKey="textLengthMode"
                       valueKey="textLength"
                       customKey="textLengthCustom"
                       options={fieldOptions?.primary_text_length || []}
-                      placeholder="Enter text length (1-500)"
-                      help="Text length preference."
+                      placeholder="Enter meta description length (1-500)"
+                      help="Meta description length preference."
                       customInputProps={{ type: "number", min: 1, max: 500, step: 1 }}
                       formData={formData}
                       setFormData={setFormData}

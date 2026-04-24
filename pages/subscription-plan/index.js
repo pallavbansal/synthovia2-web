@@ -1021,6 +1021,8 @@ const SubscriptionPlanPage = () => {
                       const name = String(plan?.name || "");
                       const description = String(plan?.description || "");
                       const pref = getPlanPreferredPrice(plan);
+                      const displaySymbol = "$";
+                      const displayPrice = String(plan?.amount_usd ?? plan?.price?.amount_usd ?? plan?.price?.amount ?? plan?.price ?? "");
                       const price = String((pref?.value != null ? pref.value : plan?.price) || "");
                       const billing = String(plan?.billing_period || "");
                       const planId = plan?.id;
@@ -1045,7 +1047,7 @@ const SubscriptionPlanPage = () => {
                               </div>
 
                               <div className="subscription-plan-price-row">
-                                <span className="subscription-plan-price">{pref?.symbol}{price}</span>
+                                <span className="subscription-plan-price">{displaySymbol}{displayPrice}</span>
                                 <span className="subscription-plan-period">/ {billingLabel}</span>
                               </div>
 
