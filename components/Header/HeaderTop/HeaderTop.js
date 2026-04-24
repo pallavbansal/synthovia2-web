@@ -15,7 +15,7 @@ const HeaderTop = () => {
               <div className="col-lg-12">
                 <div className="inner">
                   <div className="content">
-                    <span className="rainbow-badge">Limited Time Offer</span>
+                    <span className="rainbow-badge bg-none">Limited Time Offer</span>
                     <span className="news-text">
                       Intro price. Get AiWave for Big Sale -95% off.
                     </span>
