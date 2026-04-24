@@ -1588,13 +1588,12 @@ const CopywritingAssistantForm = () => {
                                                 <span style={styles.infoIcon} data-tooltip-id="topic-tooltip" data-tooltip-content="Enter the main topic or subject of your copy">i</span>
                                             </label>
                                             <Tooltip style={styles.toolTip} id="topic-tooltip" />
-                                            <input
-                                                type="text"
+                                            <textarea
                                                 id="topic"
                                                 name="topic"
                                                 value={formData.topic}
                                                 onChange={handleChange}
-                                                style={styles.input}
+                                                style={{ ...styles.textarea, minHeight: '80px' }}
                                                 placeholder="What is the main topic of your copy?"
                                                 required
                                             />
