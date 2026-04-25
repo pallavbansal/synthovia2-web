@@ -304,7 +304,7 @@ const Captionandhastaggeneratorform = () => {
                     const defaultTone = result.data.caption_tone_of_voice[0]?.key || '';
                     const defaultLanguage = result.data.caption_language_locale.find(o => o.key === 'en_global')?.key || result.data.caption_language_locale[0]?.key || 'en_global';
                     const defaultEmotionalIntent = result.data.caption_emotional_intent[0]?.key || '';
-                    const defaultCtaStyle = result.data.caption_cta_style?.[0]?.key || '';
+                    const defaultCtaStyle = '';
                     const defaultCaptionStyle = result.data.caption_style[0]?.key || '';
                     const defaultHashtagStyle = result.data.caption_hashtag_style[0]?.key || '';
                     const defaultPostLength = result.data.caption_post_length[0]?.key || '';
@@ -662,8 +662,8 @@ const Captionandhastaggeneratorform = () => {
                                     next[variantIndex] = {
                                         ...next[variantIndex],
                                         id: next[variantIndex].id || msg.variant_id || null,
-                                        content: (next[variantIndex].content?.length > (msg.content?.length || 0)) 
-                                            ? next[variantIndex].content 
+                                        content: (next[variantIndex].content?.length > (msg.content?.length || 0))
+                                            ? next[variantIndex].content
                                             : (msg.content || next[variantIndex].content || ''),
                                         is_streaming: false,
                                     };
@@ -896,8 +896,8 @@ const Captionandhastaggeneratorform = () => {
                             next[variantIndex] = {
                                 ...next[variantIndex],
                                 id: next[variantIndex].id || msg.variant_id || null,
-                                content: (next[variantIndex].content?.length > (msg.content?.length || 0)) 
-                                    ? next[variantIndex].content 
+                                content: (next[variantIndex].content?.length > (msg.content?.length || 0))
+                                    ? next[variantIndex].content
                                     : (msg.content || next[variantIndex].content || ''),
                                 is_streaming: false,
                             };
@@ -1050,7 +1050,7 @@ const Captionandhastaggeneratorform = () => {
         const defaultTone = toneOptions[0]?.key || '';
         const defaultLanguage = languageOptions.find(o => o.key === 'en_global')?.key || languageOptions[0]?.key || 'en_global';
         const defaultEmotionalIntent = emotionalIntentOptions[0]?.key || ''; // Default Emotional Intent
-        const defaultCtaStyle = ctaStyleOptions[0]?.key || '';
+        const defaultCtaStyle = '';
         const defaultCaptionStyle = captionStyleOptions[0]?.key || '';
         const defaultHashtagStyle = hashtagStyleOptions[0]?.key || '';
         const defaultPostLength = postLengthOptions[0]?.key || '';

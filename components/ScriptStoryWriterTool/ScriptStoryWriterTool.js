@@ -703,7 +703,7 @@ const ScriptStoryWriterTool = () => {
                     const inFT = js?.in_free_trial ?? js?.data?.in_free_trial;
                     if (inFT != null) statusStr = inFT ? 'free' : 'subscription';
                 }
-            } catch {}
+            } catch { }
 
             const res = await fetch(API.USER_CREDITS, {
                 method: 'GET',
@@ -915,7 +915,7 @@ const ScriptStoryWriterTool = () => {
             setShowSummary(false);
 
             const streamSingleVariant = async (variantIndex) => {
-                  
+
                 const controller = new AbortController();
                 streamControllersRef.current = [...streamControllersRef.current, controller];
 
@@ -1027,7 +1027,7 @@ const ScriptStoryWriterTool = () => {
                     }
 
                     if (msg.type === 'error' && isGateError(msg)) {
-                      
+
                         if (msg.trial_credits_remaining != null) {
                             const t = Number(msg.trial_credits_remaining);
                             if (!Number.isNaN(t)) setTrialRemaining?.(t);
@@ -1061,8 +1061,8 @@ const ScriptStoryWriterTool = () => {
                                 next[variantIndex] = {
                                     ...next[variantIndex],
                                     id: next[variantIndex].id || msg.variant_id || null,
-                                    content: (next[variantIndex].content?.length > (msg.content?.length || 0)) 
-                                        ? next[variantIndex].content 
+                                    content: (next[variantIndex].content?.length > (msg.content?.length || 0))
+                                        ? next[variantIndex].content
                                         : (msg.content || next[variantIndex].content || ''),
                                     is_streaming: false,
                                 };
@@ -1300,8 +1300,8 @@ const ScriptStoryWriterTool = () => {
                             next[variantIndex] = {
                                 ...next[variantIndex],
                                 id: next[variantIndex].id || msg.variant_id || null,
-                                content: (next[variantIndex].content?.length > (msg.content?.length || 0)) 
-                                    ? next[variantIndex].content 
+                                content: (next[variantIndex].content?.length > (msg.content?.length || 0))
+                                    ? next[variantIndex].content
                                     : (msg.content || next[variantIndex].content || ''),
                                 is_streaming: false,
                             };
@@ -1872,57 +1872,6 @@ const ScriptStoryWriterTool = () => {
                                                             </div>
                                                         </div>
 
-                                                        <div className="col-12">
-                                                            <div style={styles.formGroup}>
-                                                                <label style={styles.label}>
-                                                                    Video Length / Duration <span style={{ color: '#ef4444' }}>*</span>
-                                                                    <span style={styles.infoIcon} data-tooltip-id="duration-tooltip" data-tooltip-content="Choose how long the script should be. Use presets, slider, or custom input.">i</span>
-                                                                </label>
-
-                                                                <Tooltip style={styles.toolTip} id="duration-tooltip" />
-
-                                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-                                                                    {durationPresets.map((seconds) => {
-                                                                        const active = formData.durationPresetSeconds === seconds;
-                                                                        return (
-                                                                            <button
-                                                                                key={seconds}
-                                                                                type="button"
-                                                                                style={{
-                                                                                    ...styles.badge,
-                                                                                    backgroundColor: active ? '#3b82f6' : '#1e293b',
-                                                                                    color: active ? 'white' : '#e2e8f0',
-                                                                                    border: '1px solid #334155',
-                                                                                    cursor: 'pointer',
-                                                                                }}
-                                                                                onClick={() => handleDurationPresetClick(seconds)}
-                                                                            >
-                                                                                {formatDuration(seconds)}
-                                                                            </button>
-                                                                        );
-                                                                    })}
-                                                                </div>
-
-                                                                <div style={{ marginBottom: '10px' }}>
-                                                                    <input
-                                                                        type="range"
-                                                                        min={15}
-                                                                        max={360}
-                                                                        step={1}
-                                                                        value={formData.durationSeconds}
-                                                                        onChange={handleDurationSliderChange}
-                                                                        style={{ width: '100%' }}
-                                                                    />
-                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', color: '#94a3b8', fontSize: '13px' }}>
-                                                                        <span>15s</span>
-                                                                        <span>{formatDuration(formData.durationSeconds)} — Target ≈ {estimateWords(formData.durationSeconds)} words</span>
-                                                                        <span>6m</span>
-                                                                    </div>
-                                                                </div>
-
-       
-                                                            </div>
-                                                        </div>
 
                                                         <div className="col-12">
                                                             <div style={styles.formGroup}>
