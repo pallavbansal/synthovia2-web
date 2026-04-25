@@ -200,10 +200,6 @@ const SummaryReviewModal = ({ formData, onGenerate, onEdit, isGenerating, onView
                         <div style={styles.valueBox}>{toneValue || 'N/A'}</div>
                     </div>
 
-                    <div style={styles.item}>
-                        <span style={styles.itemLabel}>Duration (seconds):</span>
-                        <div style={styles.valueBox}>{String(formData.durationSeconds ?? 'N/A')}</div>
-                    </div>
 
                     <div style={styles.item}>
                         <span style={styles.itemLabel}>Script Style:</span>

@@ -1480,6 +1480,24 @@ const CopywritingAssistantForm = () => {
 
     return (
         <div style={styles.container}>
+            {/* Notification Toast */}
+            {notification.show && (
+                <div style={{
+                    ...styles.toast,
+                    backgroundColor: notification.type === 'error' ? '#fef2f2' : '#f0fdf4',
+                    borderColor: notification.type === 'error' ? '#fecaca' : '#bbf7d0',
+                    color: notification.type === 'error' ? '#b91c1c' : '#166534',
+                    border: '1px solid',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                }}>
+                    {notification.message}
+                    <button onClick={() => setNotification({ ...notification, show: false })} style={{
+                        background: 'none', border: 'none', color: 'inherit', marginLeft: '10px', cursor: 'pointer', fontSize: '18px'
+                    }}>&times;</button>
+                </div>
+            )}
             <div style={styles.header}>
                 <h1 style={styles.title}>Copywriting Assistant Tool</h1>
                 <p style={styles.subtitle}>Generate high-quality copy for your needs</p>
@@ -1492,7 +1510,7 @@ const CopywritingAssistantForm = () => {
                             {!formData.showAdvanced && (
                                 <>
                                     {/* Use Case */}
-                                    <div className="col-12">
+                                    <div className="col-md-6">
                                         <div style={styles.formGroup}>
                                             <label style={styles.label}>
                                                 Use Case <span style={{ color: '#ef4444' }}>*</span>
@@ -1526,7 +1544,7 @@ const CopywritingAssistantForm = () => {
 
                                             {/* Predefined Use Case (shown when predefined is selected) */}
                                             {formData.useCaseMode === 'predefined' && (
-                                                <div className="col-md-6">
+                                                <div className="col-12">
                                                     <div style={styles.formGroup}>
                                                         <select
                                                             id="useCase"
@@ -1547,7 +1565,7 @@ const CopywritingAssistantForm = () => {
 
                                             {/* Custom Use Case (shown when custom is selected) */}
                                             {formData.useCaseMode === 'custom' && (
-                                                <div className="col-md-6">
+                                                <div className="col-12">
                                                     <div style={styles.formGroup}>
                                                         <input
                                                             type="text"
@@ -1580,6 +1598,28 @@ const CopywritingAssistantForm = () => {
                                         </div>
                                     </div>
 
+                                    {/* Primary Goal */}
+                                    <div className="col-md-6">
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="primaryGoal" style={styles.label}>
+                                                Primary Goal <span style={{ color: '#ef4444' }}>*</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="primaryGoal-tooltip" data-tooltip-content="Describe the main objective of your content (max 150 words)">i</span>
+                                            </label>
+                                            <Tooltip style={styles.toolTip} id="primaryGoal-tooltip" />
+                                            <input
+                                                type="text"
+                                                id="primaryGoal"
+                                                name="primaryGoal"
+                                                value={formData.primaryGoal}
+                                                onChange={handleChange}
+                                                style={styles.input}
+                                                placeholder="What do you want to achieve with this content?"
+                                                maxLength={750} // ~150 words
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
                                     {/* Topic */}
                                     <div className="col-12">
                                         <div style={styles.formGroup}>
@@ -1600,26 +1640,6 @@ const CopywritingAssistantForm = () => {
                                         </div>
                                     </div>
 
-                                    {/* Primary Goal */}
-                                    <div className="col-12">
-                                        <div style={styles.formGroup}>
-                                            <label htmlFor="primaryGoal" style={styles.label}>
-                                                Primary Goal <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} data-tooltip-id="primaryGoal-tooltip" data-tooltip-content="Describe the main objective of your content (max 150 words)">i</span>
-                                            </label>
-                                            <Tooltip style={styles.toolTip} id="primaryGoal-tooltip" />
-                                            <textarea
-                                                id="primaryGoal"
-                                                name="primaryGoal"
-                                                value={formData.primaryGoal}
-                                                onChange={handleChange}
-                                                style={{ ...styles.textarea, minHeight: '80px' }}
-                                                placeholder="What do you want to achieve with this content?"
-                                                maxLength={750} // ~150 words
-                                                required
-                                            />
-                                        </div>
-                                    </div>
 
                                     {/* Target Audience */}
                                     <div className="col-12">

@@ -48,7 +48,7 @@ const VariantModalContent = ({
             textarea.select();
             document.execCommand('copy');
             document.body.removeChild(textarea);
-            showNotification(`Variant ${variantId} copied to clipboard!`, 'success');
+            showNotification('Copied!', 'success');
         } catch (err) {
             showNotification('Failed to copy text.', 'error');
         }
