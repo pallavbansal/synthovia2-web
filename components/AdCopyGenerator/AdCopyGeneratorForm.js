@@ -354,6 +354,10 @@ const AdCopyGeneratorForm = () => {
     };
 
     const addAudienceChip = (chip) => {
+        if (formData.targetAudience.length >= 15) {
+            showNotification('Maximum 15 audience segments allowed', 'error');
+            return;
+        }
         if (!formData.targetAudience.includes(chip)) {
             setFormData(prev => ({ ...prev, targetAudience: [...prev.targetAudience, chip] }));
         }
@@ -440,15 +444,27 @@ const AdCopyGeneratorForm = () => {
     };
 
     const handleArrayChange = (e, field) => {
+        const limits = {
+            targetAudience: 15,
+            keyBenefits: 12,
+            audiencePain: 12,
+            proofCredibility: 10
+        };
+        const limit = limits[field] || 10;
+
         if (e.key === 'Enter' && e.target.value.trim()) {
             e.preventDefault();
             const newItem = e.target.value.trim();
-            if (formData[field].length < 10) {
-                setFormData(prev => ({
-                    ...prev,
-                    [field]: [...prev[field], newItem]
-                }));
+            if (formData[field].length < limit) {
+                if (!formData[field].includes(newItem)) {
+                    setFormData(prev => ({
+                        ...prev,
+                        [field]: [...prev[field], newItem]
+                    }));
+                }
                 e.target.value = '';
+            } else {
+                showNotification(`Maximum ${limit} items allowed for this field`, 'error');
             }
         }
     };
@@ -1508,6 +1524,12 @@ const AdCopyGeneratorForm = () => {
             color: '#94a3b8',
             marginTop: '8px',
             whiteSpace: 'pre-wrap'
+        },
+        charCount: {
+            fontSize: '12px',
+            color: '#94a3b8',
+            textAlign: 'right',
+            marginTop: '4px'
         }
     };
 
@@ -1536,7 +1558,6 @@ const AdCopyGeneratorForm = () => {
                 <>
                     <div style={styles.header} id="ad-copy-form-top">
                         <h1 style={styles.title}>Ad Copy Generator</h1>
-                        <p style={styles.subtitle}>Create compelling ad copy for your campaigns</p>
                     </div>
                     <div style={styles.card}>
 
@@ -1555,7 +1576,7 @@ const AdCopyGeneratorForm = () => {
                                                         <span
                                                             style={styles.infoIcon}
                                                             data-tooltip-id="platform-tooltip"
-                                                            data-tooltip-content="Choose whether you want to use predefined platforms like Instagram, Facebook, Google, or enter your own custom platform. This helps the tool understand where your ad will be posted so the content format matches platform style."
+                                                            data-tooltip-content="Choose where this ad will run. Each platform has different copy lengths, tones, and best practices — Synthovia adjusts the output accordingly."
                                                         >
                                                             i
                                                         </span>
@@ -1631,16 +1652,20 @@ const AdCopyGeneratorForm = () => {
                                                     )}
 
                                                     {formData.platformMode === 'custom' && (
-                                                        <input
-                                                            type="text"
-                                                            id="platformCustom"
-                                                            name="platformCustom"
-                                                            value={formData.platformCustom}
-                                                            onChange={handleChange}
-                                                            style={{ ...styles.input, marginTop: '8px' }}
-                                                            placeholder="Enter custom ad platform"
-                                                            required
-                                                        />
+                                                        <div style={{ position: 'relative' }}>
+                                                            <input
+                                                                type="text"
+                                                                id="platformCustom"
+                                                                name="platformCustom"
+                                                                value={formData.platformCustom}
+                                                                onChange={handleChange}
+                                                                style={{ ...styles.input, marginTop: '8px' }}
+                                                                placeholder="Enter custom ad platform"
+                                                                required
+                                                                maxLength={50}
+                                                            />
+                                                            <div style={styles.charCount}>{formData.platformCustom.length}/50</div>
+                                                        </div>
                                                     )}
                                                     {optionsError && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{optionsError}</p>}
                                                 </div>
@@ -1656,7 +1681,7 @@ const AdCopyGeneratorForm = () => {
                                                         <span
                                                             style={styles.infoIcon}
                                                             data-tooltip-id="campaignObjective-tooltip"
-                                                            data-tooltip-html="Select the main goal of your campaign, such as leads, sales, awareness, traffic, or engagement. The tool uses your objective to shape message style, content strength, and call-to-action direction to drive results effectively."
+                                                            data-tooltip-content="What do you want this ad to achieve? Clicks, awareness, sales, or signups? Your goal shapes the hook, body, and CTA style."
                                                         >
                                                             i
                                                         </span>
@@ -1716,7 +1741,7 @@ const AdCopyGeneratorForm = () => {
                                                     )}
 
                                                     {campaignObjectiveMode === 'custom' && (
-                                                        <div style={{ marginTop: '12px' }}>
+                                                        <div style={{ marginTop: '12px', position: 'relative' }}>
                                                             <input
                                                                 type="text"
                                                                 name="customObjective"
@@ -1725,8 +1750,9 @@ const AdCopyGeneratorForm = () => {
                                                                 style={styles.input}
                                                                 placeholder="Describe your custom objective"
                                                                 required={formData.campaignObjective === 'Custom Objective'}
+                                                                maxLength={80}
                                                             />
-
+                                                            <div style={styles.charCount}>{formData.customObjective.length}/80</div>
                                                         </div>
                                                     )}
                                                 </div>
@@ -1736,11 +1762,11 @@ const AdCopyGeneratorForm = () => {
                                             <div className="col-12">
                                                 <div style={styles.formGroup}>
                                                     <label style={styles.label}>
-                                                        Target Audience <span style={{ color: '#ef4444' }}>*</span>
+                                                        Target Audience <span style={{ color: '#ef4444' }}>*</span> ({formData.targetAudience.length}/15 tags)
                                                         <span
                                                             style={styles.infoIcon}
                                                             data-tooltip-id="targetAudience-tooltip"
-                                                            data-tooltip-html="Describe who you want to reach with this ad. Include audience characteristics like age, profession, interests, and behavior. This helps generate messaging that speaks directly to the right people and increases conversions."
+                                                            data-tooltip-content="Who is this ad for? Add segments like &quot;Women 25–34&quot;, &quot;SaaS Founders&quot;, or &quot;Fitness Beginners&quot;. The more specific you are, the more relevant the copy."
                                                         >
                                                             i
                                                         </span>
@@ -1816,7 +1842,9 @@ const AdCopyGeneratorForm = () => {
                                                                 : "Type and press Enter to Add another segment"}
                                                             required={formData.targetAudience.length === 0}
                                                             inputMode="text"
+                                                            maxLength={150}
                                                         />
+                                                        <div style={styles.charCount}>{audienceInput.length}/150</div>
 
                                                         {showAudienceSuggestions && (
                                                             <div style={{
@@ -1905,7 +1933,7 @@ const AdCopyGeneratorForm = () => {
                                                         <span
                                                             style={styles.infoIcon}
                                                             data-tooltip-id="productServices-tooltip"
-                                                            data-tooltip-html="Write important information about your product or service, including features, purpose, and key details. Clear information allows the system to create accurate ad content that explains your offering effectively to potential customers."
+                                                            data-tooltip-content="Describe what you're selling. Mention what it does, who it helps, and what makes it different. Specifics here = sharper ad copy out."
                                                         >
                                                             i
                                                         </span>
@@ -1919,7 +1947,9 @@ const AdCopyGeneratorForm = () => {
                                                         style={{ ...styles.textarea, minHeight: '100px' }}
                                                         placeholder="Describe your product or service in detail. What makes it unique? What problems does it solve?"
                                                         required
+                                                        maxLength={3000}
                                                     />
+                                                    <div style={styles.charCount}>{formData.productServices.length}/3000</div>
                                                 </div>
                                             </div>
 
@@ -1931,7 +1961,7 @@ const AdCopyGeneratorForm = () => {
                                                         <span
                                                             style={styles.infoIcon}
                                                             data-tooltip-id="tone-tooltip"
-                                                            data-tooltip-html="Select the personality or feel of the ad copy (such as professional, friendly, urgent, funny, bold). Tone guides how the message connects emotionally with your target audience."
+                                                            data-tooltip-content="Pick the voice your brand speaks in — professional, casual, witty, bold, or your own custom style. This sets the mood of every variant."
                                                         >
                                                             i
                                                         </span>
@@ -1988,18 +2018,22 @@ const AdCopyGeneratorForm = () => {
                                                     )}
 
                                                     {toneMode === 'custom' && (
-                                                        <input
-                                                            type="text"
-                                                            id="toneCustom"
-                                                            value={toneCustom}
-                                                            onChange={(e) => {
-                                                                const val = e.target.value;
-                                                                setToneCustom(val);
-                                                                setFormData(prev => ({ ...prev, tone: val }));
-                                                            }}
-                                                            style={{ ...styles.input, marginTop: '8px' }}
-                                                            placeholder="Enter custom tone"
-                                                        />
+                                                        <div style={{ position: 'relative' }}>
+                                                            <input
+                                                                type="text"
+                                                                id="toneCustom"
+                                                                value={toneCustom}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    setToneCustom(val);
+                                                                    setFormData(prev => ({ ...prev, tone: val }));
+                                                                }}
+                                                                style={{ ...styles.input, marginTop: '8px' }}
+                                                                placeholder="Enter custom tone"
+                                                                maxLength={80}
+                                                            />
+                                                            <div style={styles.charCount}>{toneCustom.length}/80</div>
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>
@@ -2012,7 +2046,7 @@ const AdCopyGeneratorForm = () => {
                                                         <span
                                                             style={styles.infoIcon}
                                                             data-tooltip-id="ctaType-tooltip"
-                                                            data-tooltip-html="Choose what action you want users to take (example: Buy Now, Learn More, Sign Up). A strong CTA increases conversions by telling the audience exactly what to do next."
+                                                            data-tooltip-content="The action you want users to take — like &quot;Shop Now&quot;, &quot;Sign Up&quot;, or &quot;Learn More&quot;. Choose a preset or write your own."
                                                         >
                                                             i
                                                         </span>
@@ -2069,19 +2103,23 @@ const AdCopyGeneratorForm = () => {
                                                     )}
 
                                                     {ctaTypeMode === 'custom' && (
-                                                        <input
-                                                            type="text"
-                                                            id="ctaTypeCustom"
-                                                            value={ctaTypeCustom}
-                                                            onChange={(e) => {
-                                                                const val = e.target.value;
-                                                                setCtaTypeCustom(val);
-                                                                setFormData(prev => ({ ...prev, ctaType: val }));
-                                                            }}
-                                                            style={{ ...styles.input, marginTop: '8px' }}
-                                                            placeholder="Enter custom CTA"
-                                                            required
-                                                        />
+                                                        <div style={{ position: 'relative' }}>
+                                                            <input
+                                                                type="text"
+                                                                id="ctaTypeCustom"
+                                                                value={ctaTypeCustom}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    setCtaTypeCustom(val);
+                                                                    setFormData(prev => ({ ...prev, ctaType: val }));
+                                                                }}
+                                                                style={{ ...styles.input, marginTop: '8px' }}
+                                                                placeholder="Enter custom CTA"
+                                                                required
+                                                                maxLength={40}
+                                                            />
+                                                            <div style={styles.charCount}>{ctaTypeCustom.length}/40</div>
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>
@@ -2090,8 +2128,8 @@ const AdCopyGeneratorForm = () => {
                                             <div className="col-12">
                                                 <div style={styles.formGroup}>
                                                     <label style={styles.label}>
-                                                        Key Benefits
-                                                        <span style={styles.infoIcon} data-tooltip-id="keyBenefits-tooltip" data-tooltip-content="List the main benefits of your product/service (press Enter to add)">i</span>
+                                                        Key Benefits ({formData.keyBenefits.length}/12 tags)
+                                                        <span style={styles.infoIcon} data-tooltip-id="keyBenefits-tooltip" data-tooltip-content="Top reasons someone should choose your product. Add 2–4 benefits like &quot;Saves 5 hours a week&quot; or &quot;30-day money-back&quot;. These power the persuasion in your ad.">i</span>
                                                     </label>
                                                     <Tooltip style={styles.toolTip} id="keyBenefits-tooltip" />
                                                     <div style={{
@@ -2141,17 +2179,23 @@ const AdCopyGeneratorForm = () => {
                                                         onKeyPress={(e) => handleArrayChange(e, 'keyBenefits')}
                                                         onBlur={(e) => {
                                                             const value = e.target.value.trim();
-                                                            if (value && formData.keyBenefits.length < 10) {
-                                                                setFormData(prev => ({
-                                                                    ...prev,
-                                                                    keyBenefits: [...prev.keyBenefits, value]
-                                                                }));
+                                                            if (value && formData.keyBenefits.length < 12) {
+                                                                if (!formData.keyBenefits.includes(value)) {
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        keyBenefits: [...prev.keyBenefits, value]
+                                                                    }));
+                                                                }
                                                                 e.target.value = '';
+                                                            } else if (value && formData.keyBenefits.length >= 12) {
+                                                                showNotification('Maximum 12 key benefits allowed', 'error');
                                                             }
                                                         }}
-                                                        disabled={formData.keyBenefits.length >= 10}
+                                                        disabled={formData.keyBenefits.length >= 12}
                                                         inputMode='text'
+                                                        maxLength={200}
                                                     />
+                                                    <div style={styles.charCount}>Max 200 chars per tag</div>
                                                 </div>
                                             </div>
 
@@ -2160,7 +2204,7 @@ const AdCopyGeneratorForm = () => {
                                                 <div style={styles.formGroup}>
                                                     <label htmlFor="variants" style={styles.label}>
                                                         Number of Variants: {formData.variants}
-                                                        <span style={styles.infoIcon} data-tooltip-id="variants-tooltip" data-tooltip-content="How many different ad variations would you like to generate?">i</span>
+                                                        <span style={styles.infoIcon} data-tooltip-id="variants-tooltip" data-tooltip-content="How many different ad versions you want generated. More variants = more options to A/B test. (Costs more credits.)">i</span>
                                                     </label>
                                                     <Tooltip style={styles.toolTip} id="variants-tooltip" />
                                                     <input
@@ -2203,7 +2247,9 @@ const AdCopyGeneratorForm = () => {
                                                 <div style={styles.formGroup}>
                                                     <label htmlFor="brandVoice" style={styles.label}>
                                                         Brand Voice (Optional)
+                                                        <span style={styles.infoIcon} data-tooltip-id="brandVoice-tooltip" data-tooltip-content="How your brand sounds — playful, bold, expert, friendly.">i</span>
                                                     </label>
+                                                    <Tooltip style={styles.toolTip} id="brandVoice-tooltip" />
                                                     <input
                                                         type="text"
                                                         id="brandVoice"
@@ -2212,7 +2258,9 @@ const AdCopyGeneratorForm = () => {
                                                         onChange={handleChange}
                                                         style={styles.input}
                                                         placeholder="Describe your brand's tone and personality"
+                                                        maxLength={800}
                                                     />
+                                                    <div style={styles.charCount}>{formData.brandVoice.length}/800</div>
                                                 </div>
                                             </div>
 
@@ -2221,7 +2269,9 @@ const AdCopyGeneratorForm = () => {
                                                 <div style={styles.formGroup}>
                                                     <label htmlFor="usp" style={styles.label}>
                                                         USP [Unique Selling Proposition](Optional)
+                                                        <span style={styles.infoIcon} data-tooltip-id="usp-tooltip" data-tooltip-content="The one thing only you can say vs competitors.">i</span>
                                                     </label>
+                                                    <Tooltip style={styles.toolTip} id="usp-tooltip" />
                                                     <textarea
                                                         id="usp"
                                                         name="usp"
@@ -2229,7 +2279,9 @@ const AdCopyGeneratorForm = () => {
                                                         onChange={handleChange}
                                                         style={{ ...styles.textarea, minHeight: '80px' }}
                                                         placeholder="Strongest differentiator vs competitors. E.g., 'First AI tool with multi-variant regeneration in one click.'"
+                                                        maxLength={800}
                                                     />
+                                                    <div style={styles.charCount}>{formData.usp.length}/800</div>
                                                 </div>
                                             </div>
 
@@ -2238,7 +2290,9 @@ const AdCopyGeneratorForm = () => {
                                                 <div style={styles.formGroup}>
                                                     <label htmlFor="featureHighlight" style={styles.label}>
                                                         Feature Highlight (Optional)
+                                                        <span style={styles.infoIcon} data-tooltip-id="featureHighlight-tooltip" data-tooltip-content="The single hero feature this ad should spotlight.">i</span>
                                                     </label>
+                                                    <Tooltip style={styles.toolTip} id="featureHighlight-tooltip" />
                                                     <textarea
                                                         id="featureHighlight"
                                                         name="featureHighlight"
@@ -2246,7 +2300,9 @@ const AdCopyGeneratorForm = () => {
                                                         onChange={handleChange}
                                                         style={{ ...styles.textarea, minHeight: '80px' }}
                                                         placeholder="Most important product feature showcased. E.g., 'Automated campaign generation in 30 seconds.'"
+                                                        maxLength={800}
                                                     />
+                                                    <div style={styles.charCount}>{formData.featureHighlight.length}/800</div>
                                                 </div>
                                             </div>
 
@@ -2255,7 +2311,9 @@ const AdCopyGeneratorForm = () => {
                                                 <div style={styles.formGroup}>
                                                     <label htmlFor="problemScenario" style={styles.label}>
                                                         Problem Scenario (Optional)
+                                                        <span style={styles.infoIcon} data-tooltip-id="problemScenario-tooltip" data-tooltip-content="The exact moment your customer needs you most.">i</span>
                                                     </label>
+                                                    <Tooltip style={styles.toolTip} id="problemScenario-tooltip" />
                                                     <textarea
                                                         id="problemScenario"
                                                         name="problemScenario"
@@ -2263,7 +2321,9 @@ const AdCopyGeneratorForm = () => {
                                                         onChange={handleChange}
                                                         style={{ ...styles.textarea, minHeight: '80px' }}
                                                         placeholder="When/where customer needs your solution. E.g., 'When agencies need to scale content fast without hiring more writers during seasonal sales events.'"
+                                                        maxLength={1500}
                                                     />
+                                                    <div style={styles.charCount}>{formData.problemScenario.length}/1500</div>
                                                 </div>
                                             </div>
 
@@ -2272,7 +2332,9 @@ const AdCopyGeneratorForm = () => {
                                                 <div style={styles.formGroup}>
                                                     <label htmlFor="offerPricing" style={styles.label}>
                                                         Offer & Pricing (Optional)
+                                                        <span style={styles.infoIcon} data-tooltip-id="offerPricing-tooltip" data-tooltip-content="Any discount, deal, or price hook to feature.">i</span>
                                                     </label>
+                                                    <Tooltip style={styles.toolTip} id="offerPricing-tooltip" />
                                                     <input
                                                         type="text"
                                                         id="offerPricing"
@@ -2281,7 +2343,9 @@ const AdCopyGeneratorForm = () => {
                                                         onChange={handleChange}
                                                         style={styles.input}
                                                         placeholder="e.g., 20% off, Free trial, Limited time offer"
+                                                        maxLength={500}
                                                     />
+                                                    <div style={styles.charCount}>{formData.offerPricing.length}/500</div>
                                                 </div>
                                             </div>
 
@@ -2291,8 +2355,8 @@ const AdCopyGeneratorForm = () => {
                                             <div className="col-12">
                                                 <div style={styles.formGroup}>
                                                     <label style={styles.label}>
-                                                        Audience Pain Points (Optional)
-                                                        <span style={styles.infoIcon} data-tooltip-id="audiencePain-tooltip" data-tooltip-content="What problems or pain points does your product/service solve? (press Enter to add)">i</span>
+                                                        Audience Pain Points (Optional) ({formData.audiencePain.length}/12 tags)
+                                                        <span style={styles.infoIcon} data-tooltip-id="audiencePain-tooltip" data-tooltip-content="Frustrations your audience feels right now.">i</span>
                                                     </label>
                                                     <Tooltip style={styles.toolTip} id="audiencePain-tooltip" />
                                                     <input
@@ -2300,7 +2364,9 @@ const AdCopyGeneratorForm = () => {
                                                         style={styles.input}
                                                         placeholder="Add a pain point and press Enter"
                                                         onKeyPress={(e) => handleArrayChange(e, 'audiencePain')}
+                                                        maxLength={250}
                                                     />
+                                                    <div style={styles.charCount}>Max 250 chars per tag</div>
                                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
                                                         {formData.audiencePain.length === 0 && (
                                                             <span style={{ color: '#9ca3af', fontSize: '14px' }}>
@@ -2327,8 +2393,8 @@ const AdCopyGeneratorForm = () => {
                                             <div className="col-12">
                                                 <div style={styles.formGroup}>
                                                     <label style={styles.label}>
-                                                        Proof & Credibility Elements (Optional)
-                                                        <span style={styles.infoIcon} data-tooltip-id="proofCredibility-tooltip" data-tooltip-content="Add trust signals (press Enter to add)">i</span>
+                                                        Proof & Credibility Elements (Optional) ({formData.proofCredibility.length}/10 tags)
+                                                        <span style={styles.infoIcon} data-tooltip-id="proofCredibility-tooltip" data-tooltip-content="Trust signals — users, ratings, press, awards.">i</span>
                                                     </label>
                                                     <Tooltip style={styles.toolTip} id="proofCredibility-tooltip" />
                                                     <input
@@ -2336,7 +2402,9 @@ const AdCopyGeneratorForm = () => {
                                                         style={styles.input}
                                                         placeholder="e.g., '10,000+ happy customers', 'Rated 4.9/5 stars'"
                                                         onKeyPress={(e) => handleArrayChange(e, 'proofCredibility')}
+                                                        maxLength={250}
                                                     />
+                                                    <div style={styles.charCount}>Max 250 chars per tag</div>
                                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
                                                         {formData.proofCredibility.length === 0 && (
                                                             <span style={{ color: '#9ca3af', fontSize: '14px' }}>
@@ -2362,7 +2430,9 @@ const AdCopyGeneratorForm = () => {
                                                 <div style={styles.formGroup}>
                                                     <label htmlFor="complianceNote" style={styles.label}>
                                                         Compliance Note (Optional)
+                                                        <span style={styles.infoIcon} data-tooltip-id="complianceNote-tooltip" data-tooltip-content="Legal disclaimers or restricted phrases to follow.">i</span>
                                                     </label>
+                                                    <Tooltip style={styles.toolTip} id="complianceNote-tooltip" />
                                                     <textarea
                                                         id="complianceNote"
                                                         name="complianceNote"
@@ -2370,7 +2440,9 @@ const AdCopyGeneratorForm = () => {
                                                         onChange={handleChange}
                                                         style={{ ...styles.textarea, minHeight: '80px' }}
                                                         placeholder="Any legal disclaimers or compliance requirements for your ads"
+                                                        maxLength={2500}
                                                     />
+                                                    <div style={styles.charCount}>{formData.complianceNote.length}/2500</div>
                                                 </div>
                                             </div>
 
@@ -2382,7 +2454,7 @@ const AdCopyGeneratorForm = () => {
                                                         <span
                                                             style={styles.infoIcon}
                                                             data-tooltip-id="customInstructions-tooltip"
-                                                            data-tooltip-content="Optional: extra instructions for pacing, format, do/don'ts, audience voice, etc."
+                                                            data-tooltip-content="Extra rules — format, banned words, length, etc."
                                                         >
                                                             i
                                                         </span>
@@ -2394,7 +2466,9 @@ const AdCopyGeneratorForm = () => {
                                                         value={formData.customInstructions}
                                                         onChange={handleChange}
                                                         placeholder="Any specific guidance for the AI (format, pacing, forbidden phrases, etc.)"
+                                                        maxLength={3000}
                                                     />
+                                                    <div style={styles.charCount}>{formData.customInstructions.length}/3000</div>
                                                 </div>
                                             </div>
 
@@ -2445,8 +2519,7 @@ const AdCopyGeneratorForm = () => {
                 // --- Summary Review Modal/View ---
                 <div style={styles.card}>
                     <div style={styles.header}>
-                        <h1 style={styles.title}>Review Your Selections</h1>
-                        <p style={styles.subtitle}>Please review your ad copy details before generating</p>
+                        <h1 style={styles.title}>Ad Copy Generator</h1>
                     </div>
                     <div style={{ padding: '24px' }}>
                         {/* The SummaryReviewModal component is used for the summary display - assuming it exists */}

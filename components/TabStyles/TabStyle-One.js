@@ -72,6 +72,7 @@ const TabStyleOne = () => {
                         <div className="col-xl-6">
                           <div className="section-title">
                             <h2 className="title">{tab.title}</h2>
+                            {tab.desc && <p className="description b1 mb--20">{tab.desc}</p>}
                             <div className="features-section">
                               <ul className="list-style--1">
                                 {tab.subItem.map((item, i) => (
@@ -87,7 +88,7 @@ const TabStyleOne = () => {
                                 className="btn-default btn-large color-blacked"
                                 href={getToolHref(tab)}
                               >
-                                Start Exploring Now
+                                {tab.btnText || "Start Exploring Now"}
                                 <i className="fa-sharp fa-solid fa-arrow-right ps-2"></i>
                               </Link>
                             </div>

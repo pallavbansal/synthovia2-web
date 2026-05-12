@@ -1,7 +1,8 @@
 {
   "TabStyleOne": [
     {
-      "title": "Video generating AI refers to artificial intelligence.",
+      "title": "Ads That Stop the Scroll, Not the Budget.",
+      "desc": "Generate high-converting ad copy for Meta, Google, and LinkedIn — tailored to your product, audience, and offer. No prompt engineering, no generic hooks. Just ad variants ready to test today.",
       "img": "/images/light/generator-img/add-copy.png",
       "imgLight": "/images/light/generator-img/add-copy.png",
       "menuId": "ad-copy-generator",
@@ -10,23 +11,25 @@
       "iconImg": "/images/icons/video-g.png",
       "iconClass": "fa-solid fa-ad",
       "isSelect": false,
+      "btnText": "Generate Your First Ad",
       "subItem": [
         {
-          "text": "Transformer Models"
+          "text": "Multi-Platform Ready (Meta, Google, LinkedIn)"
         },
         {
-          "text": "Conditional Generative Models"
+          "text": "Hook + Body + CTA Variants"
         },
         {
-          "text": "Pre-trained Models"
+          "text": "Audience-Tuned Messaging"
         },
         {
-          "text": "Variational Autoencoders"
+          "text": "Built-In Persuasion Frameworks"
         }
       ]
     },
     {
-      "title": "Audio generating AI refers to artificial intelligence.",
+      "title": "Captions That Sound Like You. Hashtags That Actually Reach.",
+      "desc": "Turn a single idea into scroll-stopping captions and researched hashtags for Instagram, LinkedIn, and Twitter/X. Match your brand tone, hit your goal, and post without second-guessing.",
       "img": "/images/light/generator-img/caption-hashtag.png",
       "imgLight": "/images/light/generator-img/caption-hashtag.png",
       "menuId": "caption-and-hastag-generator",
@@ -35,23 +38,25 @@
       "iconImg": "/images/icons/audio-g.png",
       "iconClass": "fa-solid fa-hashtag",
       "isSelect": true,
+      "btnText": "Write Your Next Caption",
       "subItem": [
         {
-          "text": "Transformer Models"
+          "text": "Hook-Driven Opening Lines"
         },
         {
-          "text": "Conditional Generative Models"
+          "text": "Smart Hashtag Mixing (Reach + Niche)"
         },
         {
-          "text": "Pre-trained Models"
+          "text": "Multiple Caption Variants Per Generation"
         },
         {
-          "text": "Variational Autoencoders"
+          "text": "Tone & Goal Customization"
         }
       ]
     },
     {
-      "title": "Photo generating AI refers to artificial intelligence.",
+      "title": "Copy That Sells, Without the Blank Page.",
+      "desc": "Generate landing page copy, product descriptions, sales sections, and CTAs from simple inputs. Skip the staring-at-cursor stage and start with copy designed to convert.",
       "img": "/images/light/generator-img/copy-writing.png",
       "imgLight": "/images/light/generator-img/copy-writing.png",
       "menuId": "copywriting-assistant",
@@ -60,23 +65,25 @@
       "iconImg": "/images/icons/photo-g.png",
       "iconClass": "fa-solid fa-file-text",
       "isSelect": false,
+      "btnText": "Start Writing Copy",
       "subItem": [
         {
-          "text": "Transformer Models"
+          "text": "Long & Short-Form Copy"
         },
         {
-          "text": "Conditional Generative Models"
+          "text": "Tone Control"
         },
         {
-          "text": "Pre-trained Models"
+          "text": "Conversion-Focused Structure"
         },
         {
-          "text": "Variational Autoencoders"
+          "text": "Multiple Variants Per Generation"
         }
       ]
     },
     {
-      "title": "Text generating AI refers to artificial intelligence.",
+      "title": "Scripts That Hold Attention From Hook to CTA.",
+      "desc": "Generate scripts for short-form videos, long-form content, and ad creatives — with structured hooks, story beats, and clear CTAs. Built for creators and founders who post regularly.",
       "img": "/images/light/generator-img/script-writer.png",
       "imgLight": "/images/light/generator-img/script-writer.png",
       "menuId": "script-writing-generator",
@@ -85,23 +92,25 @@
       "iconImg": "/images/icons/text-g.png",
       "iconClass": "fa-solid fa-file-video",
       "isSelect": false,
+      "btnText": "Write Your Next Script",
       "subItem": [
         {
-          "text": "Transformer Models"
+          "text": "Hook → Body → CTA Structure"
         },
         {
-          "text": "Conditional Generative Models"
+          "text": "Short & Long-Form Support"
         },
         {
-          "text": "Pre-trained Models"
+          "text": "Tone & Pacing Control"
         },
         {
-          "text": "Variational Autoencoders"
+          "text": "Story Arcs That Convert"
         }
       ]
     },
     {
-      "title": "Code generating AI refers to artificial intelligence.",
+      "title": "Emails People Actually Open. Newsletters They Actually Read.",
+      "desc": "From cold outreach to product launches to weekly newsletters — generate subject lines, body copy, and CTAs in seconds. Built for founders and marketers who need their list to drive revenue, not unsubscribes.",
       "img": "/images/light/generator-img/email-newsletter.png",
       "imgLight": "/images/light/generator-img/email-newsletter.png",
       "menuId": "email-generator",
@@ -110,23 +119,25 @@
       "iconImg": "/images/icons/code-g.png",
       "iconClass": "fa-solid fa-envelope",
       "isSelect": false,
+      "btnText": "Draft Your Next Email",
       "subItem": [
         {
-          "text": "Transformer Models"
+          "text": "Subject Lines Built to Open"
         },
         {
-          "text": "Conditional Generative Models"
+          "text": "Cold, Warm & Newsletter Modes"
         },
         {
-          "text": "Pre-trained Models"
+          "text": "Tone & Audience Matching"
         },
         {
-          "text": "Variational Autoencoders"
+          "text": "Ready-to-Send Formatting"
         }
       ]
     },
     {
-      "title": "Code generating AI refers to artificial intelligence.",
+      "title": "Rank Higher Without the SEO Headache.",
+      "desc": "Generate keywords, meta descriptions, H1/H2/H3 headings, and SEO-friendly URL slugs from a single topic. Built for SMBs who want to ship optimized pages without hiring an agency.",
       "img": "/images/light/generator-img/seo-generator.png",
       "imgLight": "/images/light/generator-img/seo-generator.png",
       "menuId": "seo-keyword-meta-tag-generator",
@@ -135,18 +146,19 @@
       "iconImg": "/images/icons/code-g.png",
       "iconClass": "fa-solid fa-key",
       "isSelect": false,
+      "btnText": "Find Your Keywords",
       "subItem": [
         {
-          "text": "Transformer Models"
+          "text": "Keyword Ideas"
         },
         {
-          "text": "Conditional Generative Models"
+          "text": "Meta Titles & Descriptions"
         },
         {
-          "text": "Pre-trained Models"
+          "text": "H1, H2 & H3 Heading Structures"
         },
         {
-          "text": "Variational Autoencoders"
+          "text": "SEO-Friendly URL Slugs"
         }
       ]
     }

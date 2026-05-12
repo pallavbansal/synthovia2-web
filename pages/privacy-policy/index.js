@@ -16,7 +16,6 @@ const TermsPolicyPage = () => {
           <div className="rbt-panel-wrapper">
             <HeaderDashboard display="d-none" />
             <PopupMobileMenu />
-            <LeftDashboardSidebar />
 
             <PrivacyPolicy />
           </div>
