@@ -50,12 +50,12 @@ const CopywritingAssistantForm = () => {
         customTone: '',
         lengthTargetMode: 'predefined',
         lengthTarget: 'short',
-        customWordCount: 180,
+        customWordCount: '180',
         keyPoints: [],
 
         variants: 1,
         showAdvanced: false,
-        keywords: '',
+        keywords: [],
         referenceText: '',
         rewriteMode: false,
         brandVoiceMode: 'predefined',
@@ -73,6 +73,7 @@ const CopywritingAssistantForm = () => {
         outputStructure: 'plain_text',
         creativityLevel: 5,
         referenceUrl: '',
+        customInstructions: '',
         proofreading: true,
         submitted: false,
     });
@@ -111,6 +112,8 @@ const CopywritingAssistantForm = () => {
 
     const [keyPointsInput, setKeyPointsInput] = useState('');
     const [showKeyPointsSuggestions, setShowKeyPointsSuggestions] = useState(false);
+
+    const [keywordsInput, setKeywordsInput] = useState('');
 
     const streamControllersRef = useRef([]);
     const sessionRequestIdRef = useRef(null);
@@ -379,20 +382,39 @@ const CopywritingAssistantForm = () => {
     };
 
     const handleArrayChange = (e, field) => {
+        const limits = {
+            targetAudience: 15,
+            keyPoints: 12,
+            keywords: 30,
+            excludeWords: 30
+        };
+        const limit = limits[field] || 10;
+
         if (e.key === 'Enter' && e.target.value.trim()) {
             e.preventDefault();
             const newItem = e.target.value.trim();
-            setFormData((prev) => ({
-                ...prev,
-                [field]: [...prev[field], newItem],
-            }));
-            e.target.value = '';
+            if (formData[field].length < limit) {
+                if (!formData[field].includes(newItem)) {
+                    setFormData((prev) => ({
+                        ...prev,
+                        [field]: [...prev[field], newItem],
+                    }));
+                }
+                e.target.value = '';
+            } else {
+                showNotification(`Maximum ${limit} items allowed for this field`, 'error');
+            }
         }
     };
 
     const addAudienceChip = (value) => {
         const trimmed = value.trim();
         if (!trimmed) return;
+
+        if (formData.targetAudience.length >= 15) {
+            showNotification('Maximum 15 audience segments allowed', 'error');
+            return;
+        }
 
         setFormData((prev) => {
             if (prev.targetAudience.includes(trimmed)) return prev;
@@ -422,6 +444,11 @@ const CopywritingAssistantForm = () => {
     const addKeyPointsChip = (value) => {
         const trimmed = value.trim();
         if (!trimmed) return;
+
+        if (formData.keyPoints.length >= 12) {
+            showNotification('Maximum 12 key benefits allowed', 'error');
+            return;
+        }
 
         setFormData((prev) => {
             if (prev.keyPoints.includes(trimmed)) return prev;
@@ -462,6 +489,37 @@ const CopywritingAssistantForm = () => {
         }));
     };
 
+    const addKeywordsChip = (value) => {
+        const trimmed = value.trim();
+        if (!trimmed) return;
+
+        if (formData.keywords.length >= 30) {
+            showNotification('Maximum 30 keywords allowed', 'error');
+            return;
+        }
+
+        setFormData((prev) => {
+            if (prev.keywords.includes(trimmed)) return prev;
+            return {
+                ...prev,
+                keywords: [...prev.keywords, trimmed],
+            };
+        });
+
+        setKeywordsInput('');
+    };
+
+    const removeKeywordsChip = (chip) => {
+        setFormData((prev) => ({
+            ...prev,
+            keywords: prev.keywords.filter((item) => item !== chip),
+        }));
+    };
+
+    const handleKeywordsInput = (e) => {
+        setKeywordsInput(e.target.value);
+    };
+
     // Reset handler (Retained)
     const handleReset = () => {
         abortAllStreams();
@@ -480,12 +538,12 @@ const CopywritingAssistantForm = () => {
             customTone: '',
             lengthTargetMode: 'predefined',
             lengthTarget: 'short',
-            customWordCount: 180,
+            customWordCount: '180',
             keyPoints: [],
 
             variants: 1,
             showAdvanced: false,
-            keywords: '',
+            keywords: [],
             referenceText: '',
             rewriteMode: false,
             brandVoiceMode: 'predefined',
@@ -503,6 +561,7 @@ const CopywritingAssistantForm = () => {
             outputStructure: 'plain_text',
             creativityLevel: 5,
             referenceUrl: '',
+            customInstructions: '',
             proofreading: true,
             submitted: false,
         });
@@ -512,6 +571,8 @@ const CopywritingAssistantForm = () => {
 
         setKeyPointsInput('');
         setShowKeyPointsSuggestions(false);
+
+        setKeywordsInput('');
 
         setShowSummary(false);
         setGeneratedVariantsData({ requestId: null, variants: [], inputs: {} });
@@ -677,7 +738,7 @@ const CopywritingAssistantForm = () => {
 
         let lengthTargetObj;
         if (formData.lengthTargetMode === 'custom') {
-            lengthTargetObj = { id: null, value: String(formData.customWordCount ?? ''), type: 'custom' };
+            lengthTargetObj = { id: null, value: String(formData.customWordCount || '').trim(), type: 'custom' };
         } else {
             lengthTargetObj =
                 buildOptionObject('length_target', formData.lengthTarget) || {
@@ -722,12 +783,14 @@ const CopywritingAssistantForm = () => {
             ? buildOptionObject('output_structure_type', formData.outputStructure) || { id: null, value: formData.outputStructure, type: 'predefined' }
             : null;
 
-        const keywordsArray = formData.keywords
+        const keywordsArray = Array.isArray(formData.keywords)
             ? formData.keywords
-                .split(',')
-                .map((k) => k.trim())
-                .filter(Boolean)
-            : [];
+            : (formData.keywords
+                ? formData.keywords
+                    .split(',')
+                    .map((k) => k.trim())
+                    .filter(Boolean)
+                : []);
 
         const payload = {
             use_case: useCaseObj,
@@ -920,8 +983,8 @@ const CopywritingAssistantForm = () => {
                                 next[variantIndex] = {
                                     ...next[variantIndex],
                                     id: next[variantIndex].id || msg.variant_id || null,
-                                    content: (next[variantIndex].content?.length > (msg.content?.length || 0)) 
-                                        ? next[variantIndex].content 
+                                    content: (next[variantIndex].content?.length > (msg.content?.length || 0))
+                                        ? next[variantIndex].content
                                         : (msg.content || next[variantIndex].content || ''),
                                     is_streaming: false,
                                 };
@@ -1120,8 +1183,8 @@ const CopywritingAssistantForm = () => {
                             next[variantIndex] = {
                                 ...next[variantIndex],
                                 id: next[variantIndex].id || msg.variant_id || null,
-                                content: (next[variantIndex].content?.length > (msg.content?.length || 0)) 
-                                    ? next[variantIndex].content 
+                                content: (next[variantIndex].content?.length > (msg.content?.length || 0))
+                                    ? next[variantIndex].content
                                     : (msg.content || next[variantIndex].content || ''),
                                 is_streaming: false,
                             };
@@ -1420,6 +1483,14 @@ const CopywritingAssistantForm = () => {
         radioItem: { display: 'flex', alignItems: 'center', gap: '8px' },
         toolTip: { width: '40%' },
         toast: { position: 'fixed', top: '20px', right: '20px', padding: '16px 24px', color: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 9999 },
+        charCount: {
+            fontSize: '12px',
+            color: '#f8fafc',
+            opacity: 0.7,
+            textAlign: 'right',
+            marginTop: '4px',
+            fontWeight: '500'
+        }
     };
 
     // --- Layout Helpers (Unchanged) ---
@@ -1499,8 +1570,7 @@ const CopywritingAssistantForm = () => {
                 </div>
             )}
             <div style={styles.header}>
-                <h1 style={styles.title}>Copywriting Assistant Tool</h1>
-                <p style={styles.subtitle}>Generate high-quality copy for your needs</p>
+                <h1 style={styles.title}>Copy Writing Generator</h1>
             </div>
             <div style={styles.card}>
                 <div style={{ padding: '24px' }}>
@@ -1514,7 +1584,7 @@ const CopywritingAssistantForm = () => {
                                         <div style={styles.formGroup}>
                                             <label style={styles.label}>
                                                 Use Case <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} data-tooltip-id="useCase-tooltip" data-tooltip-content="Select a predefined use case or define your own custom use case">i</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="useCase-tooltip" data-tooltip-content="The type of copy you want to write.">i</span>
                                             </label>
                                             <Tooltip style={styles.toolTip} id="useCase-tooltip" />
                                             <div style={{ display: 'flex', gap: '20px', marginBottom: '8px' }}>
@@ -1567,23 +1637,26 @@ const CopywritingAssistantForm = () => {
                                             {formData.useCaseMode === 'custom' && (
                                                 <div className="col-12">
                                                     <div style={styles.formGroup}>
-                                                        <input
-                                                            type="text"
-                                                            id="customUseCase"
-                                                            name="customUseCase"
-                                                            value={formData.customUseCase}
-                                                            onChange={handleChange}
-                                                            ref={customUseCaseInputRef}
-                                                            style={{
-                                                                ...styles.input,
-                                                                border: customUseCaseError ? '1px solid #ef4444' : styles.input.border,
-                                                            }}
-                                                            placeholder="Describe your specific use case"
-                                                            maxLength={150}
-                                                            required={formData.useCaseMode === 'custom'}
-                                                            aria-invalid={customUseCaseError ? 'true' : 'false'}
-                                                            aria-describedby={customUseCaseError ? 'customUseCase-error' : undefined}
-                                                        />
+                                                        <div style={{ position: 'relative' }}>
+                                                            <input
+                                                                type="text"
+                                                                id="customUseCase"
+                                                                name="customUseCase"
+                                                                value={formData.customUseCase}
+                                                                onChange={handleChange}
+                                                                ref={customUseCaseInputRef}
+                                                                style={{
+                                                                    ...styles.input,
+                                                                    border: customUseCaseError ? '1px solid #ef4444' : styles.input.border,
+                                                                }}
+                                                                placeholder="Describe your specific use case"
+                                                                maxLength={80}
+                                                                required={formData.useCaseMode === 'custom'}
+                                                                aria-invalid={customUseCaseError ? 'true' : 'false'}
+                                                                aria-describedby={customUseCaseError ? 'customUseCase-error' : undefined}
+                                                            />
+                                                            <div style={styles.charCount}>{formData.customUseCase.length}/80</div>
+                                                        </div>
                                                         {customUseCaseError ? (
                                                             <div
                                                                 id="customUseCase-error"
@@ -1603,7 +1676,7 @@ const CopywritingAssistantForm = () => {
                                         <div style={styles.formGroup}>
                                             <label htmlFor="primaryGoal" style={styles.label}>
                                                 Primary Goal <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} data-tooltip-id="primaryGoal-tooltip" data-tooltip-content="Describe the main objective of your content (max 150 words)">i</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="primaryGoal-tooltip" data-tooltip-content="The action this copy should drive.">i</span>
                                             </label>
                                             <Tooltip style={styles.toolTip} id="primaryGoal-tooltip" />
                                             <input
@@ -1614,9 +1687,10 @@ const CopywritingAssistantForm = () => {
                                                 onChange={handleChange}
                                                 style={styles.input}
                                                 placeholder="What do you want to achieve with this content?"
-                                                maxLength={750} // ~150 words
+                                                maxLength={500}
                                                 required
                                             />
+                                            <div style={styles.charCount}>{formData.primaryGoal.length}/500 characters</div>
                                         </div>
                                     </div>
 
@@ -1625,7 +1699,7 @@ const CopywritingAssistantForm = () => {
                                         <div style={styles.formGroup}>
                                             <label htmlFor="topic" style={styles.label}>
                                                 Topic <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} data-tooltip-id="topic-tooltip" data-tooltip-content="Enter the main topic or subject of your copy">i</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="topic-tooltip" data-tooltip-content="The main subject your copy is about.">i</span>
                                             </label>
                                             <Tooltip style={styles.toolTip} id="topic-tooltip" />
                                             <textarea
@@ -1636,7 +1710,9 @@ const CopywritingAssistantForm = () => {
                                                 style={{ ...styles.textarea, minHeight: '80px' }}
                                                 placeholder="What is the main topic of your copy?"
                                                 required
+                                                maxLength={1500}
                                             />
+                                            <div style={styles.charCount}>{formData.topic.length}/1500 characters</div>
                                         </div>
                                     </div>
 
@@ -1645,11 +1721,11 @@ const CopywritingAssistantForm = () => {
                                     <div className="col-12">
                                         <div style={styles.formGroup}>
                                             <label style={styles.label}>
-                                                Target Audience <span style={{ color: '#ef4444' }}>*</span>
+                                                Target Audience <span style={{ color: '#ef4444' }}>*</span> ({formData.targetAudience.length}/15 tags)
                                                 <span
                                                     style={styles.infoIcon}
                                                     data-tooltip-id="targetAudience-tooltip"
-                                                    data-tooltip-html="Describe who you want to reach with this ad. Include audience characteristics like age, profession, interests, and behavior. This helps generate messaging that speaks directly to the right people and increases conversions."
+                                                    data-tooltip-content="Who you're writing this copy for."
                                                 >
                                                     i
                                                 </span>
@@ -1721,7 +1797,9 @@ const CopywritingAssistantForm = () => {
                                                     placeholder="Type and press Enter to add audience segments"
                                                     required={formData.targetAudience.length === 0}
                                                     inputMode='text'
+                                                    maxLength={150}
                                                 />
+                                                <div style={styles.charCount}>{audienceInput.length}/150 characters</div>
 
                                                 {showAudienceSuggestions && (
                                                     <div style={{
@@ -1807,7 +1885,7 @@ const CopywritingAssistantForm = () => {
                                         <div style={styles.formGroup}>
                                             <label style={styles.label}>
                                                 Tone Selection <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} data-tooltip-id="toneMode-tooltip" data-tooltip-content="Choose between predefined tones or define a custom tone">i</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="toneMode-tooltip" data-tooltip-content="How your brand should sound here.">i</span>
                                             </label>
                                             <Tooltip style={styles.toolTip} id="toneMode-tooltip" />
                                             <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
@@ -1855,7 +1933,7 @@ const CopywritingAssistantForm = () => {
                                             )}
 
                                             {formData.toneMode === 'custom' && (
-                                                <div style={{ marginTop: '8px' }}>
+                                                <div style={{ position: 'relative', marginTop: '8px' }}>
                                                     <input
                                                         type="text"
                                                         id="customTone"
@@ -1864,9 +1942,10 @@ const CopywritingAssistantForm = () => {
                                                         onChange={handleChange}
                                                         style={styles.input}
                                                         placeholder="Describe your desired tone in a few words (max 12 words)"
-                                                        maxLength={100}
+                                                        maxLength={80}
                                                         required={formData.toneMode === 'custom'}
                                                     />
+                                                    <div style={styles.charCount}>{formData.customTone.length}/80</div>
                                                 </div>
                                             )}
                                         </div>
@@ -1876,11 +1955,11 @@ const CopywritingAssistantForm = () => {
                                     <div className="col-12">
                                         <div style={styles.formGroup}>
                                             <label htmlFor="keyPoints" style={styles.label}>
-                                                Key Benefits <span style={{ color: '#ef4444' }}>*</span>
+                                                Key Benefits <span style={{ color: '#ef4444' }}>*</span> ({formData.keyPoints.length}/12 tags)
                                                 <span
                                                     style={styles.infoIcon}
                                                     data-tooltip-id="keyPoints-tooltip"
-                                                    data-tooltip-content="List the main points to include in your content as short bullets."
+                                                    data-tooltip-content="Top reasons your audience should care."
                                                 >
                                                     i
                                                 </span>
@@ -1948,7 +2027,9 @@ const CopywritingAssistantForm = () => {
                                                 placeholder="Type a key point and press Enter to add"
 
                                                 inputMode='text'
+                                                maxLength={200}
                                             />
+                                            <div style={styles.charCount}>{keyPointsInput.length}/200 characters</div>
                                         </div>
                                     </div>
 
@@ -1957,7 +2038,7 @@ const CopywritingAssistantForm = () => {
                                         <div style={styles.formGroup}>
                                             <label style={styles.label}>
                                                 Length Target <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} data-tooltip-id="length-tooltip" data-tooltip-content="Select or specify your desired word count">i</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="length-tooltip" data-tooltip-content="How long the final copy should be.">i</span>
                                             </label>
                                             <Tooltip style={styles.toolTip} id="length-tooltip" />
 
@@ -2004,20 +2085,17 @@ const CopywritingAssistantForm = () => {
                                             )}
 
                                             {formData.lengthTargetMode === 'custom' && (
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                                     <input
-                                                        type="number"
+                                                        type="text"
                                                         name="customWordCount"
                                                         value={formData.customWordCount}
                                                         onChange={handleChange}
-                                                        min="50"
-                                                        max="1200"
-                                                        style={{ ...styles.input, maxWidth: '160px' }}
-                                                        placeholder="Target words (50-1200)"
+                                                        style={styles.input}
+                                                        placeholder="e.g., Around 500 words"
+                                                        maxLength={40}
                                                     />
-                                                    <div style={{ fontSize: '12px', color: '#9ca3af' }}>
-                                                        Custom length target should be between 50 and 1200 words. The generator will aim for this length.
-                                                    </div>
+                                                    <div style={styles.charCount}>{formData.customWordCount.length}/40</div>
                                                 </div>
                                             )}
                                         </div>
@@ -2028,7 +2106,7 @@ const CopywritingAssistantForm = () => {
                                         <div style={styles.formGroup}>
                                             <label htmlFor="variants" style={styles.label}>
                                                 Number of Variants: {formData.variants}
-                                                <span style={styles.infoIcon} data-tooltip-id="variants-tooltip" data-tooltip-content="How many different versions of the content would you like to generate?">i</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="variants-tooltip" data-tooltip-content="How many versions to generate.">i</span>
                                             </label>
                                             <Tooltip style={styles.toolTip} id="variants-tooltip" />
                                             <input
@@ -2036,7 +2114,7 @@ const CopywritingAssistantForm = () => {
                                                 id="variants"
                                                 name="variants"
                                                 min="1"
-                                                max={isFreeTrial ? 1 : 2}
+                                                max={isFreeTrial ? 1 : 5}
                                                 value={formData.variants}
                                                 onChange={handleChange}
                                                 style={{ width: '100%' }}
@@ -2045,9 +2123,9 @@ const CopywritingAssistantForm = () => {
                                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
                                                 <span>1</span>
                                                 <span>2</span>
-                                                {/* <span>3</span>
+                                                <span>3</span>
                                                 <span>4</span>
-                                                <span>5</span> */}
+                                                <span>5</span>
                                             </div>
                                         </div>
                                     </div>
@@ -2067,22 +2145,73 @@ const CopywritingAssistantForm = () => {
                                     <div className="col-12">
                                         <div style={styles.formGroup}>
                                             <label htmlFor="keywords" style={styles.label}>
-                                                Keywords (optional)
-                                                <span style={styles.infoIcon} data-tooltip-id="keywords-tooltip" data-tooltip-content="Add keywords to include in your content (max 250 characters)">i</span>
+                                                Keywords (optional) ({formData.keywords.length}/30 tags)
+                                                <span style={styles.infoIcon} data-tooltip-id="keywords-tooltip" data-tooltip-content="Terms to weave into the copy naturally.">i</span>
                                             </label>
                                             <Tooltip style={styles.toolTip} id="keywords-tooltip" />
+
+                                            <div style={{
+                                                display: 'flex',
+                                                flexWrap: 'wrap',
+                                                gap: '8px',
+                                                marginBottom: '8px',
+                                                minHeight: '40px',
+                                                alignItems: 'center',
+                                                padding: '4px',
+                                                border: '1px solid #d1d5db',
+                                                borderRadius: '6px',
+                                                backgroundColor: formData.keywords.length > 0 ? '#f9fafb' : 'white'
+                                            }}>
+                                                {formData.keywords.length === 0 && (
+                                                    <span style={{ color: '#9ca3af', fontSize: '14px', marginLeft: '8px' }}>
+                                                        Add keywords (e.g., 'digital marketing', 'SEO')
+                                                    </span>
+                                                )}
+                                                {formData.keywords.map((chip, index) => (
+                                                    <span
+                                                        key={index}
+                                                        style={{
+                                                            ...styles.badge,
+                                                            ...styles.badgePrimary,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '6px',
+                                                            padding: '4px 10px'
+                                                        }}
+                                                    >
+                                                        {chip}
+                                                        <RemoveTagButton
+                                                            style={styles.removeBtn}
+                                                            onClick={() => removeKeywordsChip(chip)}
+                                                        />
+                                                    </span>
+                                                ))}
+                                            </div>
+
                                             <input
                                                 type="text"
-                                                id="keywords"
-                                                name="keywords"
-                                                value={formData.keywords}
-                                                onChange={handleChange}
-                                                style={{ ...styles.input, marginBottom: '3rem' }}
-                                                placeholder="e.g., digital marketing, seo, content strategy"
-                                                maxLength={250}
+                                                value={keywordsInput}
+                                                onChange={handleKeywordsInput}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' && keywordsInput.trim()) {
+                                                        e.preventDefault();
+                                                        addKeywordsChip(keywordsInput.trim());
+                                                    }
+                                                }}
+                                                onBlur={(e) => {
+                                                    if (keywordsInput.trim()) {
+                                                        addKeywordsChip(keywordsInput.trim());
+                                                    }
+                                                }}
+                                                style={{
+                                                    ...styles.input,
+                                                    marginBottom: 0,
+                                                }}
+                                                placeholder="Type a keyword and press Enter to add"
+                                                maxLength={100}
                                             />
+                                            <div style={styles.charCount}>{keywordsInput.length}/100</div>
                                         </div>
-
                                     </div>
 
                                     {/* Reference Text */}
@@ -2090,7 +2219,7 @@ const CopywritingAssistantForm = () => {
                                         <div style={styles.formGroup}>
                                             <label htmlFor="referenceText" style={styles.label}>
                                                 Reference Text (optional)
-                                                <span style={styles.infoIcon} data-tooltip-id="reference-tooltip" data-tooltip-content="Add any reference text or examples (max 5000 characters)">i</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="reference-tooltip" data-tooltip-content="Sample copy to match style or tone.">i</span>
                                             </label>
                                             <Tooltip style={styles.toolTip} id="reference-tooltip" />
                                             <textarea
@@ -2100,8 +2229,9 @@ const CopywritingAssistantForm = () => {
                                                 onChange={handleChange}
                                                 style={{ ...styles.textarea, minHeight: '100px' }}
                                                 placeholder="Paste any reference text or examples here"
-                                                maxLength={5000}
+                                                maxLength={8000}
                                             />
+                                            <div style={styles.charCount}>{formData.referenceText.length}/8000</div>
                                         </div>
                                     </div>
 
@@ -2113,7 +2243,7 @@ const CopywritingAssistantForm = () => {
                                         <div style={styles.formGroup}>
                                             <label style={styles.label}>
                                                 Formatting Options (optional)
-                                                <span style={styles.infoIcon} data-tooltip-id="formatting-tooltip" data-tooltip-content="Select the formatting options you want to include">i</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="formatting-tooltip" data-tooltip-content="Add structure with headings and sections.">i</span>
                                             </label>
                                             <Tooltip style={styles.toolTip} id="formatting-tooltip" />
                                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginTop: '8px' }}>
@@ -2160,7 +2290,7 @@ const CopywritingAssistantForm = () => {
                                             {renderModeToggle(
                                                 'writingFrameworkMode',
                                                 'Writing Framework (optional)',
-                                                'Select a writing framework or specify a custom one for content structure'
+                                                'Persuasion structure to follow (AIDA, PAS, etc.).'
                                             )}
 
                                             {formData.writingFrameworkMode === 'predefined' && (
@@ -2181,7 +2311,7 @@ const CopywritingAssistantForm = () => {
                                             )}
 
                                             {formData.writingFrameworkMode === 'custom' && (
-                                                <div style={styles.formGroup}>
+                                                <div style={{ position: 'relative' }}>
                                                     <input
                                                         type="text"
                                                         id="customWritingFramework"
@@ -2190,8 +2320,9 @@ const CopywritingAssistantForm = () => {
                                                         onChange={handleChange}
                                                         style={styles.input}
                                                         placeholder="e.g., Problem-Agitate-Solve with a storytelling intro"
-                                                        maxLength={120}
+                                                        maxLength={100}
                                                     />
+                                                    <div style={styles.charCount}>{formData.customWritingFramework.length}/100</div>
                                                 </div>
                                             )}
                                         </div>
@@ -2202,7 +2333,7 @@ const CopywritingAssistantForm = () => {
                                         <div style={styles.formGroup}>
                                             <label htmlFor="creativityLevel" style={styles.label}>
                                                 Creativity Level (optional): {formData.creativityLevel}/10
-                                                <span style={styles.infoIcon} data-tooltip-id="creativity-tooltip" data-tooltip-content="Adjust how creative or conservative the output should be">i</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="creativity-tooltip" data-tooltip-content="Lower = predictable. Higher = bolder, more original.">i</span>
                                             </label>
                                             <Tooltip style={styles.toolTip} id="creativity-tooltip" />
                                             <input
@@ -2227,7 +2358,7 @@ const CopywritingAssistantForm = () => {
                                         <div style={styles.formGroup}>
                                             <label htmlFor="referenceUrl" style={styles.label}>
                                                 Reference URL (optional)
-                                                <span style={styles.infoIcon} data-tooltip-id="url-tooltip" data-tooltip-content="Add a URL for reference or to extract content from">i</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="url-tooltip" data-tooltip-content="A link Synthovia can pull style cues from.">i</span>
                                             </label>
                                             <Tooltip style={styles.toolTip} id="url-tooltip" />
                                             <input
@@ -2238,36 +2369,40 @@ const CopywritingAssistantForm = () => {
                                                 onChange={handleChange}
                                                 style={styles.input}
                                                 placeholder="https://example.com"
+                                                maxLength={500}
                                             />
+                                            <div style={styles.charCount}>{formData.referenceUrl.length}/500</div>
                                         </div>
                                     </div>
 
 
 
-                                        {/* Custom Instructions / AI Guidance */}
-                                        <div className="col-12">
-                                            <div style={styles.formGroup}>
-                                                <label htmlFor="customInstructions" style={styles.label}>
-                                                    Custom Instructions / AI Guidance (optional)
-                                                    <span
-                                                        style={styles.infoIcon}
-                                                        data-tooltip-id="customInstructions-tooltip"
-                                                        data-tooltip-content="Optional: extra instructions for pacing, format, do/don'ts, audience voice, etc."
-                                                    >
-                                                        i
-                                                    </span>
-                                                </label>
-                                                <Tooltip style={styles.toolTip} id="customInstructions-tooltip" />
-                                                <textarea
-                                                    id="customInstructions"
-                                                    name="customInstructions"
-                                                    value={formData.customInstructions}
-                                                    onChange={handleChange}
-                                                    style={{ ...styles.textarea, minHeight: '120px' }}
-                                                    placeholder="Any specific guidance for the AI (format, pacing, forbidden phrases, etc.)"
-                                                />
-                                            </div>
+                                    {/* Custom Instructions / AI Guidance */}
+                                    <div className="col-12">
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="customInstructions" style={styles.label}>
+                                                Custom Instructions / AI Guidance (optional)
+                                                <span
+                                                    style={styles.infoIcon}
+                                                    data-tooltip-id="customInstructions-tooltip"
+                                                    data-tooltip-content="Extra rules — format, banned words, tone tweaks."
+                                                >
+                                                    i
+                                                </span>
+                                            </label>
+                                            <Tooltip style={styles.toolTip} id="customInstructions-tooltip" />
+                                            <textarea
+                                                id="customInstructions"
+                                                name="customInstructions"
+                                                value={formData.customInstructions}
+                                                onChange={handleChange}
+                                                style={{ ...styles.textarea, minHeight: '120px' }}
+                                                placeholder="Any specific guidance for the AI (format, pacing, forbidden phrases, etc.)"
+                                                maxLength={3000}
+                                            />
+                                            <div style={styles.charCount}>{formData.customInstructions.length}/3000</div>
                                         </div>
+                                    </div>
 
 
                                 </>

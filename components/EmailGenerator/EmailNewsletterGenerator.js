@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ToggleButton from '../Form/ToggleButton';
 import SummaryReviewModal from './SummaryReviewModal';
 import VariantModalContent from './VariantModalContent';
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 import { getAuthHeader } from '@/utils/auth';
 
 import API from "@/utils/api";
@@ -491,6 +493,14 @@ const EmailNewsletterGenerator = () => {
             color: '#e2e8f0',
             fontSize: '14px',
         },
+        charCount: {
+            fontSize: '12px',
+            color: '#f8fafc',
+            opacity: 0.7,
+            textAlign: 'right',
+            marginTop: '4px',
+            fontWeight: '500'
+        },
     };
 
     const handleInputChange = (e) => {
@@ -511,6 +521,17 @@ const EmailNewsletterGenerator = () => {
                     : type === 'personalization'
                         ? 'personalizationTags'
                         : 'keyHighlights';
+
+            const limits = {
+                targetAudience: 15,
+                personalizationTags: 15,
+                keyHighlights: 15
+            };
+
+            if (formData[fieldName].length >= limits[fieldName]) {
+                showNotification(`Maximum ${limits[fieldName]} tags allowed for this field`, 'error');
+                return;
+            }
 
             if (!formData[fieldName].includes(newTag)) {
                 setFormData((prev) => ({
@@ -592,7 +613,7 @@ const EmailNewsletterGenerator = () => {
 
         const textLengthObj = (() => {
             if (formData.lengthPreferenceMode === 'custom') {
-                const value = String(formData.lengthPreferenceCustom || formData.lengthPreference || '').trim();
+                const value = String(formData.lengthPreferenceCustom || '').trim();
                 return { type: 'custom', id: null, value: value || null };
             }
 
@@ -1206,8 +1227,7 @@ const EmailNewsletterGenerator = () => {
             )}
 
             <div style={styles.header}>
-                <h1 style={styles.title}>Email / Newsletter Generator</h1>
-                <p style={styles.subtitle}>Create engaging email content for your campaigns</p>
+                <h1 style={styles.title}>Email & Newsletter Generator</h1>
             </div>
 
             <div style={styles.card}>
@@ -1223,11 +1243,13 @@ const EmailNewsletterGenerator = () => {
                                                 Email Type / Use Case <span style={{ color: '#ef4444' }}>*</span>
                                                 <span
                                                     style={styles.infoIcon}
-                                                    title="Select the type of email you want to generate (e.g., Newsletter, Promotional, Welcome Series)"
+                                                    data-tooltip-id="emailType-tooltip"
+                                                    data-tooltip-content="The kind of email you're sending."
                                                 >
                                                     i
                                                 </span>
                                             </label>
+                                            <Tooltip style={styles.toolTip} id="emailType-tooltip" />
 
                                             <div style={styles.radioGroup}>
                                                 <label style={styles.radioItem}>
@@ -1283,22 +1305,26 @@ const EmailNewsletterGenerator = () => {
                                             )}
 
                                             {formData.emailTypeMode === 'custom' && (
-                                                <input
-                                                    type="text"
-                                                    style={styles.input}
-                                                    name="emailTypeCustom"
-                                                    value={formData.emailTypeCustom}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value;
-                                                        setFormData((prev) => ({
-                                                            ...prev,
-                                                            emailTypeCustom: val,
-                                                            emailType: val,
-                                                        }));
-                                                    }}
-                                                    placeholder="Enter custom email type"
-                                                    required
-                                                />
+                                                <>
+                                                    <input
+                                                        type="text"
+                                                        style={styles.input}
+                                                        name="emailTypeCustom"
+                                                        value={formData.emailTypeCustom}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                emailTypeCustom: val,
+                                                                emailType: val,
+                                                            }));
+                                                        }}
+                                                        placeholder="Enter custom email type"
+                                                        maxLength={80}
+                                                        required
+                                                    />
+                                                    <div style={styles.charCount}>{formData.emailTypeCustom.length}/80</div>
+                                                </>
                                             )}
                                         </div>
                                     </div>
@@ -1309,11 +1335,13 @@ const EmailNewsletterGenerator = () => {
                                                 Target Audience / Recipient Type <span style={{ color: '#ef4444' }}>*</span>
                                                 <span
                                                     style={styles.infoIcon}
-                                                    title="Define who will receive this email (e.g., Marketing Managers, E-commerce Shoppers)"
+                                                    data-tooltip-id="audience-tooltip"
+                                                    data-tooltip-content="Who will receive this email."
                                                 >
                                                     i
                                                 </span>
                                             </label>
+                                            <Tooltip style={styles.toolTip} id="audience-tooltip" />
 
                                             <div
                                                 style={{
@@ -1367,7 +1395,9 @@ const EmailNewsletterGenerator = () => {
                                                 onKeyDown={(e) => handleTagInput(e, 'audience')}
                                                 placeholder="Type and press Enter to add audience segments"
                                                 required={formData.targetAudience.length === 0}
+                                                maxLength={150}
                                             />
+                                            <div style={styles.charCount}>{audienceInput.length}/150</div>
                                         </div>
                                     </div>
 
@@ -1375,20 +1405,22 @@ const EmailNewsletterGenerator = () => {
                                         <div style={styles.formGroup}>
                                             <label htmlFor="brandContext" style={styles.label}>
                                                 Sender / Brand Context <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} title="Your company or brand name and brief context">
+                                                <span style={styles.infoIcon} data-tooltip-id="brandContext-tooltip" data-tooltip-content="Your company name and what you do.">
                                                     i
                                                 </span>
                                             </label>
-                                            <input
-                                                type="text"
-                                                style={styles.input}
+                                            <Tooltip style={styles.toolTip} id="brandContext-tooltip" />
+                                            <textarea
+                                                style={{ ...styles.textarea, minHeight: '100px' }}
                                                 id="brandContext"
                                                 name="brandContext"
                                                 value={formData.brandContext}
                                                 onChange={handleInputChange}
                                                 placeholder="Your company/brand name and context"
+                                                maxLength={1500}
                                                 required
                                             />
+                                            <div style={styles.charCount}>{formData.brandContext.length}/1500</div>
                                         </div>
                                     </div>
 
@@ -1396,10 +1428,11 @@ const EmailNewsletterGenerator = () => {
                                         <div style={styles.formGroup}>
                                             <label htmlFor="emailGoal" style={styles.label}>
                                                 Goal or Purpose of Email <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} title="What do you want to achieve with this email?">
+                                                <span style={styles.infoIcon} data-tooltip-id="emailGoal-tooltip" data-tooltip-content="The action this email should drive.">
                                                     i
                                                 </span>
                                             </label>
+                                            <Tooltip style={styles.toolTip} id="emailGoal-tooltip" />
 
                                             <div style={styles.radioGroup}>
                                                 <label style={styles.radioItem}>
@@ -1454,15 +1487,19 @@ const EmailNewsletterGenerator = () => {
                                             )}
 
                                             {formData.emailGoalMode === 'custom' && (
-                                                <input
-                                                    type="text"
-                                                    style={styles.input}
-                                                    name="customGoal"
-                                                    value={formData.customGoal}
-                                                    onChange={handleInputChange}
-                                                    placeholder="Specify custom goal"
-                                                    required
-                                                />
+                                                <>
+                                                    <input
+                                                        type="text"
+                                                        style={styles.input}
+                                                        name="customGoal"
+                                                        value={formData.customGoal}
+                                                        onChange={handleInputChange}
+                                                        placeholder="Specify custom goal"
+                                                        maxLength={80}
+                                                        required
+                                                    />
+                                                    <div style={styles.charCount}>{formData.customGoal.length}/80</div>
+                                                </>
                                             )}
                                         </div>
                                     </div>
@@ -1471,10 +1508,11 @@ const EmailNewsletterGenerator = () => {
                                         <div style={styles.formGroup}>
                                             <label htmlFor="toneStyle" style={styles.label}>
                                                 Tone or Style <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} title="Select the tone or style for your email content">
+                                                <span style={styles.infoIcon} data-tooltip-id="toneStyle-tooltip" data-tooltip-content="How your email should sound.">
                                                     i
                                                 </span>
                                             </label>
+                                            <Tooltip style={styles.toolTip} id="toneStyle-tooltip" />
 
                                             <div style={styles.radioGroup}>
                                                 <label style={styles.radioItem}>
@@ -1529,22 +1567,26 @@ const EmailNewsletterGenerator = () => {
                                             )}
 
                                             {formData.toneStyleMode === 'custom' && (
-                                                <input
-                                                    type="text"
-                                                    style={styles.input}
-                                                    name="toneStyleCustom"
-                                                    value={formData.toneStyleCustom}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value;
-                                                        setFormData((prev) => ({
-                                                            ...prev,
-                                                            toneStyleCustom: val,
-                                                            toneStyle: val,
-                                                        }));
-                                                    }}
-                                                    placeholder="Enter custom tone or style"
-                                                    required
-                                                />
+                                                <>
+                                                    <input
+                                                        type="text"
+                                                        style={styles.input}
+                                                        name="toneStyleCustom"
+                                                        value={formData.toneStyleCustom}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                toneStyleCustom: val,
+                                                                toneStyle: val,
+                                                            }));
+                                                        }}
+                                                        placeholder="Enter custom tone or style"
+                                                        maxLength={80}
+                                                        required
+                                                    />
+                                                    <div style={styles.charCount}>{formData.toneStyleCustom.length}/80</div>
+                                                </>
                                             )}
                                         </div>
                                     </div>
@@ -1553,10 +1595,11 @@ const EmailNewsletterGenerator = () => {
                                         <div style={styles.formGroup}>
                                             <label htmlFor="keyMessage" style={styles.label}>
                                                 Key Message / Offer <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} title="The main message or offer you want to communicate in your email">
+                                                <span style={styles.infoIcon} data-tooltip-id="keyMessage-tooltip" data-tooltip-content="The main point or deal you're pitching.">
                                                     i
                                                 </span>
                                             </label>
+                                            <Tooltip style={styles.toolTip} id="keyMessage-tooltip" />
                                             <textarea
                                                 style={{ ...styles.textarea, minHeight: '100px' }}
                                                 id="keyMessage"
@@ -1564,8 +1607,10 @@ const EmailNewsletterGenerator = () => {
                                                 value={formData.keyMessage}
                                                 onChange={handleInputChange}
                                                 placeholder="Describe the main message or offer of your email"
+                                                maxLength={2500}
                                                 required
                                             />
+                                            <div style={styles.charCount}>{formData.keyMessage.length}/2500</div>
                                         </div>
                                     </div>
 
@@ -1573,10 +1618,11 @@ const EmailNewsletterGenerator = () => {
                                         <div style={styles.formGroup}>
                                             <label htmlFor="lengthPreference" style={styles.label}>
                                                 Length Preference <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} title="Choose the desired length for your email content">
+                                                <span style={styles.infoIcon} data-tooltip-id="lengthPreference-tooltip" data-tooltip-content="How long the email should be.">
                                                     i
                                                 </span>
                                             </label>
+                                            <Tooltip style={styles.toolTip} id="lengthPreference-tooltip" />
 
                                             <div style={styles.radioGroup}>
                                                 <label style={styles.radioItem}>
@@ -1630,34 +1676,26 @@ const EmailNewsletterGenerator = () => {
                                             )}
 
                                             {formData.lengthPreferenceMode === 'custom' && (
-                                                <input
-                                                    type="number"
-                                                    inputMode="numeric"
-                                                    min={1}
-                                                    max={1000}
-                                                    step={1}
-                                                    style={styles.input}
-                                                    name="lengthPreferenceCustom"
-                                                    value={formData.lengthPreferenceCustom}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value;
-                                                        if (val === '') {
-                                                        setFormData((prev) => ({ ...prev, lengthPreferenceCustom: '' }));
-                                                        return;
-                                                    }
-                                                    const parsed = parseInt(val, 10);
-                                                    const clamped = Number.isFinite(parsed)
-                                                        ? Math.min(1000, Math.max(1, parsed))
-                                                        : '';
-                                                        setFormData((prev) => ({
-                                                            ...prev,
-                                                            lengthPreferenceCustom:clamped === '' ? '' : String(clamped),
-                                                            lengthPreference: val,
-                                                        }));
-                                                    }}
-                                                    placeholder="Enter custom length preference max upto 1000"
-                                                    required
-                                                />
+                                                <div style={{ position: 'relative' }}>
+                                                    <input
+                                                        type="text"
+                                                        style={styles.input}
+                                                        name="lengthPreferenceCustom"
+                                                        value={formData.lengthPreferenceCustom}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                lengthPreferenceCustom: val,
+                                                                lengthPreference: val,
+                                                            }));
+                                                        }}
+                                                        placeholder="e.g., Approx 300 words"
+                                                        maxLength={40}
+                                                        required
+                                                    />
+                                                    <div style={styles.charCount}>{formData.lengthPreferenceCustom.length}/40</div>
+                                                </div>
                                             )}
                                         </div>
                                     </div>
@@ -1666,10 +1704,11 @@ const EmailNewsletterGenerator = () => {
                                         <div style={styles.formGroup}>
                                             <label htmlFor="ctaType" style={styles.label}>
                                                 Call to Action (CTA) <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} title="Select or specify the call-to-action for your email">
+                                                <span style={styles.infoIcon} data-tooltip-id="ctaType-tooltip" data-tooltip-content="What you want readers to do next.">
                                                     i
                                                 </span>
                                             </label>
+                                            <Tooltip style={styles.toolTip} id="ctaType-tooltip" />
 
                                             <div style={styles.radioGroup}>
                                                 <label style={styles.radioItem}>
@@ -1724,15 +1763,19 @@ const EmailNewsletterGenerator = () => {
                                             )}
 
                                             {formData.ctaTypeMode === 'custom' && (
-                                                <input
-                                                    type="text"
-                                                    style={styles.input}
-                                                    name="customCta"
-                                                    value={formData.customCta}
-                                                    onChange={handleInputChange}
-                                                    placeholder="Enter custom CTA text"
-                                                    required
-                                                />
+                                                <>
+                                                    <input
+                                                        type="text"
+                                                        style={styles.input}
+                                                        name="customCta"
+                                                        value={formData.customCta}
+                                                        onChange={handleInputChange}
+                                                        placeholder="Enter custom CTA text"
+                                                        maxLength={40}
+                                                        required
+                                                    />
+                                                    <div style={styles.charCount}>{formData.customCta.length}/40</div>
+                                                </>
                                             )}
                                         </div>
                                     </div>
@@ -1741,10 +1784,11 @@ const EmailNewsletterGenerator = () => {
                                         <div style={styles.formGroup}>
                                             <label htmlFor="variantsCount" style={styles.label}>
                                                 Number of Variants: {formData.variantsCount}
-                                                <span style={styles.infoIcon} title="How many different email variations would you like to generate?">
+                                                <span style={styles.infoIcon} data-tooltip-id="variantsCount-tooltip" data-tooltip-content="How many email versions to generate.">
                                                     i
                                                 </span>
                                             </label>
+                                            <Tooltip style={styles.toolTip} id="variantsCount-tooltip" />
                                             <input
                                                 type="range"
                                                 id="variantsCount"
@@ -1792,10 +1836,11 @@ const EmailNewsletterGenerator = () => {
                                         <div style={styles.formGroup}>
                                             <label htmlFor="subjectLineFocus" style={styles.label}>
                                                  Subject Line Style
-                                                <span style={styles.infoIcon} title="Choose the approach for your email subject line">
+                                                <span style={styles.infoIcon} data-tooltip-id="subjectLineFocus-tooltip" data-tooltip-content="The hook angle for your subject line.">
                                                     i
                                                 </span>
                                             </label>
+                                            <Tooltip style={styles.toolTip} id="subjectLineFocus-tooltip" />
 
                                             <div style={styles.radioGroup}>
                                                 <label style={styles.radioItem}>
@@ -1849,21 +1894,25 @@ const EmailNewsletterGenerator = () => {
                                             )}
 
                                             {formData.subjectLineFocusMode === 'custom' && (
-                                                <input
-                                                    type="text"
-                                                    style={styles.input}
-                                                    name="subjectLineFocusCustom"
-                                                    value={formData.subjectLineFocusCustom}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value;
-                                                        setFormData((prev) => ({
-                                                            ...prev,
-                                                            subjectLineFocusCustom: val,
-                                                            subjectLineFocus: val,
-                                                        }));
-                                                    }}
-                                                    placeholder="Enter custom subject line focus (optional)"
-                                                />
+                                                <>
+                                                    <input
+                                                        type="text"
+                                                        style={styles.input}
+                                                        name="subjectLineFocusCustom"
+                                                        value={formData.subjectLineFocusCustom}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                subjectLineFocusCustom: val,
+                                                                subjectLineFocus: val,
+                                                            }));
+                                                        }}
+                                                        placeholder="Enter custom subject line focus (optional)"
+                                                        maxLength={80}
+                                                    />
+                                                    <div style={styles.charCount}>{formData.subjectLineFocusCustom.length}/80</div>
+                                                </>
                                             )}
                                         </div>
                                     </div>
@@ -1872,10 +1921,11 @@ const EmailNewsletterGenerator = () => {
                                         <div style={styles.formGroup}>
                                             <label style={styles.label}>
                                                 Personalization Tags (Optional)
-                                                <span style={styles.infoIcon} title="Add personalization tokens like {first_name}, {company}">
+                                                <span style={styles.infoIcon} data-tooltip-id="personalizationTags-tooltip" data-tooltip-content="Merge fields like {first_name} or {company}.">
                                                     i
                                                 </span>
                                             </label>
+                                            <Tooltip style={styles.toolTip} id="personalizationTags-tooltip" />
 
                                             <div
                                                 style={{
@@ -1923,7 +1973,9 @@ const EmailNewsletterGenerator = () => {
                                                 onChange={(e) => setPersonalizationInput(e.target.value)}
                                                 onKeyDown={(e) => handleTagInput(e, 'personalization')}
                                                 placeholder="Add personalization tags (e.g., {first_name}, {company})"
+                                                maxLength={80}
                                             />
+                                            <div style={styles.charCount}>{personalizationInput.length}/80 characters</div>
                                         </div>
                                     </div>
 
@@ -1931,10 +1983,11 @@ const EmailNewsletterGenerator = () => {
                                         <div style={styles.formGroup}>
                                             <label style={styles.label}>
                                                 Key Highlights / Bullet Points (Optional)
-                                                <span style={styles.infoIcon} title="Add key points to highlight in your email">
+                                                <span style={styles.infoIcon} data-tooltip-id="keyHighlights-tooltip" data-tooltip-content="Main points to emphasize in the email.">
                                                     i
                                                 </span>
                                             </label>
+                                            <Tooltip style={styles.toolTip} id="keyHighlights-tooltip" />
 
                                             <div
                                                 style={{
@@ -1982,7 +2035,9 @@ const EmailNewsletterGenerator = () => {
                                                 onChange={(e) => setHighlightInput(e.target.value)}
                                                 onKeyDown={(e) => handleTagInput(e, 'highlight')}
                                                 placeholder="Add key points to highlight"
+                                                maxLength={300}
                                             />
+                                            <div style={styles.charCount}>{highlightInput.length}/300 characters</div>
                                         </div>
                                     </div>
 
@@ -1990,10 +2045,11 @@ const EmailNewsletterGenerator = () => {
                                         <div style={styles.formGroup}>
                                             <label htmlFor="complianceNotes" style={styles.label}>
                                                 Compliance / Restrictions (Optional)
-                                                <span style={styles.infoIcon} title="Any compliance requirements or restrictions to consider">
+                                                <span style={styles.infoIcon} data-tooltip-id="complianceNotes-tooltip" data-tooltip-content="Legal disclaimers or regulated phrases to follow.">
                                                     i
                                                 </span>
                                             </label>
+                                            <Tooltip style={styles.toolTip} id="complianceNotes-tooltip" />
                                             <textarea
                                                 style={styles.textarea}
                                                 id="complianceNotes"
@@ -2001,7 +2057,9 @@ const EmailNewsletterGenerator = () => {
                                                 value={formData.complianceNotes}
                                                 onChange={handleInputChange}
                                                 placeholder="Any compliance requirements or restrictions to consider"
+                                                maxLength={2500}
                                             />
+                                            <div style={styles.charCount}>{formData.complianceNotes.length}/2500 characters</div>
                                         </div>
                                     </div>
 
@@ -2011,11 +2069,13 @@ const EmailNewsletterGenerator = () => {
                                                 Custom Instructions / AI Guidance (Optional)
                                                 <span
                                                     style={styles.infoIcon}
-                                                    title="Optional: extra instructions for pacing, format, do/don'ts, audience voice, etc."
+                                                    data-tooltip-id="customInstructions-tooltip"
+                                                    data-tooltip-content="Extra rules — format, banned words, tone."
                                                 >
                                                     i
                                                 </span>
                                             </label>
+                                            <Tooltip style={styles.toolTip} id="customInstructions-tooltip" />
                                             <textarea
                                                 style={styles.textarea}
                                                 id="customInstructions"
@@ -2023,7 +2083,9 @@ const EmailNewsletterGenerator = () => {
                                                 value={formData.customInstructions}
                                                 onChange={handleInputChange}
                                                 placeholder="Any specific guidance for the AI (format, pacing, forbidden phrases, etc.)"
+                                                maxLength={3000}
                                             />
+                                            <div style={styles.charCount}>{formData.customInstructions.length}/3000 characters</div>
                                         </div>
                                     </div>
 
@@ -2031,10 +2093,11 @@ const EmailNewsletterGenerator = () => {
                                         <div style={styles.formGroup}>
                                             <label htmlFor="sendFrequency" style={styles.label}>
                                                 Send Frequency / Cadence (Optional)
-                                                <span style={styles.infoIcon} title="How often will this email be sent?">
+                                                <span style={styles.infoIcon} data-tooltip-id="sendFrequency-tooltip" data-tooltip-content="How often this email type goes out.">
                                                     i
                                                 </span>
                                             </label>
+                                            <Tooltip style={styles.toolTip} id="sendFrequency-tooltip" />
 
                                             <div style={styles.radioGroup}>
                                                 <label style={styles.radioItem}>
@@ -2088,14 +2151,18 @@ const EmailNewsletterGenerator = () => {
                                             )}
 
                                             {formData.sendFrequencyMode === 'custom' && (
-                                                <input
-                                                    type="text"
-                                                    style={styles.input}
-                                                    name="customFrequency"
-                                                    value={formData.customFrequency}
-                                                    onChange={handleInputChange}
-                                                    placeholder="Specify custom frequency"
-                                                />
+                                                <>
+                                                    <input
+                                                        type="text"
+                                                        style={styles.input}
+                                                        name="customFrequency"
+                                                        value={formData.customFrequency}
+                                                        onChange={handleInputChange}
+                                                        placeholder="Specify custom frequency"
+                                                        maxLength={50}
+                                                    />
+                                                    <div style={styles.charCount}>{formData.customFrequency.length}/50</div>
+                                                </>
                                             )}
                                         </div>
                                     </div>

@@ -110,6 +110,45 @@ const defaultFieldOptions = {
     ],
 };
 
+const ToggleButton = ({ showAdvanced, onToggle }) => (
+    <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        padding: '12px 16px',
+        backgroundColor: '#1e293b',
+        borderRadius: '8px',
+        border: '1px solid #334155',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        userSelect: 'none',
+        width: 'fit-content'
+    }} onClick={onToggle}>
+        <div style={{
+            width: '40px',
+            height: '20px',
+            backgroundColor: showAdvanced ? '#3b82f6' : '#475569',
+            borderRadius: '20px',
+            position: 'relative',
+            transition: 'background-color 0.2s'
+        }}>
+            <div style={{
+                width: '16px',
+                height: '16px',
+                backgroundColor: 'white',
+                borderRadius: '50%',
+                position: 'absolute',
+                top: '2px',
+                left: showAdvanced ? '22px' : '2px',
+                transition: 'left 0.2s'
+            }} />
+        </div>
+        <span style={{ color: '#f8fafc', fontSize: '14px', fontWeight: '500' }}>
+            {showAdvanced ? 'Hide Advanced Options' : 'Show Advanced Options'}
+        </span>
+    </div>
+);
+
 const ScriptWritingGeneratorForm = () => {
     const sessionRequestIdRef = useRef(null);
     const [formData, setFormData] = useState({
@@ -164,6 +203,8 @@ const ScriptWritingGeneratorForm = () => {
         languageCustom: '',
 
         customInstructions: '',
+        variants: 1,
+        showAdvanced: false,
     });
 
     const [audienceInput, setAudienceInput] = useState('');
@@ -350,6 +391,14 @@ const ScriptWritingGeneratorForm = () => {
             color: '#e2e8f0',
             fontSize: '14px'
         },
+        charCount: {
+            fontSize: '12px',
+            color: '#f8fafc',
+            opacity: 0.7,
+            textAlign: 'right',
+            marginTop: '4px',
+            fontWeight: '500'
+        },
     };
 
     const handleInputChange = (e) => {
@@ -364,6 +413,10 @@ const ScriptWritingGeneratorForm = () => {
         if (e.key === 'Enter' && e.target.value.trim()) {
             e.preventDefault();
             const newTag = e.target.value.trim();
+            if (formData.targetAudience.length >= 15) {
+                showNotification('Maximum 15 audience tags allowed', 'error');
+                return;
+            }
             if (!formData.targetAudience.includes(newTag)) {
                 setFormData(prev => ({
                     ...prev,
@@ -506,6 +559,7 @@ const ScriptWritingGeneratorForm = () => {
                 compliance_mode: formData.complianceMode,
                 language: formData.languageMode === 'custom' ? formData.languageCustom : formData.language,
                 custom_instructions: formData.customInstructions,
+                variants: formData.variants,
                 session_request_id: sessionRequestIdRef.current,
             };
 
@@ -571,10 +625,19 @@ const ScriptWritingGeneratorForm = () => {
             languageMode: 'predefined',
             languageCustom: '',
             customInstructions: '',
+            variants: 1,
+            showAdvanced: false,
         });
         setAudienceInput('');
         setCustomDurationInput('');
         showNotification('Form has been reset', 'info');
+    };
+
+    const toggleAdvanced = () => {
+        setFormData((prev) => ({
+            ...prev,
+            showAdvanced: !prev.showAdvanced,
+        }));
     };
 
     if (!mounted) return null;
@@ -611,16 +674,17 @@ const ScriptWritingGeneratorForm = () => {
                                         <span style={styles.infoIcon} data-tooltip-id="scriptTitle-tooltip" data-tooltip-content="Short topic/title for the script (required).">i</span>
                                     </label>
                                     <Tooltip style={styles.toolTip} id="scriptTitle-tooltip" />
-                                    <input
-                                        type="text"
-                                        style={styles.input}
+                                    <textarea
+                                        style={{ ...styles.textarea, minHeight: '100px' }}
                                         id="scriptTitle"
                                         name="scriptTitle"
                                         value={formData.scriptTitle}
                                         onChange={handleInputChange}
                                         placeholder="e.g., How to grow on YouTube Shorts"
                                         required
+                                        maxLength={500}
                                     />
+                                    <div style={styles.charCount}>{formData.scriptTitle.length}/500 characters</div>
                                 </div>
                             </div>
 
@@ -761,6 +825,9 @@ const ScriptWritingGeneratorForm = () => {
                                     <label style={styles.label}>
                                         Target Audience <span style={{ color: '#ef4444' }}>*</span>
                                         <span style={styles.infoIcon} data-tooltip-id="targetAudience-tooltip" data-tooltip-content="Add one or more audience tags (press Enter to add).">i</span>
+                                        <span style={{ float: 'right', fontSize: '12px', color: '#94a3b8' }}>
+                                            {formData.targetAudience.length}/15 tags
+                                        </span>
                                     </label>
 
                                     <Tooltip style={styles.toolTip} id="targetAudience-tooltip" />
@@ -815,7 +882,9 @@ const ScriptWritingGeneratorForm = () => {
                                         onKeyDown={handleTagInput}
                                         placeholder="Type and press Enter to add audience tags"
                                         required={formData.targetAudience.length === 0}
+                                        maxLength={150}
                                     />
+                                    <div style={styles.charCount}>{audienceInput.length}/150 characters</div>
                                 </div>
                             </div>
                             <div className="col-md-6">
@@ -1321,14 +1390,15 @@ const ScriptWritingGeneratorForm = () => {
                                         <span style={styles.infoIcon} data-tooltip-id="complianceMode-tooltip" data-tooltip-content="Optional safety/compliance guidelines (e.g., avoid claims, sensitive topics).">i</span>
                                     </label>
                                     <Tooltip style={styles.toolTip} id="complianceMode-tooltip" />
-                                    <input
-                                        type="text"
-                                        style={styles.input}
+                                    <textarea
+                                        style={{ ...styles.textarea, minHeight: '80px' }}
                                         name="complianceMode"
                                         value={formData.complianceMode}
                                         onChange={handleInputChange}
                                         placeholder="e.g., No medical claims, No financial guarantees"
+                                        maxLength={1500}
                                     />
+                                    <div style={styles.charCount}>{formData.complianceMode.length}/1500 characters</div>
                                 </div>
                             </div>
 
@@ -1390,22 +1460,63 @@ const ScriptWritingGeneratorForm = () => {
                                 </div>
                             </div>
 
+                            {/* Number of Variants (Main Field) */}
                             <div className="col-12">
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>
-                                        Custom Instructions / AI Guidance
-                                        <span style={styles.infoIcon} data-tooltip-id="customInstructions-tooltip" data-tooltip-content="Optional: extra instructions for pacing, format, do/don'ts, audience voice, etc.">i</span>
+                                    <label htmlFor="variants" style={styles.label}>
+                                        Number of Variants: {formData.variants}
+                                        <span style={styles.infoIcon} data-tooltip-id="variants-tooltip" data-tooltip-content="How many versions to generate.">i</span>
                                     </label>
-                                    <Tooltip style={styles.toolTip} id="customInstructions-tooltip" />
-                                    <textarea
-                                        style={{ ...styles.textarea, minHeight: '120px' }}
-                                        name="customInstructions"
-                                        value={formData.customInstructions}
+                                    <Tooltip style={styles.toolTip} id="variants-tooltip" />
+                                    <input
+                                        type="range"
+                                        id="variants"
+                                        name="variants"
+                                        min="1"
+                                        max="5"
+                                        value={formData.variants}
                                         onChange={handleInputChange}
-                                        placeholder="Any specific guidance for the AI (format, pacing, forbidden phrases, etc.)"
+                                        style={{ width: '100%' }}
                                     />
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+                                        <span>1</span>
+                                        <span>2</span>
+                                        <span>3</span>
+                                        <span>4</span>
+                                        <span>5</span>
+                                    </div>
                                 </div>
                             </div>
+
+                            {/* Advanced Section Toggle */}
+                            <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #1e293b', margin: '5px 0' }} />
+
+                            <div className="col-12" style={{ margin: '16px 0' }}>
+                                <ToggleButton showAdvanced={formData.showAdvanced} onToggle={toggleAdvanced} />
+                            </div>
+
+                            {formData.showAdvanced && (
+                                <>
+                                    <div className="col-12">
+                                        <div style={styles.formGroup}>
+                                            <label style={styles.label}>
+                                                Custom Instructions / AI Guidance
+                                                <span style={styles.infoIcon} data-tooltip-id="customInstructions-tooltip" data-tooltip-content="Optional: extra instructions for pacing, format, do/don'ts, audience voice, etc.">i</span>
+                                            </label>
+                                            <Tooltip style={styles.toolTip} id="customInstructions-tooltip" />
+                                            <textarea
+                                                style={{ ...styles.textarea, minHeight: '120px' }}
+                                                name="customInstructions"
+                                                value={formData.customInstructions}
+                                                onChange={handleInputChange}
+                                                placeholder="Any specific guidance for the AI (format, pacing, forbidden phrases, etc.)"
+                                                maxLength={3000}
+                                            />
+                                            <div style={styles.charCount}>{formData.customInstructions.length}/3000 characters</div>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
 
                             {/* Submit Buttons */}
                             <div className="col-12 mt-4">

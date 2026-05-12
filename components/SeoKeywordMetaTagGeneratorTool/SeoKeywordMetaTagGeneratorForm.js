@@ -160,14 +160,22 @@ const PredefinedCustom = ({
           })}
         </select>
       ) : (
-        <input
-          style={{ ...styles.input, marginTop: "12px" }}
-          value={formData[customKey]}
-          onChange={handleCustomChange}
-          placeholder={placeholder}
-          required={required}
-          {...(customInputProps || {})}
-        />
+        <>
+          <input
+            style={{ ...styles.input, marginTop: "12px" }}
+            value={formData[customKey]}
+            onChange={handleCustomChange}
+            placeholder={placeholder}
+            required={required}
+            {...(customInputProps || {})}
+            maxLength={customInputProps?.maxLength || 150}
+          />
+          {customInputProps?.type !== "number" && (
+            <div style={styles.charCount}>
+              {formData[customKey].length}/{customInputProps?.maxLength || 150}
+            </div>
+          )}
+        </>
       )}
     </Labeled>
   );
@@ -327,7 +335,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     textLength: "short",
     textLengthCustom: "",
 
-    variantsCount: 3,
+    variantsCount: 5,
 
     customInstructions: "",
   });
@@ -798,6 +806,13 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     setFormData((prev) => {
       const list = Array.isArray(prev[key]) ? prev[key] : [];
       if (list.includes(next)) return prev;
+
+      const maxTags = key === "targetAudience" ? 15 : 30;
+      if (list.length >= maxTags) {
+        showToast(`Maximum ${maxTags} tags allowed`, "error");
+        return prev;
+      }
+
       return { ...prev, [key]: [...list, next] };
     });
   };
@@ -1292,7 +1307,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       textLength: getDefaultKeyFromOptions("primary_text_length", "short"),
       textLengthCustom: "",
 
-      variantsCount: 3,
+      variantsCount: 5,
 
       customInstructions: "",
     });
@@ -1459,6 +1474,14 @@ const SeoKeywordMetaTagGeneratorForm = () => {
       boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
       zIndex: 9999,
     },
+    charCount: {
+      fontSize: "12px",
+      color: "#f8fafc",
+      opacity: 0.7,
+      textAlign: "right",
+      marginTop: "4px",
+      fontWeight: "500",
+    },
   };
 
   const Toast = () => {
@@ -1495,6 +1518,8 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     showSuggestions,
     setShowSuggestions,
     colClass,
+    maxLength = 150,
+    maxTags = 15,
   }) => {
     const tags = Array.isArray(formData[valueKey]) ? formData[valueKey] : [];
     const suggestionMap = suggestions && typeof suggestions === "object" ? suggestions : {};
@@ -1582,7 +1607,12 @@ const SeoKeywordMetaTagGeneratorForm = () => {
               placeholder={tags.length === 0 ? "Type and press Enter to add" : "Type and press Enter to add another"}
               required={required && tags.length === 0}
               inputMode="text"
+              maxLength={maxLength}
             />
+            <div style={styles.charCount}>{inputValue.length}/{maxLength} characters</div>
+            <div style={{ ...styles.charCount, textAlign: 'left', color: tags.length >= maxTags ? '#ef4444' : '#f8fafc' }}>
+                {tags.length}/{maxTags} tags added
+            </div>
 
             {showSuggestions && (
               <div
@@ -1677,8 +1707,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
 
       <div style={styles.container} className="seo-keyword-meta-form">
          <div style={styles.header}>
-            <h2 style={styles.title}>SEO Keyword & Meta Tag Generator</h2>
-            <p style={styles.subtitle}>Generate keyword clusters, meta tags, and schema guidance for your page.</p>
+            <h1 style={styles.title}>Seo Keyword & Meta Tag Generator</h1>
           </div>
         <div style={styles.card}>
          
@@ -1695,7 +1724,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                           <span
                             style={styles.infoIcon}
                             data-tooltip-id="pageTopicSummary-tooltip"
-                            data-tooltip-content="Brief semantic summary so AI can infer keyword themes."
+                            data-tooltip-content="Brief summary of what the page covers."
                           >
                             i
                           </span>
@@ -1707,14 +1736,16 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                           placeholder="Brief semantic summary so AI can infer keyword themes"
                           required
                           style={styles.textarea}
+                          maxLength={1500}
                         />
+                        <div style={styles.charCount}>{formData.pageTopicSummary.length}/1500 characters</div>
                         {/* <div style={{ marginTop: "8px", fontSize: "12px", color: "#94a3b8" }}>
                           Brief semantic summary so AI can infer keyword themes.
                         </div> */}
                       </div>
                     </div>
 
-                    <Labeled label="Page Goal / Intent" required help="Defines objective of the page for SEO targeting." styles={styles}>
+                    <Labeled label="Page Goal / Intent" required help="The purpose this page serves for users." styles={styles}>
                       <div style={styles.radioGroup}>
                         <label style={styles.radioItem}>
                           <input
@@ -1740,7 +1771,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
 
                       {formData.pageGoalMode === "predefined" ? (
                         <select
-                          style={{ ...styles.select,marginTop: "8px" }}
+                          style={{ ...styles.select, marginTop: "8px" }}
                           value={formData.pageGoal}
                           onChange={(e) => setFormData((p) => ({ ...p, pageGoal: e.target.value }))}
                           required
@@ -1753,13 +1784,19 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                           ))}
                         </select>
                       ) : (
-                        <input
-                          style={{ ...styles.input, marginTop: "12px" }}
-                          value={formData.pageGoalCustom}
-                          onChange={(e) => setFormData((p) => ({ ...p, pageGoalCustom: e.target.value }))}
-                          placeholder="Describe your custom page goal / intent"
-                          required
-                        />
+                        <div style={{ position: "relative" }}>
+                          <input
+                            style={{ ...styles.input, marginTop: "12px" }}
+                            value={formData.pageGoalCustom}
+                            onChange={(e) => setFormData((p) => ({ ...p, pageGoalCustom: e.target.value }))}
+                            placeholder="Describe your custom page goal / intent"
+                            maxLength={80}
+                            required
+                          />
+                          <div style={styles.charCount}>
+                            {formData.pageGoalCustom.length}/80
+                          </div>
+                        </div>
                       )}
                     </Labeled>
 
@@ -1771,7 +1808,8 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                       customKey="keywordFocusTypeCustom"
                       options={fieldOptions?.keyword_focus_type || []}
                       placeholder="Enter custom focus type"
-                      help="Granularity & clustering strategy for keywords."
+                      help="Short-tail for reach, long-tail for intent."
+                      customInputProps={{ maxLength: 60 }}
                       formData={formData}
                       setFormData={setFormData}
                       styles={styles}
@@ -1784,9 +1822,9 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                       valueKey="textLength"
                       customKey="textLengthCustom"
                       options={fieldOptions?.primary_text_length || []}
-                      placeholder="Enter meta description length (1-500)"
-                      help="Meta description length preference."
-                      customInputProps={{ type: "number", min: 1, max: 500, step: 1 }}
+                      placeholder="e.g., Short and Punchy"
+                      help="How long the meta description should be."
+                      customInputProps={{ type: "text", maxLength: 40 }}
                       formData={formData}
                       setFormData={setFormData}
                       styles={styles}
@@ -1796,7 +1834,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     <Labeled
                       label="Search Volume Priority"
                       required
-                      help="Traffic potential bias for keyword mix."
+                      help="High volume = reach. Low = niche."
                       styles={styles}
                       colClass="col-12"
                     >
@@ -1824,8 +1862,10 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                       suggestions: audienceSuggestions,
                       showSuggestions: showAudienceSuggestions,
                       setShowSuggestions: setShowAudienceSuggestions,
-                      help: "Audience segments & regions added as tags.",
+                      help: "Who you're targeting and where.",
                       colClass: "col-12",
+                      maxLength: 150,
+                      maxTags: 15,
                     })}
 
                     <div className="col-12">
@@ -1835,7 +1875,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                           <span
                             style={styles.infoIcon}
                             data-tooltip-id="variantsCount-tooltip"
-                            data-tooltip-content="How many variations you want the AI to generate."
+                            data-tooltip-content="How many keyword sets to generate."
                           >
                             i
                           </span>
@@ -1852,6 +1892,13 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                           style={{ width: "100%" }}
                           disabled={isFreeTrial}
                         />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+                          <span>1</span>
+                          <span>2</span>
+                          <span>3</span>
+                          <span>4</span>
+                          <span>5</span>
+                        </div>
                       </div>
                     </div>
                   </>
@@ -1871,29 +1918,34 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     customKey="metaTitleStyleCustom"
                     options={fieldOptions?.meta_title_style || []}
                     placeholder="Enter custom meta title style"
-                    help="Creative structure of meta titles within limits."
+                    help="The structure your meta titles should follow."
+                    customInputProps={{ maxLength: 80 }}
                     formData={formData}
                     setFormData={setFormData}
                     styles={styles}
                   />
 
 
-                  <Labeled label="Brand / Website Name" required={false} help="Used for branded keywords and SERP trust signals." styles={styles}>
+                  <Labeled label="Brand / Website Name" required={false} help="Your brand name for branded keywords." styles={styles}>
                     <input
                       style={styles.input}
                       value={formData.brandName}
                       onChange={(e) => setFormData((p) => ({ ...p, brandName: e.target.value }))}
                       placeholder="e.g., Synthovia"
+                      maxLength={150}
                     />
+                    <div style={styles.charCount}>{formData.brandName.length}/150 characters</div>
                   </Labeled>
 
-                  <Labeled label="Competitor URL / Reference Page" required={false} help="Reference for comparison keywords and meta angles." styles={styles}>
+                  <Labeled label="Competitor URL / Reference Page" required={false} help="A page to benchmark keywords against." styles={styles}>
                     <input
                       style={styles.input}
                       value={formData.competitorUrl}
                       onChange={(e) => setFormData((p) => ({ ...p, competitorUrl: e.target.value }))}
                       placeholder="https://..."
+                      maxLength={500}
                     />
+                    <div style={styles.charCount}>{formData.competitorUrl.length}/500 characters</div>
                   </Labeled>
 
                   {/* <Labeled label="Output Format" required={false} help="Defines how generated results are displayed or exported." styles={styles}>
@@ -1919,7 +1971,9 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     suggestions: keywordSuggestions,
                     showSuggestions: showIncludeKeywordSuggestions,
                     setShowSuggestions: setShowIncludeKeywordSuggestions,
-                    help: "Must-use terms or phrases that AI should include.",
+                    help: "Terms that must appear in the output.",
+                    maxLength: 100,
+                    maxTags: 30,
                   })}
 
                   {renderTagInput({
@@ -1931,13 +1985,15 @@ const SeoKeywordMetaTagGeneratorForm = () => {
                     suggestions: keywordSuggestions,
                     showSuggestions: showExcludeKeywordSuggestions,
                     setShowSuggestions: setShowExcludeKeywordSuggestions,
-                    help: "Terms or phrases that AI must avoid.",
+                    help: "Terms the output must avoid.",
+                    maxLength: 100,
+                    maxTags: 30,
                   })}
 
                  <Labeled
   label="Custom Instructions / AI Guidance"
   required={false}
-  help="Optional: extra instructions for pacing, format, do/don'ts, SERP focus, etc."
+  help="Extra rules — format, focus, banned phrases."
   styles={styles}
 >
   <textarea
@@ -1945,7 +2001,9 @@ const SeoKeywordMetaTagGeneratorForm = () => {
     value={formData.customInstructions || ""}
     onChange={(e) => setFormData((p) => ({ ...p, customInstructions: e.target.value }))}
     placeholder="Any specific guidance for the AI (format, focus, forbidden phrases, etc.)"
+    maxLength={3000}
   />
+  <div style={styles.charCount}>{(formData.customInstructions || "").length}/3000 characters</div>
 </Labeled>
                 </>
               )}

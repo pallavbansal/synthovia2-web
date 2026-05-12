@@ -455,6 +455,14 @@ const ScriptStoryWriterTool = () => {
         checkboxInput: {
             margin: 0,
         },
+        charCount: {
+            fontSize: '12px',
+            color: '#f8fafc',
+            opacity: 0.7,
+            textAlign: 'right',
+            marginTop: '4px',
+            fontWeight: '500'
+        },
     };
 
     const renderModeToggle = (modeKey, onSetMode) => (
@@ -497,6 +505,10 @@ const ScriptStoryWriterTool = () => {
     const handleTagInput = (e) => {
         if (e.key === 'Enter' && e.target.value.trim()) {
             e.preventDefault();
+            if (formData.targetAudience.length >= 15) {
+                showNotification('Maximum 15 tags allowed', 'error');
+                return;
+            }
             const newTag = e.target.value.trim();
             if (!formData.targetAudience.includes(newTag)) {
                 setFormData(prev => ({
@@ -643,8 +655,7 @@ const ScriptStoryWriterTool = () => {
         }
 
         if (formData.textLengthMode === 'custom') {
-            const parsed = parseInt(formData.textLengthCustom, 10);
-            if (!Number.isFinite(parsed) || parsed < 1 || parsed > 1000) missing.push('Text Length');
+            if (!String(formData.textLengthCustom || '').trim()) missing.push('Text Length');
         } else {
             const selected = String(formData.textLength || '').trim();
             if (!selected) {
@@ -778,11 +789,7 @@ const ScriptStoryWriterTool = () => {
                 ? {
                     type: 'custom',
                     id: null,
-                    value: (() => {
-                        const parsed = parseInt(formData.textLengthCustom, 10);
-                        if (!Number.isFinite(parsed) || parsed <= 0) return null;
-                        return String(Math.min(1000, parsed));
-                    })(),
+                    value: String(formData.textLengthCustom || '').trim(),
                 }
                 : buildSelectObject({
                     mode: 'predefined',
@@ -1452,8 +1459,7 @@ const ScriptStoryWriterTool = () => {
                                 )}
 
                                 <div style={styles.header}>
-                                    <h1 style={styles.title}>Script Writing Generator</h1>
-                                    <p style={styles.subtitle}>Generate platform-ready scripts with structure, hooks and CTA</p>
+                                    <h1 style={styles.title}>Scripting Writing Generator</h1>
                                 </div>
 
                                 <div style={styles.card}>
@@ -1467,7 +1473,7 @@ const ScriptStoryWriterTool = () => {
                                                             <div style={styles.formGroup}>
                                                                 <label htmlFor="scriptTitle" style={styles.label}>
                                                                     Script Title / Topic <span style={{ color: '#ef4444' }}>*</span>
-                                                                    <span style={styles.infoIcon} data-tooltip-id="scriptTitle-tooltip" data-tooltip-content="Short topic/title for the script (required).">i</span>
+                                                                    <span style={styles.infoIcon} data-tooltip-id="scriptTitle-tooltip" data-tooltip-content="What your script is about.">i</span>
                                                                 </label>
                                                                 <Tooltip style={styles.toolTip} id="scriptTitle-tooltip" />
                                                                 <textarea
@@ -1479,7 +1485,9 @@ const ScriptStoryWriterTool = () => {
                                                                     onChange={handleInputChange}
                                                                     placeholder="e.g., How to grow on YouTube Shorts"
                                                                     required
+                                                                    maxLength={500}
                                                                 />
+                                                                <div style={styles.charCount}>{formData.scriptTitle.length}/500 characters</div>
                                                             </div>
                                                         </div>
 
@@ -1487,7 +1495,7 @@ const ScriptStoryWriterTool = () => {
                                                             <div style={styles.formGroup}>
                                                                 <label htmlFor="platform" style={styles.label}>
                                                                     Platform <span style={{ color: '#ef4444' }}>*</span>
-                                                                    <span style={styles.infoIcon} data-tooltip-id="platform-tooltip" data-tooltip-content="Choose the target platform (or switch to Custom to type your own).">i</span>
+                                                                    <span style={styles.infoIcon} data-tooltip-id="platform-tooltip" data-tooltip-content="Where this script will be used.">i</span>
                                                                 </label>
 
                                                                 <Tooltip style={styles.toolTip} id="platform-tooltip" />
@@ -1539,10 +1547,6 @@ const ScriptStoryWriterTool = () => {
 
                                                                 {formData.platformMode === 'custom' && (
                                                                     <div style={{ marginTop: '10px' }}>
-                                                                        {/* <label style={styles.label}>
-                                                Custom Platform <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} data-tooltip-id="platformCustom-tooltip" data-tooltip-content="Type the platform name if it is not listed.">i</span>
-                                            </label> */}
                                                                         <Tooltip style={styles.toolTip} id="platformCustom-tooltip" />
                                                                         <input
                                                                             type="text"
@@ -1552,7 +1556,9 @@ const ScriptStoryWriterTool = () => {
                                                                             onChange={handleInputChange}
                                                                             placeholder="Enter custom platform"
                                                                             required
+                                                                            maxLength={50}
                                                                         />
+                                                                        <div style={styles.charCount}>{formData.platformCustom.length}/50</div>
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -1562,7 +1568,7 @@ const ScriptStoryWriterTool = () => {
                                                             <div style={styles.formGroup}>
                                                                 <label htmlFor="goal" style={styles.label}>
                                                                     Goal / Objective <span style={{ color: '#ef4444' }}>*</span>
-                                                                    <span style={styles.infoIcon} data-tooltip-id="goal-tooltip" data-tooltip-content="What should this script/story achieve (e.g., educate, entertain, sell).">i</span>
+                                                                    <span style={styles.infoIcon} data-tooltip-id="goal-tooltip" data-tooltip-content="The action this script should drive.">i</span>
                                                                 </label>
 
                                                                 <Tooltip style={styles.toolTip} id="goal-tooltip" />
@@ -1611,10 +1617,6 @@ const ScriptStoryWriterTool = () => {
 
                                                                 {formData.goalMode === 'custom' && (
                                                                     <div style={{ marginTop: '10px' }}>
-                                                                        {/* <label style={styles.label}>
-                                                Custom Goal <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} data-tooltip-id="goalCustom-tooltip" data-tooltip-content="Type the goal/objective in your own words.">i</span>
-                                            </label> */}
                                                                         <Tooltip style={styles.toolTip} id="goalCustom-tooltip" />
                                                                         <input
                                                                             type="text"
@@ -1624,7 +1626,9 @@ const ScriptStoryWriterTool = () => {
                                                                             onChange={handleInputChange}
                                                                             placeholder="Enter custom goal"
                                                                             required
+                                                                            maxLength={80}
                                                                         />
+                                                                        <div style={styles.charCount}>{formData.goalCustom.length}/80</div>
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -1634,7 +1638,7 @@ const ScriptStoryWriterTool = () => {
                                                             <div style={styles.formGroup}>
                                                                 <label htmlFor="tone" style={styles.label}>
                                                                     Tone / Emotion <span style={{ color: '#ef4444' }}>*</span>
-                                                                    <span style={styles.infoIcon} data-tooltip-id="tone-tooltip" data-tooltip-content="Select the writing tone (or switch to Custom to type your own).">i</span>
+                                                                    <span style={styles.infoIcon} data-tooltip-id="tone-tooltip" data-tooltip-content="The feeling your script should carry.">i</span>
                                                                 </label>
 
                                                                 <Tooltip style={styles.toolTip} id="tone-tooltip" />
@@ -1683,10 +1687,6 @@ const ScriptStoryWriterTool = () => {
 
                                                                 {formData.toneMode === 'custom' && (
                                                                     <div style={{ marginTop: '10px' }}>
-                                                                        {/* <label style={styles.label}>
-                                                Custom Tone <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} data-tooltip-id="toneCustom-tooltip" data-tooltip-content="Describe the desired tone (e.g., witty, dramatic, warm).">i</span>
-                                            </label> */}
                                                                         <Tooltip style={styles.toolTip} id="toneCustom-tooltip" />
                                                                         <input
                                                                             type="text"
@@ -1696,7 +1696,9 @@ const ScriptStoryWriterTool = () => {
                                                                             onChange={handleInputChange}
                                                                             placeholder="Enter custom tone"
                                                                             required
+                                                                            maxLength={80}
                                                                         />
+                                                                        <div style={styles.charCount}>{formData.toneCustom.length}/80</div>
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -1707,7 +1709,7 @@ const ScriptStoryWriterTool = () => {
                                                             <div style={styles.formGroup}>
                                                                 <label style={styles.label}>
                                                                     Target Audience <span style={{ color: '#ef4444' }}>*</span>
-                                                                    <span style={styles.infoIcon} data-tooltip-id="targetAudience-tooltip" data-tooltip-content="Add one or more audience tags (press Enter to add).">i</span>
+                                                                    <span style={styles.infoIcon} data-tooltip-id="targetAudience-tooltip" data-tooltip-content="Who you're speaking to.">i</span>
                                                                 </label>
 
                                                                 <Tooltip style={styles.toolTip} id="targetAudience-tooltip" />
@@ -1756,20 +1758,26 @@ const ScriptStoryWriterTool = () => {
                                                                 <input
                                                                     type="text"
                                                                     style={styles.input}
-                                                                    id="audienceInput"
+                                                                    id="targetAudience"
+                                                                    name="targetAudience"
                                                                     value={audienceInput}
                                                                     onChange={(e) => setAudienceInput(e.target.value)}
                                                                     onKeyDown={handleTagInput}
                                                                     placeholder="Type and press Enter to add audience tags"
+                                                                    maxLength={150}
                                                                     required={formData.targetAudience.length === 0}
                                                                 />
+                                                                <div style={styles.charCount}>{audienceInput.length}/150 characters</div>
+                                                                <div style={{ ...styles.charCount, textAlign: 'left', color: formData.targetAudience.length >= 15 ? '#ef4444' : '#f8fafc' }}>
+                                                                    {formData.targetAudience.length}/15 tags added
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <div className="col-md-6">
                                                             <div style={styles.formGroup}>
-                                                                <label style={styles.label}>
-                                                                    Text Length
-                                                                    <span style={styles.infoIcon} data-tooltip-id="textLength-tooltip" data-tooltip-content="Choose an approximate maximum length (predefined) or enter a custom length.">i</span>
+                                                                <label htmlFor="textLength" style={styles.label}>
+                                                                    Text Length <span style={{ color: '#ef4444' }}>*</span>
+                                                                    <span style={styles.infoIcon} data-tooltip-id="textLength-tooltip" data-tooltip-content="How long the script should be.">i</span>
                                                                 </label>
 
                                                                 <Tooltip style={styles.toolTip} id="textLength-tooltip" />
@@ -1836,37 +1844,18 @@ const ScriptStoryWriterTool = () => {
                                                                 )}
 
                                                                 {formData.textLengthMode === 'custom' && (
-                                                                    <div style={{ marginTop: '10px' }}>
-                                                                        {/* <label style={styles.label}>
-                                                Custom Text Length
-                                                <span style={styles.infoIcon} data-tooltip-id="textLengthCustom-tooltip" data-tooltip-content="Enter a custom max length/word count (1–1000).">i</span>
-                                            </label> */}
+                                                                    <div style={{ position: 'relative', marginTop: '10px' }}>
                                                                         <Tooltip style={styles.toolTip} id="textLengthCustom-tooltip" />
                                                                         <input
-                                                                            type="number"
-                                                                            inputMode="numeric"
-                                                                            min={1}
-                                                                            max={1000}
-                                                                            step={1}
+                                                                            type="text"
                                                                             style={styles.input}
                                                                             value={formData.textLengthCustom}
-                                                                            onChange={(e) => {
-                                                                                const raw = e.target.value;
-                                                                                if (raw === '') {
-                                                                                    setFormData((prev) => ({ ...prev, textLengthCustom: '' }));
-                                                                                    return;
-                                                                                }
-                                                                                const parsed = parseInt(raw, 10);
-                                                                                const clamped = Number.isFinite(parsed)
-                                                                                    ? Math.min(1000, Math.max(1, parsed))
-                                                                                    : '';
-                                                                                setFormData((prev) => ({
-                                                                                    ...prev,
-                                                                                    textLengthCustom: clamped === '' ? '' : String(clamped),
-                                                                                }));
-                                                                            }}
-                                                                            placeholder="Enter max words/length (1–1000)"
+                                                                            onChange={handleInputChange}
+                                                                            name="textLengthCustom"
+                                                                            placeholder="e.g., Around 300 words"
+                                                                            maxLength={40}
                                                                         />
+                                                                        <div style={styles.charCount}>{formData.textLengthCustom.length}/40</div>
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -1877,7 +1866,7 @@ const ScriptStoryWriterTool = () => {
                                                             <div style={styles.formGroup}>
                                                                 <label htmlFor="variantsCount" style={styles.label}>
                                                                     Number of Variants: {formData.variantsCount}
-                                                                    <span style={styles.infoIcon} data-tooltip-id="variantsCount-tooltip" data-tooltip-content="How many variations you want the AI to generate.">i</span>
+                                                                    <span style={styles.infoIcon} data-tooltip-id="variantsCount-tooltip" data-tooltip-content="How many script versions to generate.">i</span>
                                                                 </label>
                                                                 <Tooltip style={styles.toolTip} id="variantsCount-tooltip" />
                                                                 <input
@@ -1923,7 +1912,9 @@ const ScriptStoryWriterTool = () => {
                                                                     value={formData.complianceMode}
                                                                     onChange={handleInputChange}
                                                                     placeholder="e.g., No medical claims, No financial guarantees"
+                                                                    maxLength={1500}
                                                                 />
+                                                                <div style={styles.charCount}>{formData.complianceMode.length}/1500 characters</div>
                                                             </div>
                                                         </div>
                                                     </>
@@ -1939,9 +1930,9 @@ const ScriptStoryWriterTool = () => {
                                                     <>
                                                         <div className="col-md-6">
                                                             <div style={styles.formGroup}>
-                                                                <label style={styles.label}>
+                                                                <label htmlFor="scriptStyle" style={styles.label}>
                                                                     Script Style
-                                                                    <span style={styles.infoIcon} data-tooltip-id="scriptStyle-tooltip" data-tooltip-content="Select the structure/style of the script (or switch to Custom to type your own).">i</span>
+                                                                    <span style={styles.infoIcon} data-tooltip-id="scriptStyle-tooltip" data-tooltip-content="The format your script should follow.">i</span>
                                                                 </label>
 
                                                                 <Tooltip style={styles.toolTip} id="scriptStyle-tooltip" />
@@ -1987,11 +1978,7 @@ const ScriptStoryWriterTool = () => {
                                                                 )}
 
                                                                 {formData.scriptStyleMode === 'custom' && (
-                                                                    <div style={{ marginTop: '10px' }}>
-                                                                        {/* <label style={styles.label}>
-                                                Custom Script Style
-                                                <span style={styles.infoIcon} data-tooltip-id="scriptStyleCustom-tooltip" data-tooltip-content="Describe the script style/structure you want.">i</span>
-                                            </label> */}
+                                                                    <div style={{ position: 'relative', marginTop: '10px' }}>
                                                                         <Tooltip style={styles.toolTip} id="scriptStyleCustom-tooltip" />
                                                                         <input
                                                                             type="text"
@@ -2000,44 +1987,20 @@ const ScriptStoryWriterTool = () => {
                                                                             value={formData.scriptStyleCustom}
                                                                             onChange={handleInputChange}
                                                                             placeholder="Enter custom script style (optional)"
+                                                                            maxLength={80}
                                                                         />
+                                                                        <div style={styles.charCount}>{formData.scriptStyleCustom.length}/80</div>
                                                                     </div>
                                                                 )}
                                                             </div>
                                                         </div>
 
-                                                        {/* <div className="col-md-6">
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>
-                                        Include Hook (Yes/No)
-                                        <span style={styles.infoIcon} data-tooltip-id="includeHook-tooltip" data-tooltip-content="Toggle whether to include a strong opening hook.">i</span>
-                                    </label>
-                                    <Tooltip style={styles.toolTip} id="includeHook-tooltip" />
-                                    <div style={styles.checkboxRow}>
-                                        <input
-                                            type="checkbox"
-                                            style={styles.checkboxInput}
-                                            checked={formData.includeHook}
-                                            onChange={(e) => {
-                                                const checked = e.target.checked;
-                                                setFormData(prev => ({
-                                                    ...prev,
-                                                    includeHook: checked,
-                                                    ...(checked ? {} : { hookStyleMode: 'predefined', hookStyle: '', hookStyleCustomPattern: '' }),
-                                                }));
-                                            }}
-                                        />
-                                        <span>{formData.includeHook ? 'Yes' : 'No'}</span>
-                                    </div>
-                                </div>
-                            </div> */}
-
                                                         {formData.includeHook && (
                                                             <div className="col-md-6">
                                                                 <div style={styles.formGroup}>
-                                                                    <label style={styles.label}>
+                                                                    <label htmlFor="hookStyle" style={styles.label}>
                                                                         Hook Style
-                                                                        <span style={styles.infoIcon} data-tooltip-id="hookStyle-tooltip" data-tooltip-content="Pick a hook style and optionally provide a custom hook pattern.">i</span>
+                                                                        <span style={styles.infoIcon} data-tooltip-id="hookStyle-tooltip" data-tooltip-content="How your opening line should grab attention.">i</span>
                                                                     </label>
                                                                     <Tooltip style={styles.toolTip} id="hookStyle-tooltip" />
 
@@ -2076,11 +2039,7 @@ const ScriptStoryWriterTool = () => {
                                                                     )}
 
                                                                     {formData.hookStyleMode === 'custom' && (
-                                                                        <div style={{ marginTop: '10px' }}>
-                                                                            {/* <label style={styles.label}>
-                                                    Custom Hook
-                                                    <span style={styles.infoIcon} data-tooltip-id="hookStyleCustomPattern-tooltip" data-tooltip-content="Provide a hook sentence template (e.g., 'Stop scrolling if...').">i</span>
-                                                </label> */}
+                                                                        <div style={{ position: 'relative', marginTop: '10px' }}>
                                                                             <Tooltip style={styles.toolTip} id="hookStyleCustomPattern-tooltip" />
                                                                             <input
                                                                                 type="text"
@@ -2089,45 +2048,21 @@ const ScriptStoryWriterTool = () => {
                                                                                 value={formData.hookStyleCustomPattern}
                                                                                 onChange={handleInputChange}
                                                                                 placeholder="e.g., Stop scrolling if..."
+                                                                                maxLength={80}
                                                                             />
+                                                                            <div style={styles.charCount}>{formData.hookStyleCustomPattern.length}/80</div>
                                                                         </div>
                                                                     )}
                                                                 </div>
                                                             </div>
                                                         )}
 
-                                                        {/* <div className="col-md-6">
-                                <div style={styles.formGroup}>
-                                    <label style={styles.label}>
-                                        Include CTA (Yes/No)
-                                        <span style={styles.infoIcon} data-tooltip-id="includeCta-tooltip" data-tooltip-content="Toggle whether to include a call-to-action at the end.">i</span>
-                                    </label>
-                                    <Tooltip style={styles.toolTip} id="includeCta-tooltip" />
-                                    <div style={styles.checkboxRow}>
-                                        <input
-                                            type="checkbox"
-                                            style={styles.checkboxInput}
-                                            checked={formData.includeCta}
-                                            onChange={(e) => {
-                                                const checked = e.target.checked;
-                                                setFormData(prev => ({
-                                                    ...prev,
-                                                    includeCta: checked,
-                                                    ...(checked ? {} : { ctaType: '', ctaTypeMode: 'predefined', ctaTypeCustom: '' }),
-                                                }));
-                                            }}
-                                        />
-                                        <span>{formData.includeCta ? 'Yes' : 'No'}</span>
-                                    </div>
-                                </div>
-                            </div> */}
-
                                                         {formData.includeCta && (
                                                             <div className="col-md-6">
                                                                 <div style={styles.formGroup}>
-                                                                    <label style={styles.label}>
+                                                                    <label htmlFor="ctaType" style={styles.label}>
                                                                         CTA Type
-                                                                        <span style={styles.infoIcon} data-tooltip-id="ctaType-tooltip" data-tooltip-content="Select a CTA type (or switch to Custom to type your own).">i</span>
+                                                                        <span style={styles.infoIcon} data-tooltip-id="ctaType-tooltip" data-tooltip-content="The action you want viewers to take.">i</span>
                                                                     </label>
 
                                                                     <Tooltip style={styles.toolTip} id="ctaType-tooltip" />
@@ -2174,11 +2109,7 @@ const ScriptStoryWriterTool = () => {
                                                                     )}
 
                                                                     {formData.ctaTypeMode === 'custom' && (
-                                                                        <div style={{ marginTop: '10px' }}>
-                                                                            {/* <label style={styles.label}>
-                                                    Custom CTA
-                                                    <span style={styles.infoIcon} data-tooltip-id="ctaTypeCustom-tooltip" data-tooltip-content="Type a custom call-to-action if needed (e.g., 'Book a free demo').">i</span>
-                                                </label> */}
+                                                                        <div style={{ position: 'relative', marginTop: '10px' }}>
                                                                             <Tooltip style={styles.toolTip} id="ctaTypeCustom-tooltip" />
                                                                             <input
                                                                                 type="text"
@@ -2187,7 +2118,9 @@ const ScriptStoryWriterTool = () => {
                                                                                 value={formData.ctaTypeCustom}
                                                                                 onChange={handleInputChange}
                                                                                 placeholder="Enter custom CTA"
+                                                                                maxLength={40}
                                                                             />
+                                                                            <div style={styles.charCount}>{formData.ctaTypeCustom.length}/40</div>
                                                                         </div>
                                                                     )}
                                                                 </div>
@@ -2196,9 +2129,9 @@ const ScriptStoryWriterTool = () => {
 
                                                         <div className="col-md-6">
                                                             <div style={styles.formGroup}>
-                                                                <label style={styles.label}>
+                                                                <label htmlFor="visualTone" style={styles.label}>
                                                                     Visual Tone & Mood
-                                                                    <span style={styles.infoIcon} data-tooltip-id="visualTone-tooltip" data-tooltip-content="Choose the desired visual mood (or switch to Custom to type your own).">i</span>
+                                                                    <span style={styles.infoIcon} data-tooltip-id="visualTone-tooltip" data-tooltip-content="The visual feel suggested in directions.">i</span>
                                                                 </label>
 
                                                                 <Tooltip style={styles.toolTip} id="visualTone-tooltip" />
@@ -2244,11 +2177,7 @@ const ScriptStoryWriterTool = () => {
                                                                 )}
 
                                                                 {formData.visualToneMode === 'custom' && (
-                                                                    <div style={{ marginTop: '10px' }}>
-                                                                        {/* <label style={styles.label}>
-                                                Custom Visual Mood
-                                                <span style={styles.infoIcon} data-tooltip-id="visualToneCustom-tooltip" data-tooltip-content="Describe the visual mood (e.g., sleek, gritty, high-energy).">i</span>
-                                            </label> */}
+                                                                    <div style={{ position: 'relative', marginTop: '10px' }}>
                                                                         <Tooltip style={styles.toolTip} id="visualToneCustom-tooltip" />
                                                                         <input
                                                                             type="text"
@@ -2257,7 +2186,9 @@ const ScriptStoryWriterTool = () => {
                                                                             value={formData.visualToneCustom}
                                                                             onChange={handleInputChange}
                                                                             placeholder="Enter custom mood"
+                                                                            maxLength={80}
                                                                         />
+                                                                        <div style={styles.charCount}>{formData.visualToneCustom.length}/80</div>
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -2265,9 +2196,9 @@ const ScriptStoryWriterTool = () => {
 
                                                         <div className="col-12">
                                                             <div style={styles.formGroup}>
-                                                                <label style={styles.label}>
+                                                                <label htmlFor="narrationStyle" style={styles.label}>
                                                                     Narration Style (POV)
-                                                                    <span style={styles.infoIcon} data-tooltip-id="narrationStyle-tooltip" data-tooltip-content="Select point-of-view / narration style (or switch to Custom to type your own).">i</span>
+                                                                    <span style={styles.infoIcon} data-tooltip-id="narrationStyle-tooltip" data-tooltip-content="First-person, second, or third perspective.">i</span>
                                                                 </label>
 
                                                                 <Tooltip style={styles.toolTip} id="narrationStyle-tooltip" />
@@ -2314,11 +2245,7 @@ const ScriptStoryWriterTool = () => {
                                                                 )}
 
                                                                 {formData.narrationStyleMode === 'custom' && (
-                                                                    <div style={{ marginTop: '10px' }}>
-                                                                        {/* <label style={styles.label}>
-                                                Custom Narration Style
-                                                <span style={styles.infoIcon} data-tooltip-id="narrationStyleCustom-tooltip" data-tooltip-content="Describe the narration/POV style in your own words.">i</span>
-                                            </label> */}
+                                                                    <div style={{ position: 'relative', marginTop: '10px' }}>
                                                                         <Tooltip style={styles.toolTip} id="narrationStyleCustom-tooltip" />
                                                                         <input
                                                                             type="text"
@@ -2327,7 +2254,9 @@ const ScriptStoryWriterTool = () => {
                                                                             value={formData.narrationStyleCustom}
                                                                             onChange={handleInputChange}
                                                                             placeholder="Enter custom narration style"
+                                                                            maxLength={60}
                                                                         />
+                                                                        <div style={styles.charCount}>{formData.narrationStyleCustom.length}/60</div>
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -2337,8 +2266,8 @@ const ScriptStoryWriterTool = () => {
                                                         <div className="col-12">
                                                             <div style={styles.formGroup}>
                                                                 <label style={styles.label}>
-                                                                    Custom Instructions / AI Guidance
-                                                                    <span style={styles.infoIcon} data-tooltip-id="customInstructions-tooltip" data-tooltip-content="Optional: extra instructions for pacing, format, do/don'ts, audience voice, etc.">i</span>
+                                                                    Custom Instructions
+                                                                    <span style={styles.infoIcon} data-tooltip-id="customInstructions-tooltip" data-tooltip-content="Extra rules — format, pacing, banned phrases.">i</span>
                                                                 </label>
                                                                 <Tooltip style={styles.toolTip} id="customInstructions-tooltip" />
                                                                 <textarea
@@ -2347,7 +2276,9 @@ const ScriptStoryWriterTool = () => {
                                                                     value={formData.customInstructions}
                                                                     onChange={handleInputChange}
                                                                     placeholder="Any specific guidance for the AI (format, pacing, forbidden phrases, etc.)"
+                                                                    maxLength={3000}
                                                                 />
+                                                                <div style={styles.charCount}>{formData.customInstructions.length}/3000 characters</div>
                                                             </div>
                                                         </div>
 

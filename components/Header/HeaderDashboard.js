@@ -66,7 +66,7 @@ const HeaderDashboard = ({ display }) => {
                     <i className="fa-sharp fa-regular fa-sidebar"></i>
                   </button>
                 </div> */}
-                <div className="expand-btn-grp">
+                <div className={`expand-btn-grp ${display || ""}`}>
                   <button
                     type="button"
                     aria-label="Toggle side navigation"
