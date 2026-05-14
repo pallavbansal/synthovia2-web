@@ -1,4 +1,4 @@
-name: Deploy Next.js to VPS
+name: Deploy Next.js to CyberPanel VPS
 
 on:
   push:
@@ -36,7 +36,7 @@ jobs:
           script: |
             set -e
 
-            APP_DIR=/home/synthovia.ai/app
+            APP_DIR=/home/synthovia.ai/public_html
 
             echo "Creating app directory..."
             mkdir -p $APP_DIR
@@ -52,7 +52,7 @@ jobs:
               npm install -g pm2
             fi
 
-            echo "Cleaning old app..."
+            echo "Cleaning old files..."
             find $APP_DIR -mindepth 1 -maxdepth 1 -exec rm -rf {} +
 
       - name: Upload Project Files
@@ -65,7 +65,7 @@ jobs:
 
           source: "."
 
-          target: /home/synthovia.ai/app
+          target: /home/synthovia.ai/public_html
 
       - name: Install & Start Application
         uses: appleboy/ssh-action@v1.0.3
@@ -78,7 +78,7 @@ jobs:
           script: |
             set -e
 
-            cd /home/synthovia.ai/app
+            cd /home/synthovia.ai/public_html
 
             echo "Installing dependencies..."
             npm install
@@ -91,46 +91,8 @@ jobs:
 
             pm2 save
 
-            echo "Installing Nginx..."
-            apt-get install -y nginx
-
-            echo "Stopping Apache if running..."
-            systemctl stop apache2 || true
-            systemctl disable apache2 || true
-
-            echo "Creating Nginx config..."
-
-            cat > /etc/nginx/sites-available/synthovia.ai << 'EOF'
-            server {
-                listen 80;
-
-                server_name synthovia.ai www.synthovia.ai;
-
-                location / {
-                    proxy_pass http://localhost:3000;
-
-                    proxy_http_version 1.1;
-
-                    proxy_set_header Upgrade $http_upgrade;
-                    proxy_set_header Connection 'upgrade';
-
-                    proxy_set_header Host $host;
-
-                    proxy_cache_bypass $http_upgrade;
-                }
-            }
-            EOF
-
-            ln -sf /etc/nginx/sites-available/synthovia.ai /etc/nginx/sites-enabled/synthovia.ai
-
-            echo "Testing Nginx config..."
-            nginx -t
-
-            echo "Restarting Nginx..."
-            systemctl restart nginx
-
-            echo "Enabling Nginx..."
-            systemctl enable nginx
+            echo "Restarting LiteSpeed..."
+            /usr/local/lsws/bin/lswsctrl restart || true
 
             echo "Deployment completed successfully!"
 
