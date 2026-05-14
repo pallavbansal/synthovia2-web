@@ -38,23 +38,21 @@ jobs:
 
             APP_DIR=/home/synthovia.ai/app
 
+            echo "Creating app directory..."
             mkdir -p $APP_DIR
 
             echo "Installing Node.js if missing..."
-
             if ! command -v node >/dev/null 2>&1; then
               curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
               apt-get install -y nodejs
             fi
 
             echo "Installing PM2 if missing..."
-
             if ! command -v pm2 >/dev/null 2>&1; then
               npm install -g pm2
             fi
 
             echo "Cleaning old app..."
-
             find $APP_DIR -mindepth 1 -maxdepth 1 -exec rm -rf {} +
 
       - name: Upload Project Files
@@ -89,12 +87,16 @@ jobs:
             pm2 delete synthovia-web || true
 
             echo "Starting Next.js app..."
-            pm2 start "npm start" --name synthovia-web
+            pm2 start npm --name "synthovia-web" -- start
 
             pm2 save
 
             echo "Installing Nginx..."
             apt-get install -y nginx
+
+            echo "Stopping Apache if running..."
+            systemctl stop apache2 || true
+            systemctl disable apache2 || true
 
             echo "Creating Nginx config..."
 
@@ -121,9 +123,14 @@ jobs:
 
             ln -sf /etc/nginx/sites-available/synthovia.ai /etc/nginx/sites-enabled/synthovia.ai
 
+            echo "Testing Nginx config..."
             nginx -t
 
+            echo "Restarting Nginx..."
             systemctl restart nginx
+
+            echo "Enabling Nginx..."
+            systemctl enable nginx
 
             echo "Deployment completed successfully!"
 
