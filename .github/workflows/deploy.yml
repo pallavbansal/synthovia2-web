@@ -20,12 +20,12 @@ jobs:
           cache: npm
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build Next.js App
         run: npm run build
 
-      - name: Deploy to VPS
+      - name: Prepare VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: 173.212.213.153
@@ -38,22 +38,24 @@ jobs:
 
             APP_DIR=/home/synthovia.ai/app
 
-            echo "Creating app directory..."
             mkdir -p $APP_DIR
 
             echo "Installing Node.js if missing..."
+
             if ! command -v node >/dev/null 2>&1; then
               curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
               apt-get install -y nodejs
             fi
 
             echo "Installing PM2 if missing..."
+
             if ! command -v pm2 >/dev/null 2>&1; then
               npm install -g pm2
             fi
 
             echo "Cleaning old app..."
-            rm -rf $APP_DIR/*
+
+            find $APP_DIR -mindepth 1 -maxdepth 1 -exec rm -rf {} +
 
       - name: Upload Project Files
         uses: appleboy/scp-action@v0.1.7
@@ -80,18 +82,18 @@ jobs:
 
             cd /home/synthovia.ai/app
 
-            echo "Installing production dependencies..."
-            npm install --omit=dev
+            echo "Installing dependencies..."
+            npm install
 
-            echo "Stopping old PM2 app if exists..."
+            echo "Stopping old PM2 app..."
             pm2 delete synthovia-web || true
 
             echo "Starting Next.js app..."
-            pm2 start npm --name "synthovia-web" -- start
+            pm2 start "npm start" --name synthovia-web
 
             pm2 save
 
-            echo "Installing Nginx if missing..."
+            echo "Installing Nginx..."
             apt-get install -y nginx
 
             echo "Creating Nginx config..."
@@ -109,6 +111,7 @@ jobs:
 
                     proxy_set_header Upgrade $http_upgrade;
                     proxy_set_header Connection 'upgrade';
+
                     proxy_set_header Host $host;
 
                     proxy_cache_bypass $http_upgrade;
