@@ -63,12 +63,7 @@ jobs:
           password: Boxinall@325
           port: 22
 
-          source: |
-            .next
-            public
-            package.json
-            package-lock.json
-            next.config.js
+          source: "."
 
           target: /home/synthovia.ai/app
 
