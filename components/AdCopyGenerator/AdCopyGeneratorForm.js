@@ -671,7 +671,7 @@ const AdCopyGeneratorForm = () => {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json',
+                        'Accept': 'text/event-stream',
                         'Authorization': getAuthHeader(),
                     },
                     body: JSON.stringify(payloadForStream),
@@ -712,166 +712,6 @@ const AdCopyGeneratorForm = () => {
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder('utf-8');
                 let buffer = '';
-
-                const processLine = (rawLine) => {
-                    if (!rawLine) return;
-                    let line = rawLine.trim();
-                    if (!line) return;
-                    if (line.startsWith('data:')) {
-                        line = line.slice('data:'.length).trim();
-                    }
-                    if (!line) return;
-
-                    if (line.startsWith(',')) line = line.slice(1).trim();
-                    if (line.endsWith(',')) line = line.slice(0, -1).trim();
-                    if (!line) return;
-
-                    let msg;
-                    try {
-                        msg = JSON.parse(line);
-                    } catch (e) {
-                        buffer = `${line}\n${buffer}`;
-                        return;
-                    }
-                    console.log("susbcription is here 2")
-                    if (!msg || typeof msg !== 'object') return;
-
-                    if (msg.type === 'meta') {
-                        if (msg.request_id) { setRequestId((prev) => prev || msg.request_id); }
-                        if (msg.variant_id) {
-                            setGeneratedVariantsData((prev) => {
-                                const next = [...(prev.variants || [])];
-                                if (next[variantIndex]) next[variantIndex] = { ...next[variantIndex], id: msg.variant_id };
-                                return { ...prev, variants: next };
-                            });
-                        }
-                        if (msg.trial_credits_remaining != null) {
-                            const t = Number(msg.trial_credits_remaining);
-                            if (!Number.isNaN(t)) setTrialRemaining?.(t);
-                            try { fetchCredits?.(); } catch { }
-                        }
-                        return;
-                    }
-
-                    if (msg.type === 'error' && isGateError(msg)) {
-                        console.log("susbcription is here 1");
-                        if (msg.trial_credits_remaining != null) {
-                            const t = Number(msg.trial_credits_remaining);
-                            if (!Number.isNaN(t)) setTrialRemaining?.(t);
-                        }
-                        try { fetchCredits?.(); } catch { }
-                        showGateFromPayload(msg);
-                        try { controller?.abort?.(); } catch { }
-                        try { setIsGenerating(false); setShowVariantsModal(false); } catch { }
-                        return;
-                    }
-
-                    if (msg.type === 'delta') {
-                        const deltaText = msg.content || '';
-                        if (!deltaText) return;
-                        setGeneratedVariantsData((prev) => {
-                            const next = [...(prev.variants || [])];
-                            if (next[variantIndex]) {
-                                next[variantIndex] = {
-                                    ...next[variantIndex],
-                                    content: `${next[variantIndex].content || ''}${deltaText}`,
-                                };
-                            }
-                            return { ...prev, variants: next };
-                        });
-                        return;
-                    }
-
-                    if (msg.type === 'done') {
-                        if (msg.request_id) {
-                            setRequestId((prev) => prev || msg.request_id);
-                        }
-                        setGeneratedVariantsData((prev) => {
-                            const next = [...(prev.variants || [])];
-                            if (next[variantIndex]) {
-                                next[variantIndex] = {
-                                    ...next[variantIndex],
-                                    id: next[variantIndex].id || msg.variant_id || null,
-                                    content: (next[variantIndex].content?.length > (msg.content?.length || 0))
-                                        ? next[variantIndex].content
-                                        : (msg.content || next[variantIndex].content || ''),
-                                    is_streaming: false,
-                                };
-                            }
-                            return { ...prev, variants: next };
-                        });
-                    }
-                };
-
-                const processMessage = (msg) => {
-                    if (!msg || typeof msg !== 'object') return;
-
-                    if (msg.type === 'meta') {
-                        if (msg.request_id) { setRequestId((prev) => prev || msg.request_id); }
-                        if (msg.variant_id) {
-                            setGeneratedVariantsData((prev) => {
-                                const next = [...(prev.variants || [])];
-                                if (next[variantIndex]) next[variantIndex] = { ...next[variantIndex], id: msg.variant_id };
-                                return { ...prev, variants: next };
-                            });
-                        }
-                        if (msg.trial_credits_remaining != null) {
-                            const t = Number(msg.trial_credits_remaining);
-                            if (!Number.isNaN(t)) setTrialRemaining?.(t);
-                            try { fetchCredits?.(); } catch { }
-                        }
-                        return;
-                    }
-
-                    if (msg.type === 'error' && isGateError(msg)) {
-                        console.log("susbcription is here 1");
-                        if (msg.trial_credits_remaining != null) {
-                            const t = Number(msg.trial_credits_remaining);
-                            if (!Number.isNaN(t)) setTrialRemaining?.(t);
-                        }
-                        try { fetchCredits?.(); } catch { }
-                        showGateFromPayload(msg);
-                        try { controller?.abort?.(); } catch { }
-                        try { setIsGenerating(false); setShowVariantsModal(false); } catch { }
-                        return;
-                    }
-
-                    if (msg.type === 'delta') {
-                        const deltaText = msg.content || '';
-                        if (!deltaText) return;
-                        setGeneratedVariantsData((prev) => {
-                            const next = [...(prev.variants || [])];
-                            if (next[variantIndex]) {
-                                next[variantIndex] = {
-                                    ...next[variantIndex],
-                                    content: `${next[variantIndex].content || ''}${deltaText}`,
-                                };
-                            }
-                            return { ...prev, variants: next };
-                        });
-                        return;
-                    }
-
-                    if (msg.type === 'done') {
-                        if (msg.request_id) {
-                            setRequestId((prev) => prev || msg.request_id);
-                        }
-                        setGeneratedVariantsData((prev) => {
-                            const next = [...(prev.variants || [])];
-                            if (next[variantIndex]) {
-                                next[variantIndex] = {
-                                    ...next[variantIndex],
-                                    id: next[variantIndex].id || msg.variant_id || null,
-                                    content: (next[variantIndex].content?.length > (msg.content?.length || 0))
-                                        ? next[variantIndex].content
-                                        : (msg.content || next[variantIndex].content || ''),
-                                    is_streaming: false,
-                                };
-                            }
-                            return { ...prev, variants: next };
-                        });
-                    }
-                };
 
                 const stripSsePrefixes = (text) => text.replace(/^data:\s*/gm, '');
 
@@ -930,6 +770,75 @@ const AdCopyGeneratorForm = () => {
                     return null;
                 };
 
+                const processMessage = (msg) => {
+                    if (!msg || typeof msg !== 'object') return;
+
+                    if (msg.type === 'meta') {
+                        if (msg.request_id) { setRequestId((prev) => prev || msg.request_id); }
+                        if (msg.variant_id) {
+                            setGeneratedVariantsData((prev) => {
+                                const next = [...(prev.variants || [])];
+                                if (next[variantIndex]) next[variantIndex] = { ...next[variantIndex], id: msg.variant_id };
+                                return { ...prev, variants: next };
+                            });
+                        }
+                        if (msg.trial_credits_remaining != null) {
+                            const t = Number(msg.trial_credits_remaining);
+                            if (!Number.isNaN(t)) setTrialRemaining?.(t);
+                            try { fetchCredits?.(); } catch { }
+                        }
+                        return;
+                    }
+
+                    if (msg.type === 'error' && isGateError(msg)) {
+                        if (msg.trial_credits_remaining != null) {
+                            const t = Number(msg.trial_credits_remaining);
+                            if (!Number.isNaN(t)) setTrialRemaining?.(t);
+                        }
+                        try { fetchCredits?.(); } catch { }
+                        showGateFromPayload(msg);
+                        try { controller?.abort?.(); } catch { }
+                        try { setIsGenerating(false); setShowVariantsModal(false); } catch { }
+                        return;
+                    }
+
+                    if (msg.type === 'delta') {
+                        const deltaText = msg.content || '';
+                        if (!deltaText) return;
+                        setGeneratedVariantsData((prev) => {
+                            const next = [...(prev.variants || [])];
+                            if (next[variantIndex]) {
+                                next[variantIndex] = {
+                                    ...next[variantIndex],
+                                    content: `${next[variantIndex].content || ''}${deltaText}`,
+                                };
+                            }
+                            return { ...prev, variants: next };
+                        });
+                        return;
+                    }
+
+                    if (msg.type === 'done') {
+                        if (msg.request_id) {
+                            setRequestId((prev) => prev || msg.request_id);
+                        }
+                        setGeneratedVariantsData((prev) => {
+                            const next = [...(prev.variants || [])];
+                            if (next[variantIndex]) {
+                                next[variantIndex] = {
+                                    ...next[variantIndex],
+                                    id: next[variantIndex].id || msg.variant_id || null,
+                                    content: (next[variantIndex].content?.length > (msg.content?.length || 0))
+                                        ? next[variantIndex].content
+                                        : (msg.content || next[variantIndex].content || ''),
+                                    is_streaming: false,
+                                };
+                            }
+                            return { ...prev, variants: next };
+                        });
+                    }
+                };
+
                 const drainBuffer = () => {
                     for (; ;) {
                         const jsonText = extractNextJsonObject();
@@ -947,9 +856,7 @@ const AdCopyGeneratorForm = () => {
                 try {
                     for (; ;) {
                         const { value, done } = await reader.read();
-
                         if (done) break;
-
                         buffer = stripSsePrefixes(buffer + decoder.decode(value, { stream: true }));
                         drainBuffer();
                     }

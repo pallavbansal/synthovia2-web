@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Tooltip } from 'react-tooltip';
 
 // API Configuration
-const BASE_URL = 'https://olive-gull-905765.hostingersite.com/public/api/v1';
+const BASE_URL = 'https://api.synthovia.ai/public/api/v1';
 const API = {
     GENERATE_SCRIPT: `${BASE_URL}/script/generate`,
     AUTH_TOKEN: '3|WwYYaSEAfSr1guYBFdPQlPtGg0dKphy1sVMDLBmX647db358',
