@@ -148,7 +148,7 @@ const EmailNewsletterGenerator = () => {
 
     // Ensure latest trial/credits state when this tool mounts (avoid stale isFreeTrial)
     useEffect(() => {
-        try { fetchCredits?.(); } catch {}
+        try { fetchCredits?.(); } catch { }
     }, [fetchCredits]);
 
     const isGateError = useCallback((payload) => {
@@ -162,7 +162,7 @@ const EmailNewsletterGenerator = () => {
     const showGateFromPayload = useCallback((payload) => {
         const handled = setGateFromPayload?.(payload);
         if (!handled) {
-            try { setShowGateModal?.(true); } catch {}
+            try { setShowGateModal?.(true); } catch { }
         }
     }, [setGateFromPayload, setShowGateModal]);
 
@@ -185,7 +185,7 @@ const EmailNewsletterGenerator = () => {
                     const inFT = js?.in_free_trial ?? js?.data?.in_free_trial;
                     if (inFT != null) statusStr = inFT ? 'free' : 'subscription';
                 }
-            } catch {}
+            } catch { }
 
             const res = await fetch(API.USER_CREDITS, {
                 method: 'GET',
@@ -733,7 +733,7 @@ const EmailNewsletterGenerator = () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json',
+                'Accept': 'text/event-stream',
                 'X-Requested-With': 'XMLHttpRequest',
                 'Authorization': getAuthHeader(),
             },
@@ -748,13 +748,13 @@ const EmailNewsletterGenerator = () => {
             } catch {
             }
             if (errorData && isGateError(errorData)) {
-                try { showGateFromPayload(errorData); } catch {}
-                try { controller?.abort?.(); } catch {}
+                try { showGateFromPayload(errorData); } catch { }
+                try { controller?.abort?.(); } catch { }
                 try {
                     setIsGenerating(false);
                     setIsApiLoading(false);
                     setShowVariantsModal(false);
-                } catch {}
+                } catch { }
                 return;
             }
             throw new Error(errorData?.message || `API call failed with status: ${res.status}`);
@@ -766,13 +766,13 @@ const EmailNewsletterGenerator = () => {
         if (looksLikeJson || !res.body) {
             const json = await res.json().catch(() => null);
             if (json && isGateError(json)) {
-                try { showGateFromPayload(json); } catch {}
-                try { controller?.abort?.(); } catch {}
+                try { showGateFromPayload(json); } catch { }
+                try { controller?.abort?.(); } catch { }
                 try {
                     setIsGenerating(false);
                     setIsApiLoading(false);
                     setShowVariantsModal(false);
-                } catch {}
+                } catch { }
                 return;
             }
             const content =
@@ -789,7 +789,7 @@ const EmailNewsletterGenerator = () => {
                 if (t != null && !Number.isNaN(Number(t))) {
                     setTrialRemaining?.(Number(t));
                 }
-            } catch {}
+            } catch { }
             if (content) appendVariantDelta(variantIndex, content);
             return;
         }
@@ -842,7 +842,7 @@ const EmailNewsletterGenerator = () => {
                         const t = Number(msg.trial_credits_remaining);
                         if (!Number.isNaN(t)) setTrialRemaining?.(t);
                     }
-                } catch {}
+                } catch { }
                 return;
             }
 
@@ -870,15 +870,15 @@ const EmailNewsletterGenerator = () => {
                             const t = Number(msg.trial_credits_remaining);
                             if (!Number.isNaN(t)) setTrialRemaining?.(t);
                         }
-                    } catch {}
-                    try { fetchCredits?.(); } catch {}
-                    try { showGateFromPayload(msg); } catch {}
-                    try { controller?.abort?.(); } catch {}
+                    } catch { }
+                    try { fetchCredits?.(); } catch { }
+                    try { showGateFromPayload(msg); } catch { }
+                    try { controller?.abort?.(); } catch { }
                     try {
                         setIsGenerating(false);
                         setIsApiLoading(false);
                         setShowVariantsModal(false);
-                    } catch {}
+                    } catch { }
                     return;
                 }
                 throw new Error(msg.message || 'Stream error');
@@ -960,7 +960,7 @@ const EmailNewsletterGenerator = () => {
         };
 
         try {
-            for (;;) {
+            for (; ;) {
                 const { value, done } = await reader.read();
                 if (done) break;
 
@@ -1006,7 +1006,7 @@ const EmailNewsletterGenerator = () => {
 
         setShowSummary(false);
         setShowVariantsModal(true);
-        try { fetchCredits?.(); } catch {}
+        try { fetchCredits?.(); } catch { }
         setIsApiLoading(true);
         setIsGenerating(true);
 
@@ -1074,7 +1074,7 @@ const EmailNewsletterGenerator = () => {
             setIsApiLoading(false);
             setIsGenerating(false);
             setShowSummary(false);
-            try { fetchCredits?.(); } catch {}
+            try { fetchCredits?.(); } catch { }
         }
     };
 
@@ -1835,7 +1835,7 @@ const EmailNewsletterGenerator = () => {
                                     <div className="col-md-6">
                                         <div style={styles.formGroup}>
                                             <label htmlFor="subjectLineFocus" style={styles.label}>
-                                                 Subject Line Style
+                                                Subject Line Style
                                                 <span style={styles.infoIcon} data-tooltip-id="subjectLineFocus-tooltip" data-tooltip-content="The hook angle for your subject line.">
                                                     i
                                                 </span>
@@ -2181,7 +2181,7 @@ const EmailNewsletterGenerator = () => {
                                     </button>
                                     <button
                                         type="submit"
-                                    // className='personal-info-button'
+                                        // className='personal-info-button'
                                         style={{ ...styles.btn, ...styles.btnPrimary }}
                                         disabled={isGenerating || isApiLoading}
                                     >

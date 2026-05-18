@@ -538,7 +538,7 @@ const SeoKeywordMetaTagGeneratorForm = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Accept: "application/json",
+          Accept: "text/event-stream",
           Authorization: getAuthHeader(),
         },
         body: JSON.stringify(payload),

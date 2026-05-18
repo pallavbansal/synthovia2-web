@@ -1,4 +1,4 @@
-const BASE_URL = "https://synthovia.boxinallsoftech.com/public/api/v1";
+const BASE_URL = "https://api.synthovia.ai/public/api/v1";
 const buildQueryUrl = (base, params) => {
   const qs = new URLSearchParams();
   Object.entries(params || {}).forEach(([k, v]) => {
