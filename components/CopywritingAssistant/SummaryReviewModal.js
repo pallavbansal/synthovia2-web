@@ -141,6 +141,7 @@ const SummaryReviewModal = ({
   lengthTargetOptions,
   contentStyleOptions,
   writingFrameworkOptions,
+  ctaStyleOptions,
   formattingOptionsList,
   onGenerate,
   onEdit,
@@ -331,6 +332,25 @@ const SummaryReviewModal = ({
           <div style={{ ...styles.item, gridColumn: '1 / -1' }}>
             <span style={styles.itemLabel}>Exclude Words:</span>
             <div style={styles.valueBox}>{renderListValue(formData.excludeWords)}</div>
+          </div>
+
+          {/* CTA Style */}
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>CTA Style Mode:</span>
+            <div style={styles.valueBox}>
+              {formData.ctaStyleMode === 'custom' ? 'Custom' : 'Predefined'}
+            </div>
+          </div>
+
+          <div style={{ ...styles.item, gridColumn: 'span 1' }}>
+            <span style={styles.itemLabel}>CTA Style:</span>
+            <div style={styles.valueBox}>
+              {formData.ctaStyleMode === 'custom'
+                ? formData.customCtaStyle || 'N/A'
+                : (formData.ctaStyle
+                    ? findLabel(ctaStyleOptions, formData.ctaStyle)
+                    : 'N/A')}
+            </div>
           </div>
 
           {/* Writing Framework */}

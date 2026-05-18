@@ -67,6 +67,9 @@ const CopywritingAssistantForm = () => {
         writingFrameworkMode: 'predefined',
         writingFramework: '',
         customWritingFramework: '',
+        ctaStyleMode: 'predefined',
+        ctaStyle: '',
+        customCtaStyle: '',
         formattingOptions: ['structured_layout'],
         excludeWords: [],
         complianceNotes: '',
@@ -317,6 +320,20 @@ const CopywritingAssistantForm = () => {
             ]
     );
 
+    const ctaStyleOptions = normalizeOptions(
+        getOptions('cta_style').length
+            ? getOptions('cta_style')
+            : getOptions('copy_writing_cta_style').length
+                ? getOptions('copy_writing_cta_style')
+                : [
+                    { key: 'direct_action', label: 'Direct Action (Buy Now, Sign Up)' },
+                    { key: 'soft_low_friction', label: 'Soft / Low-Friction (Learn More, Read More)' },
+                    { key: 'curiosity_driven', label: 'Curiosity-Driven (Discover How, Find Out)' },
+                    { key: 'value_first', label: 'Value-First (Get Free Guide, Start Free Trial)' },
+                    { key: 'urgent_fomo', label: 'Urgent / FOMO (Limited Time Offer, Claim Spot)' },
+                ]
+    );
+
     const outputStructureOptions = normalizeOptions(
         getOptions('output_structure_type').length
             ? getOptions('output_structure_type')
@@ -555,6 +572,9 @@ const CopywritingAssistantForm = () => {
             writingFrameworkMode: 'predefined',
             writingFramework: '',
             customWritingFramework: '',
+            ctaStyleMode: 'predefined',
+            ctaStyle: '',
+            customCtaStyle: '',
             formattingOptions: ['structured_layout'],
             excludeWords: [],
             complianceNotes: '',
@@ -676,6 +696,11 @@ const CopywritingAssistantForm = () => {
                 return;
             }
 
+            if (formData.ctaStyleMode === 'custom' && !formData.customCtaStyle) {
+                alert('Please enter a Custom Call to Action Style.');
+                return;
+            }
+
         }
 
         setShowSummary(true);
@@ -777,7 +802,14 @@ const CopywritingAssistantForm = () => {
             writingFrameworkObj = buildOptionObject('writing_framework', formData.writingFramework) || { id: null, value: formData.writingFramework, type: 'predefined' };
         }
 
-
+        let ctaStyleObj = null;
+        if (formData.ctaStyleMode === 'custom' && formData.customCtaStyle) {
+            ctaStyleObj = { id: null, value: formData.customCtaStyle, type: 'custom' };
+        } else if (formData.ctaStyleMode === 'predefined' && formData.ctaStyle) {
+            ctaStyleObj = buildOptionObject('cta_style', formData.ctaStyle) || 
+                          buildOptionObject('copy_writing_cta_style', formData.ctaStyle) || 
+                          { id: null, value: formData.ctaStyle, type: 'predefined' };
+        }
 
         const outputStructureObj = formData.outputStructure
             ? buildOptionObject('output_structure_type', formData.outputStructure) || { id: null, value: formData.outputStructure, type: 'predefined' }
@@ -823,6 +855,7 @@ const CopywritingAssistantForm = () => {
             emotional_intent: null,
             compliance_notes: formData.complianceNotes || '',
             writing_framework: writingFrameworkObj,
+            cta_style: ctaStyleObj,
             output_structure_type: outputStructureObj,
             creativity_level: Number(formData.creativityLevel) / 10,
             reference_url: formData.referenceUrl || null,
@@ -2281,9 +2314,49 @@ const CopywritingAssistantForm = () => {
                                         </div>
                                     </div>
 
-                                    {/* --- EMOTIONAL INTENT + WRITING FRAMEWORK (two-column row) --- */}
+                                    {/* --- CTA STYLE + WRITING FRAMEWORK (two-column row) --- */}
                                     <div style={twoColContainerStyle}>
+                                        {/* CTA Style (Left Half) */}
+                                        <div style={colHalfStyle}>
+                                            {renderModeToggle(
+                                                'ctaStyleMode',
+                                                'CTA Style (optional)',
+                                                'How your call-to-action should feel.'
+                                            )}
 
+                                            {formData.ctaStyleMode === 'predefined' && (
+                                                <div style={styles.formGroup}>
+                                                    <select
+                                                        id="ctaStyle"
+                                                        name="ctaStyle"
+                                                        value={formData.ctaStyle}
+                                                        onChange={handleChange}
+                                                        style={styles.select}
+                                                    >
+                                                        <option value="">Select a CTA style</option>
+                                                        {ctaStyleOptions.map((opt, index) => (
+                                                            <option key={index} value={opt.value}>{opt.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+
+                                            {formData.ctaStyleMode === 'custom' && (
+                                                <div style={{ position: 'relative' }}>
+                                                    <input
+                                                        type="text"
+                                                        id="customCtaStyle"
+                                                        name="customCtaStyle"
+                                                        value={formData.customCtaStyle}
+                                                        onChange={handleChange}
+                                                        style={styles.input}
+                                                        placeholder="e.g., Urgency-driven with a countdown link"
+                                                        maxLength={100}
+                                                    />
+                                                    <div style={styles.charCount}>{formData.customCtaStyle.length}/100</div>
+                                                </div>
+                                            )}
+                                        </div>
 
                                         {/* Writing Framework (Right Half) */}
                                         <div style={colHalfStyle}>
@@ -2445,6 +2518,7 @@ const CopywritingAssistantForm = () => {
                     lengthTargetOptions={lengthTargetOptions}
                     contentStyleOptions={contentStyleOptions}
                     writingFrameworkOptions={writingFrameworkOptions}
+                    ctaStyleOptions={ctaStyleOptions}
                     outputStructureOptions={outputStructureOptions}
                     formattingOptionsList={formattingOptionsList}
                     onGenerate={handleGenerate}
