@@ -101,9 +101,8 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
     <>
       {/* <DarkSwitch isLight={isLightTheme} switchTheme={toggleTheme} /> */}
       <header
-        className={`rainbow-header header-default ${headerTransparent} ${headerSticky} ${
-          isSticky ? "sticky" : ""
-        }`}
+        className={`rainbow-header header-default ${headerTransparent} ${headerSticky} ${isSticky ? "sticky" : ""
+          }`}
       >
         <div className="container position-relative">
           <div className="row align-items-center row--0">
@@ -220,14 +219,31 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
                     </div>
                   </div>
                 ) : (
-                  <div className="header-btn d-flex align-items-center" style={{ gap: 10 }}>
-                    <Link className={`${btnClass}`} href="/signin">
-                      <span>Get Start</span>
+                  <div className="d-flex flex-column align-items-center justify-content-center">
+                    <div className="header-btn d-flex align-items-center" style={{ gap: 10 }}>
+                      <Link className={`${btnClass}`} href="/signin">
+                        <span>Get Start</span>
+                      </Link>
+                    </div>
+                    <Link href="/subscription-plan" className="d-flex d-lg-none align-items-center" style={{ fontSize: "11px", fontWeight: "600", color: "rgba(255,255,255,0.75)", gap: 4, marginTop: "2px" }}>
+                      <i className="fa-solid fa-credit-card"></i> <span>Plans</span>
                     </Link>
                   </div>
                 )}
 
-                
+                {!authed && (
+                  <div className="mobile-menu-bar mr--10 ml--10 d-block d-lg-none">
+                    <div className="hamberger">
+                      <Link
+                        className="hamberger-button"
+                        href="/subscription-plan"
+                        aria-label="Subscriptions"
+                      >
+                        <i className="feather-menu"></i>
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

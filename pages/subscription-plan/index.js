@@ -306,9 +306,20 @@ const SubscriptionPlanPage = () => {
     if (stored?.code) {
       setGeoCountryCode(stored.code);
       setGeoIsIndia(stored.code === "IN");
+      return;
     }
 
-    if (stored?.code) return;
+    // Set a best-effort default country first so guest/unlogged users don't get blocked
+    let defaultCode = "US";
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+      if (String(tz).toLowerCase().includes("kolkata") || String(tz).toLowerCase().includes("calcutta")) {
+        defaultCode = "IN";
+      }
+    } catch (e) {}
+    setGeoCountryCode(defaultCode);
+    setGeoIsIndia(defaultCode === "IN");
+
     if (typeof window === "undefined") return;
     if (!navigator?.permissions?.query) return;
 
