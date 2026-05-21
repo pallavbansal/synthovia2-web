@@ -96,7 +96,7 @@ const Home = () => {
             <div className="col-lg-12">
               <div className="inner text-center mt--140">
                 <h1 className="title display-one" style={{ ...styles.glasstext, ...styles.fontLarge }}>
-                  One Platform to Plan, Structure, and Write Content — <span style={styles.gradientText}>Powered by AI</span>
+                  Generate Marketing Content in Minutes, <span style={styles.gradientText}> Not Hours</span>
                   {/* <br /> */}
                   {/* {" "}
                   <span className="header-caption">
@@ -135,8 +135,8 @@ const Home = () => {
                   AI Hack */}
                 </h1>
                 <p className="description" style={{ ...styles.glasstext }}>
-                  Generate ads, emails, SEO, and social content with AI  <br />{" "}
-                  that works from your inputs and helps shape content for practical use.
+                  Ads, emails, captions, SEO, and scripts — from simple inputs, not prompts. Built for founders and marketers <br />{" "}
+                  who'd rather ship than tinker. Try free, no credit card.
                 </p>
                 {/* <div className="form-group">
                   <textarea
@@ -280,10 +280,10 @@ const Home = () => {
                 data-sal-delay="150"
               >
                 <h4 className="subtitle">
-                  <span className="theme-gradient">Assisting individuals</span>
+                  <span className="theme-gradient">Powering Content Worldwide</span>
                 </h4>
                 <h2 className="title mb--60">
-                  Generate Smarter, Not <br /> Harder with
+                  Stop Struggling <br /> Start Publishing
                 </h2>
               </div>
             </div>

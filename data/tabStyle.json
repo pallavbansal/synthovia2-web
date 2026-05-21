@@ -6,7 +6,7 @@
       "img": "/images/light/generator-img/add-copy.png",
       "imgLight": "/images/light/generator-img/add-copy.png",
       "menuId": "ad-copy-generator",
-      "text": "Add Copy Generator",
+      "text": "Ad Copy Generator",
       "target": "ad-copy-generator",
       "iconImg": "/images/icons/video-g.png",
       "iconClass": "fa-solid fa-ad",
@@ -170,7 +170,7 @@
       "isSelect": true,
       "menuText": "Choose a Tool & Content Type",
       "img": "/images/split/split-1.png",
-      "subTitle": "How Synthovia Works",
+      "subTitle": "Pick Your Goal",
       "title": "Choose a Tool & Content Type",
       "desc": "Select what you want to create — ad copy, email, SEO content, social post, or script — using one of Synthovia’s focused AI tools designed for specific content needs."
     },
@@ -180,7 +180,7 @@
       "isSelect": false,
       "menuText": "Add Structured Inputs",
       "img": "/images/split/split-4.png",
-      "subTitle": "Exploring Efficiency",
+      "subTitle": "No Prompt Skills Needed",
       "title": "Add Structured Inputs",
       "desc": "Provide key details like your goal, audience, tone, platform, and key points. Synthovia uses these structured inputs to guide how the content is generated."
     },
@@ -190,7 +190,7 @@
       "isSelect": false,
       "menuText": "Generate & Review Content",
       "img": "/images/split/split-5.png",
-      "subTitle": "Navigating Cybersecurity",
+      "subTitle": "AI Does the Heavy Lifting",
       "title": "Generate & Review Content",
       "desc": "The AI generates content based on your inputs. Review the output, regenerate variations, or adjust inputs until it fits your needs."
     },
@@ -200,7 +200,7 @@
       "isSelect": false,
       "menuText": "Download & Use Your Content",
       "img": "/images/split/split-3.png",
-      "subTitle": "Mastering Data Analysis",
+      "subTitle": "Ready to Publish",
       "title": "Download & Use Your Content",
       "desc": "Download the generated content and use it directly in your campaigns, platforms, or workflows based on your needs."
     }
