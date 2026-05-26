@@ -2,7 +2,7 @@
   "TabStyleOne": [
     {
       "title": "Ads That Stop the Scroll, Not the Budget.",
-      "desc": "Generate high-converting ad copy for Meta, Google, and LinkedIn — tailored to your product, audience, and offer. No prompt engineering, no generic hooks. Just ad variants ready to test today.",
+      "desc": "",
       "img": "/images/light/generator-img/add-copy.png",
       "imgLight": "/images/light/generator-img/add-copy.png",
       "menuId": "ad-copy-generator",
@@ -29,7 +29,7 @@
     },
     {
       "title": "Captions That Sound Like You. Hashtags That Actually Reach.",
-      "desc": "Turn a single idea into scroll-stopping captions and researched hashtags for Instagram, LinkedIn, and Twitter/X. Match your brand tone, hit your goal, and post without second-guessing.",
+      "desc": "",
       "img": "/images/light/generator-img/caption-hashtag.png",
       "imgLight": "/images/light/generator-img/caption-hashtag.png",
       "menuId": "caption-and-hastag-generator",
@@ -56,7 +56,7 @@
     },
     {
       "title": "Copy That Sells, Without the Blank Page.",
-      "desc": "Generate landing page copy, product descriptions, sales sections, and CTAs from simple inputs. Skip the staring-at-cursor stage and start with copy designed to convert.",
+      "desc": "",
       "img": "/images/light/generator-img/copy-writing.png",
       "imgLight": "/images/light/generator-img/copy-writing.png",
       "menuId": "copywriting-assistant",
@@ -83,7 +83,7 @@
     },
     {
       "title": "Scripts That Hold Attention From Hook to CTA.",
-      "desc": "Generate scripts for short-form videos, long-form content, and ad creatives — with structured hooks, story beats, and clear CTAs. Built for creators and founders who post regularly.",
+      "desc": "",
       "img": "/images/light/generator-img/script-writer.png",
       "imgLight": "/images/light/generator-img/script-writer.png",
       "menuId": "script-writing-generator",
@@ -110,7 +110,7 @@
     },
     {
       "title": "Emails People Actually Open. Newsletters They Actually Read.",
-      "desc": "From cold outreach to product launches to weekly newsletters — generate subject lines, body copy, and CTAs in seconds. Built for founders and marketers who need their list to drive revenue, not unsubscribes.",
+      "desc": "",
       "img": "/images/light/generator-img/email-newsletter.png",
       "imgLight": "/images/light/generator-img/email-newsletter.png",
       "menuId": "email-generator",
@@ -137,7 +137,7 @@
     },
     {
       "title": "Rank Higher Without the SEO Headache.",
-      "desc": "Generate keywords, meta descriptions, H1/H2/H3 headings, and SEO-friendly URL slugs from a single topic. Built for SMBs who want to ship optimized pages without hiring an agency.",
+      "desc": "",
       "img": "/images/light/generator-img/seo-generator.png",
       "imgLight": "/images/light/generator-img/seo-generator.png",
       "menuId": "seo-keyword-meta-tag-generator",

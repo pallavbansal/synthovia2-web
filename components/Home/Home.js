@@ -96,7 +96,7 @@ const Home = () => {
             <div className="col-lg-12">
               <div className="inner text-center mt--140">
                 <h1 className="title display-one" style={{ ...styles.glasstext, ...styles.fontLarge }}>
-                  Generate Marketing Content in Minutes, <span style={styles.gradientText}> Not Hours</span>
+                  Generate Marketing<br /> Content in Minutes<br />, <span style={styles.gradientText}> Not Hours</span>
                   {/* <br /> */}
                   {/* {" "}
                   <span className="header-caption">
@@ -135,8 +135,8 @@ const Home = () => {
                   AI Hack */}
                 </h1>
                 <p className="description" style={{ ...styles.glasstext }}>
-                  Ads, emails, captions, SEO, and scripts — from simple inputs, not prompts. Built for founders and marketers <br />{" "}
-                  who'd rather ship than tinker. Try free, no credit card.
+                  Skip the prompt engineering. <br />{" "}
+                  Just fill in the details and get content that converts.
                 </p>
                 {/* <div className="form-group">
                   <textarea
