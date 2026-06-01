@@ -32,6 +32,35 @@ import BrandTwo from "../Brands/Brand-Two";
 import CtaTwo from "../CallToActions/Cta-Two";
 import { useAppContext } from "@/context/Context";
 
+const mobileStyles = `
+  @media (max-width: 767px) {
+    .mobile-banner-enhance {
+      width: 140% !important;
+      max-width: 140% !important;
+      margin-left: -20% !important;
+      border: none !important;
+      background: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+    .mobile-banner-enhance::before,
+    .mobile-banner-enhance::after {
+      display: none !important;
+    }
+    .img-container-mobile-banner {
+      overflow: hidden;
+      border: none !important;
+      background: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+    .img-container-mobile-banner::before,
+    .img-container-mobile-banner::after {
+      display: none !important;
+    }
+  }
+`;
+
 const Home = () => {
   const [visibleIndex, setVisibleIndex] = useState(0);
   const { isLightTheme } = useAppContext();
@@ -76,8 +105,8 @@ const Home = () => {
     },
     gradientText: {
       background: "linear-gradient(90deg,#c77dff,#9d4edd,#7b2cbf)",
-      "-webkit-background-clip": "text",
-      "-webkit-text-fill-color": "transparent",
+      WebkitBackgroundClip: "text",
+      WebkitTextFillColor: "transparent",
       position: "relative",
     },
     fontLarge: {
@@ -87,6 +116,7 @@ const Home = () => {
 
   return (
     <>
+      <style dangerouslySetInnerHTML={{ __html: mobileStyles }} />
       <div
         className="slider-area slider-style-1 variation-default slider-bg-image bg-banner1 slider-bg-shape"
         data-black-overlay="1"
@@ -182,9 +212,9 @@ const Home = () => {
                 </div>
               </div>
             </div>
-            <div className="col-lg-11 col-xl-11 justify-content-center">
+            <div className="col-lg-11 col-xl-11 justify-content-center img-container-mobile-banner">
               <Image
-                className="slider-image-effect"
+                className="slider-image-effect mobile-banner-enhance"
                 src={isLightTheme ? bannerImg : bannerWhiteImg}
                 width={1055}
                 height={898}

@@ -5,6 +5,40 @@ import React from "react";
 import TabData from "../../data/tabStyle.json";
 import { useAppContext } from "@/context/Context";
 
+const mobileStyles = `
+  @media (max-width: 767px) {
+    .mobile-img-enhance {
+      width: 100% !important;
+      height: auto !important;
+      object-fit: cover !important;
+      max-width: 100% !important;
+      border-radius: 14px !important;
+      display: block !important;
+    }
+    .img-container-mobile {
+      width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .export-img,
+    .img-bg-shape {
+      border: none !important;
+      background: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 100% !important;
+      display: block !important;
+    }
+    .export-img::before,
+    .export-img::after,
+    .img-bg-shape::before,
+    .img-bg-shape::after {
+      display: none !important;
+    }
+  }
+`;
+
 const TabStyleOne = () => {
   const { isLightTheme } = useAppContext();
 
@@ -16,6 +50,7 @@ const TabStyleOne = () => {
 
   return (
     <>
+      <style dangerouslySetInnerHTML={{ __html: mobileStyles }} />
       <div className="row row--30 align-items-center">
         <div className="col-lg-12">
           <div className="rainbow-default-tab style-three generator-tab-defalt">
@@ -96,10 +131,11 @@ const TabStyleOne = () => {
                         </div>
                         <div className="col-xl-6 mt_md--30 mt_sm--30">
                           <div className="export-img">
-                            <div className="inner-without-padding">
+                            <div className="inner-without-padding img-container-mobile">
                               <div className="export-img img-bg-shape">
                                 <Link className="w-100 d-block" href={getToolHref(tab)} aria-label={`Open ${tab.text || "tool"}`}>
                                   <Image
+                                    className="mobile-img-enhance"
                                     src={isLightTheme ? tab.img : tab.imgLight}
                                     width={569}
                                     height={483}

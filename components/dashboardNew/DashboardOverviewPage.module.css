@@ -209,10 +209,7 @@
 }
 
 @media (max-width: 860px) {
-.leftCol {
-  display: none !important;
-  visibility: hidden !important;
-}
+/* .leftCol is now allowed to display and will stack naturally */
 }
 
 .leftCol {

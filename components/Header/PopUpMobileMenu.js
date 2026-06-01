@@ -82,17 +82,6 @@ const PopupMobileMenu = () => {
         ></div>
         <div className="inner-popup">
           <div className="header-top">
-            <div className="logo">
-              <Link href="/">
-                <Image
-                  className="logo-light"
-                  src={isLightTheme ? logoLight : logoDark}
-                  width={116}
-                  height={30}
-                  alt="Corporate Logo"
-                />
-              </Link>
-            </div>
             <div className="close-menu">
               <button
                 className="close-button"
@@ -104,11 +93,6 @@ const PopupMobileMenu = () => {
           </div>
           <div className="content">
             <Nav />
-
-            <div className="rbt-sm-separator"></div>
-            <div className="rbt-default-sidebar-wrapper">
-              <SmallNav />
-            </div>
           </div>
           <div className="header-btn d-block d-md-none">
             {isClient && authed ? (
