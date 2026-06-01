@@ -13,6 +13,7 @@ import PopupMobileMenu from "@/components/Header/PopUpMobileMenu";
 import Footer from "@/components/Footers/Footer";
 import Copyright from "@/components/Footers/Copyright";
 import BackToTop from "../backToTop";
+import DashboardLayout from "@/components/dashboardNew/DashboardLayout";
 
 import { getAuthHeader, isAuthenticated } from "@/utils/auth";
 import API from "@/utils/api";
@@ -761,19 +762,36 @@ const SubscriptionPlanPage = () => {
     return [creditsLine, "Advanced tools access", "Cancel anytime", "Secure payments"];
   };
 
+  const renderLayout = (children) => {
+    if (authed) {
+      return (
+        <DashboardLayout title="Subscription Plans">
+          {children}
+        </DashboardLayout>
+      );
+    }
+    return (
+      <main className="page-wrapper">
+        <Header
+          headerTransparent="header-transparent"
+          headerSticky="header-sticky"
+          btnClass="rainbow-gradient-btn"
+        />
+        <PopupMobileMenu />
+        {children}
+        <Footer />
+        <Copyright />
+      </main>
+    );
+  };
+
   return (
     <>
       <PageHead title="Subscription Plans" />
 
-      <main className="page-wrapper">
-        <Context>
-          {/* <HeaderTop /> */}
-          <Header
-            headerTransparent="header-transparent"
-            headerSticky="header-sticky"
-            btnClass="rainbow-gradient-btn"
-          />
-          <PopupMobileMenu />
+      <Context>
+        {renderLayout(
+          <>
 
           {authPromptOpen ? (
             <div
@@ -1507,10 +1525,9 @@ const SubscriptionPlanPage = () => {
             </div>
           </div>
 
-          <Footer />
-          <Copyright />
-        </Context>
-      </main>
+          </>
+        )}
+      </Context>
       <BackToTop />
       <style jsx>{`
         .payment-modal {

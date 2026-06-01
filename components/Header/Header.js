@@ -100,13 +100,23 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
   return (
     <>
       {/* <DarkSwitch isLight={isLightTheme} switchTheme={toggleTheme} /> */}
+      <style dangerouslySetInnerHTML={{ __html: `
+          /* Adjust layout on mobile to prevent transparent header overlap */
+          .subscription-plan-area {
+            padding-top: 160px !important;
+          }
+          .inner.text-center.mt--140 {
+            margin-top: 140px !important;
+          }
+        }
+      `}} />
       <header
         className={`rainbow-header header-default ${headerTransparent} ${headerSticky} ${isSticky ? "sticky" : ""
           }`}
       >
         <div className="container position-relative">
           <div className="row align-items-center row--0">
-            <div className="col-lg-2 col-md-6 col-6">
+            <div className="col-lg-2 col-md-6 col-6 order-1">
               <div className="logo">
                 <Link href="/">
                   <span
@@ -141,13 +151,13 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
               </div>
             </div>
 
-            <div className="col-lg-8 d-none d-lg-block">
-              <nav className="mainmenu-nav d-none d-lg-flex justify-content-center">
+            <div className="col-lg-8 col-12 d-none d-lg-block order-3 order-lg-2 mobile-nav-wrapper">
+              <nav className="mainmenu-nav d-flex justify-content-center">
                 <Nav />
               </nav>
             </div>
 
-            <div className="col-lg-2 col-md-6 col-6 position-static">
+            <div className="col-lg-2 col-md-6 col-6 position-static order-2 order-lg-3">
               <div className="header-right d-flex align-items-center justify-content-end" style={{ gap: 10 }}>
                 {!onHome && !hideCreditsOnThisPage && <CreditsBadge className="me-2" />}
                 {isClient && authed ? (
@@ -201,9 +211,21 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
                         </div>
                         <ul className="user-list-wrapper user-nav">
                           <li>
+                            <Link href="/">
+                              <i className="fa-solid fa-house"></i>
+                              <span>Home</span>
+                            </Link>
+                          </li>
+                          <li>
                             <Link href={adminEnabled ? "/admin/users/dashboard" : "/dashboard-overview"}>
                               <i className="fa-solid fa-gauge"></i>
                               <span>Dashboard Overview</span>
+                            </Link>
+                          </li>
+                          <li>
+                            <Link href="/subscription-plan">
+                              <i className="fa-solid fa-credit-card"></i>
+                              <span>Subscription</span>
                             </Link>
                           </li>
                         </ul>
@@ -219,28 +241,25 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
                     </div>
                   </div>
                 ) : (
-                  <div className="d-flex flex-column align-items-center justify-content-center">
+                  <div className="d-none d-lg-flex flex-column align-items-center justify-content-center">
                     <div className="header-btn d-flex align-items-center" style={{ gap: 10 }}>
                       <Link className={`${btnClass}`} href="/signin">
                         <span>Get Start</span>
                       </Link>
                     </div>
-                    <Link href="/subscription-plan" className="d-flex d-lg-none align-items-center" style={{ fontSize: "11px", fontWeight: "600", color: "rgba(255,255,255,0.75)", gap: 4, marginTop: "2px" }}>
-                      <i className="fa-solid fa-credit-card"></i> <span>Plans</span>
-                    </Link>
                   </div>
                 )}
 
                 {!authed && (
                   <div className="mobile-menu-bar mr--10 ml--10 d-block d-lg-none">
                     <div className="hamberger">
-                      <Link
+                      <button
                         className="hamberger-button"
-                        href="/subscription-plan"
-                        aria-label="Subscriptions"
+                        onClick={() => setActiveMobileMenu(!activeMobileMenu)}
+                        aria-label="Toggle Mobile Menu"
                       >
                         <i className="feather-menu"></i>
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 )}

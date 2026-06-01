@@ -8,38 +8,44 @@ import CreditsBadge from "@/components/CreditsBadge";
 const NAV_ITEMS = [
   { href: "/", label: "Home", iconClass: "fa-solid fa-house" },
   { href: "/dashboard-overview", label: "Dashboard", iconClass: "fa-solid fa-gauge" },
-  { href: "/tool-history", label: "Tool History", iconClass: "fa-solid fa-clock-rotate-left" },
-  { href: "/feedback", label: "Feedback", iconClass: "fa-solid fa-comment-dots" },
   {
     href: "/copywriting-assistant",
     label: "Copywriting Tool",
     iconClass: "fa-solid fa-pen-nib",
+    isTool: true,
   },
   {
     href: "/ad-copy-generator",
     label: "Ad Generator Tool",
     iconClass: "fa-solid fa-bullhorn",
+    isTool: true,
   },
   {
     href: "/email-generator",
     label: "Email & Newsletter Writer Tool",
     iconClass: "fa-solid fa-envelope",
+    isTool: true,
   },
   {
     href: "/seo-keyword-meta-tag-generator",
     label: "SEO Keyword & Meta Tag Generator Tool",
     iconClass: "fa-solid fa-magnifying-glass",
+    isTool: true,
   },
   {
     href: "/caption-and-hastag-generator",
     label: "Caption & Hashtag Generator Tool",
     iconClass: "fa-solid fa-hashtag",
+    isTool: true,
   },
   {
     href: "/script-story-writer-tool",
     label: "Script Writer Tool",
     iconClass: "fa-solid fa-clapperboard",
+    isTool: true,
   },
+  { href: "/tool-history", label: "Tool History", iconClass: "fa-solid fa-clock-rotate-left" },
+  { href: "/feedback", label: "Feedback", iconClass: "fa-solid fa-comment-dots" },
   { href: "/settings", label: "Settings", iconClass: "fa-solid fa-gear" },
 ];
 
@@ -67,6 +73,7 @@ const DashboardLayout = ({ children, title }) => {
   const router = useRouter();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const userMenuRef = useRef(null);
 
   const [adminEnabled, setAdminEnabled] = useState(false);
@@ -170,7 +177,10 @@ const DashboardLayout = ({ children, title }) => {
 
   return (
     <div className={styles.layout}>
-      <aside className={`${styles.sidebar} ${sidebarOpen ? "" : styles.sidebarClosed}`.trim()} aria-hidden={!sidebarOpen}>
+      {mobileSidebarOpen ? (
+        <div className={styles.overlay} onClick={() => setMobileSidebarOpen(false)} />
+      ) : null}
+      <aside className={`${styles.sidebar} ${sidebarOpen ? "" : styles.sidebarClosed} ${mobileSidebarOpen ? styles.sidebarMobileOpen : ""}`.trim()} aria-hidden={!sidebarOpen && !mobileSidebarOpen}>
         <div className={styles.brand}>
           <div className={styles.brandLeft}>
             <div className={`${styles.brandMark} ${profilePicture ? styles.brandMarkNoBg : ''}`.trim()}>
@@ -195,10 +205,13 @@ const DashboardLayout = ({ children, title }) => {
           <div className={styles.navSectionTitle}>Menu</div>
           {navItems.map((item) => {
             const active = isActivePath(router.pathname, item.href);
-            const className = `${styles.navLink} ${active ? styles.navLinkActive : ""}`;
+            let className = `${styles.navLink} ${active ? styles.navLinkActive : ""}`;
+            if (!active && item.isTool) {
+              className += ` ${styles.navLinkTool}`;
+            }
             return (
-              <Link key={item.href} href={item.href} className={className}>
-                <div className={styles.navIcon}>
+              <Link key={item.href} href={item.href} className={className.trim()}>
+                <div className={`${styles.navIcon} ${item.isTool && !active ? styles.navIconTool : ""}`.trim()}>
                   <i className={item.iconClass} />
                 </div>
                 <div className={styles.navLabel}>{item.label}</div>
@@ -218,9 +231,15 @@ const DashboardLayout = ({ children, title }) => {
               className={styles.iconBtn}
               aria-label={sidebarOpen ? "Hide navigation" : "Show navigation"}
               aria-expanded={sidebarOpen}
-              onClick={() => setSidebarOpen((v) => !v)}
+              onClick={() => {
+                if (window.innerWidth <= 860) {
+                  setMobileSidebarOpen((v) => !v);
+                } else {
+                  setSidebarOpen((v) => !v);
+                }
+              }}
             >
-              <i className={sidebarOpen ? "fa-solid fa-bars" : "fa-solid fa-bars"} />
+              <i className="fa-solid fa-bars" />
             </button>
           </div>
           <div className={styles.topbarRight}>

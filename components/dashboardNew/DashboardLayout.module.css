@@ -19,6 +19,19 @@
   flex-direction: column;
   gap: 14px;
   backdrop-filter: blur(10px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
 }
 
  .topbarLeft {
@@ -105,6 +118,16 @@
   background: linear-gradient(135deg, rgba(120, 132, 255, 0.18), rgba(0, 209, 255, 0.12));
   border-color: rgba(120, 132, 255, 0.25);
   color: rgba(255, 255, 255, 0.95);
+}
+
+.navLinkTool {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.navIconTool {
+  background: rgba(120, 132, 255, 0.08);
+  border-color: rgba(120, 132, 255, 0.15);
+  color: rgba(120, 132, 255, 0.95);
 }
 
 .navIcon {
@@ -315,9 +338,33 @@
   }
 
   .sidebar {
-    width: 100%;
-    flex-basis: auto;
-    margin-bottom: 10px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    height: 100vh;
+    z-index: 1000;
+    margin: 0;
+    border-radius: 0;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+    background: rgba(10, 12, 18, 0.98);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex !important; /* Override sidebarClosed */
+  }
+
+  .sidebarMobileOpen {
+    transform: translateX(0) !important;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 999;
   }
 
   .main {
@@ -326,5 +373,25 @@
 
   .search {
     max-width: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .topbar {
+    padding: 10px 8px;
+    gap: 8px;
+    height: auto;
+    min-height: 60px;
+    flex-wrap: wrap;
+  }
+
+  .topbarRight {
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .datePill {
+    display: none;
   }
 }
