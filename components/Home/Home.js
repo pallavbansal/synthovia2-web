@@ -35,9 +35,9 @@ import { useAppContext } from "@/context/Context";
 const mobileStyles = `
   @media (max-width: 767px) {
     .mobile-banner-enhance {
-      width: 140% !important;
-      max-width: 140% !important;
-      margin-left: -20% !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      margin-left: 0 !important;
       border: none !important;
       background: none !important;
       box-shadow: none !important;
@@ -322,7 +322,7 @@ const Home = () => {
         <ServiceStyleOne />
       </div>
 
-      <div className="rainbow-advance-tab-area aiwave-bg-gradient rainbow-section-gap-big">
+      <div id="how-it-works" className="rainbow-advance-tab-area aiwave-bg-gradient rainbow-section-gap-big">
         <div className="container">
           <div className="html-tabs" data-tabs="true">
             <AdvanceTab />
