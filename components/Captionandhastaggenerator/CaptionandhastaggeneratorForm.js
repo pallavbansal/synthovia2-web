@@ -1218,7 +1218,8 @@ const Captionandhastaggeneratorform = () => {
             )}
             {/* Header */}
             <div style={styles.header} id="caption-form-top">
-                <h1 style={styles.title}>Caption Hashtag Generator</h1>
+                <h1 style={styles.title}>Caption & Hashtag Generator</h1>
+                <p style={styles.subtitle}>Captions and hashtags that grow reach.</p>
             </div>
 
             <div style={styles.card}>

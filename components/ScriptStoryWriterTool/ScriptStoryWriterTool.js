@@ -1459,7 +1459,8 @@ const ScriptStoryWriterTool = () => {
                                 )}
 
                                 <div style={styles.header}>
-                                    <h1 style={styles.title}>Scripting Writing Generator</h1>
+                                    <h1 style={styles.title}>Script Writer</h1>
+                                    <p style={styles.subtitle}>Scripts that tell stories and engage.</p>
                                 </div>
 
                                 <div style={styles.card}>

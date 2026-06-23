@@ -1465,6 +1465,7 @@ const AdCopyGeneratorForm = () => {
                 <>
                     <div style={styles.header} id="ad-copy-form-top">
                         <h1 style={styles.title}>Ad Copy Generator</h1>
+                        <p style={styles.subtitle}>Ads that turn clicks into customers.</p>
                     </div>
                     <div style={styles.card}>
 

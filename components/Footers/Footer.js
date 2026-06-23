@@ -46,22 +46,37 @@ const Footer = () => {
                 </div>
               </div>
 
-              <div className="col-lg-3 col-md-6 col-sm-6 col-12">
+              <div className="col-lg-6 col-md-6 col-sm-12 col-12">
                 {FooterData &&
-                  FooterData.footer.map((data, index) => (
-                    <div className="rainbow-footer-widget" key={index}>
-                      <FooterProps list={data.links} />
-                    </div>
-                  ))}
-              </div>
-
-              <div className="col-lg-3 col-md-6 col-sm-6 col-12">
-                {FooterData &&
-                  FooterData.footer.map((data, index) => (
-                    <div className="rainbow-footer-widget" key={index}>
-                      <FooterProps list={data.services} />
-                    </div>
-                  ))}
+                  FooterData.footer.map((data, index) => {
+                    const firstColumnItems = data.links[0]?.innerItem || [];
+                    const secondColumnItems = data.services[0]?.innerItem || [];
+                    return (
+                      <div className="rainbow-footer-widget" key={index}>
+                        <div className="widget-menu-bottom">
+                          <h4 className="title">Tools</h4>
+                          <div className="inner">
+                            <div style={{ display: "flex", flexDirection: "row", gap: "40px", flexWrap: "nowrap", alignItems: "flex-start" }}>
+                              <ul className="footer-link link-hover" style={{ margin: 0, padding: 0, listStyle: "none", minWidth: "180px", flex: "0 0 auto" }}>
+                                {firstColumnItems.map((inner, i) => (
+                                  <li key={i}>
+                                    <Link href={inner.link}>{inner.text}</Link>
+                                  </li>
+                                ))}
+                              </ul>
+                              <ul className="footer-link link-hover" style={{ margin: 0, padding: 0, listStyle: "none", minWidth: "180px", flex: "0 0 auto" }}>
+                                {secondColumnItems.map((inner, i) => (
+                                  <li key={i}>
+                                    <Link href={inner.link}>{inner.text}</Link>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
 
               {/* <div className="col-lg-3 col-md-6 col-sm-6 col-12">

@@ -16,9 +16,9 @@ const ServiceStyleOne = () => {
   const { isLightTheme } = useAppContext();
 
   var settings = {
-    infinite: true,
+    infinite: false,
     slidesToShow: 3,
-    slidesToScroll: 2,
+    slidesToScroll: 3,
     dots: true,
     arrows: true,
     cssEase: "linear",
@@ -78,12 +78,7 @@ const ServiceStyleOne = () => {
                         <div className="description centered-shape">
                           <h5 className="title">{data.title}</h5>
                           <p className="desc">{data.desc}</p>
-                          <Link className="read-more-btn" href="#">
-                            Explore More{" "}
-                            <span>
-                              <i className="fa-sharp fa-solid fa-arrow-right"></i>
-                            </span>
-                          </Link>
+
                         </div>
                       </div>
                       <div className="bg-shaped">

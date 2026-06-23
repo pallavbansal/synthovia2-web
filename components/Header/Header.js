@@ -136,7 +136,7 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
                       sizes="44px"
                       priority={true}
                       alt="ChatBot Logo"
-                      style={{ objectFit: "cover", transform: "scale(1.35)", transformOrigin: "center" }}
+                      style={{ objectFit: "contain" }}
                     />
                   </span>
                   <Image
@@ -244,7 +244,7 @@ const Header = ({ headerTransparent, headerSticky, btnClass }) => {
                   <div className="d-none d-lg-flex flex-column align-items-center justify-content-center">
                     <div className="header-btn d-flex align-items-center" style={{ gap: 10 }}>
                       <Link className={`${btnClass}`} href="/signin">
-                        <span>Get Start</span>
+                        <span>Get Started</span>
                       </Link>
                     </div>
                   </div>

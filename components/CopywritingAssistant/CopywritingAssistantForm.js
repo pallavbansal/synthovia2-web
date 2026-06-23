@@ -1603,7 +1603,8 @@ const CopywritingAssistantForm = () => {
                 </div>
             )}
             <div style={styles.header}>
-                <h1 style={styles.title}>Copy Writing Generator</h1>
+                <h1 style={styles.title}>Copywriting Assistant</h1>
+                <p style={styles.subtitle}>Ready-to-use copy that persuades.</p>
             </div>
             <div style={styles.card}>
                 <div style={{ padding: '24px' }}>

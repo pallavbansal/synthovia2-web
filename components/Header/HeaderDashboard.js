@@ -11,7 +11,7 @@ import UserMenu from "./UserMenu";
 
 import { getUser } from "@/utils/auth";
 
-const HeaderDashboard = ({ display }) => {
+const HeaderDashboard = ({ display, hideDropdown }) => {
   const {
     mobile,
     setMobile,
@@ -96,7 +96,7 @@ const HeaderDashboard = ({ display }) => {
                         fill
                         sizes="44px"
                         alt="Corporate Logo"
-                        style={{ objectFit: "cover", transform: "scale(1.35)", transformOrigin: "center" }}
+                        style={{ objectFit: "contain" }}
                       />
                     </span>
                     <span
@@ -115,7 +115,7 @@ const HeaderDashboard = ({ display }) => {
                         fill
                         sizes="44px"
                         alt="Corporate Logo"
-                        style={{ objectFit: "cover", transform: "scale(1.35)", transformOrigin: "center" }}
+                        style={{ objectFit: "contain" }}
                       />
                     </span>
                   </Link>
@@ -142,52 +142,54 @@ const HeaderDashboard = ({ display }) => {
                   </div>
                 </div>
 
-                <div className="rbt-admin-panel account-access rbt-user-wrapper right-align-dropdown">
-                  <div className="rbt-admin-card grid-style">
-                    <a className="d-flex align-items-center" href="#">
-                      <div className="inner d-flex align-items-center">
-                        <div className="img-box">
-                          {profilePicture ? (
-                            <img
-                              src={profilePicture}
-                              alt={userTitle}
-                              style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }}
-                            />
-                          ) : (
-                            <div
-                              style={{
-                                width: 36,
-                                height: 36,
-                                borderRadius: "50%",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontWeight: 800,
-                                fontSize: 12,
-                                letterSpacing: "0.06em",
-                                color: "#fff",
-                                background:
-                                  "linear-gradient(135deg, rgba(124,58,237,1) 0%, rgba(99,102,241,1) 60%, rgba(236,72,153,0.9) 100%)",
-                              }}
-                            >
-                              {avatarText}
-                            </div>
-                          )}
+                {!hideDropdown && (
+                  <div className="rbt-admin-panel account-access rbt-user-wrapper right-align-dropdown">
+                    <div className="rbt-admin-card grid-style">
+                      <a className="d-flex align-items-center" href="#">
+                        <div className="inner d-flex align-items-center">
+                          <div className="img-box">
+                            {profilePicture ? (
+                              <img
+                                src={profilePicture}
+                                alt={userTitle}
+                                style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  width: 36,
+                                  height: 36,
+                                  borderRadius: "50%",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  fontWeight: 800,
+                                  fontSize: 12,
+                                  letterSpacing: "0.06em",
+                                  color: "#fff",
+                                  background:
+                                    "linear-gradient(135deg, rgba(124,58,237,1) 0%, rgba(99,102,241,1) 60%, rgba(236,72,153,0.9) 100%)",
+                                }}
+                              >
+                                {avatarText}
+                              </div>
+                            )}
+                          </div>
+                          <div className="content">
+                            <span className="title ">{userTitle}</span>
+                            <p>{userSub}</p>
+                          </div>
                         </div>
-                        <div className="content">
-                          <span className="title ">{userTitle}</span>
-                          <p>{userSub}</p>
+                        <div className="icon" style={{ marginLeft: 6, display: "flex", alignItems: "center" }}>
+                          <i className="fa-sharp fa-solid fa-chevron-down"></i>
                         </div>
-                      </div>
-                      <div className="icon" style={{ marginLeft: 6, display: "flex", alignItems: "center" }}>
-                        <i className="fa-sharp fa-solid fa-chevron-down"></i>
-                      </div>
-                    </a>
+                      </a>
+                    </div>
+                    <div className="rbt-user-menu-list-wrapper">
+                      <UserMenu />
+                    </div>
                   </div>
-                  <div className="rbt-user-menu-list-wrapper">
-                    <UserMenu />
-                  </div>
-                </div>
+                )}
 
                 {/* <div className={`expand-btn-grp ${display}`}>
                   <button
