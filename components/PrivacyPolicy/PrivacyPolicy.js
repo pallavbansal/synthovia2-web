@@ -69,97 +69,80 @@ const PrivacyPolicy = () => {
             <div style={styles.card}>
               <div style={styles.section}>
                 <p style={styles.text}>
-                  By accessing or using Synthovia, you agree to this Privacy Policy. 
-                  If you do not agree, you must not use the service.
+                  At Synthovia, we are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our AI-powered services. Please read this policy carefully.
                 </p>
               </div>
 
               <div style={styles.section}>
-                <h2 style={styles.heading}>1. Service Description</h2>
-                <p style={styles.text}>
-                  Synthovia provides AI-powered tools for content generation, branding, automation, and related services.
-                </p>
+                <h2 style={styles.heading}>1. Information We Collect</h2>
+                <p style={styles.text}>We may collect information about you in a variety of ways. The information we may collect includes:</p>
                 <ul style={styles.list}>
-                  <li style={styles.listItem}><span style={styles.bullet}>•</span> We may change, update, or remove features at any time without notice.</li>
-                  <li style={styles.listItem}><span style={styles.bullet}>•</span> We do not guarantee that the service will always be available, accurate, or error-free.</li>
+                  <li style={styles.listItem}><span style={styles.bullet}>•</span> <strong>Personal Data:</strong> Personally identifiable information, such as your name, email address, and demographic information, that you voluntarily give to us when you register for an account.</li>
+                  <li style={styles.listItem}><span style={styles.bullet}>•</span> <strong>Derivative Data:</strong> Information our servers automatically collect when you access the site, such as your IP address, your browser type, your operating system, and your access times.</li>
+                  <li style={styles.listItem}><span style={styles.bullet}>•</span> <strong>Service Data:</strong> Prompts, content inputs, and any generated content resulting from your use of our AI tools.</li>
                 </ul>
               </div>
 
               <div style={styles.section}>
-                <h2 style={styles.heading}>2. Account</h2>
-                <p style={styles.text}>You may need to create an account to use Synthovia. You are responsible for:</p>
+                <h2 style={styles.heading}>2. How We Use Your Information</h2>
+                <p style={styles.text}>Having accurate information about you permits us to provide you with a smooth, efficient, and customized experience. We may use information collected about you via the Site to:</p>
                 <ul style={styles.list}>
-                  <li style={styles.listItem}><span style={styles.bullet}>•</span> Keeping your login secure</li>
-                  <li style={styles.listItem}><span style={styles.bullet}>•</span> All activity on your account</li>
-                  <li style={styles.listItem}><span style={styles.bullet}>•</span> Any content created using your account</li>
+                  <li style={styles.listItem}><span style={styles.bullet}>•</span> Create and manage your account.</li>
+                  <li style={styles.listItem}><span style={styles.bullet}>•</span> Generate and deliver AI-powered content based on your inputs.</li>
+                  <li style={styles.listItem}><span style={styles.bullet}>•</span> Improve our services, algorithms, and user experience.</li>
+                  <li style={styles.listItem}><span style={styles.bullet}>•</span> Process transactions and send you related information, including purchase confirmations and invoices.</li>
+                  <li style={styles.listItem}><span style={styles.bullet}>•</span> Send you technical notices, updates, security alerts, and support and administrative messages.</li>
                 </ul>
-                <p style={styles.text}>We may suspend or delete accounts at any time without notice.</p>
               </div>
 
               <div style={styles.section}>
-                <h2 style={styles.heading}>3. User Content</h2>
-                <p style={styles.text}>You are responsible for all prompts, inputs, and generated content. You agree not to use Synthovia to create or share:</p>
+                <h2 style={styles.heading}>3. Information Sharing and Disclosure</h2>
+                <p style={styles.text}>We may share information we have collected about you in certain situations. Your information may be disclosed as follows:</p>
                 <ul style={styles.list}>
-                  <li style={styles.listItem}><span style={styles.bullet}>•</span> Illegal content</li>
-                  <li style={styles.listItem}><span style={styles.bullet}>•</span> Harmful content</li>
-                  <li style={styles.listItem}><span style={styles.bullet}>•</span> Copyrighted material without permission</li>
-                  <li style={styles.listItem}><span style={styles.bullet}>•</span> Spam or abuse</li>
-                  <li style={styles.listItem}><span style={styles.bullet}>•</span> Misleading or fraudulent content</li>
+                  <li style={styles.listItem}><span style={styles.bullet}>•</span> <strong>By Law or to Protect Rights:</strong> If we believe the release of information about you is necessary to respond to legal process or to protect the rights, property, and safety of others.</li>
+                  <li style={styles.listItem}><span style={styles.bullet}>•</span> <strong>Third-Party Service Providers:</strong> We may share your information with third parties that perform services for us or on our behalf, including AI models (like OpenAI or Anthropic), payment processing, data analysis, email delivery, hosting services, and customer service.</li>
                 </ul>
-                <p style={styles.text}>Synthovia may remove content or block users at any time.</p>
               </div>
 
               <div style={styles.section}>
-                <h2 style={styles.heading}>4. AI Generated Output</h2>
-                <p style={styles.text}>AI results may be incorrect, incomplete, or inaccurate. Synthovia is not responsible for:</p>
+                <h2 style={styles.heading}>4. Data Security</h2>
+                <p style={styles.text}>We use administrative, technical, and physical security measures to help protect your personal information. While we have taken reasonable steps to secure the personal information you provide to us, please be aware that despite our efforts, no security measures are perfect or impenetrable, and no method of data transmission can be guaranteed against any interception or other type of misuse.</p>
+              </div>
+
+              <div style={styles.section}>
+                <h2 style={styles.heading}>5. Data Retention</h2>
+                <p style={styles.text}>We will only retain your personal information for as long as necessary to fulfill the purposes we collected it for, including for the purposes of satisfying any legal, accounting, or reporting requirements. You can request deletion of your account and associated data at any time.</p>
+              </div>
+
+              <div style={styles.section}>
+                <h2 style={styles.heading}>6. Your Privacy Rights</h2>
+                <p style={styles.text}>Depending on your location, you may have the following rights regarding your personal information:</p>
                 <ul style={styles.list}>
-                  <li style={styles.listItem}><span style={styles.bullet}>•</span> Decisions made using AI output</li>
-                  <li style={styles.listItem}><span style={styles.bullet}>•</span> Business losses</li>
-                  <li style={styles.listItem}><span style={styles.bullet}>•</span> Financial losses</li>
-                  <li style={styles.listItem}><span style={styles.bullet}>•</span> Legal issues</li>
-                  <li style={styles.listItem}><span style={styles.bullet}>•</span> Damages caused by generated content</li>
+                  <li style={styles.listItem}><span style={styles.bullet}>•</span> The right to access and receive a copy of your personal data.</li>
+                  <li style={styles.listItem}><span style={styles.bullet}>•</span> The right to rectify any inaccurate or incomplete personal data.</li>
+                  <li style={styles.listItem}><span style={styles.bullet}>•</span> The right to request the erasure of your personal data.</li>
+                  <li style={styles.listItem}><span style={styles.bullet}>•</span> The right to object to or restrict the processing of your data.</li>
                 </ul>
-                <p style={styles.text}>Use AI output at your own risk.</p>
               </div>
 
               <div style={styles.section}>
-                <h2 style={styles.heading}>5. Payments</h2>
-                <p style={styles.text}>Paid plans may be offered. All payments are final, non-refundable, and subject to change. We may change pricing at any time. Failure to pay may result in account suspension.</p>
+                <h2 style={styles.heading}>7. Cookies and Tracking</h2>
+                <p style={styles.text}>We may use cookies, web beacons, tracking pixels, and other tracking technologies on the Site to help customize the Site and improve your experience. You can remove or reject cookies through your browser settings, but be aware that such action could affect the availability and functionality of the Site.</p>
               </div>
 
               <div style={styles.section}>
-                <h2 style={styles.heading}>6. Data & Storage</h2>
-                <p style={styles.text}>We may store user data, prompts, and generated content to operate the service. We do not guarantee permanent storage. Data may be deleted at any time without notice.</p>
+                <h2 style={styles.heading}>8. Children's Privacy</h2>
+                <p style={styles.text}>We do not knowingly solicit information from or market to children under the age of 13. If you become aware of any data we have collected from children under age 13, please contact us.</p>
               </div>
 
               <div style={styles.section}>
-                <h2 style={styles.heading}>7. Third-Party Services</h2>
-                <p style={styles.text}>Synthovia may use third-party services such as hosting providers, payment providers, and analytics tools. We are not responsible for third-party failures.</p>
+                <h2 style={styles.heading}>9. Changes to This Privacy Policy</h2>
+                <p style={styles.text}>We may update this Privacy Policy from time to time in order to reflect, for example, changes to our practices or for other operational, legal, or regulatory reasons. We will notify you of any changes by posting the new Privacy Policy on this page.</p>
               </div>
 
               <div style={styles.section}>
-                <h2 style={styles.heading}>8. No Warranty</h2>
-                <p style={styles.text}>Synthovia is provided "as is" and "as available". We make no guarantees about accuracy, availability, reliability, security, or performance. Use the service at your own risk.</p>
-              </div>
-
-              <div style={styles.section}>
-                <h2 style={styles.heading}>9. Limitation of Liability</h2>
-                <p style={styles.text}>Synthovia will not be liable for data loss, lost profits, business loss, indirect damages, service interruption, or AI errors. Your use of Synthovia is at your own risk.</p>
-              </div>
-
-              <div style={styles.section}>
-                <h2 style={styles.heading}>10. Termination</h2>
-                <p style={styles.text}>We may suspend or terminate access at any time for any reason without notice.</p>
-              </div>
-
-              <div style={styles.section}>
-                <h2 style={styles.heading}>11. Changes to Terms</h2>
-                <p style={styles.text}>We may update these Terms at any time. Continued use of Synthovia means you accept the new terms.</p>
-              </div>
-
-              <div style={styles.section}>
-                <h2 style={styles.heading}>12. Acceptance</h2>
-                <p style={styles.text}>By using Synthovia, you agree to these Terms and Conditions.</p>
+                <h2 style={styles.heading}>10. Contact Us</h2>
+                <p style={styles.text}>If you have questions or comments about this Privacy Policy, please contact us at support@synthovia.ai.</p>
               </div>
             </div>
           </div>

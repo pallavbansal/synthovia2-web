@@ -14,7 +14,7 @@ const TermsPolicyPage = () => {
       <main className="page-wrapper rbt-dashboard-page">
         <Context>
           <div className="rbt-panel-wrapper">
-            <HeaderDashboard display="d-none" />
+            <HeaderDashboard display="d-none" hideDropdown={true} />
             <PopupMobileMenu />
 
             <PrivacyPolicy />
