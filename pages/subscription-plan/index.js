@@ -317,7 +317,7 @@ const SubscriptionPlanPage = () => {
       if (String(tz).toLowerCase().includes("kolkata") || String(tz).toLowerCase().includes("calcutta")) {
         defaultCode = "IN";
       }
-    } catch (e) {}
+    } catch (e) { }
     setGeoCountryCode(defaultCode);
     setGeoIsIndia(defaultCode === "IN");
 
@@ -1350,7 +1350,7 @@ const SubscriptionPlanPage = () => {
                           data-bs-parent="#faqAccordion"
                         >
                           <div className="accordion-body">
-                            We accept PayPal for secure and convenient payments. All transactions are encrypted and processed securely to protect your financial information.
+                            We accept all major credit/debit cards, UPI, Net Banking, and Wallets via Razorpay (for India), and PayPal for international payments.
                           </div>
                         </div>
                       </div>
@@ -1376,7 +1376,7 @@ const SubscriptionPlanPage = () => {
                           data-bs-parent="#faqAccordion"
                         >
                           <div className="accordion-body">
-                            Yes, you can upgrade or downgrade your plan at any time. When you upgrade, you'll be charged the prorated difference. When you downgrade, the changes will take effect at the start of your next billing cycle.
+                            Yes! You can upgrade or downgrade your plan anytime from your dashboard. Changes take effect immediately, and your credits are adjusted accordingly.
                           </div>
                         </div>
                       </div>
@@ -1402,7 +1402,7 @@ const SubscriptionPlanPage = () => {
                           data-bs-parent="#faqAccordion"
                         >
                           <div className="accordion-body">
-                            If you run out of credits before your billing cycle ends, you can either upgrade to a higher plan or purchase additional credits separately. Your service will continue uninterrupted once you add more credits.
+                            Once your credits are exhausted, you won't be able to generate new content until you top up or your plan renews. You can purchase additional credits or upgrade to a higher plan anytime.
                           </div>
                         </div>
                       </div>
@@ -1428,7 +1428,7 @@ const SubscriptionPlanPage = () => {
                           data-bs-parent="#faqAccordion"
                         >
                           <div className="accordion-body">
-                            Absolutely! You can cancel your subscription at any time from your account settings. You'll continue to have access to your plan features until the end of your current billing period. No cancellation fees apply.
+                            Synthovia operates on a pay-per-cycle model — there's no long-term contract. Simply don't renew when your billing cycle ends and your subscription will automatically stop. No manual cancellation needed.
                           </div>
                         </div>
                       </div>
@@ -1455,7 +1455,7 @@ const SubscriptionPlanPage = () => {
                           data-bs-parent="#faqAccordion"
                         >
                           <div className="accordion-body">
-                            Currently, we don't offer a traditional free trial, but our Starter plan provides an affordable way to explore our platform. Additionally, we offer a 7-day money-back guarantee so you can try our service risk-free.
+                            Yes! New users get a set of free credits upon signing up so you can explore Synthovia's tools before committing to a paid plan.
                           </div>
                         </div>
                       </div>
@@ -1481,7 +1481,7 @@ const SubscriptionPlanPage = () => {
                           data-bs-parent="#faqAccordion"
                         >
                           <div className="accordion-body">
-                            Credits are renewed at the start of each billing cycle and do not roll over. We recommend choosing a plan that matches your typical monthly usage to get the best value.
+                            Credits do not roll over — they reset at the start of each billing cycle. We recommend choosing a plan that matches your monthly usage.
                           </div>
                         </div>
                       </div>
@@ -1507,7 +1507,7 @@ const SubscriptionPlanPage = () => {
                           data-bs-parent="#faqAccordion"
                         >
                           <div className="accordion-body">
-                            Yes, security is our top priority. We use industry-standard encryption for all data transmission and storage. Your payment information is processed through secure payment gateways and we never store your full payment details on our servers.
+                            Yes. We take data privacy seriously. Your inputs and generated content are never shared or used to train models. Synthovia complies with India's DPDP Act 2023 and follows industry-standard security practices.
                           </div>
                         </div>
                       </div>

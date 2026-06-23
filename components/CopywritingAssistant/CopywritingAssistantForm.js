@@ -806,9 +806,9 @@ const CopywritingAssistantForm = () => {
         if (formData.ctaStyleMode === 'custom' && formData.customCtaStyle) {
             ctaStyleObj = { id: null, value: formData.customCtaStyle, type: 'custom' };
         } else if (formData.ctaStyleMode === 'predefined' && formData.ctaStyle) {
-            ctaStyleObj = buildOptionObject('cta_style', formData.ctaStyle) || 
-                          buildOptionObject('copy_writing_cta_style', formData.ctaStyle) || 
-                          { id: null, value: formData.ctaStyle, type: 'predefined' };
+            ctaStyleObj = buildOptionObject('cta_style', formData.ctaStyle) ||
+                buildOptionObject('copy_writing_cta_style', formData.ctaStyle) ||
+                { id: null, value: formData.ctaStyle, type: 'predefined' };
         }
 
         const outputStructureObj = formData.outputStructure
@@ -1705,26 +1705,74 @@ const CopywritingAssistantForm = () => {
                                         </div>
                                     </div>
 
-                                    {/* Primary Goal */}
+                                    {/* Tone Selection */}
                                     <div className="col-md-6">
                                         <div style={styles.formGroup}>
-                                            <label htmlFor="primaryGoal" style={styles.label}>
-                                                Primary Goal <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} data-tooltip-id="primaryGoal-tooltip" data-tooltip-content="The action this copy should drive.">i</span>
+                                            <label style={styles.label}>
+                                                Tone Selection <span style={{ color: '#ef4444' }}>*</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="toneMode-tooltip" data-tooltip-content="How your brand should sound here.">i</span>
                                             </label>
-                                            <Tooltip style={styles.toolTip} id="primaryGoal-tooltip" />
-                                            <input
-                                                type="text"
-                                                id="primaryGoal"
-                                                name="primaryGoal"
-                                                value={formData.primaryGoal}
-                                                onChange={handleChange}
-                                                style={styles.input}
-                                                placeholder="What do you want to achieve with this content?"
-                                                maxLength={500}
-                                                required
-                                            />
-                                            <div style={styles.charCount}>{formData.primaryGoal.length}/500 characters</div>
+                                            <Tooltip style={styles.toolTip} id="toneMode-tooltip" />
+                                            <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
+                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="radio"
+                                                        name="toneMode"
+                                                        value="predefined"
+                                                        checked={formData.toneMode === 'predefined'}
+                                                        onChange={handleChange}
+                                                        style={{ marginRight: '8px' }}
+                                                    />
+                                                    Predefined
+                                                </label>
+                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                    <input
+                                                        type="radio"
+                                                        name="toneMode"
+                                                        value="custom"
+                                                        checked={formData.toneMode === 'custom'}
+                                                        onChange={handleChange}
+                                                        style={{ marginRight: '8px' }}
+                                                    />
+                                                    Custom
+                                                </label>
+                                            </div>
+
+                                            {formData.toneMode === 'predefined' && (
+                                                <div style={{ marginTop: '8px' }}>
+                                                    <Tooltip style={styles.toolTip} id="tone-tooltip" />
+                                                    <select
+                                                        id="toneOfVoice"
+                                                        name="toneOfVoice"
+                                                        value={formData.toneOfVoice}
+                                                        onChange={handleChange}
+                                                        style={styles.select}
+                                                        required={formData.toneMode === 'predefined'}
+                                                    >
+                                                        <option value="">Select a tone</option>
+                                                        {toneOptions.map((tone, index) => (
+                                                            <option key={index} value={tone.value}>{tone.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+
+                                            {formData.toneMode === 'custom' && (
+                                                <div style={{ position: 'relative', marginTop: '8px' }}>
+                                                    <input
+                                                        type="text"
+                                                        id="customTone"
+                                                        name="customTone"
+                                                        value={formData.customTone}
+                                                        onChange={handleChange}
+                                                        style={styles.input}
+                                                        placeholder="Describe your desired tone in a few words (max 12 words)"
+                                                        maxLength={80}
+                                                        required={formData.toneMode === 'custom'}
+                                                    />
+                                                    <div style={styles.charCount}>{formData.customTone.length}/80</div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
@@ -1750,6 +1798,28 @@ const CopywritingAssistantForm = () => {
                                         </div>
                                     </div>
 
+                                    {/* Primary Goal */}
+                                    <div className="col-12">
+                                        <div style={styles.formGroup}>
+                                            <label htmlFor="primaryGoal" style={styles.label}>
+                                                Primary Goal <span style={{ color: '#ef4444' }}>*</span>
+                                                <span style={styles.infoIcon} data-tooltip-id="primaryGoal-tooltip" data-tooltip-content="The action this copy should drive.">i</span>
+                                            </label>
+                                            <Tooltip style={styles.toolTip} id="primaryGoal-tooltip" />
+                                            <input
+                                                type="text"
+                                                id="primaryGoal"
+                                                name="primaryGoal"
+                                                value={formData.primaryGoal}
+                                                onChange={handleChange}
+                                                style={styles.input}
+                                                placeholder="What do you want to achieve with this content?"
+                                                maxLength={500}
+                                                required
+                                            />
+                                            <div style={styles.charCount}>{formData.primaryGoal.length}/500 characters</div>
+                                        </div>
+                                    </div>
 
                                     {/* Target Audience */}
                                     <div className="col-12">
@@ -1911,77 +1981,6 @@ const CopywritingAssistantForm = () => {
                                                     </div>
                                                 )}
                                             </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Tone Selection */}
-                                    <div className="col-12">
-                                        <div style={styles.formGroup}>
-                                            <label style={styles.label}>
-                                                Tone Selection <span style={{ color: '#ef4444' }}>*</span>
-                                                <span style={styles.infoIcon} data-tooltip-id="toneMode-tooltip" data-tooltip-content="How your brand should sound here.">i</span>
-                                            </label>
-                                            <Tooltip style={styles.toolTip} id="toneMode-tooltip" />
-                                            <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
-                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                                    <input
-                                                        type="radio"
-                                                        name="toneMode"
-                                                        value="predefined"
-                                                        checked={formData.toneMode === 'predefined'}
-                                                        onChange={handleChange}
-                                                        style={{ marginRight: '8px' }}
-                                                    />
-                                                    Predefined
-                                                </label>
-                                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                                    <input
-                                                        type="radio"
-                                                        name="toneMode"
-                                                        value="custom"
-                                                        checked={formData.toneMode === 'custom'}
-                                                        onChange={handleChange}
-                                                        style={{ marginRight: '8px' }}
-                                                    />
-                                                    Custom
-                                                </label>
-                                            </div>
-
-                                            {formData.toneMode === 'predefined' && (
-                                                <div style={{ marginTop: '8px' }}>
-                                                    <Tooltip style={styles.toolTip} id="tone-tooltip" />
-                                                    <select
-                                                        id="toneOfVoice"
-                                                        name="toneOfVoice"
-                                                        value={formData.toneOfVoice}
-                                                        onChange={handleChange}
-                                                        style={styles.select}
-                                                        required={formData.toneMode === 'predefined'}
-                                                    >
-                                                        <option value="">Select a tone</option>
-                                                        {toneOptions.map((tone, index) => (
-                                                            <option key={index} value={tone.value}>{tone.label}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            )}
-
-                                            {formData.toneMode === 'custom' && (
-                                                <div style={{ position: 'relative', marginTop: '8px' }}>
-                                                    <input
-                                                        type="text"
-                                                        id="customTone"
-                                                        name="customTone"
-                                                        value={formData.customTone}
-                                                        onChange={handleChange}
-                                                        style={styles.input}
-                                                        placeholder="Describe your desired tone in a few words (max 12 words)"
-                                                        maxLength={80}
-                                                        required={formData.toneMode === 'custom'}
-                                                    />
-                                                    <div style={styles.charCount}>{formData.customTone.length}/80</div>
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
 

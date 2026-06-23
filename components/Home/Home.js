@@ -126,12 +126,46 @@ const Home = () => {
             <div className="col-lg-12">
               <div className="inner text-center mt--140">
                 <h1 className="title display-one" style={{ ...styles.glasstext, ...styles.fontLarge }}>
-                  Generate Marketing Content in Minutes,
-                  <br />
-                  <span style={styles.gradientText}>Not Hours</span>
+                  Generate Marketing<br /> Content in Minutes<br />, <span style={styles.gradientText}> Not Hours</span>
+                  {/* <br /> */}
+                  {/* {" "}
+                  <span className="header-caption">
+                    <span className="cd-headline rotate-1">
+                      <span className="cd-words-wrapper">
+                        <b
+                          className={
+                            visibleIndex === 0
+                              ? "is-visible theme-gradient"
+                              : "is-hidden theme-gradient"
+                          }
+                        >
+                          AI Chating
+                        </b>
+                        <b
+                          className={
+                            visibleIndex === 1
+                              ? "is-visible theme-gradient"
+                              : "is-hidden theme-gradient"
+                          }
+                        >
+                          AI Writing
+                        </b>
+                        <b
+                          className={
+                            visibleIndex === 2
+                              ? "is-visible theme-gradient"
+                              : "is-hidden theme-gradient"
+                          }
+                        >
+                          AI Chating
+                        </b>
+                      </span>
+                    </span>
+                  </span>{" "}
+                  AI Hack */}
                 </h1>
                 <p className="description" style={{ ...styles.glasstext }}>
-                  Skip the prompt engineering. <br />
+                  Skip the prompt engineering. <br />{" "}
                   Just fill in the details and get content that converts.
                 </p>
                 {/* <div className="form-group">
@@ -276,10 +310,10 @@ const Home = () => {
                 data-sal-delay="150"
               >
                 <h4 className="subtitle">
-                  <span className="theme-gradient">Assisting individuals</span>
+                  <span className="theme-gradient">Powering Content Worldwide</span>
                 </h4>
                 <h2 className="title mb--60">
-                  Generate Smarter, Not <br /> Harder with
+                  Stop Struggling <br /> Start Publishing
                 </h2>
               </div>
             </div>
