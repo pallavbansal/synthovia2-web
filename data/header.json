@@ -60,7 +60,7 @@
       "isDisable": false,
       "type": "default",
       "img": "/images/generator-icon/text.png",
-      "text": "Copywriting Tool",
+      "text": "Copywriting Assistant",
       "badge": "",
       "icon": ""
     },
@@ -69,7 +69,7 @@
       "isDisable": false,
       "type": "default",
       "img": "/images/generator-icon/code-editor.png",
-      "text": "Ad Generator Tool",
+      "text": "Ad Copy Generator",
       "badge": "",
       "icon": ""
     },
@@ -78,7 +78,7 @@
       "isDisable": false,
       "type": "default",
       "img": "/images/generator-icon/email.png",
-      "text": "Email & Newsletter Writer Tool",
+      "text": "Email & Newsletter Generator",
       "badge": "",
       "icon": ""
     },
@@ -87,7 +87,7 @@
       "isDisable": false,
       "type": "default",
       "img": "/images/generator-icon/document.png",
-      "text": "SEO Keyword & Meta Tag Generator Tool",
+      "text": "SEO & Keyword Generator",
       "badge": "",
       "icon": ""
     },
@@ -96,7 +96,7 @@
       "isDisable": false,
       "type": "default",
       "img": "/images/generator-icon/photo.png",
-      "text": "Caption & Hashtag Generator Tool",
+      "text": "Caption & Hashtag Generator",
       "badge": "",
       "icon": ""
     },
@@ -105,7 +105,7 @@
       "isDisable": false,
       "type": "default",
       "img": "/images/generator-icon/lyrics.png",
-      "text": "Script Writer Tool",
+      "text": "Script Writer",
       "badge": "",
       "icon": ""
     },

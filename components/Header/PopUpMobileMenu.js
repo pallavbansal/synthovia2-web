@@ -110,7 +110,7 @@ const PopupMobileMenu = () => {
               </div>
             ) : (
               <Link className="btn-default" href="/signin" onClick={() => setActiveMobileMenu(true)}>
-                Get Start
+                Get Started
               </Link>
             )}
           </div>

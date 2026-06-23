@@ -1228,6 +1228,7 @@ const EmailNewsletterGenerator = () => {
 
             <div style={styles.header}>
                 <h1 style={styles.title}>Email & Newsletter Generator</h1>
+                <p style={styles.subtitle}>Emails that get opened and replied to.</p>
             </div>
 
             <div style={styles.card}>

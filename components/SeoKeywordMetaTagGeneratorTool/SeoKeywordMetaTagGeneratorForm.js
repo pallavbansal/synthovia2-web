@@ -1707,7 +1707,8 @@ const SeoKeywordMetaTagGeneratorForm = () => {
 
       <div style={styles.container} className="seo-keyword-meta-form">
          <div style={styles.header}>
-            <h1 style={styles.title}>Seo Keyword & Meta Tag Generator</h1>
+            <h1 style={styles.title}>SEO & Keyword Generator</h1>
+            <p style={styles.subtitle}>Keywords and meta tags that rank.</p>
           </div>
         <div style={styles.card}>
          

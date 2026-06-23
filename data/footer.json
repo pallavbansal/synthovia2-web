@@ -3,7 +3,7 @@
     {
       "links": [
         {
-          "title": "Services",
+          "title": "Tools",
           "innerItem": [
             {
               "link": "/ad-copy-generator",
@@ -22,7 +22,7 @@
       ],
       "services": [
         {
-          "title": "Services",
+          "title": "Tools",
           "innerItem": [
             {
               "link": "/email-generator",

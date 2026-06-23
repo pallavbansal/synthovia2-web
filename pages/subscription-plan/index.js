@@ -763,13 +763,6 @@ const SubscriptionPlanPage = () => {
   };
 
   const renderLayout = (children) => {
-    if (authed) {
-      return (
-        <DashboardLayout title="Subscription Plans">
-          {children}
-        </DashboardLayout>
-      );
-    }
     return (
       <main className="page-wrapper">
         <Header

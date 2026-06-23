@@ -286,7 +286,7 @@ const Home = () => {
               >
                 <h4 className="subtitle">
                   <span className="theme-gradient">
-                    RAINBOW UNLOCKS THE POTENTIAL ai
+                    SIX TOOLS ONE CONTENT ENGINE.
                   </span>
                 </h4>
                 <h2 className="title mb--0">
