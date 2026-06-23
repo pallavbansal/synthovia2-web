@@ -126,47 +126,13 @@ const Home = () => {
             <div className="col-lg-12">
               <div className="inner text-center mt--140">
                 <h1 className="title display-one" style={{ ...styles.glasstext, ...styles.fontLarge }}>
-                  One Platform to Plan, Structure, and Write Content — <span style={styles.gradientText}>Powered by AI</span>
-                  {/* <br /> */}
-                  {/* {" "}
-                  <span className="header-caption">
-                    <span className="cd-headline rotate-1">
-                      <span className="cd-words-wrapper">
-                        <b
-                          className={
-                            visibleIndex === 0
-                              ? "is-visible theme-gradient"
-                              : "is-hidden theme-gradient"
-                          }
-                        >
-                          AI Chating
-                        </b>
-                        <b
-                          className={
-                            visibleIndex === 1
-                              ? "is-visible theme-gradient"
-                              : "is-hidden theme-gradient"
-                          }
-                        >
-                          AI Writing
-                        </b>
-                        <b
-                          className={
-                            visibleIndex === 2
-                              ? "is-visible theme-gradient"
-                              : "is-hidden theme-gradient"
-                          }
-                        >
-                          AI Chating
-                        </b>
-                      </span>
-                    </span>
-                  </span>{" "}
-                  AI Hack */}
+                  Generate Marketing Content in Minutes,
+                  <br />
+                  <span style={styles.gradientText}>Not Hours</span>
                 </h1>
                 <p className="description" style={{ ...styles.glasstext }}>
-                  Generate ads, emails, SEO, and social content with AI  <br />{" "}
-                  that works from your inputs and helps shape content for practical use.
+                  Skip the prompt engineering. <br />
+                  Just fill in the details and get content that converts.
                 </p>
                 {/* <div className="form-group">
                   <textarea
