@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Sal from "sal.js";
+import { isAuthenticated } from "@/utils/auth";
 
 import PricingData from "../../data/pricing.json";
 
@@ -64,9 +65,11 @@ const mobileStyles = `
 const Home = () => {
   const [visibleIndex, setVisibleIndex] = useState(0);
   const { isLightTheme } = useAppContext();
+  const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
     Sal();
+    setAuthed(isAuthenticated());
 
     const intervalId = setInterval(() => {
       setVisibleIndex((prevIndex) => (prevIndex + 1) % 3);
@@ -125,6 +128,10 @@ const Home = () => {
           <div className="row justify-content-center">
             <div className="col-lg-12">
               <div className="inner text-center mt--140">
+                <div style={{ display: 'inline-flex', alignItems: 'center', backgroundColor: '#1e1e1e', padding: '8px 18px', borderRadius: '50px', marginBottom: '24px', border: '1px solid #333' }}>
+                  <span style={{ width: '8px', height: '8px', backgroundColor: '#00d26a', borderRadius: '50%', marginRight: '10px', boxShadow: '0 0 10px rgba(0, 210, 106, 0.5)' }}></span>
+                  <span style={{ color: '#e0e0e0', fontSize: '14px', fontWeight: '500', letterSpacing: '0.5px' }}>Six focused AI tools for marketing content</span>
+                </div>
                 <h1 className="title display-one" style={{ ...styles.glasstext, ...styles.fontLarge }}>
                   Generate Marketing<br /> Content in Minutes,<br /><span style={styles.gradientText}> Not Hours</span>
 
@@ -166,21 +173,69 @@ const Home = () => {
                   AI Hack */}
                 </h1>
                 <p className="description" style={{ ...styles.glasstext }}>
-                  Skip the prompt engineering. <br />{" "}
-                  Just fill in the details and get content that converts.
+                  Tell Synthovia your goal, audience, and tone. <br />{" "}
+                  Get ad copy, captions, emails, SEO, and scripts that are ready to publish.
                 </p>
-                {/* <div className="form-group">
-                  <textarea
-                    name="text"
-                    id="slider-text-area"
-                    cols="30"
-                    rows="2"
-                    placeholder="Enter a prompt, for example: a fundraising deck to a mobile finance app called Intuitive"
-                  ></textarea>
-                  <Link className="btn-default " href="/text-generator">
-                    Start with AI
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '0px', flexWrap: 'wrap' }}>
+                  <Link
+                    href={authed ? "/dashboard-overview" : "/signup"}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: '#4f46e5',
+                      color: '#ffffff',
+                      fontWeight: '600',
+                      fontSize: '16px',
+                      padding: '12px 28px',
+                      borderRadius: '8px',
+                      transition: 'all 0.2s ease',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textDecoration: 'none',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#4338ca';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#4f46e5';
+                      e.currentTarget.style.transform = 'none';
+                    }}
+                  >
+                    Start creating <span style={{ marginLeft: '6px', fontSize: '18px' }}>&rarr;</span>
                   </Link>
-                </div> */}
+                  <a
+                    href="#features"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'transparent',
+                      color: '#ffffff',
+                      fontWeight: '600',
+                      fontSize: '16px',
+                      padding: '12px 28px',
+                      borderRadius: '8px',
+                      border: '1px solid #4b5563',
+                      transition: 'all 0.2s ease',
+                      cursor: 'pointer',
+                      textDecoration: 'none',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                      e.currentTarget.style.border = '1px solid #9ca3af';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.border = '1px solid #4b5563';
+                      e.currentTarget.style.transform = 'none';
+                    }}
+                  >
+                    See the tools
+                  </a>
+                </div>
                 <div className="inner-shape">
                   <Image
                     src={shapeOne}
@@ -228,6 +283,42 @@ const Home = () => {
                   borderRadius: '15px'
                 }}
               />
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '40px', marginBottom: '10px' }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#161618',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '30px',
+                  padding: '12px 32px',
+                  gap: '24px',
+                  flexWrap: 'wrap',
+                  maxWidth: '100%',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', color: '#e4e4e7', fontSize: '15px', fontWeight: '500' }}>
+                    <svg style={{ width: '16px', height: '16px', color: '#10b981', marginRight: '8px' }} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"></path>
+                    </svg>
+                    No prompt skills needed
+                  </div>
+                  <span style={{ color: '#52525b' }}>&bull;</span>
+                  <div style={{ display: 'flex', alignItems: 'center', color: '#e4e4e7', fontSize: '15px', fontWeight: '500' }}>
+                    <svg style={{ width: '16px', height: '16px', color: '#10b981', marginRight: '8px' }} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"></path>
+                    </svg>
+                    Built for real marketing use
+                  </div>
+                  <span style={{ color: '#52525b' }}>&bull;</span>
+                  <div style={{ display: 'flex', alignItems: 'center', color: '#e4e4e7', fontSize: '15px', fontWeight: '500' }}>
+                    <svg style={{ width: '16px', height: '16px', color: '#10b981', marginRight: '8px' }} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"></path>
+                    </svg>
+                    India & global pricing
+                  </div>
+                </div>
+              </div>
 
             </div>
           </div>
@@ -314,7 +405,7 @@ const Home = () => {
                   <span className="theme-gradient">Powering Content Worldwide</span>
                 </h4>
                 <h2 className="title mb--60">
-                  Stop Struggling <br /> Start Publishing
+                  Why Synthovia <br /> Start Publishing
                 </h2>
               </div>
             </div>
